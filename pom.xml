@@ -211,7 +211,7 @@
 	<issueManagement>
 		<system>GitHub</system>
 		<url>https://github.com/nethad/clustermeister/issues</url>
-	</issueManagement><!--
+	</issueManagement>
 
 	<scm>
 		<url>https://github.com/nethad/clustermeister</url>
