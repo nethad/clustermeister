@@ -5,7 +5,7 @@
 	<artifactId>clustermeister</artifactId>
 	<packaging>pom</packaging>
 	<name>Clustermeister</name>
-<!--	<url>http://incubator.apache.org/clerezza/mvn-site/</url>-->
+	<url>http://nethad.github.com/clustermeister/</url>
 	<version>0.1-SNAPSHOT</version>
 	<description>
 		The direct or indirect parent of all Clustermeister Artifacts
