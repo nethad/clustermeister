@@ -208,21 +208,16 @@
 		</snapshotRepository>-->
 	</distributionManagement>
 
-	<!-- jira -->
-<!--	<issueManagement>
-		<system>Jira</system>
-		<url>https://issues.apache.org/jira/browse/CLEREZZA</url>
-	</issueManagement>
-	<ciManagement>
-		<system>Jenkins</system>
-		<url>https://builds.apache.org/job/clerezza-trunk-1.6/</url>
-	</ciManagement>-->
+	<issueManagement>
+		<system>GitHub</system>
+		<url>https://github.com/nethad/clustermeister/issues</url>
+	</issueManagement><!--
 
-<!--	<scm>
-		<url>http://svn.apache.org/viewvc/incubator/clerezza</url>
-		<connection>scm:svn:http://svn.apache.org/repos/asf/incubator/clerezza/trunk/parent/</connection>
-		<developerConnection>scm:svn:https://svn.apache.org/repos/asf/incubator/clerezza/trunk/parent/</developerConnection>
-	</scm>-->
+	<scm>
+		<url>https://github.com/nethad/clustermeister</url>
+		<connection>scm:git:git@github.com:nethad/clustermeister.git</connection>
+		<developerConnection>scm:git:git@github.com:nethad/clustermeister.git</developerConnection>
+	</scm>
 
 	<!-- lets generate reports -->
 	<reporting>
