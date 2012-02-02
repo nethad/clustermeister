@@ -1,5 +1,5 @@
 
-package ch.uzh.ifi.ddis.clustermeister.api;
+package com.github.nethad.clustermeister.api;
 
 /**
  *
