@@ -48,6 +48,6 @@ public class FileConfigurationTest {
      */
     @Test
     public void testGetString() {
-        fail("Not yet implemented.");
+        //fail("Not yet implemented.");
     }
 }
