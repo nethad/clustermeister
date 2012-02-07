@@ -1,5 +1,5 @@
 
-package ch.uzh.ifi.ddis.clustermeister.provisioning;
+package com.github.nethad.clustermeister.provisioning;
 
 /**
  *

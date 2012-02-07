@@ -5,7 +5,7 @@
 	<artifactId>clustermeister</artifactId>
 	<packaging>pom</packaging>
 	<name>Clustermeister</name>
-<!--	<url>http://incubator.apache.org/clerezza/mvn-site/</url>-->
+	<url>http://nethad.github.com/clustermeister/</url>
 	<version>0.1-SNAPSHOT</version>
 	<description>
 		The direct or indirect parent of all Clustermeister Artifacts
@@ -17,6 +17,39 @@
 			<distribution>repo</distribution>
 		</license>
 	</licenses>
+	<inceptionYear>2012</inceptionYear>
+	<organization>
+		<name>University of Zurich</name>
+		<url>http://www.uzh.ch</url>
+	</organization>
+	<developers>
+		<developer>
+			<id>daniel</id>
+			<name>Daniel Spicar</name>
+			<email>dspicar@apache.org</email>
+			<roles>
+				<role>developer</role>
+			</roles>
+			<timezone>+1</timezone>
+		</developer>
+		<developer>
+			<id>thomas</id>
+			<name>Thomas Ritter</name>
+			<roles>
+				<role>developer</role>
+			</roles>
+			<timezone>+1</timezone>
+		</developer>
+	</developers>
+	<issueManagement>
+		<system>GitHub</system>
+		<url>https://github.com/nethad/clustermeister/issues</url>
+	</issueManagement>
+	<scm>
+		<url>git@github.com:nethad/clustermeister.git</url>
+		<connection>scm:git:git@github.com:nethad/clustermeister.git</connection>
+		<developerConnection>scm:git:git@github.com:nethad/clustermeister.git</developerConnection>
+	</scm>
 
 	<profiles>
 		<profile>
@@ -188,41 +221,6 @@
 			</dependency>
 		</dependencies>
 	</dependencyManagement>
-	<distributionManagement>
-		<!-- where to deploy the web site -->
-<!--		<site>
-			<id>people.apache.org</id>
-			<url>scp://people.apache.org/www/incubator.apache.org/clerezza/mvn-site/</url>
-		</site>-->
-
-		<!-- where to deploy the artifacts -->
-<!--		<repository>
-			<id>apache.releases.https</id>
-			<name>Apache Release Distribution Repository</name>
-			<url>https://repository.apache.org/service/local/staging/deploy/maven2</url>
-		</repository>-->
-<!--		<snapshotRepository>
-			<id>apache.snapshots.https</id>
-			<name>Apache Development Snapshot Repository</name>
-			<url>https://repository.apache.org/content/repositories/snapshots</url>
-		</snapshotRepository>-->
-	</distributionManagement>
-
-	<!-- jira -->
-<!--	<issueManagement>
-		<system>Jira</system>
-		<url>https://issues.apache.org/jira/browse/CLEREZZA</url>
-	</issueManagement>
-	<ciManagement>
-		<system>Jenkins</system>
-		<url>https://builds.apache.org/job/clerezza-trunk-1.6/</url>
-	</ciManagement>-->
-
-<!--	<scm>
-		<url>http://svn.apache.org/viewvc/incubator/clerezza</url>
-		<connection>scm:svn:http://svn.apache.org/repos/asf/incubator/clerezza/trunk/parent/</connection>
-		<developerConnection>scm:svn:https://svn.apache.org/repos/asf/incubator/clerezza/trunk/parent/</developerConnection>
-	</scm>-->
 
 	<!-- lets generate reports -->
 	<reporting>
