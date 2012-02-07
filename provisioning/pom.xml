@@ -14,7 +14,11 @@
 	lorem ipsum.
     </description>
     <dependencies>
-        
+        <dependency>
+			<groupId>com.jcraft</groupId>
+			<artifactId>jsch</artifactId>
+			<version>0.1.45</version>
+		</dependency>
     </dependencies>
 </project>
 
