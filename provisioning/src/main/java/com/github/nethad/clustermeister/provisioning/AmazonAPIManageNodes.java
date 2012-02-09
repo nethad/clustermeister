@@ -21,6 +21,8 @@ package com.github.nethad.clustermeister.provisioning;
 
 //import com.google.common.collect.Iterables;
 //import com.google.inject.Module;
+import com.google.common.collect.ImmutableSet;
+import com.google.inject.Module;
 import java.io.File;
 import java.util.Set;
 import org.jclouds.compute.ComputeServiceContext;
@@ -31,6 +33,11 @@ import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.ec2.compute.options.EC2TemplateOptions;
 import org.jclouds.ec2.domain.InstanceType;
+import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
+import org.jclouds.logging.log4j.config.Log4JLoggingModule;
+import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
+import org.jclouds.ssh.jsch.config.JschSshClientModule;
+import org.jclouds.sshj.config.SshjSshClientModule;
 
 //import org.jclouds.logging.log4j.config.Log4JLoggingModule;
 //import org.jclouds.ssh.jsch.config.JschSshClientModule;
@@ -49,24 +56,46 @@ public class AmazonAPIManageNodes {
     
     private ComputeServiceContext context;
     private Template template;
+	
+	private Configuration configuration;
+
+	public AmazonAPIManageNodes(Configuration config) {
+		this.configuration = config;
+	}
     
-    public static void main(String... args) {
-        new AmazonAPIManageNodes().execute();
-    }
+//    public static void main(String... args) {
+//        new AmazonAPIManageNodes().execute();
+//    }
     
-    private void execute() {
+    public void init() {
         loadConfiguration();
-        
-        context = new ComputeServiceContextFactory().createContext("aws-ec2", accessKeyId, secretKey);
+		context = new ComputeServiceContextFactory().createContext("aws-ec2", accessKeyId, secretKey,
+                                        ImmutableSet.of(new JschSshClientModule(), new SLF4JLoggingModule(), new EnterpriseConfigurationModule()));
+//		context = new ComputeServiceContextFactory().createContext("aws-ec2", accessKeyId, secretKey,
+//                                        ImmutableSet.of(new SshjSshClientModule(), new SLF4JLoggingModule(), new EnterpriseConfigurationModule()));
+//        context = new ComputeServiceContextFactory().createContext("aws-ec2", accessKeyId, secretKey);
         buildTemplate();
+	}
+	
+	public ComputeServiceContext getContext() {
+		return context;
+		
+	}
+	
+    public void suspendNode(String nodeId) {
+		context.getComputeService().suspendNode(nodeId);
+	}
+	
+    public NodeMetadata resumeNode(String nodeId) {
+        
 //        listNodes();
 
-        String nodeId = "eu-west-1/i-14c98e5d";
+//        String nodeId = "eu-west-1/i-14c98e5d";
 
         
-        System.out.println("create new node");
-        
-        Set<? extends NodeMetadata> newNodes = null;
+//        System.out.println("create new node");
+//        
+//        Set<? extends NodeMetadata> newNodes = null;
         
 //        try {
              context.getComputeService().resumeNode(nodeId);
@@ -79,31 +108,31 @@ public class AmazonAPIManageNodes {
         // when you need access to very ec2-specific features, use the provider-specific context
 //        AWSEC2Client ec2Client = AWSEC2Client.class.cast(context.getProviderSpecificContext().getApi());
         
-        NodeMetadata node = context.getComputeService().getNodeMetadata(nodeId);
-
-//        NodeMetadata node = Iterables.get(nodes, 0);
-        
-        System.out.println("old node");
-        
-        printMetadata(node);
+        return context.getComputeService().getNodeMetadata(nodeId);
+//
+////        NodeMetadata node = Iterables.get(nodes, 0);
+//        
+//        System.out.println("old node");
+//        
+//        printMetadata(node);
         
 //        System.out.println("new node");
 //        
 //        printMetadata(newNodes.iterator().next());
 
-        context.close();
+//        context.close();
     }
 
     private void loadConfiguration() {
-        String homeDir = System.getProperty("user.home");
-        String configFilePath = homeDir + File.separator + CONFIG_FILE_PATH;
-        FileConfiguration config = new FileConfiguration(configFilePath);
-        
-        accessKeyId = config.getString("accessKeyId", "");
-        secretKey = config.getString("secretKey", "");
-        securityGroup = config.getString("securityGroup", "");
-        keyPair = config.getString("keyPair", "");
-        locationId = config.getString("locationId", "");
+//        String homeDir = System.getProperty("user.home");
+//        String configFilePath = homeDir + File.separator + CONFIG_FILE_PATH;
+//        FileConfiguration config = new FileConfiguration(configFilePath);
+		
+        accessKeyId = configuration.getString("accessKeyId", "");
+        secretKey = configuration.getString("secretKey", "");
+        securityGroup = configuration.getString("securityGroup", "");
+        keyPair = configuration.getString("keyPair", "");
+        locationId = configuration.getString("locationId", "");
     }
 
     private void buildTemplate() {
