@@ -293,6 +293,7 @@ public class SSHClient {
 					sb.append("\n");
 				}
 				
+				//TODO: somehow does not properly disconnect
 				return sb.toString().trim();
 				
 			} catch (Exception ex) {
