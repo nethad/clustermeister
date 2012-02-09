@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>ch.uzh.ifi.ddis.clustermeister</groupId>
+        <groupId>com.github.nethad.clustermeister</groupId>
         <artifactId>clustermeister</artifactId>
         <version>0.1-SNAPSHOT</version>
     </parent>
-    <groupId>ch.uzh.ifi.ddis.clustermeister</groupId>
+    <groupId>com.github.nethad.clustermeister</groupId>
     <artifactId>api</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
