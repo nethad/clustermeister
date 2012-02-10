@@ -60,6 +60,12 @@ public class AmazonAPIManageNodes {
         buildTemplate();
 	}
 	
+	public void close() {
+		if(context != null) {
+			context.close();
+		}
+	}
+	
 	public ComputeServiceContext getContext() {
 		return context;
 		
