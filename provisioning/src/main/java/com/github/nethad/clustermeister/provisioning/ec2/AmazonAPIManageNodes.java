@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 University of Zurich.
+ * Copyright 2012 The Clustermeister Team.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,6 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
-//import com.google.common.collect.ImmutableSet;
-
-//import org.jclouds.aws.ec2.AWSEC2Client;
-
-//import com.google.common.collect.Iterables;
-//import com.google.inject.Module;
 import com.github.nethad.clustermeister.provisioning.Configuration;
 import com.google.common.collect.ImmutableSet;
 import java.util.Set;
@@ -36,9 +30,6 @@ import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.ssh.jsch.config.JschSshClientModule;
 
-//import org.jclouds.logging.log4j.config.Log4JLoggingModule;
-//import org.jclouds.ssh.jsch.config.JschSshClientModule;
-
 /**
  *
  * @author thomas
@@ -50,7 +41,7 @@ public class AmazonAPIManageNodes {
     private String securityGroup;
     private String keyPair;
     private String locationId;
-    
+	
     private ComputeServiceContext context;
     private Template template;
 	
@@ -60,17 +51,12 @@ public class AmazonAPIManageNodes {
 		this.configuration = config;
 	}
     
-//    public static void main(String... args) {
-//        new AmazonAPIManageNodes().execute();
-//    }
-    
     public void init() {
         loadConfiguration();
-		context = new ComputeServiceContextFactory().createContext("aws-ec2", accessKeyId, secretKey,
-                                        ImmutableSet.of(new JschSshClientModule(), new SLF4JLoggingModule(), new EnterpriseConfigurationModule()));
-//		context = new ComputeServiceContextFactory().createContext("aws-ec2", accessKeyId, secretKey,
-//                                        ImmutableSet.of(new SshjSshClientModule(), new SLF4JLoggingModule(), new EnterpriseConfigurationModule()));
-//        context = new ComputeServiceContextFactory().createContext("aws-ec2", accessKeyId, secretKey);
+		context = new ComputeServiceContextFactory().
+				createContext("aws-ec2", accessKeyId, secretKey, 
+				ImmutableSet.of(new JschSshClientModule(), 
+				new SLF4JLoggingModule(), new EnterpriseConfigurationModule()));
         buildTemplate();
 	}
 	
@@ -84,47 +70,12 @@ public class AmazonAPIManageNodes {
 	}
 	
     public NodeMetadata resumeNode(String nodeId) {
+		context.getComputeService().resumeNode(nodeId);
         
-//        listNodes();
-
-//        String nodeId = "eu-west-1/i-14c98e5d";
-
-        
-//        System.out.println("create new node");
-//        
-//        Set<? extends NodeMetadata> newNodes = null;
-        
-//        try {
-             context.getComputeService().resumeNode(nodeId);
-            // context.getComputeService().runNodesWithTag("jclouds", 1);
-//            newNodes = context.getComputeService().createNodesInGroup("jclouds-test", 1, template);
-//        } catch (RunNodesException ex) {
-//            System.err.println(ex.getMessage());
-//        }
-
-        // when you need access to very ec2-specific features, use the provider-specific context
-//        AWSEC2Client ec2Client = AWSEC2Client.class.cast(context.getProviderSpecificContext().getApi());
-        
-        return context.getComputeService().getNodeMetadata(nodeId);
-//
-////        NodeMetadata node = Iterables.get(nodes, 0);
-//        
-//        System.out.println("old node");
-//        
-//        printMetadata(node);
-        
-//        System.out.println("new node");
-//        
-//        printMetadata(newNodes.iterator().next());
-
-//        context.close();
+		return context.getComputeService().getNodeMetadata(nodeId);
     }
 
     private void loadConfiguration() {
-//        String homeDir = System.getProperty("user.home");
-//        String configFilePath = homeDir + File.separator + CONFIG_FILE_PATH;
-//        FileConfiguration config = new FileConfiguration(configFilePath);
-		
         accessKeyId = configuration.getString("accessKeyId", "");
         secretKey = configuration.getString("secretKey", "");
         securityGroup = configuration.getString("securityGroup", "");
