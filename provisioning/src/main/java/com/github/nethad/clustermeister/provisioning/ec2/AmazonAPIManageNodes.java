@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning;
+package com.github.nethad.clustermeister.provisioning.ec2;
 
 //import com.google.common.collect.ImmutableSet;
 
@@ -21,9 +21,8 @@ package com.github.nethad.clustermeister.provisioning;
 
 //import com.google.common.collect.Iterables;
 //import com.google.inject.Module;
+import com.github.nethad.clustermeister.provisioning.Configuration;
 import com.google.common.collect.ImmutableSet;
-import com.google.inject.Module;
-import java.io.File;
 import java.util.Set;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.ComputeServiceContextFactory;
@@ -34,10 +33,8 @@ import org.jclouds.compute.domain.Template;
 import org.jclouds.ec2.compute.options.EC2TemplateOptions;
 import org.jclouds.ec2.domain.InstanceType;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
-import org.jclouds.logging.log4j.config.Log4JLoggingModule;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.ssh.jsch.config.JschSshClientModule;
-import org.jclouds.sshj.config.SshjSshClientModule;
 
 //import org.jclouds.logging.log4j.config.Log4JLoggingModule;
 //import org.jclouds.ssh.jsch.config.JschSshClientModule;
