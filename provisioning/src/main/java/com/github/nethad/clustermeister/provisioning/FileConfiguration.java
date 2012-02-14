@@ -46,5 +46,15 @@ public class FileConfiguration implements Configuration {
     public String getString(String key, String defaultValue) {
         return properties.getProperty(key, defaultValue);
     }
+
+    @Override
+    public int getInt(String key, int defaultValue) {
+        try {
+            return Integer.parseInt(properties.getProperty(key));
+        } catch (NumberFormatException e) {
+            Logger.getLogger(FileConfiguration.class.getName()).log(Level.WARNING, null, e);
+            return defaultValue;
+        }
+    }
     
 }
