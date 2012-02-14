@@ -33,19 +33,23 @@ import org.slf4j.LoggerFactory;
  *
  * @author daniel
  */
-public class AmazonEC2JPPFDriverDeployerTest {
+@Ignore("Depends on local configuration.")
+public class AmazonEC2JPPFDeployerTest {
 	static final String AMAZON_SETTINGS = "/home/daniel/clustermeister-amazonapi.properties";
-	static final String nodeID = "eu-west-1/i-28b4f361";
+	static final String driverNodeID = "eu-west-1/i-28b4f361";
+	static final String nodeNodeID = "eu-west-1/i-14c98e5d";
 	static final String privateKeyFile = "/home/daniel/Desktop/EC2/EC2_keypair.pem";
 	static final String userName = "ec2-user";
 	
 	static AmazonAPIManageNodes nodeManager;
 	static AmazonEC2JPPFDriverDeployer driverDeployer;
+	static AmazonEC2JPPFNodeDeployer nodeDeployer1;
+	static AmazonEC2JPPFNodeDeployer nodeDeployer2;
 	static NodeMetadata metadata;
 	static LoginCredentials loginCredentials;
 	
 	private final static Logger logger = 
-			LoggerFactory.getLogger(AmazonEC2JPPFDriverDeployerTest.class);
+			LoggerFactory.getLogger(AmazonEC2JPPFDeployerTest.class);
 	
 	@BeforeClass
 	public static void setUpClass() throws Exception {
@@ -53,27 +57,47 @@ public class AmazonEC2JPPFDriverDeployerTest {
 				new FileConfiguration(AMAZON_SETTINGS);
 		nodeManager = new AmazonAPIManageNodes(config);
 		nodeManager.init();
-		logger.info("Resuming node {}", nodeID);
-		metadata = nodeManager.resumeNode(nodeID);
-		logger.info("Node {} resumed at {}", nodeID, metadata.getPublicAddresses().iterator().next());
+		logger.info("Resuming node {}", driverNodeID);
+		metadata = nodeManager.resumeNode(driverNodeID);
+		logger.info("Node {} resumed at {}", driverNodeID, 
+				metadata.getPublicAddresses().iterator().next());
 		
 		loginCredentials = new LoginCredentials(userName, null, getPrivateKey(), true);
 		
 		driverDeployer = new AmazonEC2JPPFDriverDeployer(nodeManager.getContext(), 
 				metadata, loginCredentials);
+		String driverPublicIP = metadata.getPublicAddresses().iterator().next();
+		String driverPrivateIP = metadata.getPrivateAddresses().iterator().next();
+		
+		nodeDeployer1 = new AmazonEC2JPPFNodeDeployer(nodeManager.getContext(), 
+				metadata, loginCredentials, driverPrivateIP);
+		
+		logger.info("Resuming node {}", nodeNodeID);
+		metadata = nodeManager.resumeNode(nodeNodeID);
+		logger.info("Node {} resumed at {}", nodeNodeID, 
+				metadata.getPublicAddresses().iterator().next());
+		nodeDeployer2 = new AmazonEC2JPPFNodeDeployer(nodeManager.getContext(), 
+				metadata, loginCredentials, driverPublicIP);
+		
 	}
 
 	
 
 	@AfterClass
 	public static void tearDownClass() throws Exception {
-//		nodeManager.suspendNode(nodeID);
+//		nodeManager.suspendNode(nodeNodeID);
+//		nodeManager.suspendNode(driverNodeID);
+		nodeManager.close();
 	}
 	
-	@Ignore("Depends on local configuration.")
 	@Test
 	public void testSomeMethod() {
 		driverDeployer.run();
+		logger.info("Driver running");
+		nodeDeployer1.run();
+		logger.info("Node1 running");
+		nodeDeployer2.run();
+		logger.info("Node2 running");
 	}
 	
 	static String getPrivateKey() throws FileNotFoundException, IOException {
