@@ -15,6 +15,11 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeMetadataBuilder;
@@ -28,49 +33,70 @@ import org.slf4j.LoggerFactory;
  *
  * @author daniel
  */
-public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
-
-	private final static Logger logger = 
-			LoggerFactory.getLogger(AmazonEC2JPPFDriverDeployer.class);
+public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
 	
-	public AmazonEC2JPPFDriverDeployer(ComputeServiceContext context, 
-			NodeMetadata metadata, LoginCredentials credentials) {
+	private final static Logger logger = 
+			LoggerFactory.getLogger(AmazonEC2JPPFNodeDeployer.class);
+
+	final String driverhost;
+	
+	public AmazonEC2JPPFNodeDeployer(ComputeServiceContext context, 
+			NodeMetadata metadata, LoginCredentials credentials, String driverhost) {
 		super(credentials, context, metadata);
+		
+		this.driverhost = driverhost;
 	}
 	
 	@Override
 	public void run() {
-		logger.info("Deploying JPPF-Driver to {} ({}).", metadata.getId(), 
+		logger.info("Deploying JPPF-Node to {} ({}).", metadata.getId(), 
 				metadata.getPublicAddresses().iterator().next());
+		
+		Properties nodeProperties = new Properties();
+		try {
+			nodeProperties.load(this.getClass().getResourceAsStream("jppf-node.properties"));
+		} catch (IOException ex) {
+			logger.warn("Can not read properties file.", ex);
+		}
+		nodeProperties.setProperty("jppf.server.host", driverhost);
+		ByteArrayOutputStream runningConfig = new ByteArrayOutputStream();
+		try {
+			nodeProperties.store(runningConfig, "Running Config");
+		} catch (IOException ex) {
+			logger.warn("Can not write running property configuration.", ex);
+		}
+		
+		
 		SshClient client = context.utils().sshForNode().apply(
 				NodeMetadataBuilder.fromNodeMetadata(metadata).
 				credentials(loginCredentials).build());
 		client.connect();
 		try {
-			execute("rm -rf jppf-driver*", client);
-			upload(client, getClass().getResourceAsStream("jppf-driver.zip"), 
-					"/home/ec2-user/jppf-driver.zip");
-			execute("unzip jppf-driver.zip", client);
-			execute("chmod +x jppf-driver/startDriver.sh", client);
-			upload(client, getClass().getResourceAsStream("jppf-driver.properties"), 
-					"jppf-driver/config/jppf-driver.properties");
+			execute("rm -rf jppf-node*", client);
+			upload(client, getClass().getResourceAsStream("jppf-node.zip"), 
+					"/home/ec2-user/jppf-node.zip");
+			execute("unzip jppf-node.zip", client);
+			execute("chmod +x jppf-node/startNode.sh", client);
+			upload(client, new ByteArrayInputStream(runningConfig.toByteArray()), 
+					"jppf-node/config/jppf-node.properties");
 			
-			logger.info("Starting JPPF-Driver on {}...", metadata.getId());
-			final String script = "cd /home/ec2-user/jppf-driver\nnohup ./startDriver.sh > nohup.out 2>&1";
+			logger.info("Starting JPPF-Node on {}...", metadata.getId());
+			final String script = "cd /home/ec2-user/jppf-node\nnohup ./startNode.sh > nohup.out 2>&1";
 			RunScriptOptions options = new RunScriptOptions().
 					overrideLoginPrivateKey(loginCredentials.getPrivateKey()).
 					overrideLoginUser(loginCredentials.getUser()).
 					blockOnComplete(false).
 					runAsRoot(false).
-					nameTask("jppf-driver-start");
+					nameTask("jppf-node-start");
 			logExecResponse(context.getComputeService().
 					runScriptOnNode(metadata.getId(), script, options));
-			logger.info("JPPF-Driver started.");
+			logger.info("JPPF-Node started.");
 		} finally {
 			if (client != null) {
 				client.disconnect();
 			}
 		}
-		logger.info("JPPF-Driver deployed on {}.", metadata.getId());
+		logger.info("JPPF-Node deployed on {}.", metadata.getId());
 	}
+	
 }
