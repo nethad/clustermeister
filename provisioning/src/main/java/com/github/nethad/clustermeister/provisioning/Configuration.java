@@ -22,5 +22,6 @@ package com.github.nethad.clustermeister.provisioning;
 public interface Configuration {
     
     public String getString(String key, String defaultValue);
+    public int getInt(String key, int defaultValue);
     
 }
