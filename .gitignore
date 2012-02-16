@@ -1,2 +1,8 @@
 /provisioning/target/
 /api/target/
+/ext/org.jppf.common/target/
+/org.jppf.common/target/
+/org (copy).jppf.common/target/
+/org.jppf.client/target/
+/org.jppf.node/target/
+/org.jppf.common-node/target/
