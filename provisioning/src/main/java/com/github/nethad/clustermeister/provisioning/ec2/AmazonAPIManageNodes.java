@@ -15,7 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
-import com.github.nethad.clustermeister.provisioning.Configuration;
+import com.github.nethad.clustermeister.api.Configuration;
 import com.google.common.collect.ImmutableSet;
 import java.util.Set;
 import org.jclouds.compute.ComputeServiceContext;

@@ -15,7 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
-import com.github.nethad.clustermeister.provisioning.FileConfiguration;
+import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
