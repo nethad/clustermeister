@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.github.nethad.clustermeister</groupId>
+		<artifactId>clustermeister</artifactId>
+		<version>0.1-SNAPSHOT</version>
+	</parent>
+	<groupId>com.github.nethad.clustermeister</groupId>
+	<artifactId>org.jppf.common</artifactId>
+	<packaging>jar</packaging>
+	<name>Clustermeister EXT: JPPF Common</name>
+	<version>3.0</version>
+	<description>
+		Mavenized jppf-common library.
+	</description>
+	<dependencies>
+		<dependency>
+			<groupId>org.jppf</groupId>
+			<artifactId>jppf-common</artifactId>
+			<version>3.0</version>
+			<scope>system</scope>
+			<systemPath>${basedir}/lib/jppf-common.jar</systemPath>
+			<type>jar</type>
+		</dependency>
+	</dependencies>
+	<build>
+		<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-dependency-plugin</artifactId>
+				<configuration>
+					<outputDirectory>${project.build.directory}/classes</outputDirectory>
+				</configuration>
+				<executions> 
+					<execution> 
+						<id>unpack-dep</id>
+						<phase>process-resources</phase>
+						<goals>
+							<goal>unpack-dependencies</goal>
+						</goals>
+						<configuration>
+							<excludes>**/slf4j/**</excludes>
+							<excludeTransitive>true</excludeTransitive>
+							<outputDirectory>${project.build.directory}/classes</outputDirectory>
+						</configuration>
+					</execution> 
+				</executions>
+			</plugin>
+		</plugins>
+	</build>
+</project>
