@@ -1,20 +1,37 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?><project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
-    <modelVersion>4.0.0</modelVersion>
-    <parent>
-        <groupId>com.github.nethad.clustermeister</groupId>
-        <artifactId>clustermeister</artifactId>
-        <version>0.1-SNAPSHOT</version>
-    </parent>
-    <groupId>com.github.nethad.clustermeister</groupId>
-    <artifactId>api</artifactId>
-    <version>0.1-SNAPSHOT</version>
-    <packaging>jar</packaging>
-    <name>Clustermeister API</name>
-    <description>
-	lorem ipsum.
-    </description>
-    <dependencies>
-        
-    </dependencies>
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<modelVersion>4.0.0</modelVersion>
+	<parent>
+		<groupId>com.github.nethad.clustermeister</groupId>
+		<artifactId>clustermeister</artifactId>
+		<version>0.1-SNAPSHOT</version>
+	</parent>
+	<groupId>com.github.nethad.clustermeister</groupId>
+	<artifactId>api</artifactId>
+	<version>0.1-SNAPSHOT</version>
+	<packaging>jar</packaging>
+	<name>Clustermeister API</name>
+	<description>
+		lorem ipsum.
+	</description>
+	<dependencies>
+		<dependency>
+			<groupId>com.github.nethad.clustermeister</groupId>
+			<artifactId>org.jppf.common</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.github.nethad.clustermeister</groupId>
+			<artifactId>org.jppf.client</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.github.nethad.clustermeister</groupId>
+			<artifactId>org.jppf.common-node</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>junit</groupId>
+			<artifactId>junit</artifactId>
+			<scope>test</scope>
+		</dependency>
+	</dependencies>
 </project>
 

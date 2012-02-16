@@ -15,8 +15,8 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
-import com.github.nethad.clustermeister.provisioning.Configuration;
-import com.github.nethad.clustermeister.provisioning.FileConfiguration;
+import com.github.nethad.clustermeister.api.Configuration;
+import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientExcpetion;
 
