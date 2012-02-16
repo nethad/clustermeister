@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 University of Zurich.
+ * Copyright 2012 The Clustermeister Team.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning;
+package com.github.nethad.clustermeister.provisioning.torque;
 
 /**
  *
  * @author thomas
  */
-public interface Configuration {
+public class TorqueJPPFTestSetup {
     
-    public String getString(String key, String defaultValue);
-    public int getInt(String key, int defaultValue);
+    public static void main(String... args) {
+        execute();
+    }
+
+    private static void execute() {
+        new TorqueJPPFNodeDeployer().execute(5);
+        new TorqueJPPFDriverDeployer().execute();
+    }
     
 }
