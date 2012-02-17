@@ -33,6 +33,7 @@ import test.org.jppf.test.setup.*;
  * Unit tests for {@link JPPFExecutorService}.
  * @author Laurent Cohen
  */
+@Ignore
 public class TestJPPFExecutorService extends Setup1D1N1C
 {
   /**

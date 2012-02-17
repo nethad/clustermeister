@@ -28,6 +28,7 @@ import org.jppf.JPPFException;
 import org.jppf.client.JPPFJob;
 import org.jppf.scheduling.JPPFSchedule;
 import org.jppf.server.protocol.JPPFTask;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import test.org.jppf.test.setup.*;
@@ -38,6 +39,7 @@ import test.org.jppf.test.setup.*;
  * as specified in the job SLA.
  * @author Laurent Cohen
  */
+@Ignore
 public class TestJPPFTask extends Setup1D1N1C
 {
   /**
