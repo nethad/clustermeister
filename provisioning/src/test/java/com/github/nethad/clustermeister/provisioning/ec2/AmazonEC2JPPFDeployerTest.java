@@ -41,7 +41,7 @@ public class AmazonEC2JPPFDeployerTest {
 	static final String privateKeyFile = "/home/daniel/Desktop/EC2/EC2_keypair.pem";
 	static final String userName = "ec2-user";
 	
-	static AmazonInstanceManager nodeManager;
+	static AmazonInstanceManager instanceManager;
 	static AmazonEC2JPPFDriverDeployer driverDeployer;
 	static AmazonEC2JPPFNodeDeployer nodeDeployer1;
 	static AmazonEC2JPPFNodeDeployer nodeDeployer2;
@@ -55,28 +55,28 @@ public class AmazonEC2JPPFDeployerTest {
 	public static void setUpClass() throws Exception {
 		FileConfiguration config = 
 				new FileConfiguration(AMAZON_SETTINGS);
-		nodeManager = new AmazonInstanceManager(config);
-		nodeManager.init();
+		instanceManager = new AmazonInstanceManager(config);
+		instanceManager.init();
 		logger.info("Resuming node {}", driverNodeID);
-		metadata = nodeManager.resumeNode(driverNodeID);
+		metadata = instanceManager.resumeNode(driverNodeID);
 		logger.info("Node {} resumed at {}", driverNodeID, 
 				metadata.getPublicAddresses().iterator().next());
 		
 		loginCredentials = new LoginCredentials(userName, null, getPrivateKey(), true);
 		
-		driverDeployer = new AmazonEC2JPPFDriverDeployer(nodeManager.getContext(), 
+		driverDeployer = new AmazonEC2JPPFDriverDeployer(instanceManager.getContext(), 
 				metadata, loginCredentials);
 		String driverPublicIP = metadata.getPublicAddresses().iterator().next();
 		String driverPrivateIP = metadata.getPrivateAddresses().iterator().next();
 		
-		nodeDeployer1 = new AmazonEC2JPPFNodeDeployer(nodeManager.getContext(), 
+		nodeDeployer1 = new AmazonEC2JPPFNodeDeployer(instanceManager.getContext(), 
 				metadata, loginCredentials, driverPrivateIP);
 		
 		logger.info("Resuming node {}", nodeNodeID);
-		metadata = nodeManager.resumeNode(nodeNodeID);
+		metadata = instanceManager.resumeNode(nodeNodeID);
 		logger.info("Node {} resumed at {}", nodeNodeID, 
 				metadata.getPublicAddresses().iterator().next());
-		nodeDeployer2 = new AmazonEC2JPPFNodeDeployer(nodeManager.getContext(), 
+		nodeDeployer2 = new AmazonEC2JPPFNodeDeployer(instanceManager.getContext(), 
 				metadata, loginCredentials, driverPublicIP);
 		
 	}
@@ -87,7 +87,7 @@ public class AmazonEC2JPPFDeployerTest {
 	public static void tearDownClass() throws Exception {
 //		nodeManager.suspendNode(nodeNodeID);
 //		nodeManager.suspendNode(driverNodeID);
-		nodeManager.close();
+		instanceManager.close();
 	}
 	
 	@Test
