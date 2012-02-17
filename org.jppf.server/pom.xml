@@ -16,37 +16,12 @@
 	</description>
 	<dependencies>
 		<dependency>
-			<groupId>org.jppf</groupId>
-			<artifactId>jppf-server</artifactId>
-			<version>3.0</version>
-			<scope>system</scope>
-			<systemPath>${basedir}/lib/jppf-server.jar</systemPath>
-			<type>jar</type>
+			<groupId>com.github.nethad.clustermeister</groupId>
+			<artifactId>org.jppf.common</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>com.github.nethad.clustermeister</groupId>
+			<artifactId>org.jppf.common-node</artifactId>
 		</dependency>
 	</dependencies>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<configuration>
-					<outputDirectory>${project.build.directory}/classes</outputDirectory>
-				</configuration>
-				<executions> 
-					<execution> 
-						<id>unpack-dep</id>
-						<phase>process-resources</phase>
-						<goals>
-							<goal>unpack-dependencies</goal>
-						</goals>
-						<configuration>
-							<excludes>**/slf4j/**</excludes>
-							<excludeTransitive>true</excludeTransitive>
-							<outputDirectory>${project.build.directory}/classes</outputDirectory>
-						</configuration>
-					</execution> 
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
 </project>
