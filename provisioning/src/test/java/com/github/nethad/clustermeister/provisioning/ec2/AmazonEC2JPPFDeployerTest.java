@@ -41,7 +41,7 @@ public class AmazonEC2JPPFDeployerTest {
 	static final String privateKeyFile = "/home/daniel/Desktop/EC2/EC2_keypair.pem";
 	static final String userName = "ec2-user";
 	
-	static AmazonAPIManageNodes nodeManager;
+	static AmazonInstanceManager nodeManager;
 	static AmazonEC2JPPFDriverDeployer driverDeployer;
 	static AmazonEC2JPPFNodeDeployer nodeDeployer1;
 	static AmazonEC2JPPFNodeDeployer nodeDeployer2;
@@ -55,7 +55,7 @@ public class AmazonEC2JPPFDeployerTest {
 	public static void setUpClass() throws Exception {
 		FileConfiguration config = 
 				new FileConfiguration(AMAZON_SETTINGS);
-		nodeManager = new AmazonAPIManageNodes(config);
+		nodeManager = new AmazonInstanceManager(config);
 		nodeManager.init();
 		logger.info("Resuming node {}", driverNodeID);
 		metadata = nodeManager.resumeNode(driverNodeID);
