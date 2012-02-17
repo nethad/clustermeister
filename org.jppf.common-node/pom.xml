@@ -14,39 +14,10 @@
 	<description>
 		Mavenized jppf-common-node library.
 	</description>
-	<dependencies>
-		<dependency>
-			<groupId>org.jppf</groupId>
-			<artifactId>jppf-common-node</artifactId>
-			<version>3.0</version>
-			<scope>system</scope>
-			<systemPath>${basedir}/lib/jppf-common-node.jar</systemPath>
-			<type>jar</type>
-		</dependency>
-	</dependencies>
-	<build>
-		<plugins>
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-dependency-plugin</artifactId>
-				<configuration>
-					<outputDirectory>${project.build.directory}/classes</outputDirectory>
-				</configuration>
-				<executions> 
-					<execution> 
-						<id>unpack-dep</id>
-						<phase>process-resources</phase>
-						<goals>
-							<goal>unpack-dependencies</goal>
-						</goals>
-						<configuration>
-							<excludes>**/slf4j/**</excludes>
-							<excludeTransitive>true</excludeTransitive>
-							<outputDirectory>${project.build.directory}/classes</outputDirectory>
-						</configuration>
-					</execution> 
-				</executions>
-			</plugin>
-		</plugins>
-	</build>
+    <dependencies>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+        </dependency>
+    </dependencies>
 </project>
