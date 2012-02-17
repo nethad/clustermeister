@@ -34,7 +34,7 @@ import org.jclouds.ssh.jsch.config.JschSshClientModule;
  *
  * @author thomas
  */
-public class AmazonAPIManageNodes {
+public class AmazonInstanceManager {
     public static final String CONFIG_FILE_PATH = ".clustermeister/configuration.properties";
     private String accessKeyId;
     private String secretKey;
@@ -47,7 +47,7 @@ public class AmazonAPIManageNodes {
 	
 	private Configuration configuration;
 
-	public AmazonAPIManageNodes(Configuration config) {
+	public AmazonInstanceManager(Configuration config) {
 		this.configuration = config;
 	}
     
