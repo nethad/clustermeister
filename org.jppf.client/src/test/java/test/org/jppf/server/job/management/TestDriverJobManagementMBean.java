@@ -28,6 +28,7 @@ import org.jppf.client.*;
 import org.jppf.management.JMXDriverConnectionWrapper;
 import org.jppf.server.job.management.DriverJobManagementMBean;
 import org.jppf.server.protocol.JPPFTask;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import test.org.jppf.test.setup.*;
@@ -37,6 +38,7 @@ import test.org.jppf.test.setup.*;
  * In this class, we test that the functionality of the DriverJobManagementMBean from the client point of view.
  * @author Laurent Cohen
  */
+@Ignore
 public class TestDriverJobManagementMBean extends Setup1D1N1C
 {
   /**

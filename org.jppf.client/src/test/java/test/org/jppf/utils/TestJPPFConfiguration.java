@@ -23,12 +23,14 @@ import static org.junit.Assert.*;
 import java.io.*;
 
 import org.jppf.utils.*;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /**
  * Unit test for the <code>JPPFConfiguration</code> class.
  * @author Laurent Cohen
  */
+@Ignore
 public class TestJPPFConfiguration
 {
   /**
