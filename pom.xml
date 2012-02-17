@@ -61,6 +61,7 @@
 				<module>org.jppf.common</module>
 				<module>org.jppf.common-node</module>
 				<module>org.jppf.client</module>
+				<module>org.jppf.server</module>
 				<module>api</module>
 				<module>provisioning</module>
 			</modules>
@@ -215,6 +216,11 @@
 			<dependency>
 				<groupId>com.github.nethad.clustermeister</groupId>
 				<artifactId>org.jppf.client</artifactId>
+				<version>3.0</version>
+			</dependency>
+			<dependency>
+				<groupId>com.github.nethad.clustermeister</groupId>
+				<artifactId>org.jppf.server</artifactId>
 				<version>3.0</version>
 			</dependency>
 			<dependency>
