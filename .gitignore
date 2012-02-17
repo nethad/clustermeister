@@ -6,3 +6,5 @@
 /org.jppf.client/target/
 /org.jppf.node/target/
 /org.jppf.common-node/target/
+/org (copy).jppf.client/target/
+/org.jppf.server/target/
