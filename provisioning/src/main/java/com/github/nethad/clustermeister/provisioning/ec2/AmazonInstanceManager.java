@@ -17,9 +17,12 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Configuration;
 import com.google.common.collect.ImmutableSet;
+import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.ComputeServiceContextFactory;
+import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.OsFamily;
@@ -29,12 +32,17 @@ import org.jclouds.ec2.domain.InstanceType;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.ssh.jsch.config.JschSshClientModule;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author thomas
+ * @author thomas, daniel
  */
 public class AmazonInstanceManager {
+	private final static Logger logger = 
+			LoggerFactory.getLogger(AmazonInstanceManager.class);
+	
     public static final String CONFIG_FILE_PATH = ".clustermeister/configuration.properties";
     private String accessKeyId;
     private String secretKey;
@@ -52,33 +60,66 @@ public class AmazonInstanceManager {
 	}
     
     public void init() {
+		logger.info("Loading Configuration...");
         loadConfiguration();
+		logger.info("Creating Context...");
 		context = new ComputeServiceContextFactory().
 				createContext("aws-ec2", accessKeyId, secretKey, 
 				ImmutableSet.of(new JschSshClientModule(), 
 				new SLF4JLoggingModule(), new EnterpriseConfigurationModule()));
         buildTemplate();
+		logger.info("Initialization complete.");
 	}
 	
 	public void close() {
 		if(context != null) {
+			logger.info("Closing context...");
 			context.close();
+			logger.info("closed.");
 		}
 	}
 	
-	public ComputeServiceContext getContext() {
-		return context;
-		
+	Iterator<? extends ComputeMetadata> getInstances() {
+		return context.getComputeService().listNodes().iterator();
 	}
 	
-    public void suspendNode(String nodeId) {
+	NodeMetadata getInstanceMetadata(String id) {
+		return context.getComputeService().getNodeMetadata(id);
+	}
+
+	@Deprecated
+	public ComputeServiceContext getContext() {
+		return context;
+	}
+	
+    public NodeMetadata createInstance(Map<String, String> userMetaData) {
+		try {
+			if(userMetaData != null) {
+				template.getOptions().userMetadata(userMetaData);
+			}
+			Set<? extends NodeMetadata> instances = 
+					context.getComputeService().createNodesInGroup(
+						"instances", 1, template);
+			Iterator<? extends NodeMetadata> it = instances.iterator();
+			if(it.hasNext()) {
+				return instances.iterator().next();
+			}
+		} catch (RunNodesException ex) {
+			logger.error("Exception while creating new instance.", ex);
+		}
+		return null;
+	}
+
+	public void suspendInstance(String nodeId) {
 		context.getComputeService().suspendNode(nodeId);
 	}
 	
-    public NodeMetadata resumeNode(String nodeId) {
+	public void terminateInstance(String nodeId) {
+		context.getComputeService().destroyNode(nodeId);
+	}
+	
+    public void resumeInstance(String nodeId) {
 		context.getComputeService().resumeNode(nodeId);
-        
-		return context.getComputeService().getNodeMetadata(nodeId);
     }
 
     private void loadConfiguration() {
@@ -89,52 +130,21 @@ public class AmazonInstanceManager {
         locationId = configuration.getString("locationId", "");
     }
 
+
     private void buildTemplate() {
-        template = context.getComputeService()
-                            .templateBuilder()
-                                .locationId(locationId)
-                                .hardwareId(InstanceType.T1_MICRO)
-                                .osFamily(OsFamily.AMZN_LINUX).build();
-        
+		logger.info("Building Template...");
+		template = context.getComputeService()
+							.templateBuilder()
+								.locationId(locationId)
+								.hardwareId(InstanceType.T1_MICRO)
+								.osFamily(OsFamily.AMZN_LINUX).build();
 
-        // specify your own groups which already have the correct rules applied
-        template.getOptions().as(EC2TemplateOptions.class).securityGroups(securityGroup);
 
-        // specify your own keypair for use in creating nodes
-        template.getOptions().as(EC2TemplateOptions.class).keyPair(keyPair);
-    }
+		// specify your own groups which already have the correct rules applied
+		template.getOptions().as(EC2TemplateOptions.class).securityGroups(securityGroup);
 
-    private void listNodes() {
-        Set<? extends ComputeMetadata> listNodes = context.getComputeService().listNodes();        
-        printSet(listNodes);
+		// specify your own keypair for use in creating nodes
+		template.getOptions().as(EC2TemplateOptions.class).keyPair(keyPair);
+		logger.info("Template built.");
     }
-    
-    private void printSet(Set<?> set) {
-        for (Object object : set) {
-            System.out.println(object);
-        }
-    }
-    
-    private void printMetadata(NodeMetadata node) {
-                System.out.println("id = "+node.getId());
-        
-        System.out.println("name = "+node.getName());
-        
-        System.out.println("private addresses");
-        
-        for (String address : node.getPrivateAddresses()) {
-            System.out.println("address = " + address);
-        }
-        
-        System.out.println("public addresses");
-        
-        for (String address : node.getPublicAddresses()) {
-            System.out.println("address = " + address);
-        }
-        
-        System.out.println("state = "+node.getState().toString());
-        
-        System.out.println("URI = "+node.getUri());
-    }
-    
 }

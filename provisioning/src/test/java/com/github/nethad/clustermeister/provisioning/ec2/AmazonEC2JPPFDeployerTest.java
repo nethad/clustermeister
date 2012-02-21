@@ -58,7 +58,8 @@ public class AmazonEC2JPPFDeployerTest {
 		instanceManager = new AmazonInstanceManager(config);
 		instanceManager.init();
 		logger.info("Resuming node {}", driverNodeID);
-		metadata = instanceManager.resumeNode(driverNodeID);
+		instanceManager.resumeInstance(driverNodeID);
+		metadata = instanceManager.getInstanceMetadata(driverNodeID);
 		logger.info("Node {} resumed at {}", driverNodeID, 
 				metadata.getPublicAddresses().iterator().next());
 		
@@ -73,12 +74,12 @@ public class AmazonEC2JPPFDeployerTest {
 				metadata, loginCredentials, driverPrivateIP);
 		
 		logger.info("Resuming node {}", nodeNodeID);
-		metadata = instanceManager.resumeNode(nodeNodeID);
+		instanceManager.resumeInstance(nodeNodeID);
+		metadata = instanceManager.getInstanceMetadata(nodeNodeID);
 		logger.info("Node {} resumed at {}", nodeNodeID, 
 				metadata.getPublicAddresses().iterator().next());
 		nodeDeployer2 = new AmazonEC2JPPFNodeDeployer(instanceManager.getContext(), 
 				metadata, loginCredentials, driverPublicIP);
-		
 	}
 
 	
