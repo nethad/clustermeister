@@ -19,11 +19,16 @@ import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
+import com.google.common.base.Optional;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.NodeMetadata;
 
@@ -35,6 +40,10 @@ public class AmazonNodeManager {
 	
 	AmazonInstanceManager amazonInstanceManager;
 	Configuration configuration;
+	
+	//TODO: make sure this will not cause a memory leak
+	private Set<AmazonNode> drivers = new HashSet<AmazonNode>();
+	private Set<AmazonNode> nodes = new HashSet<AmazonNode>();
 
 	public AmazonNodeManager(Configuration configuration) {
 		this.configuration = configuration;
@@ -42,8 +51,16 @@ public class AmazonNodeManager {
 		amazonInstanceManager.init();
 	}
 	
-	public List<? extends Node> getNodes() {
-		List<AmazonNode> nodes = new ArrayList<AmazonNode>();
+	public Collection<? extends Node> getNodes() {
+		List<AmazonNode> allNodes = 
+				new ArrayList<AmazonNode>(drivers.size() + nodes.size());
+		allNodes.addAll(nodes);
+		allNodes.addAll(drivers);
+		return Collections.unmodifiableCollection(allNodes);
+	}
+
+	Collection<AmazonNode> getNodesFromInstanceManager() {
+		Collection<AmazonNode> allNodes = new ArrayList<AmazonNode>();
 		Iterator<? extends ComputeMetadata> it = amazonInstanceManager.getInstances();
 		while (it.hasNext()) {
 			final NodeMetadata metadata = 
@@ -52,28 +69,45 @@ public class AmazonNodeManager {
 					metadata.getUserMetadata().entrySet()) {
 				if(entry.getKey().equalsIgnoreCase("jppf-node") && 
 						entry.getValue().equalsIgnoreCase("true")) {
-					nodes.add(getNode(NodeType.NODE, metadata));
+					allNodes.add(new AmazonNode(NodeType.NODE, metadata));
 				}
 				if(entry.getKey().equalsIgnoreCase("jppf-driver") && 
 						entry.getValue().equalsIgnoreCase("true")) {
-					nodes.add(getNode(NodeType.DRIVER, metadata));
+					allNodes.add(new AmazonNode(NodeType.DRIVER, metadata));
 				}
 			}
 		}
-		
-		return nodes;
+		return allNodes;
 	}
 	
-	public Node addNode(NodeConfiguration nodeConfiguration) {
+	public Node addNode(NodeConfiguration nodeConfiguration, Optional<String> instanceId) {
 		Map<String, String> tags = new HashMap<String, String>();
 		switch(nodeConfiguration.getType()) {
 			case NODE: {
-				tags.put("JPPF-node", "true");
-				return createNewInstance(nodeConfiguration, tags);
+				AmazonNode node;
+				if(!instanceId.isPresent()) {
+					tags.put("JPPF-node", "true");
+					node = createNewInstance(nodeConfiguration, tags);
+				} else {
+					node = new AmazonNode(NodeType.NODE, 
+							amazonInstanceManager.getInstanceMetadata(instanceId.get()));
+				}
+				amazonInstanceManager.deploy(node, nodeConfiguration);
+				nodes.add(node);
+				return node;
 			}
 			case DRIVER:  {
-				tags.put("JPPF-driver", "true");
-				return createNewInstance(nodeConfiguration, tags);
+				AmazonNode node;
+				if(!instanceId.isPresent()) {
+					tags.put("JPPF-driver", "true");
+					node = createNewInstance(nodeConfiguration, tags);
+				} else {
+					node = new AmazonNode(NodeType.DRIVER, 
+							amazonInstanceManager.getInstanceMetadata(instanceId.get()));
+				}
+				amazonInstanceManager.deploy(node, nodeConfiguration);
+				drivers.add(node);
+				return node;
 			}
 			default: {
 				return null;
@@ -87,20 +121,8 @@ public class AmazonNodeManager {
 		}
 	}
 	
-	private Node createNewInstance(NodeConfiguration config, Map<String, String> tags) {
+	private AmazonNode createNewInstance(NodeConfiguration config, Map<String, String> tags) {
 		NodeMetadata metadata = amazonInstanceManager.createInstance(tags);
-		return getNode(config.getType(), metadata);
-	}
-	
-	private AmazonNode getNode(NodeType type, NodeMetadata metadata) {
-		AmazonNode node = new AmazonNode();
-		node.setId(metadata.getId());
-		node.setStatus(metadata.getState().toString());
-		node.setType(type);
-		node.setPrivateAddresses(metadata.getPrivateAddresses());
-		node.setPublicAddresses(metadata.getPublicAddresses());
-		node.setPort(-1);
-		
-		return node;
+		return new AmazonNode(config.getType(), metadata);
 	}
 }

@@ -23,10 +23,9 @@ import java.util.Set;
  */
 public interface Node {
 	
-	public String getStatus();
-	public String getId();
+	public String getState();
+	public String getInstanceId();
 	public NodeType getType();
 	public Set<String> getPublicAddresses();
 	public Set<String> getPrivateAddresses();
-	public int getPort();
 }

@@ -17,45 +17,42 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeType;
-import java.util.Collections;
+import com.google.common.base.Objects;
 import java.util.Set;
 import org.apache.commons.lang3.builder.EqualsBuilder;
-import org.apache.commons.lang3.builder.HashCodeBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
+import org.jclouds.compute.domain.NodeMetadata;
 
 /**
  *
  * @author daniel
  */
 public class AmazonNode implements Node {
-	String status;
-	String id;
-	NodeType type;
-	Set<String> privateAddresses;
-	Set<String> publicAddresses;
-	int port;
+	final NodeType type;
+	NodeMetadata instanceMetadata;
 
-	public void setStatus(String status) {
-		this.status = status;
-	}
-	
-	@Override
-	public String getStatus() {
-		return status;
-	}
-
-	public void setId(String id) {
-		this.id = id;
-	}
-	
-	@Override
-	public String getId() {
-		return id;
-	}
-
-	public void setType(NodeType type) {
+	public AmazonNode(NodeType type, NodeMetadata instanceMetadata) {
+		this.instanceMetadata = instanceMetadata;
 		this.type = type;
+	}
+	
+	void updateInstanceMetaData(NodeMetadata instanceMetadata) {
+		this.instanceMetadata = instanceMetadata;
+	}
+	
+	NodeMetadata getInstanceMetadata() {
+		return instanceMetadata;
+	}
+	
+	@Override
+	public String getState() {
+		return instanceMetadata.getState().toString();
+	}
+
+	@Override
+	public String getInstanceId() {
+		return instanceMetadata.getId();
 	}
 
 	@Override
@@ -63,41 +60,24 @@ public class AmazonNode implements Node {
 		return type;
 	}
 
-	public void setPrivateAddresses(Set<String> privateAdresses) {
-		this.privateAddresses = Collections.unmodifiableSet(privateAdresses);
-	}
-
 	@Override
 	public Set<String> getPrivateAddresses() {
-		return privateAddresses;
+		return instanceMetadata.getPrivateAddresses();
 	}
 	
-	public void setPublicAddresses(Set<String> publicAdresses) {
-		this.publicAddresses = Collections.unmodifiableSet(publicAdresses);
-	}
-
 	@Override
 	public Set<String> getPublicAddresses() {
-		return publicAddresses;
+		return instanceMetadata.getPublicAddresses();
 	}
 
-	public void setPort(int port) {
-		this.port = port;
-	}
-
-	@Override
-	public int getPort() {
-		return port;
-	}
-	
 	@Override
 	public String toString() {
 		return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).
 				append(type).
-				append(id).
-				append(status).
-				append("public", publicAddresses).
-				append("private", privateAddresses).
+				append(instanceMetadata.getId()).
+				append(instanceMetadata.getState()).
+				append("public", instanceMetadata.getPublicAddresses()).
+				append("private", instanceMetadata.getPrivateAddresses()).
 				toString();
 	}
 
@@ -113,11 +93,16 @@ public class AmazonNode implements Node {
 			return false;
 		}
 		AmazonNode otherNode = (AmazonNode) obj;
-		return new EqualsBuilder().append(id, otherNode.id).isEquals();
+		//TODO: eventually support more than one node type per instance
+		return new EqualsBuilder().
+				append(instanceMetadata.getId(), otherNode.instanceMetadata.getId()).
+				append(type, otherNode.type).
+				isEquals();
 	}
 
 	@Override
 	public int hashCode() {
-		return new HashCodeBuilder(3, 5).append(id).toHashCode();
+		//TODO: eventually support more than one node type per instance
+		return Objects.hashCode(instanceMetadata.getId(), type);
 	}
 }

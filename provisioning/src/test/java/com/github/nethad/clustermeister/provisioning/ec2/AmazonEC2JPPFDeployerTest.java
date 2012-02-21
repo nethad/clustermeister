@@ -65,12 +65,12 @@ public class AmazonEC2JPPFDeployerTest {
 		
 		loginCredentials = new LoginCredentials(userName, null, getPrivateKey(), true);
 		
-		driverDeployer = new AmazonEC2JPPFDriverDeployer(instanceManager.getContext(), 
+		driverDeployer = new AmazonEC2JPPFDriverDeployer(instanceManager.context, 
 				metadata, loginCredentials);
 		String driverPublicIP = metadata.getPublicAddresses().iterator().next();
 		String driverPrivateIP = metadata.getPrivateAddresses().iterator().next();
 		
-		nodeDeployer1 = new AmazonEC2JPPFNodeDeployer(instanceManager.getContext(), 
+		nodeDeployer1 = new AmazonEC2JPPFNodeDeployer(instanceManager.context, 
 				metadata, loginCredentials, driverPrivateIP);
 		
 		logger.info("Resuming node {}", nodeNodeID);
@@ -78,7 +78,7 @@ public class AmazonEC2JPPFDeployerTest {
 		metadata = instanceManager.getInstanceMetadata(nodeNodeID);
 		logger.info("Node {} resumed at {}", nodeNodeID, 
 				metadata.getPublicAddresses().iterator().next());
-		nodeDeployer2 = new AmazonEC2JPPFNodeDeployer(instanceManager.getContext(), 
+		nodeDeployer2 = new AmazonEC2JPPFNodeDeployer(instanceManager.context, 
 				metadata, loginCredentials, driverPublicIP);
 	}
 
