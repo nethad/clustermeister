@@ -19,6 +19,10 @@ import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeType;
 import java.util.Collections;
 import java.util.Set;
+import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.apache.commons.lang3.builder.HashCodeBuilder;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
  *
@@ -88,6 +92,32 @@ public class AmazonNode implements Node {
 	
 	@Override
 	public String toString() {
-		return type.toString() + "(" + id + ", " + status + ")";
+		return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).
+				append(type).
+				append(id).
+				append(status).
+				append("public", publicAddresses).
+				append("private", privateAddresses).
+				toString();
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if(obj == null) {
+			return false;
+		}
+		if(obj == this) {
+			return true;
+		}
+		if(obj.getClass() != (getClass())) {
+			return false;
+		}
+		AmazonNode otherNode = (AmazonNode) obj;
+		return new EqualsBuilder().append(id, otherNode.id).isEquals();
+	}
+
+	@Override
+	public int hashCode() {
+		return new HashCodeBuilder(3, 5).append(id).toHashCode();
 	}
 }
