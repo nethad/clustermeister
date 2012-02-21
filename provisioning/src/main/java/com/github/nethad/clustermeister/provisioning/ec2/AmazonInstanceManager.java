@@ -46,7 +46,6 @@ public class AmazonInstanceManager {
     public static final String CONFIG_FILE_PATH = ".clustermeister/configuration.properties";
     private String accessKeyId;
     private String secretKey;
-    private String securityGroup;
     private String keyPair;
     private String locationId;
 	
@@ -125,7 +124,6 @@ public class AmazonInstanceManager {
     private void loadConfiguration() {
         accessKeyId = configuration.getString("accessKeyId", "");
         secretKey = configuration.getString("secretKey", "");
-        securityGroup = configuration.getString("securityGroup", "");
         keyPair = configuration.getString("keyPair", "");
         locationId = configuration.getString("locationId", "");
     }
@@ -139,9 +137,8 @@ public class AmazonInstanceManager {
 								.hardwareId(InstanceType.T1_MICRO)
 								.osFamily(OsFamily.AMZN_LINUX).build();
 
-
-		// specify your own groups which already have the correct rules applied
-		template.getOptions().as(EC2TemplateOptions.class).securityGroups(securityGroup);
+		template.getOptions().as(EC2TemplateOptions.class).
+				inboundPorts(22, 11111, 11112, 11113, 11198, 12198);
 
 		// specify your own keypair for use in creating nodes
 		template.getOptions().as(EC2TemplateOptions.class).keyPair(keyPair);
