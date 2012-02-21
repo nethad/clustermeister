@@ -17,7 +17,6 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 import org.jclouds.compute.ComputeServiceContext;

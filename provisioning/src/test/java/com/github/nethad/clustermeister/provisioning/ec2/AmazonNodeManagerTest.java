@@ -19,8 +19,10 @@ import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
-import java.util.List;
-import org.junit.Ignore;
+import com.google.common.base.Optional;
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.util.Collection;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,33 +39,79 @@ public class AmazonNodeManagerTest {
 	
 	@Test
 	public void testSomeMethod() throws InterruptedException {
-		String settings = "/home/daniel/clustermeister-amazonapi.properties";
-		String privateKeyFile = "/home/daniel/Desktop/EC2/EC2_keypair.pem";
-		String userName = "ec2-user";
+		final String settings = "/home/daniel/clustermeister-amazonapi.properties";
+		final String privateKeyFile = "/home/daniel/Desktop/EC2/EC2_keypair.pem";
+		final String userName = "ec2-user";
 		
 		FileConfiguration config = new FileConfiguration(settings);
 		
 		AmazonNodeManager nodeManager = new AmazonNodeManager(config);
 		
-		Node d = nodeManager.addNode(new NodeConfiguration() {
+		Optional<String> absentInstanceId = Optional.absent();
+		final Node d = nodeManager.addNode(new NodeConfiguration() {
 			@Override
 			public NodeType getType() {
 				return NodeType.DRIVER;
 			}
-		});
-		Node n = nodeManager.addNode(new NodeConfiguration() {
+
+			@Override
+			public String getUserName() {
+				return userName;
+			}
+
+			@Override
+			public String getPrivateKey() {
+				return AmazonNodeManagerTest.getPrivateKey(privateKeyFile);
+			}
+
+			@Override
+			public String getDriverAddress() {
+				return null;
+			}
+		}, absentInstanceId);
+		final Node n = nodeManager.addNode(new NodeConfiguration() {
 			@Override
 			public NodeType getType() {
 				return NodeType.NODE;
 			}
-		});
+			
+			@Override
+			public String getUserName() {
+				return userName;
+			}
+
+			@Override
+			public String getPrivateKey() {
+				return AmazonNodeManagerTest.getPrivateKey(privateKeyFile);
+			}
+
+			@Override
+			public String getDriverAddress() {
+				return d.getPrivateAddresses().iterator().next();
+			}
+		}, absentInstanceId);
 		
-		List<? extends Node> nodes = nodeManager.getNodes();
+		Collection<AmazonNode> nodes = nodeManager.getNodesFromInstanceManager();
 		for (Node node : nodes) {
-			System.out.println(node + " Public Addresses: " + node.getPublicAddresses()
-					+ " Private Addresses: " + node.getPrivateAddresses());
+			System.out.println(node);
 		}
 		
 		nodeManager.close();
+	}
+	
+	public static String getPrivateKey(String path) {
+		try {
+			BufferedReader reader = new BufferedReader(new FileReader(path));
+			StringBuilder sb = new StringBuilder();
+			String line;
+			while ((line = reader.readLine()) != null) {
+				sb.append(line);
+				sb.append("\n");
+			}
+			reader.close();
+			return sb.toString().trim();
+		} catch(Throwable ex) {
+			throw new RuntimeException(ex);
+		}
 	}
 }

@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Configuration;
+import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.google.common.collect.ImmutableSet;
 import java.util.Iterator;
 import java.util.Map;
@@ -27,6 +28,7 @@ import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;
+import org.jclouds.domain.LoginCredentials;
 import org.jclouds.ec2.compute.options.EC2TemplateOptions;
 import org.jclouds.ec2.domain.InstanceType;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
@@ -40,26 +42,26 @@ import org.slf4j.LoggerFactory;
  * @author thomas, daniel
  */
 public class AmazonInstanceManager {
-	public static final String GROUP_NAME = "clustermeister";
+	static final String GROUP_NAME = "clustermeister";
+	
 	private final static Logger logger = 
 			LoggerFactory.getLogger(AmazonInstanceManager.class);
 	
-    public static final String CONFIG_FILE_PATH = ".clustermeister/configuration.properties";
     private String accessKeyId;
     private String secretKey;
     private String keyPair;
     private String locationId;
 	
-    private ComputeServiceContext context;
+    ComputeServiceContext context;
     private Template template;
 	
 	private Configuration configuration;
 
-	public AmazonInstanceManager(Configuration config) {
+	AmazonInstanceManager(Configuration config) {
 		this.configuration = config;
 	}
     
-    public void init() {
+    void init() {
 		logger.info("Loading Configuration...");
         loadConfiguration();
 		logger.info("Creating Context...");
@@ -71,7 +73,7 @@ public class AmazonInstanceManager {
 		logger.info("Initialization complete.");
 	}
 	
-	public void close() {
+	void close() {
 		if(context != null) {
 			logger.info("Closing context...");
 			context.close();
@@ -87,12 +89,7 @@ public class AmazonInstanceManager {
 		return context.getComputeService().getNodeMetadata(id);
 	}
 
-	@Deprecated
-	public ComputeServiceContext getContext() {
-		return context;
-	}
-	
-    public NodeMetadata createInstance(Map<String, String> userMetaData) {
+    NodeMetadata createInstance(Map<String, String> userMetaData) {
 		try {
 			if(userMetaData != null) {
 				template.getOptions().userMetadata(userMetaData);
@@ -109,19 +106,45 @@ public class AmazonInstanceManager {
 		}
 		return null;
 	}
+	
+	void deploy(AmazonNode node, NodeConfiguration nodeConfig) {
+		AmazonEC2JPPFDeployer deployer;
+		switch(node.getType()) {
+			case NODE: {
+				deployer = new AmazonEC2JPPFNodeDeployer(context, 
+						node.getInstanceMetadata(), getLoginCredentials(nodeConfig), 
+						nodeConfig.getDriverAddress());
+				break;
+			}
+			case DRIVER: {
+				deployer = new AmazonEC2JPPFDriverDeployer(context, 
+						node.getInstanceMetadata(), getLoginCredentials(nodeConfig));
+				break;
+			}
+			default: {
+				throw new IllegalArgumentException("Invalid Node Type.");
+			}
+		}
+		
+		deployer.run();
+	}
 
-	public void suspendInstance(String nodeId) {
+	void suspendInstance(String nodeId) {
 		context.getComputeService().suspendNode(nodeId);
 	}
 	
-	public void terminateInstance(String nodeId) {
+	void terminateInstance(String nodeId) {
 		context.getComputeService().destroyNode(nodeId);
 	}
 	
-    public void resumeInstance(String nodeId) {
+    void resumeInstance(String nodeId) {
 		context.getComputeService().resumeNode(nodeId);
     }
 
+	private LoginCredentials getLoginCredentials(NodeConfiguration config) {
+		return new LoginCredentials(config.getUserName(), null, config.getPrivateKey(), true);
+	}
+	
     private void loadConfiguration() {
         accessKeyId = configuration.getString("accessKeyId", "");
         secretKey = configuration.getString("secretKey", "");
