@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
  * @author thomas, daniel
  */
 public class AmazonInstanceManager {
+	public static final String GROUP_NAME = "clustermeister";
 	private final static Logger logger = 
 			LoggerFactory.getLogger(AmazonInstanceManager.class);
 	
@@ -98,7 +99,7 @@ public class AmazonInstanceManager {
 			}
 			Set<? extends NodeMetadata> instances = 
 					context.getComputeService().createNodesInGroup(
-						"instances", 1, template);
+						GROUP_NAME, 1, template);
 			Iterator<? extends NodeMetadata> it = instances.iterator();
 			if(it.hasNext()) {
 				return instances.iterator().next();
