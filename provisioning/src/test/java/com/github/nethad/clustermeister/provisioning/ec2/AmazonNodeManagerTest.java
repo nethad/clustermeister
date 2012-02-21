@@ -23,6 +23,7 @@ import com.google.common.base.Optional;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.Collection;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
