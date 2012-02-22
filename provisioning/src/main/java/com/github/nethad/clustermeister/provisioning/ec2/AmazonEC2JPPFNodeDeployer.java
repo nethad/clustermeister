@@ -15,9 +15,6 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.Properties;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.NodeMetadata;
@@ -48,23 +45,11 @@ public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
 	
 	@Override
 	public void run() {
+		String publicIp = metadata.getPublicAddresses().iterator().next();
+		String privateIp = metadata.getPrivateAddresses().iterator().next();
 		logger.info("Deploying JPPF-Node to {} ({}).", metadata.getId(), 
-				metadata.getPublicAddresses().iterator().next());
-		
-		Properties nodeProperties = new Properties();
-		try {
-			nodeProperties.load(this.getClass().getResourceAsStream("jppf-node.properties"));
-		} catch (IOException ex) {
-			logger.warn("Can not read properties file.", ex);
-		}
-		nodeProperties.setProperty("jppf.server.host", driverhost);
-		ByteArrayOutputStream runningConfig = new ByteArrayOutputStream();
-		try {
-			nodeProperties.store(runningConfig, "Running Config");
-		} catch (IOException ex) {
-			logger.warn("Can not write running property configuration.", ex);
-		}
-		
+				publicIp);
+		Properties nodeProperties = getSettings(driverhost, privateIp);
 		
 		SshClient client = context.utils().sshForNode().apply(
 				NodeMetadataBuilder.fromNodeMetadata(metadata).
@@ -76,7 +61,7 @@ public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
 					"/home/ec2-user/jppf-node.zip");
 			execute("unzip jppf-node.zip", client);
 			execute("chmod +x jppf-node/startNode.sh", client);
-			upload(client, new ByteArrayInputStream(runningConfig.toByteArray()), 
+			upload(client, getRunningConfig(nodeProperties), 
 					"jppf-node/config/jppf-node.properties");
 			
 			logger.info("Starting JPPF-Node on {}...", metadata.getId());
@@ -97,5 +82,12 @@ public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
 		}
 		logger.info("JPPF-Node deployed on {}.", metadata.getId());
 	}
-	
+
+	private Properties getSettings(String driverHost, String managementHost) {
+		Properties nodeProperties = getPropertiesFromStream(
+				this.getClass().getResourceAsStream("jppf-node.properties"));
+		nodeProperties.setProperty("jppf.server.host", driverHost);
+		nodeProperties.setProperty("jppf.management.host", managementHost);
+		return nodeProperties;
+	}
 }
