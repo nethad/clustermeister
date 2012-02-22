@@ -81,11 +81,11 @@ public class AmazonNodeManager {
 	}
 	
 	public Node addNode(NodeConfiguration nodeConfiguration, Optional<String> instanceId) {
-		Map<String, String> tags = new HashMap<String, String>();
 		switch(nodeConfiguration.getType()) {
 			case NODE: {
 				AmazonNode node;
 				if(!instanceId.isPresent()) {
+					Map<String, String> tags = new HashMap<String, String>();
 					tags.put("JPPF-node", "true");
 					node = createNewInstance(nodeConfiguration, tags);
 				} else {
@@ -99,6 +99,7 @@ public class AmazonNodeManager {
 			case DRIVER:  {
 				AmazonNode node;
 				if(!instanceId.isPresent()) {
+					Map<String, String> tags = new HashMap<String, String>();
 					tags.put("JPPF-driver", "true");
 					node = createNewInstance(nodeConfiguration, tags);
 				} else {
