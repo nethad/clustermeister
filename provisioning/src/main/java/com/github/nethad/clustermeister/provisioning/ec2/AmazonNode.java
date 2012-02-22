@@ -49,7 +49,6 @@ public class AmazonNode implements Node {
 		return instanceMetadata.getState().toString();
 	}
 
-	@Override
 	public String getInstanceId() {
 		return instanceMetadata.getId();
 	}
