@@ -22,6 +22,7 @@ import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientExcpetion;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jppf.management.JMXDriverConnectionWrapper;
 import org.jppf.process.ProcessLauncher;
 import org.jppf.server.DriverLauncher;
 import org.jppf.server.JPPFDriver;
@@ -128,11 +129,13 @@ public class TorqueJPPFDriverDeployer {
     }
 
     public void stopLocalDriver() {
-        processLauncher.setStopped(true);
-    }
-    
-    public void printProcessStatus() {
-        System.out.println("isStopped() = "+processLauncher.isStopped());
+        JMXDriverConnectionWrapper wrapper = new JMXDriverConnectionWrapper("localhost", 11198);
+        wrapper.connect();
+        try {
+            wrapper.restartShutdown(1L, -1L);
+        } catch (Exception ex) {
+            Logger.getLogger(TorqueJPPFTestSetup.class.getName()).log(Level.SEVERE, null, ex);
+        }
     }
     
 }

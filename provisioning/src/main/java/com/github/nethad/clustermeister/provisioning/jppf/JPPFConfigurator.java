@@ -86,7 +86,7 @@ public class JPPFConfigurator implements JPPFConfiguration.ConfigurationSource {
                 + "-Djava.util.logging.config.file=config/logging-driver.properties "
                 + "-Djppf.config.plugin="+JPPFConfigurator.class.getCanonicalName());
         
-        properties.setProperty("jppf.debug.enabled", "true");
+//        properties.setProperty("jppf.debug.enabled", "true");
 
 //        properties.setProperty("jppf.server.host", "localhost");
 //        properties.setProperty("jppf.debug.enabled", "true");
