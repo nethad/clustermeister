@@ -15,8 +15,11 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Properties;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.NodeMetadata;
@@ -70,5 +73,26 @@ public abstract class AmazonEC2JPPFDeployer implements Runnable {
 				logger.warn("Could not close inputstream. Continuing...", ex);
 			}
 		}
+	}
+
+	protected Properties getPropertiesFromStream(InputStream properties) {
+		Properties nodeProperties = new Properties();
+		try {
+			nodeProperties.load(properties);
+		} catch (IOException ex) {
+			logger.warn("Can not read properties file.", ex);
+		}
+		return nodeProperties;
+	}
+
+	protected ByteArrayInputStream getRunningConfig(Properties properties) {
+		ByteArrayOutputStream runningConfig = new ByteArrayOutputStream();
+		try {
+			properties.store(runningConfig, "Running Config");
+		} catch (IOException ex) {
+			logger.warn("Can not write running property configuration.", ex);
+		}
+		
+		return new ByteArrayInputStream(runningConfig.toByteArray());
 	}
 }

@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
+import java.util.Properties;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeMetadataBuilder;
@@ -40,8 +41,12 @@ public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
 	
 	@Override
 	public void run() {
-		logger.info("Deploying JPPF-Driver to {} ({}).", metadata.getId(), 
-				metadata.getPublicAddresses().iterator().next());
+		final String publicIp = metadata.getPublicAddresses().iterator().next();
+		final String privateIp = metadata.getPrivateAddresses().iterator().next();
+		logger.info("Deploying JPPF-Driver to {} ({}).", metadata.getId(), publicIp);
+		Properties nodeProperties = getSettings(
+				privateIp);
+		
 		SshClient client = context.utils().sshForNode().apply(
 				NodeMetadataBuilder.fromNodeMetadata(metadata).
 				credentials(loginCredentials).build());
@@ -52,7 +57,7 @@ public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
 					"/home/ec2-user/jppf-driver.zip");
 			execute("unzip jppf-driver.zip", client);
 			execute("chmod +x jppf-driver/startDriver.sh", client);
-			upload(client, getClass().getResourceAsStream("jppf-driver.properties"), 
+			upload(client, getRunningConfig(nodeProperties), 
 					"jppf-driver/config/jppf-driver.properties");
 			
 			logger.info("Starting JPPF-Driver on {}...", metadata.getId());
@@ -72,5 +77,12 @@ public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
 			}
 		}
 		logger.info("JPPF-Driver deployed on {}.", metadata.getId());
+	}
+	
+	private Properties getSettings(String managementHost) {
+		Properties nodeProperties = getPropertiesFromStream(
+				this.getClass().getResourceAsStream("jppf-driver.properties"));
+		nodeProperties.setProperty("jppf.management.host", managementHost);
+		return nodeProperties;
 	}
 }
