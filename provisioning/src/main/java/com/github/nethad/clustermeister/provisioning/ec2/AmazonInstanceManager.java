@@ -34,6 +34,9 @@ import org.jclouds.ec2.domain.InstanceType;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
 import org.jclouds.ssh.jsch.config.JschSshClientModule;
+import org.jppf.management.JMXConnectionWrapper;
+import org.jppf.management.JMXDriverConnectionWrapper;
+import org.jppf.management.JMXNodeConnectionWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -107,18 +110,30 @@ public class AmazonInstanceManager {
 		return null;
 	}
 	
-	void deploy(AmazonNode node, NodeConfiguration nodeConfig) {
-		AmazonEC2JPPFDeployer deployer;
-		switch(node.getType()) {
+	AmazonNode deploy(NodeMetadata instanceMetadata, NodeConfiguration nodeConfig) {
+		JMXConnectionWrapper wrapper;
+		String publicIp = instanceMetadata.getPublicAddresses().iterator().next();
+		switch(nodeConfig.getType()) {
 			case NODE: {
-				deployer = new AmazonEC2JPPFNodeDeployer(context, 
-						node.getInstanceMetadata(), getLoginCredentials(nodeConfig), 
-						nodeConfig.getDriverAddress());
+				AmazonEC2JPPFDeployer deployer = 
+						new AmazonEC2JPPFNodeDeployer(context, instanceMetadata, 
+						getLoginCredentials(nodeConfig), nodeConfig.getDriverAddress());
+				deployer.run();
+				
+				//TODO: management port should be dynamic to allow multiple nodes per instance.
+				wrapper = new JMXNodeConnectionWrapper(publicIp, 11198);
+				
+				
 				break;
 			}
 			case DRIVER: {
-				deployer = new AmazonEC2JPPFDriverDeployer(context, 
-						node.getInstanceMetadata(), getLoginCredentials(nodeConfig));
+				AmazonEC2JPPFDeployer deployer = 
+						new AmazonEC2JPPFDriverDeployer(context, instanceMetadata, 
+						getLoginCredentials(nodeConfig));
+				deployer.run();
+				
+				//TODO: management port should be dynamic to allow multiple nodes per instance.
+				wrapper = new JMXDriverConnectionWrapper(publicIp, 11198);
 				break;
 			}
 			default: {
@@ -126,7 +141,23 @@ public class AmazonInstanceManager {
 			}
 		}
 		
-		deployer.run();
+		logger.info("Trying to connect to Management...");
+		wrapper.connectAndWait(100);
+		while (!wrapper.isConnected()) {
+			wrapper.connectAndWait(100);
+		}
+		logger.info("Connected to Management.");
+		
+		String uuid;
+		try {
+			uuid = wrapper.systemInformation().getUuid().getProperty("jppf.uuid");
+		} catch (Exception ex) {
+			logger.error("Could not get UUID for {}", wrapper.getId());
+			throw new RuntimeException(ex);
+		}
+		logger.info("Got UUID: {}", uuid);
+		
+		return new AmazonNode(uuid, nodeConfig.getType(), instanceMetadata);
 	}
 
 	void suspendInstance(String nodeId) {

@@ -29,12 +29,14 @@ import org.jclouds.compute.domain.NodeMetadata;
  * @author daniel
  */
 public class AmazonNode implements Node {
+	final String id;
 	final NodeType type;
 	NodeMetadata instanceMetadata;
 
-	public AmazonNode(NodeType type, NodeMetadata instanceMetadata) {
+	public AmazonNode(String uuid, NodeType type, NodeMetadata instanceMetadata) {
 		this.instanceMetadata = instanceMetadata;
 		this.type = type;
+		this.id = uuid;
 	}
 	
 	void updateInstanceMetaData(NodeMetadata instanceMetadata) {
@@ -51,6 +53,11 @@ public class AmazonNode implements Node {
 
 	public String getInstanceId() {
 		return instanceMetadata.getId();
+	}
+	
+	@Override
+	public String getID() {
+		return id;
 	}
 
 	@Override
@@ -72,6 +79,7 @@ public class AmazonNode implements Node {
 	public String toString() {
 		return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).
 				append(type).
+				append(id).
 				append(instanceMetadata.getId()).
 				append(instanceMetadata.getState()).
 				append("public", instanceMetadata.getPublicAddresses()).
@@ -91,16 +99,13 @@ public class AmazonNode implements Node {
 			return false;
 		}
 		AmazonNode otherNode = (AmazonNode) obj;
-		//TODO: eventually support more than one node type per instance
 		return new EqualsBuilder().
-				append(instanceMetadata.getId(), otherNode.instanceMetadata.getId()).
-				append(type, otherNode.type).
+				append(id, otherNode.id).
 				isEquals();
 	}
 
 	@Override
 	public int hashCode() {
-		//TODO: eventually support more than one node type per instance
-		return Objects.hashCode(instanceMetadata.getId(), type);
+		return Objects.hashCode(id);
 	}
 }

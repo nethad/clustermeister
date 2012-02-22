@@ -24,7 +24,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import org.jclouds.compute.domain.NodeMetadata;
 
@@ -56,25 +55,15 @@ public class AmazonNodeManager {
 	}
 
 	public Node addNode(NodeConfiguration nodeConfiguration, Optional<String> instanceId) {
-		AmazonNode node;
+		NodeMetadata instanceMetadata;
 		if(!instanceId.isPresent()) {
-			node = createNewInstance(nodeConfiguration, null);
+			instanceMetadata = amazonInstanceManager.createInstance(null);
 		} else {
-			node = new AmazonNode(nodeConfiguration.getType(), 
-					amazonInstanceManager.getInstanceMetadata(instanceId.get()));
+			instanceMetadata = amazonInstanceManager.getInstanceMetadata(instanceId.get());
 		}
-		amazonInstanceManager.deploy(node, nodeConfiguration);
+		AmazonNode node = amazonInstanceManager.deploy(instanceMetadata, nodeConfiguration);
 		
-		switch(nodeConfiguration.getType()) {
-			case NODE: {
-				nodes.add(node);
-				break;
-			}
-			case DRIVER:  {
-				drivers.add(node);
-				break;
-			}
-		}
+		addManagedNode(node);
 		
 		return node;
 	}
@@ -85,8 +74,19 @@ public class AmazonNodeManager {
 		}
 	}
 	
-	private AmazonNode createNewInstance(NodeConfiguration config, Map<String, String> tags) {
-		NodeMetadata metadata = amazonInstanceManager.createInstance(tags);
-		return new AmazonNode(config.getType(), metadata);
+	private void addManagedNode(AmazonNode node) {
+		switch(node.getType()) {
+			case NODE: {
+				nodes.add(node);
+				break;
+			}
+			case DRIVER:  {
+				drivers.add(node);
+				break;
+			}
+			default: {
+				throw new IllegalArgumentException("Invalid Node Type.");
+			}
+		}
 	}
 }
