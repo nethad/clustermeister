@@ -59,27 +59,6 @@ public class AmazonNodeManager {
 		return Collections.unmodifiableCollection(allNodes);
 	}
 
-	Collection<AmazonNode> getNodesFromInstanceManager() {
-		Collection<AmazonNode> allNodes = new ArrayList<AmazonNode>();
-		Iterator<? extends ComputeMetadata> it = amazonInstanceManager.getInstances();
-		while (it.hasNext()) {
-			final NodeMetadata metadata = 
-					amazonInstanceManager.getInstanceMetadata(it.next().getId());
-			for(Map.Entry<String, String> entry : 
-					metadata.getUserMetadata().entrySet()) {
-				if(entry.getKey().equalsIgnoreCase("jppf-node") && 
-						entry.getValue().equalsIgnoreCase("true")) {
-					allNodes.add(new AmazonNode(NodeType.NODE, metadata));
-				}
-				if(entry.getKey().equalsIgnoreCase("jppf-driver") && 
-						entry.getValue().equalsIgnoreCase("true")) {
-					allNodes.add(new AmazonNode(NodeType.DRIVER, metadata));
-				}
-			}
-		}
-		return allNodes;
-	}
-	
 	public Node addNode(NodeConfiguration nodeConfiguration, Optional<String> instanceId) {
 		switch(nodeConfiguration.getType()) {
 			case NODE: {
