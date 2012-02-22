@@ -18,18 +18,14 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
-import com.github.nethad.clustermeister.api.NodeType;
 import com.google.common.base.Optional;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.NodeMetadata;
 
 /**
@@ -60,39 +56,27 @@ public class AmazonNodeManager {
 	}
 
 	public Node addNode(NodeConfiguration nodeConfiguration, Optional<String> instanceId) {
+		AmazonNode node;
+		if(!instanceId.isPresent()) {
+			node = createNewInstance(nodeConfiguration, null);
+		} else {
+			node = new AmazonNode(nodeConfiguration.getType(), 
+					amazonInstanceManager.getInstanceMetadata(instanceId.get()));
+		}
+		amazonInstanceManager.deploy(node, nodeConfiguration);
+		
 		switch(nodeConfiguration.getType()) {
 			case NODE: {
-				AmazonNode node;
-				if(!instanceId.isPresent()) {
-					Map<String, String> tags = new HashMap<String, String>();
-					tags.put("JPPF-node", "true");
-					node = createNewInstance(nodeConfiguration, tags);
-				} else {
-					node = new AmazonNode(NodeType.NODE, 
-							amazonInstanceManager.getInstanceMetadata(instanceId.get()));
-				}
-				amazonInstanceManager.deploy(node, nodeConfiguration);
 				nodes.add(node);
-				return node;
+				break;
 			}
 			case DRIVER:  {
-				AmazonNode node;
-				if(!instanceId.isPresent()) {
-					Map<String, String> tags = new HashMap<String, String>();
-					tags.put("JPPF-driver", "true");
-					node = createNewInstance(nodeConfiguration, tags);
-				} else {
-					node = new AmazonNode(NodeType.DRIVER, 
-							amazonInstanceManager.getInstanceMetadata(instanceId.get()));
-				}
-				amazonInstanceManager.deploy(node, nodeConfiguration);
 				drivers.add(node);
-				return node;
-			}
-			default: {
-				return null;
+				break;
 			}
 		}
+		
+		return node;
 	}
 	
 	public void close() {
