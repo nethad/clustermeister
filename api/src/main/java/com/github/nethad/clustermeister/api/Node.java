@@ -23,6 +23,7 @@ import java.util.Set;
  */
 public interface Node {
 	
+	public String getID();
 	public NodeType getType();
 	public Set<String> getPublicAddresses();
 	public Set<String> getPrivateAddresses();
