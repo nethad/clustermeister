@@ -56,7 +56,7 @@ public class TorqueJPPFNodeDeployer {
             executeAndSysout("unzip "+DEPLOY_ZIP);
 
             sshClient.sftpUpload(getResourcePath(DEPLOY_PROPERTIES), DEPLOY_BASE_NAME+"/config/"+DEPLOY_PROPERTIES);
-            executeAndSysout("chmod +x "+DEPLOY_BASE_NAME+"/startDriver.sh");
+//            executeAndSysout("chmod +x "+DEPLOY_BASE_NAME+"/startDriver.sh");
             
             sshClient.sftpUpload(getResourcePath(DEPLOY_QSUB), DEPLOY_BASE_NAME+"/"+DEPLOY_QSUB);
             

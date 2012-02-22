@@ -20,47 +20,62 @@ import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientExcpetion;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.jppf.process.ProcessLauncher;
+import org.jppf.server.DriverLauncher;
+import org.jppf.server.JPPFDriver;
+import org.jppf.utils.JPPFConfiguration;
 
 /**
  *
  * @author thomas
  */
 public class TorqueJPPFDriverDeployer {
-    
-    private static final String DEPLOY_BASE_NAME = "jppf-driver";
-    private static final String DEPLOY_ZIP = DEPLOY_BASE_NAME+".zip";
-    private static final String DEPLOY_PROPERTIES = DEPLOY_BASE_NAME+".properties";
 
+    private static final String DEPLOY_BASE_NAME = "jppf-driver";
+    private static final String DEPLOY_ZIP = DEPLOY_BASE_NAME + ".zip";
+    private static final String DEPLOY_PROPERTIES = DEPLOY_BASE_NAME + ".properties";
     private String host;
     private int port;
+    private ProcessLauncher processLauncher;
     private SSHClient sshClient;
     private String user;
     private String privateKeyFilePath;
 //    private String passphrase;
+    private boolean runLocally = false;
 
     public static void main(String... args) {
         new TorqueJPPFDriverDeployer().execute();
     }
 
     public void execute() {
+        loadConfiguration();
+        if (runLocally) {
+            localSetupAndRun();
+        } else {
+            remoteSetupAndRun();
+        }
+    }
+
+    private void remoteSetupAndRun() {
         sshClient = null;
         try {
-            loadConfiguration();
 
             sshClient = new SSHClient(privateKeyFilePath);
             sshClient.connect(user, host, port);
-            executeAndSysout("rm -rf "+DEPLOY_BASE_NAME+"*");
+            executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "*");
 
             sshClient.sftpUpload(getResourcePath(DEPLOY_ZIP), DEPLOY_ZIP);
-            executeAndSysout("unzip "+DEPLOY_ZIP);
+            executeAndSysout("unzip " + DEPLOY_ZIP);
 
-            sshClient.sftpUpload(getResourcePath(DEPLOY_PROPERTIES), DEPLOY_BASE_NAME+"/config/"+DEPLOY_PROPERTIES);
-            executeAndSysout("chmod +x "+DEPLOY_BASE_NAME+"/startDriver.sh");
-            
+            sshClient.sftpUpload(getResourcePath(DEPLOY_PROPERTIES), DEPLOY_BASE_NAME + "/config/" + DEPLOY_PROPERTIES);
+            executeAndSysout("chmod +x " + DEPLOY_BASE_NAME + "/startDriver.sh");
+
             // assume java is installed (installed in ~/jdk-1.7)
 //            executeAndSysout("cp -R /home/user/dspicar/jdk-1.7 ~/jdk-1.7");
 
-            executeAndSysout("cd "+DEPLOY_BASE_NAME+";nohup ./startDriver.sh ~/jdk-1.7/bin/java > nohup.out 2>&1");
+            executeAndSysout("cd " + DEPLOY_BASE_NAME + ";nohup ./startDriver.sh ~/jdk-1.7/bin/java > nohup.out 2>&1");
         } catch (SSHClientExcpetion ex) {
             ex.printStackTrace();
         } finally {
@@ -95,4 +110,29 @@ public class TorqueJPPFDriverDeployer {
     private String getStringDefaultempty(Configuration config, String key) {
         return config.getString(key, "");
     }
+
+    public TorqueJPPFDriverDeployer runLocally() {
+        runLocally = true;
+        return this;
+    }
+
+    private void localSetupAndRun() {
+        processLauncher = new ProcessLauncher("org.jppf.server.JPPFDriver");
+        processLauncher.run();
+//        try {
+//            Process process = processLauncher.buildProcess();
+//            process.
+//        } catch (Exception ex) {
+//            Logger.getLogger(TorqueJPPFDriverDeployer.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+    }
+
+    public void stopLocalDriver() {
+        processLauncher.setStopped(true);
+    }
+    
+    public void printProcessStatus() {
+        System.out.println("isStopped() = "+processLauncher.isStopped());
+    }
+    
 }
