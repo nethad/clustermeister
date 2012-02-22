@@ -45,7 +45,6 @@ public class AmazonNode implements Node {
 		return instanceMetadata;
 	}
 	
-	@Override
 	public String getState() {
 		return instanceMetadata.getState().toString();
 	}
