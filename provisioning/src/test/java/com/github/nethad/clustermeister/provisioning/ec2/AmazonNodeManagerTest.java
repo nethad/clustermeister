@@ -39,7 +39,7 @@ public class AmazonNodeManagerTest {
 			LoggerFactory.getLogger(AmazonNodeManagerTest.class);
 	
 	@Test
-	public void testSomeMethod() throws InterruptedException {
+	public void testSomeMethod() throws InterruptedException, Exception {
 		final String settings = "/home/daniel/clustermeister-amazonapi.properties";
 		final String privateKeyFile = "/home/daniel/Desktop/EC2/EC2_keypair.pem";
 		final String userName = "ec2-user";
@@ -70,6 +70,9 @@ public class AmazonNodeManagerTest {
 				return null;
 			}
 		}, absentInstanceId);
+		
+		final String driverIp = d.getPrivateAddresses().iterator().next();
+		
 		final Node n = nodeManager.addNode(new NodeConfiguration() {
 			@Override
 			public NodeType getType() {
@@ -88,15 +91,15 @@ public class AmazonNodeManagerTest {
 
 			@Override
 			public String getDriverAddress() {
-				return d.getPrivateAddresses().iterator().next();
+				return driverIp;
 			}
 		}, absentInstanceId);
 		
-		Collection<AmazonNode> nodes = nodeManager.getNodesFromInstanceManager();
+		Collection<? extends Node> nodes = nodeManager.getNodes();
 		for (Node node : nodes) {
 			System.out.println(node);
 		}
-		
+
 		nodeManager.close();
 	}
 	
