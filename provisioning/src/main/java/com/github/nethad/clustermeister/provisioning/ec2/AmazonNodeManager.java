@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
 
 /**
@@ -33,8 +34,8 @@ import org.jclouds.compute.domain.NodeMetadata;
  */
 public class AmazonNodeManager {
 	
-	AmazonInstanceManager amazonInstanceManager;
-	Configuration configuration;
+	final AmazonInstanceManager amazonInstanceManager;
+	final Configuration configuration;
 	
 	//TODO: make sure this will not cause a memory leak
 	private Set<AmazonNode> drivers = new HashSet<AmazonNode>();
@@ -43,7 +44,6 @@ public class AmazonNodeManager {
 	public AmazonNodeManager(Configuration configuration) {
 		this.configuration = configuration;
 		this.amazonInstanceManager = new AmazonInstanceManager(configuration);
-		amazonInstanceManager.init();
 	}
 	
 	public Collection<? extends Node> getNodes() {
@@ -57,7 +57,11 @@ public class AmazonNodeManager {
 	public Node addNode(NodeConfiguration nodeConfiguration, Optional<String> instanceId) {
 		NodeMetadata instanceMetadata;
 		if(!instanceId.isPresent()) {
-			instanceMetadata = amazonInstanceManager.createInstance(null);
+			try {
+				instanceMetadata = amazonInstanceManager.createInstance(null);
+			} catch (RunNodesException ex) {
+				return null;
+			}
 		} else {
 			instanceMetadata = amazonInstanceManager.getInstanceMetadata(instanceId.get());
 		}
@@ -65,7 +69,11 @@ public class AmazonNodeManager {
 		try {
 			node = amazonInstanceManager.deploy(instanceMetadata, nodeConfiguration);
 		} catch (Throwable ex) {
-			amazonInstanceManager.suspendInstance(instanceMetadata.getId());
+			if(instanceId.isPresent()) {
+				amazonInstanceManager.suspendInstance(instanceMetadata.getId());
+			} else {
+				amazonInstanceManager.terminateInstance(instanceMetadata.getId());
+			}
 			return null;
 		}	
 		
