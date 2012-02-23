@@ -23,14 +23,11 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import org.jclouds.aws.ec2.reference.AWSEC2Constants;
@@ -48,10 +45,24 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Manages AWS EC2 Instances.
+ * 
+ * Instances are not equal to nodes in the context of Clustermeister. 
+ * Nodes are JPPF Nodes or Drivers while Instances are AWS EC2 (virtual) machines.
+ * Multiple nodes can be deployed on a single instance (e.g. a JPPF driver and a JPPF node).
+ * 
+ * This class is designed to be thread-safe.
  *
  * @author thomas, daniel
  */
 public class AmazonInstanceManager {
+	
+	/**
+	 * jClouds group name.
+	 * 
+	 * AWS EC2 instances will be named GROUP_NAME-xxxxxxxx 
+	 * (e.g. clustermeister-1c045955)
+	 */
 	static final String GROUP_NAME = "clustermeister";
 	
 	private final static Logger logger = 
@@ -67,11 +78,25 @@ public class AmazonInstanceManager {
     private final SettableFuture<Template> templateFuture;
 	private final ListeningExecutorService executorService;
 
+	/**
+	 * Creates a new AmazonInstanceManager.
+	 * 
+	 * This class is designed to be used by the AmazonNodeManager and 
+	 * each AmazonNodeManager should use only a single instance.
+	 * 
+	 * @param config
+	 *		The configuration containing AWS credentials.
+	 * @param executorService 
+	 *		The ExecutorService used to perform asynchronous tasks, such as 
+	 *		context set-up and template building.
+	 */
 	AmazonInstanceManager(Configuration config, ListeningExecutorService executorService) {
-		loadConfiguration(config);
 		this.executorService = executorService;
+		loadConfiguration(config);
 		templateFuture = SettableFuture.create();
+		//from here the configuration must be loaded.
 		contextFuture = createContext();
+		//after the context is ready, build the template.
 		Futures.addCallback(contextFuture, new FutureCallback<ComputeServiceContext>() {
 			@Override
 			public void onSuccess(ComputeServiceContext result) {
@@ -86,55 +111,90 @@ public class AmazonInstanceManager {
 		}, executorService);
 	}
     
+	/**
+	 * Release resources used by the instance manager.
+	 */
 	void close() {
 		try {
 			ComputeServiceContext context = contextFuture.get();
-			logger.info("Closing context...");
+			logger.debug("Closing context...");
 			context.close();
-			logger.info("Context Closed.");
+			logger.debug("Context Closed.");
 		} catch (Exception ex) {
-			//do nothing
+			//do nothing, instance manager is in corrupt state and 
+			//context could not be created.
 		}
 	}
 	
+	/**
+	 * Performs an Amazon API call retrieve all AWS EC2 instances.
+	 * 
+	 * @return Iterator containing all registered AWS EC2 instances regardless of state.
+	 */
 	Iterator<? extends ComputeMetadata> getInstances() {
-		try {
-			return contextFuture.get().getComputeService().listNodes().iterator();
-		} catch (Exception ex) {
-			return Collections.EMPTY_SET.iterator();
-		}
+		return valueOrNotReady(contextFuture).getComputeService().listNodes().iterator();
 	}
 	
+	/**
+	 * Get meta data for a given instance.
+	 * 
+	 * @param id	The jClouds node ID.
+	 * @return	jClouds node meta data object.
+	 */
 	NodeMetadata getInstanceMetadata(String id) {
 		return valueOrNotReady(contextFuture).getComputeService().getNodeMetadata(id);
 	}
 
-    NodeMetadata createInstance(Map<String, String> userMetaData) throws RunNodesException {
+	/**
+	 * Create a new instance.
+	 * 
+	 * @param userMetaData	
+	 *		A map containing optional user-defined tags.
+	 * @return	Meta data object for the created instance.
+	 * 
+	 * @throws RunNodesException	If the instance could not be started.
+	 */
+    NodeMetadata createInstance(Optional<Map<String, String>> userMetaData) throws RunNodesException {
+		logger.info("Creating a new instance...");
 		ComputeServiceContext context = valueOrNotReady(contextFuture);
 		Template template = valueOrNotReady(templateFuture);
 
-		if(userMetaData != null) {
-			template.getOptions().userMetadata(userMetaData);
+		if(userMetaData.isPresent()) {
+			template.getOptions().userMetadata(userMetaData.get());
 		}
 		template.getOptions().as(EC2TemplateOptions.class).
 				inboundPorts(22, 11111, 11112, 11113, 11198, 12198);
 
 		// specify your own keypair for use in creating nodes
+		//TODO: remove need to specify keypair in AWS.
 		template.getOptions().as(EC2TemplateOptions.class).keyPair(keyPair);
-		Set<? extends NodeMetadata> instances = 
-				context.getComputeService().createNodesInGroup(
-					GROUP_NAME, 1, template);
+		Set<? extends NodeMetadata> instances = context.getComputeService().
+				createNodesInGroup(GROUP_NAME, 1, template);
 		
-		return Iterables.getOnlyElement(instances);
+		NodeMetadata metadata = Iterables.getOnlyElement(instances);
+		logger.info("Instance {} created.", metadata.getId());
+		return metadata;
 	}
 	
+	/**
+	 * Deploy JPPF node (or driver) on an instance.
+	 * 
+	 * @param instanceMetadata	
+	 *		Meta data object identifying the instance.
+	 * @param nodeConfig
+	 *		Node configuration specifying the node to deploy.
+	 * @return
+	 *		The created node handle.
+	 * 
+	 * @throws TimeoutException When
+	 */
 	AmazonNode deploy(NodeMetadata instanceMetadata, NodeConfiguration nodeConfig) 
 			throws TimeoutException {
 		
 		ComputeServiceContext context = valueOrNotReady(contextFuture);
 		
-		JMXConnectionWrapper wrapper;
 		String publicIp = instanceMetadata.getPublicAddresses().iterator().next();
+		JMXConnectionWrapper wrapper;
 		switch(nodeConfig.getType()) {
 			case NODE: {
 				AmazonEC2JPPFDeployer deployer = 
@@ -144,8 +204,6 @@ public class AmazonInstanceManager {
 
 				//TODO: management port should be dynamic to allow multiple nodes per instance.
 				wrapper = new JMXNodeConnectionWrapper(publicIp, 11198);
-
-
 				break;
 			}
 			case DRIVER: {
@@ -163,35 +221,64 @@ public class AmazonInstanceManager {
 			}
 		}
 
-		logger.info("Trying to connect to Management...");
-		wrapper.connectAndWait(5000);
+		logger.debug("Trying to connect to node's JMX management...", instanceMetadata.getId());
+		wrapper.connectAndWait(3000);
 		if(!wrapper.isConnected()) {
 			/*
 			* Optimization: sometimes it seems the backoff is too large.
-			* Now: If timeout after 5 seconds. Try new connection with timeout 2 min.
+			* Now: If timeout after 3 seconds. Try new connection with timeout 5 seconds.
 			* Good chance the new connection will succeed instantly or quicker 
 			* than waiting for long timeout on the first connection.
+			* Fallback is waiting 2 minutes for timeout.
 			*/
-			wrapper.connectAndWait(180000); 
+			wrapper.connectAndWait(5000); 
+			if(!wrapper.isConnected()) {
+				wrapper.connectAndWait(180000); 
+			}
 		}
 		if(wrapper.isConnected()) {
-			logger.info("Connected to Management.");
+			logger.debug("Connected to JMX management.");
 			return new AmazonNode(getUUID(wrapper), nodeConfig.getType(), instanceMetadata);
 		} else {
-			throw new TimeoutException("Timed out while for node management to become available.");
+			throw new TimeoutException("Timed out while for node JMX management to become available.");
 		}
 	}
-
-	void suspendInstance(String nodeId) {
-		valueOrNotReady(contextFuture).getComputeService().suspendNode(nodeId);
+	
+	/**
+	 * Suspend (stop) an instance.
+	 * 
+	 * Shuts down the instance but the instance stays available for resuming.
+	 * 
+	 * @param instanceId	jClouds node ID.
+	 */
+	void suspendInstance(String instanceId) {
+		logger.info("Suspending instance {}.", instanceId);
+		valueOrNotReady(contextFuture).getComputeService().suspendNode(instanceId);
+		logger.info("Instance {} suspended.", instanceId);
 	}
 	
-	void terminateInstance(String nodeId) {
-		valueOrNotReady(contextFuture).getComputeService().destroyNode(nodeId);
+	/**
+	 * Terminate (destroy) an instance.
+	 * 
+	 * Shuts down and discards the instance.
+	 * 
+	 * @param instanceId	jClouds node ID.
+	 */
+	void terminateInstance(String instanceId) {
+		logger.info("Terminating instance {}.", instanceId);
+		valueOrNotReady(contextFuture).getComputeService().destroyNode(instanceId);
+		logger.info("Instance {} terminated.", instanceId);
 	}
 	
-    void resumeInstance(String nodeId) {
-		valueOrNotReady(contextFuture).getComputeService().resumeNode(nodeId);
+	/**
+	 * Resume (start) an instance.
+	 * 
+	 * @param instanceId	jClouds node ID.
+	 */
+    void resumeInstance(String instanceId) {
+		logger.info("Resuming instance {}.", instanceId);
+		valueOrNotReady(contextFuture).getComputeService().resumeNode(instanceId);
+		logger.info("Instance {} resumed.", instanceId);
     }
 
 	private LoginCredentials getLoginCredentials(NodeConfiguration config) {
@@ -199,7 +286,7 @@ public class AmazonInstanceManager {
 	}
 	
 	private ListenableFuture<ComputeServiceContext> createContext() {
-		logger.info("Creating Context...");
+		logger.debug("Creating Context...");
 		
 		Optional<Properties> overrides;
 		if(isImageIdSet()) {
@@ -218,7 +305,7 @@ public class AmazonInstanceManager {
 	}
 	
     private void loadConfiguration(Configuration configuration) {
-		logger.info("Loading Configuration...");
+		logger.debug("Loading Configuration...");
         accessKeyId = configuration.getString("accessKeyId", "").trim();
         secretKey = configuration.getString("secretKey", "").trim();
         keyPair = configuration.getString("keyPair", "").trim();
@@ -244,7 +331,7 @@ public class AmazonInstanceManager {
 			logger.error("Could not get UUID for {}", wrapper.getId());
 			throw new IllegalStateException(ex);
 		}
-		logger.info("Got UUID: {}", uuid);
+		logger.debug("Got UUID: {}", uuid);
 		return uuid;
 	}
 	
