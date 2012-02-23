@@ -67,10 +67,9 @@ public class AmazonInstanceManager {
     private final SettableFuture<Template> templateFuture;
 	private final ListeningExecutorService executorService;
 
-	AmazonInstanceManager(Configuration config) {
+	AmazonInstanceManager(Configuration config, ListeningExecutorService executorService) {
 		loadConfiguration(config);
-		executorService = MoreExecutors.listeningDecorator(
-				Executors.newCachedThreadPool());
+		this.executorService = executorService;
 		templateFuture = SettableFuture.create();
 		contextFuture = createContext();
 		Futures.addCallback(contextFuture, new FutureCallback<ComputeServiceContext>() {
