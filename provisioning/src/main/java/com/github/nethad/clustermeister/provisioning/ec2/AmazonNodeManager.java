@@ -78,6 +78,13 @@ public class AmazonNodeManager {
 	
 	public void close() {
 		if(amazonInstanceManager != null) {
+			managedNodesMonitor.enter();
+			try {
+				drivers.clear();
+				nodes.clear();
+			} finally {
+				managedNodesMonitor.leave();
+			}
 			amazonInstanceManager.close();
 		}
 	}
