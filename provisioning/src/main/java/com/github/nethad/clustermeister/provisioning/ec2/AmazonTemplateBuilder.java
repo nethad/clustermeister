@@ -15,7 +15,6 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
-import java.util.concurrent.Callable;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.Template;
 
@@ -24,7 +23,7 @@ import org.jclouds.compute.domain.Template;
  *
  * @author daniel
  */
-abstract class AmazonTemplateBuilder implements Callable<Template> {
+abstract class AmazonTemplateBuilder {
 	
 	final ComputeServiceContext context;
 
@@ -33,10 +32,4 @@ abstract class AmazonTemplateBuilder implements Callable<Template> {
 	}
 	
 	abstract Template buildTemplate();
-	
-	@Override
-	public Template call() throws Exception {
-		return buildTemplate();
-	}
-	
 }
