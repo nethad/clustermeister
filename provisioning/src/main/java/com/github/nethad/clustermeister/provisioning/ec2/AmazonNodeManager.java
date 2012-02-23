@@ -61,7 +61,13 @@ public class AmazonNodeManager {
 		} else {
 			instanceMetadata = amazonInstanceManager.getInstanceMetadata(instanceId.get());
 		}
-		AmazonNode node = amazonInstanceManager.deploy(instanceMetadata, nodeConfiguration);
+		AmazonNode node;
+		try {
+			node = amazonInstanceManager.deploy(instanceMetadata, nodeConfiguration);
+		} catch (Throwable ex) {
+			amazonInstanceManager.suspendInstance(instanceMetadata.getId());
+			return null;
+		}	
 		
 		addManagedNode(node);
 		
