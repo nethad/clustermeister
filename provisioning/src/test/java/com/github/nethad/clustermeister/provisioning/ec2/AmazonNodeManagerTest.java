@@ -23,6 +23,7 @@ import com.google.common.base.Optional;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.util.Collection;
+import java.util.concurrent.Future;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -49,7 +50,7 @@ public class AmazonNodeManagerTest {
 		AmazonNodeManager nodeManager = new AmazonNodeManager(config);
 		
 		Optional<String> absentInstanceId = Optional.absent();
-		final Node d = nodeManager.addNode(new NodeConfiguration() {
+		final Future<Node> d = nodeManager.addNode(new NodeConfiguration() {
 			@Override
 			public NodeType getType() {
 				return NodeType.DRIVER;
@@ -71,9 +72,7 @@ public class AmazonNodeManagerTest {
 			}
 		}, absentInstanceId);
 		
-		final String driverIp = d.getPrivateAddresses().iterator().next();
-		
-		final Node n = nodeManager.addNode(new NodeConfiguration() {
+		final Future<Node> n = nodeManager.addNode(new NodeConfiguration() {
 			@Override
 			public NodeType getType() {
 				return NodeType.NODE;
@@ -91,9 +90,46 @@ public class AmazonNodeManagerTest {
 
 			@Override
 			public String getDriverAddress() {
-				return driverIp;
+				try {
+					return d.get().getPrivateAddresses().iterator().next();
+				} catch (Throwable ex) {
+					logger.error("Failed to get Driver IP.", ex);
+					return null;
+				}
 			}
 		}, absentInstanceId);
+		
+		final Future<Node> n2 = nodeManager.addNode(new NodeConfiguration() {
+			@Override
+			public NodeType getType() {
+				return NodeType.NODE;
+			}
+			
+			@Override
+			public String getUserName() {
+				return userName;
+			}
+
+			@Override
+			public String getPrivateKey() {
+				return AmazonNodeManagerTest.getPrivateKey(privateKeyFile);
+			}
+
+			@Override
+			public String getDriverAddress() {
+				try {
+					return d.get().getPrivateAddresses().iterator().next();
+				} catch (Throwable ex) {
+					logger.error("Failed to get Driver IP.", ex);
+					return null;
+				}
+			}
+		}, absentInstanceId);
+		
+		//wait for all nodes to be online
+		d.get();
+		n.get();
+		n2.get();
 		
 		Collection<? extends Node> nodes = nodeManager.getNodes();
 		for (Node node : nodes) {
@@ -103,7 +139,7 @@ public class AmazonNodeManagerTest {
 		nodeManager.close();
 	}
 	
-	public static String getPrivateKey(String path) {
+	synchronized public static String getPrivateKey(String path) {
 		try {
 			BufferedReader reader = new BufferedReader(new FileReader(path));
 			StringBuilder sb = new StringBuilder();

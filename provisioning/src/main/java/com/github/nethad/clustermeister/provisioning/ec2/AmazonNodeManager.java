@@ -19,12 +19,18 @@ import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.google.common.base.Optional;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.Monitor;
+import com.google.common.util.concurrent.MoreExecutors;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Executors;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
 
@@ -40,46 +46,34 @@ public class AmazonNodeManager {
 	//TODO: make sure this will not cause a memory leak
 	private Set<AmazonNode> drivers = new HashSet<AmazonNode>();
 	private Set<AmazonNode> nodes = new HashSet<AmazonNode>();
+	private final Monitor managedNodesMonitor = new Monitor(false);
+	
+	private final ListeningExecutorService executorService;
 
 	public AmazonNodeManager(Configuration configuration) {
 		this.configuration = configuration;
-		this.amazonInstanceManager = new AmazonInstanceManager(configuration);
+		executorService = MoreExecutors.listeningDecorator(
+				Executors.newCachedThreadPool());
+		this.amazonInstanceManager = 
+				new AmazonInstanceManager(configuration, executorService);
 	}
 	
 	public Collection<? extends Node> getNodes() {
-		List<AmazonNode> allNodes = 
-				new ArrayList<AmazonNode>(drivers.size() + nodes.size());
-		allNodes.addAll(nodes);
-		allNodes.addAll(drivers);
-		return Collections.unmodifiableCollection(allNodes);
+		managedNodesMonitor.enter();
+		try {
+			List<AmazonNode> allNodes = 
+					new ArrayList<AmazonNode>(drivers.size() + nodes.size());
+			allNodes.addAll(nodes);
+			allNodes.addAll(drivers);
+			return Collections.unmodifiableCollection(allNodes);
+		} finally {
+			managedNodesMonitor.leave();
+		}
 	}
 
-	public Node addNode(NodeConfiguration nodeConfiguration, Optional<String> instanceId) {
-		NodeMetadata instanceMetadata;
-		if(!instanceId.isPresent()) {
-			try {
-				instanceMetadata = amazonInstanceManager.createInstance(null);
-			} catch (RunNodesException ex) {
-				return null;
-			}
-		} else {
-			instanceMetadata = amazonInstanceManager.getInstanceMetadata(instanceId.get());
-		}
-		AmazonNode node;
-		try {
-			node = amazonInstanceManager.deploy(instanceMetadata, nodeConfiguration);
-		} catch (Throwable ex) {
-			if(instanceId.isPresent()) {
-				amazonInstanceManager.suspendInstance(instanceMetadata.getId());
-			} else {
-				amazonInstanceManager.terminateInstance(instanceMetadata.getId());
-			}
-			return null;
-		}	
-		
-		addManagedNode(node);
-		
-		return node;
+	public ListenableFuture<Node> addNode(NodeConfiguration nodeConfiguration, 
+			Optional<String> instanceId) {
+		return executorService.submit(new AddNodeTask(nodeConfiguration, instanceId));
 	}
 	
 	public void close() {
@@ -89,18 +83,64 @@ public class AmazonNodeManager {
 	}
 	
 	private void addManagedNode(AmazonNode node) {
-		switch(node.getType()) {
-			case NODE: {
-				nodes.add(node);
-				break;
+		managedNodesMonitor.enter();
+		try {
+			switch(node.getType()) {
+				case NODE: {
+					nodes.add(node);
+					break;
+				}
+				case DRIVER:  {
+					drivers.add(node);
+					break;
+				}
+				default: {
+					throw new IllegalArgumentException("Invalid Node Type.");
+				}
 			}
-			case DRIVER:  {
-				drivers.add(node);
-				break;
-			}
-			default: {
-				throw new IllegalArgumentException("Invalid Node Type.");
-			}
+		} finally {
+			managedNodesMonitor.leave();
 		}
+	}
+	
+	private class AddNodeTask implements Callable<Node> {
+
+		private final NodeConfiguration nodeConfiguration;
+		private final Optional<String> instanceId;
+
+		public AddNodeTask(NodeConfiguration nodeConfiguration, Optional<String> instanceId) {
+			this.nodeConfiguration = nodeConfiguration;
+			this.instanceId = instanceId;
+		}
+		
+		@Override
+		public Node call() throws Exception {
+			NodeMetadata instanceMetadata;
+			if (!instanceId.isPresent()) {
+				try {
+					instanceMetadata = amazonInstanceManager.createInstance(null);
+				} catch (RunNodesException ex) {
+					return null;
+				}
+			} else {
+				instanceMetadata = amazonInstanceManager.getInstanceMetadata(instanceId.get());
+			}
+			AmazonNode node;
+			try {
+				node = amazonInstanceManager.deploy(instanceMetadata, nodeConfiguration);
+			} catch (Throwable ex) {
+				if (instanceId.isPresent()) {
+					amazonInstanceManager.suspendInstance(instanceMetadata.getId());
+				} else {
+					amazonInstanceManager.terminateInstance(instanceMetadata.getId());
+				}
+				return null;
+			}
+
+			addManagedNode(node);
+
+			return node;
+		}
+		
 	}
 }
