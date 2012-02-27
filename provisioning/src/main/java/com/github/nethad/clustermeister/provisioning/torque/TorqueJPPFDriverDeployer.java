@@ -44,22 +44,18 @@ public class TorqueJPPFDriverDeployer {
     private String user;
     private String privateKeyFilePath;
 //    private String passphrase;
-    private boolean runLocally = false;
-
-    public static void main(String... args) {
-        new TorqueJPPFDriverDeployer().execute();
-    }
+    private boolean runExternally = false;
 
     public void execute() {
-        loadConfiguration();
-        if (runLocally) {
-            localSetupAndRun();
-        } else {
+        if (runExternally) {
             remoteSetupAndRun();
+        } else {
+            localSetupAndRun();
         }
     }
 
     private void remoteSetupAndRun() {
+	loadConfiguration();
         sshClient = null;
         try {
 
@@ -112,8 +108,8 @@ public class TorqueJPPFDriverDeployer {
         return config.getString(key, "");
     }
 
-    public TorqueJPPFDriverDeployer runLocally() {
-        runLocally = true;
+    public TorqueJPPFDriverDeployer runExternally() {
+        runExternally = true;
         return this;
     }
 
