@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfigurator;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFDriverConfigurationSource;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -24,17 +25,17 @@ import java.util.logging.Logger;
  * @author thomas
  */
 public class TorqueJPPFTestSetup {
+    private static final int NUMBER_OF_NODES = 2;
 
     public static void main(String... args) {
         new TorqueJPPFTestSetup().execute();
     }
 
     private void execute() {
-        System.setProperty("jppf.config.plugin", JPPFConfigurator.class.getCanonicalName());
+        System.setProperty("jppf.config.plugin", JPPFDriverConfigurationSource.class.getCanonicalName());
 
         startDriver();
-
-//        startNodes();
+        startNodes();
     }
 
     private void startDriver() {
@@ -46,18 +47,18 @@ public class TorqueJPPFTestSetup {
         TorqueLocalRunner runner = new TorqueLocalRunner();
         runner.start();
 
-        try {
-            Thread.sleep(5000);
-            System.out.println("runner.stopDriver()");
-            runner.stopDriver();
-        } catch (InterruptedException ex) {
-            Logger.getLogger(TorqueJPPFTestSetup.class.getName()).log(Level.SEVERE, null, ex);
-        }
+//        try {
+//            Thread.sleep(5000);
+//            System.out.println("runner.stopDriver()");
+//            runner.stopDriver();
+//        } catch (InterruptedException ex) {
+//            Logger.getLogger(TorqueJPPFTestSetup.class.getName()).log(Level.SEVERE, null, ex);
+//        }
     }
 
     private void startNodes() {
-        System.out.println("Start node");
-        new TorqueJPPFNodeDeployer().execute(5);
+        System.out.println("Start "+NUMBER_OF_NODES+" nodes.");
+        new TorqueJPPFNodeDeployer().execute(NUMBER_OF_NODES);
     }
 
     private class TorqueLocalRunner extends Thread {
@@ -68,7 +69,7 @@ public class TorqueJPPFTestSetup {
         public void run() {
             System.out.println("Start driver");
             deployer = new TorqueJPPFDriverDeployer();
-            deployer.runLocally().execute();
+            deployer.execute();
         }
 
         public void stopDriver() {
