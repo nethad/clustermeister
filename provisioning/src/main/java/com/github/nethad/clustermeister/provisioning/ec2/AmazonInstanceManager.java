@@ -17,6 +17,7 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
+import com.github.nethad.clustermeister.provisioning.utils.NodeManagementConnector;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.FutureCallback;
@@ -220,28 +221,12 @@ public class AmazonInstanceManager {
 				throw new IllegalArgumentException("Invalid Node Type.");
 			}
 		}
-
+		
 		logger.debug("Trying to connect to node's JMX management...", instanceMetadata.getId());
-		wrapper.connectAndWait(3000);
-		if(!wrapper.isConnected()) {
-			/*
-			* Optimization: sometimes it seems the backoff is too large.
-			* Now: If timeout after 3 seconds. Try new connection with timeout 5 seconds.
-			* Good chance the new connection will succeed instantly or quicker 
-			* than waiting for long timeout on the first connection.
-			* Fallback is waiting 2 minutes for timeout.
-			*/
-			wrapper.connectAndWait(5000); 
-			if(!wrapper.isConnected()) {
-				wrapper.connectAndWait(180000); 
-			}
-		}
-		if(wrapper.isConnected()) {
-			logger.debug("Connected to JMX management.");
-			return new AmazonNode(getUUID(wrapper), nodeConfig.getType(), instanceMetadata);
-		} else {
-			throw new TimeoutException("Timed out while for node JMX management to become available.");
-		}
+		NodeManagementConnector.connectToNodeManagement(wrapper);
+		logger.debug("Connected to JMX management.");
+		return new AmazonNode(getUUID(wrapper), nodeConfig.getType(), 
+				getManagementPort(wrapper), instanceMetadata);
 	}
 	
 	/**
@@ -323,7 +308,7 @@ public class AmazonInstanceManager {
 		return templateBuilder.buildTemplate();
     }
 	
-	private String getUUID(JMXConnectionWrapper wrapper) throws RuntimeException {
+	private String getUUID(JMXConnectionWrapper wrapper) throws IllegalStateException {
 		String uuid;
 		try {
 			uuid = wrapper.systemInformation().getUuid().getProperty("jppf.uuid");
@@ -333,6 +318,18 @@ public class AmazonInstanceManager {
 		}
 		logger.debug("Got UUID: {}", uuid);
 		return uuid;
+	}
+	
+	private int getManagementPort(JMXConnectionWrapper wrapper) throws IllegalStateException {
+		int managementPort;
+		try {
+			managementPort = wrapper.getPort();
+		} catch (Exception ex) {
+			logger.error("Could not get management port for {}", wrapper.getId());
+			throw new IllegalStateException(ex);
+		}
+		logger.debug("Got management port: {}", managementPort);
+		return managementPort;
 	}
 	
 	private boolean isImageIdSet() {

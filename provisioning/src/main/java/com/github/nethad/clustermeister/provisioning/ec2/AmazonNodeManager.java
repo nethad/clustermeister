@@ -18,7 +18,10 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
+import com.github.nethad.clustermeister.provisioning.utils.NodeManagementConnector;
 import com.google.common.base.Optional;
+import static com.google.common.base.Preconditions.*;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.Monitor;
@@ -34,12 +37,18 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
+import org.jppf.management.JMXDriverConnectionWrapper;
+import org.jppf.management.JMXNodeConnectionWrapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author daniel
  */
 public class AmazonNodeManager {
+	private final static Logger logger = 
+			LoggerFactory.getLogger(AmazonNodeManager.class);
 	
 	final AmazonInstanceManager amazonInstanceManager;
 	final Configuration configuration;
@@ -76,6 +85,18 @@ public class AmazonNodeManager {
 			Optional<String> instanceId) {
 		return executorService.submit(new AddNodeTask(nodeConfiguration, instanceId));
 	}
+	
+	/**
+	 * 
+	 * @param node
+	 * @param shutdownMethod
+	 * @return	The future return null upon successful completion. 
+	 */
+	public ListenableFuture<Void> removeNode(AmazonNode node, 
+			AmazonInstanceShutdownMethod shutdownMethod) {
+		return executorService.submit(
+				new RemoveNodeTask(node, shutdownMethod, amazonInstanceManager));
+	}
 
 	public void close() {
 		if(amazonInstanceManager != null) {
@@ -100,6 +121,27 @@ public class AmazonNodeManager {
 				}
 				case DRIVER:  {
 					drivers.add(node);
+					break;
+				}
+				default: {
+					throw new IllegalArgumentException("Invalid Node Type.");
+				}
+			}
+		} finally {
+			managedNodesMonitor.leave();
+		}
+	}
+	
+	private void removeManagedNode(AmazonNode node) {
+		managedNodesMonitor.enter();
+		try {
+			switch(node.getType()) {
+				case NODE: {
+					nodes.remove(node);
+					break;
+				}
+				case DRIVER:  {
+					drivers.remove(node);
 					break;
 				}
 				default: {
@@ -150,6 +192,72 @@ public class AmazonNodeManager {
 
 			return node;
 		}
-		
+	}
+	
+	private class RemoveNodeTask implements Callable<Void> {
+
+		private final AmazonNode node;
+		private final AmazonInstanceShutdownMethod shutdownMethod;
+		private final AmazonInstanceManager instanceManager;
+
+		public RemoveNodeTask(AmazonNode node, AmazonInstanceShutdownMethod shutdownMethod, 
+				AmazonInstanceManager instanceManager) {
+			this.node = node;
+			this.shutdownMethod = shutdownMethod;
+			this.instanceManager = instanceManager;
+		}
+
+		@Override
+		public Void call() throws Exception {
+			
+			String publicIp = Iterables.getFirst(node.getPublicAddresses(), null);
+			checkNotNull(publicIp, "Can not get public IP of node " + node + ".");
+			switch(node.getType()) {
+				case DRIVER: {
+					JMXDriverConnectionWrapper wrapper = 
+							new JMXDriverConnectionWrapper(publicIp, node.getManagementPort());
+					NodeManagementConnector.connectToNodeManagement(wrapper);
+					wrapper.restartShutdown(0l, -1l);
+					break;
+				}
+				case NODE: {
+					JMXNodeConnectionWrapper wrapper = 
+							new JMXNodeConnectionWrapper(publicIp, node.getManagementPort());
+					NodeManagementConnector.connectToNodeManagement(wrapper);
+					wrapper.shutdown();
+					break;
+				}
+				default: {
+					throw new IllegalArgumentException("Invalid node type");
+				}
+			}
+			
+			
+			//TODO: properly shutdown node before instance shutdown/termination
+			switch(shutdownMethod) {
+				case SHUTDOWN: {
+					instanceManager.suspendInstance(node.getInstanceId());
+					break;
+				}
+				case TERMINATE: {
+					instanceManager.terminateInstance(node.getInstanceId());
+					break;
+				}
+				case NO_SHUTDOWN: {
+					logger.info("No shutdown specified. Instance continues running...");
+					//do nothing
+					break;
+				}
+				default: {
+					logger.warn("Invalid shutdown method specified. Suspending instance...");
+					instanceManager.suspendInstance(node.getInstanceId());
+					break;
+				}
+			}
+			
+			removeManagedNode(node);
+			
+			return null;
+		}
 	}
 }
