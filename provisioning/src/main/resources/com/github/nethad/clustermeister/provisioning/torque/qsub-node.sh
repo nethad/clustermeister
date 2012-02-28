@@ -18,5 +18,5 @@ cd $workingDir/jppf-node
 
 chmod +x startNode.sh
 
-cmd="./startNode.sh"
+cmd="./startNode.sh $2"
 $cmd'

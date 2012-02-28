@@ -15,10 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfigurator;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFDriverConfigurationSource;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
