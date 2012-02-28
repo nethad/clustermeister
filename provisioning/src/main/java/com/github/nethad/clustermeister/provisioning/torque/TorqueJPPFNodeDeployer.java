@@ -74,7 +74,7 @@ public class TorqueJPPFNodeDeployer {
 	    prepareLocalIP();
 
 	    submitJobs(numberOfNodes);
-	    resolveNodeIpAddresses();
+//	    resolveNodeIpAddresses();
 	} catch (SSHClientExcpetion ex) {
 	    ex.printStackTrace();
 	} finally {
