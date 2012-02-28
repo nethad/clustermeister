@@ -72,11 +72,11 @@ public class AmazonNodeManager {
 		}
 	}
 
-	public ListenableFuture<Node> addNode(NodeConfiguration nodeConfiguration, 
+	public ListenableFuture<? extends Node> addNode(NodeConfiguration nodeConfiguration, 
 			Optional<String> instanceId) {
 		return executorService.submit(new AddNodeTask(nodeConfiguration, instanceId));
 	}
-	
+
 	public void close() {
 		if(amazonInstanceManager != null) {
 			managedNodesMonitor.enter();
@@ -111,7 +111,7 @@ public class AmazonNodeManager {
 		}
 	}
 	
-	private class AddNodeTask implements Callable<Node> {
+	private class AddNodeTask implements Callable<AmazonNode> {
 
 		private final NodeConfiguration nodeConfiguration;
 		private final Optional<String> instanceId;
@@ -122,7 +122,7 @@ public class AmazonNodeManager {
 		}
 		
 		@Override
-		public Node call() throws Exception {
+		public AmazonNode call() throws Exception {
 			NodeMetadata instanceMetadata;
 			if (!instanceId.isPresent()) {
 				try {
