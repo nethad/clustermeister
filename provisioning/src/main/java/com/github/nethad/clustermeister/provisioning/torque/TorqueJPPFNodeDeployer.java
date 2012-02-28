@@ -131,6 +131,7 @@ public class TorqueJPPFNodeDeployer {
 	    InputStream propertyStream = new JPPFNodeConfiguration()
 		    .setProperty("jppf.server.host", localIp)
 		    .setProperty("jppf.management.port", String.valueOf(managementPort))
+			.setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-"+managementPort)
 		    .getPropertyStream();
 	    sshClient.sftpUpload(propertyStream, DEPLOY_BASE_NAME + "/config/" + nodeConfigFileName);
 	} catch (IOException ex) {
