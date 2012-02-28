@@ -127,7 +127,7 @@ public class AmazonInstanceManager {
 	}
 	
 	/**
-	 * Performs an Amazon API call retrieve all AWS EC2 instances.
+	 * Performs an Amazon API call to retrieve all AWS EC2 instances.
 	 * 
 	 * @return Iterator containing all registered AWS EC2 instances regardless of state.
 	 */
