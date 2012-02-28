@@ -27,5 +27,6 @@ public interface NodeConfiguration {
 	public String getPrivateKey();
 	
 	public String getDriverAddress();
-
+	
+	public boolean isDriverDeployedLocally();
 }

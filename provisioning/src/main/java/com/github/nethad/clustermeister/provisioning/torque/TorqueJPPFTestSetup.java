@@ -55,7 +55,7 @@ public class TorqueJPPFTestSetup {
 
     private void startNodes() {
         System.out.println("Start "+NUMBER_OF_NODES+" nodes.");
-        new TorqueJPPFNodeDeployer().execute(NUMBER_OF_NODES);
+//        new TorqueJPPFNodeDeployer().execute(NUMBER_OF_NODES);
     }
 
     private class TorqueLocalRunner extends Thread {

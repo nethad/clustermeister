@@ -28,6 +28,11 @@ import java.util.Set;
  * @author daniel
  */
 public class TorqueNode implements Node {
+	private final NodeType nodeType;
+
+	public TorqueNode(NodeType nodeType) {
+		this.nodeType = nodeType;
+	}
 
 	@Override
 	public String getID() {
@@ -36,7 +41,7 @@ public class TorqueNode implements Node {
 
 	@Override
 	public NodeType getType() {
-		throw new UnsupportedOperationException("Not supported yet.");
+		return nodeType;
 	}
 
 	@Override

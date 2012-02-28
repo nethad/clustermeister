@@ -44,5 +44,10 @@ public class TorqueNodeConfiguration implements NodeConfiguration {
 	public String getDriverAddress() {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
+
+	@Override
+	public boolean isDriverDeployedLocally() {
+		throw new UnsupportedOperationException("Not supported yet.");
+	}
 	
 }
