@@ -1,5 +1,5 @@
 echo "#PBS -N $1
-#PBS -l nodes=1:ppn=23
+#PBS -l nodes=1:ppn=1
 #PBS -p 0
 #PBS -j oe
 #PBS -m b
