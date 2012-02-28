@@ -48,5 +48,10 @@ public class TorqueNode implements Node {
 	public Set<String> getPrivateAddresses() {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
+
+	@Override
+	public int getManagementPort() {
+		throw new UnsupportedOperationException("Not supported yet.");
+	}
 	
 }
