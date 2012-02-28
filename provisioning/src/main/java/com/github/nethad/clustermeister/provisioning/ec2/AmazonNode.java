@@ -30,13 +30,15 @@ import org.jclouds.compute.domain.NodeMetadata;
  */
 public class AmazonNode implements Node {
 	final String id;
+	final int managementPort;
 	final NodeType type;
 	NodeMetadata instanceMetadata;
 
-	public AmazonNode(String uuid, NodeType type, NodeMetadata instanceMetadata) {
+	public AmazonNode(String uuid, NodeType type, int managementPort, NodeMetadata instanceMetadata) {
 		this.instanceMetadata = instanceMetadata;
 		this.type = type;
 		this.id = uuid;
+		this.managementPort = managementPort;
 	}
 	
 	void updateInstanceMetaData(NodeMetadata instanceMetadata) {
@@ -73,6 +75,11 @@ public class AmazonNode implements Node {
 	@Override
 	public Set<String> getPublicAddresses() {
 		return instanceMetadata.getPublicAddresses();
+	}
+	
+	@Override
+	public int getManagementPort() {
+		return managementPort;
 	}
 
 	@Override
