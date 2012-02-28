@@ -16,7 +16,7 @@ echo 'workingDir=/home/torque/tmp/${USER}.${PBS_JOBID}
 cp -r ~/jppf-node $workingDir/jppf-node
 cd $workingDir/jppf-node
 
-chmod +x startNode.sh
+chmod +x startNode.sh'
 
-cmd="./startNode.sh $2"
-$cmd'
+echo "cmd=\"./startNode.sh $2 \""
+echo '$cmd'
