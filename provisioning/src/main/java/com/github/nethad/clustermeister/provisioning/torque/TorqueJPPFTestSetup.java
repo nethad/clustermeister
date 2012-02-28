@@ -15,19 +15,65 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfigurator;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFDriverConfigurationSource;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  *
  * @author thomas
  */
 public class TorqueJPPFTestSetup {
-    
+    private static final int NUMBER_OF_NODES = 2;
+
     public static void main(String... args) {
-        execute();
+        new TorqueJPPFTestSetup().execute();
     }
 
-    private static void execute() {
-        new TorqueJPPFNodeDeployer().execute(5);
-        new TorqueJPPFDriverDeployer().execute();
+    private void execute() {
+        System.setProperty("jppf.config.plugin", JPPFDriverConfigurationSource.class.getCanonicalName());
+
+        startDriver();
+        startNodes();
     }
-    
+
+    private void startDriver() {
+//        JPPFDriver.main("noLauncher");
+
+//        ProcessLauncher processLauncher = new ProcessLauncher("org.jppf.server.JPPFDriver");
+//        processLauncher.run();
+
+        TorqueLocalRunner runner = new TorqueLocalRunner();
+        runner.start();
+
+//        try {
+//            Thread.sleep(5000);
+//            System.out.println("runner.stopDriver()");
+//            runner.stopDriver();
+//        } catch (InterruptedException ex) {
+//            Logger.getLogger(TorqueJPPFTestSetup.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+    }
+
+    private void startNodes() {
+        System.out.println("Start "+NUMBER_OF_NODES+" nodes.");
+        new TorqueJPPFNodeDeployer().execute(NUMBER_OF_NODES);
+    }
+
+    private class TorqueLocalRunner extends Thread {
+
+        private TorqueJPPFDriverDeployer deployer;
+
+        @Override
+        public void run() {
+            System.out.println("Start driver");
+            deployer = new TorqueJPPFDriverDeployer();
+            deployer.execute();
+        }
+
+        public void stopDriver() {
+            deployer.stopLocalDriver();
+        }
+    }
 }

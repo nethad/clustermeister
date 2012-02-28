@@ -24,14 +24,14 @@ import org.jppf.utils.JPPFConfiguration;
 
 /**
  *
- * @author daniel
+ * @author thomas
  */
-public class JPPFConfigurator implements JPPFConfiguration.ConfigurationSource {
+public class JPPFDriverConfigurationSource implements JPPFConfiguration.ConfigurationSource {
 
     public static String host = "localhost";
     Properties properties = new Properties();
 
-    public JPPFConfigurator() {
+    public JPPFDriverConfigurationSource() {
 //        properties.setProperty("jppf.discovery.enabled", "false");
 //        properties.setProperty("jppf.discovery.group", "230.0.0.1");
 //        properties.setProperty("jppf.discovery.port", "11111");
@@ -84,7 +84,7 @@ public class JPPFConfigurator implements JPPFConfiguration.ConfigurationSource {
                 "-Xmx256m "
                 + "-Dlog4j.configuration=log4j-driver.properties"
                 + "-Djava.util.logging.config.file=config/logging-driver.properties "
-                + "-Djppf.config.plugin="+JPPFConfigurator.class.getCanonicalName());
+                + "-Djppf.config.plugin="+com.github.nethad.clustermeister.provisioning.jppf.JPPFConfigurator.class.getCanonicalName());
         
 //        properties.setProperty("jppf.debug.enabled", "true");
 
@@ -100,3 +100,4 @@ public class JPPFConfigurator implements JPPFConfiguration.ConfigurationSource {
         return new ByteArrayInputStream(baos.toByteArray());
     }
 }
+
