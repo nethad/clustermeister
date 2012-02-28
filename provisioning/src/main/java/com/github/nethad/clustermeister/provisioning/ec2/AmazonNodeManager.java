@@ -28,6 +28,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
@@ -125,7 +126,8 @@ public class AmazonNodeManager {
 			NodeMetadata instanceMetadata;
 			if (!instanceId.isPresent()) {
 				try {
-					instanceMetadata = amazonInstanceManager.createInstance(null);
+					Optional<Map<String, String>> noMap = Optional.absent();
+					instanceMetadata = amazonInstanceManager.createInstance(noMap);
 				} catch (RunNodesException ex) {
 					return null;
 				}
