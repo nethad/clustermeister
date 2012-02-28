@@ -27,4 +27,5 @@ public interface Node {
 	public NodeType getType();
 	public Set<String> getPublicAddresses();
 	public Set<String> getPrivateAddresses();
+	public int getManagementPort();
 }
