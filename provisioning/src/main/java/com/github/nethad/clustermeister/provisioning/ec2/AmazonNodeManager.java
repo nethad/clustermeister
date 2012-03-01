@@ -218,6 +218,11 @@ public class AmazonNodeManager {
 							new JMXDriverConnectionWrapper(publicIp, node.getManagementPort());
 					NodeManagementConnector.connectToNodeManagement(wrapper);
 					wrapper.restartShutdown(0l, -1l);
+					try {
+						wrapper.close();
+					} catch (Exception ex) {
+						logger.warn("Could not close connection to node management.", ex);
+					}
 					break;
 				}
 				case NODE: {
@@ -225,6 +230,11 @@ public class AmazonNodeManager {
 							new JMXNodeConnectionWrapper(publicIp, node.getManagementPort());
 					NodeManagementConnector.connectToNodeManagement(wrapper);
 					wrapper.shutdown();
+					try {
+						wrapper.close();
+					} catch (Exception ex) {
+						logger.warn("Could not close connection to node management.", ex);
+					}
 					break;
 				}
 				default: {
