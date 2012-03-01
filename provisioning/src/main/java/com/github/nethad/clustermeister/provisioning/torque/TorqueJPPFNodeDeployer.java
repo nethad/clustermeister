@@ -50,12 +50,15 @@ public class TorqueJPPFNodeDeployer {
 //    private static final String DEPLOY_PROPERTIES = DEPLOY_BASE_NAME + DEPLOY_CONFIG_SUFFIX;
 	private static final String DEPLOY_QSUB = "qsub-node.sh";
 	public static final String PATH_TO_QSUB_SCRIPT = "./" + DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB;
+
 	private static final int POLLING_INTERVAL = 1000;
 	private String host;
 	private List<String> jobIdList;
 	private String localIp;
 	private Map<String, String> nodeIpMap;
 	private int port;
+
+
 	private SSHClient sshClient;
 	private String user;
 	private String privateKeyFilePath;
@@ -72,17 +75,26 @@ public class TorqueJPPFNodeDeployer {
 		sessionId = System.currentTimeMillis();
 	}
 
-	private void execute(int numberOfNodes) {
+	public void execute(int numberOfNodes) {
 		sshClient = null;
 
 		try {
+			loadConfiguration();
 
-			deployInfrastructure();
+			sshClient = new SSHClient(privateKeyFilePath);
+			sshClient.connect(user, host, port);
 
-//			submitJob(numberOfNodes);
-//			resolveNodeIpAddresses();
+			// remove previously uploaded files (might be outdated/not necessary)
+			executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "*");
+
+			uploadResources();
+
+			prepareLocalIP();
+
+			submitJobs(numberOfNodes);
+//	    resolveNodeIpAddresses();
 		} catch (SSHClientExcpetion ex) {
-			ex.printStackTrace();
+			System.out.println(ex.getClass().getName() + ": "+ex.getMessage());
 		} finally {
 			if (sshClient != null) {
 				sshClient.disconnect();
@@ -148,6 +160,7 @@ public class TorqueJPPFNodeDeployer {
 
 	
 
+	/*
 	private void uploadNodeConfiguration(final String nodeConfigFileName, final String driverIpAddress) throws SSHClientExcpetion {
 		// generate properties file from configuration class and attach
 		// the local ip address as the driver's IP target address.
@@ -159,7 +172,77 @@ public class TorqueJPPFNodeDeployer {
 			driverIp = localIp;
 		}
 		try {
-			InputStream propertyStream = new JPPFNodeConfiguration().setProperty("jppf.server.host", driverIp).setProperty("jppf.management.port", String.valueOf(managementPort)).setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-" + sessionId + "_" + currentNodeNumber).getPropertyStream();
+			InputStream propertyStream = new JPPFNodeConfiguration()
+					.setProperty("jppf.server.host", driverIp)
+					.setProperty("jppf.management.port", String.valueOf(managementPort))
+					.setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-" + sessionId + "_" + currentNodeNumber)
+					.getPropertyStream();
+					*/
+	private void resolveNodeIpAddresses() throws SSHClientExcpetion {
+		for (String jobId : jobIdList) {
+			waitForJobToBeRunning(jobId);
+			String nodeIp = waitForNodeIpToResolve(jobId);
+			nodeIpMap.put(jobId, nodeIp);
+			System.out.println(jobId + ": " + nodeIp);
+		}
+	}
+
+	private void submitJobs(int numberOfNodes) throws SSHClientExcpetion {
+		// assume java is installed (installed in ~/jdk-1.7)
+		// executeAndSysout("cp -R /home/user/dspicar/jdk-1.7 ~/jdk-1.7");
+
+		// execute qsub helper script and pipe it into qsub (job submission)
+		String pathToQsubScript = "./" + DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB;
+
+		String nodeNameBase = "Node" + sessionId;
+		String nodeName;
+		String nodeConfigFileName;
+		String currentJobId;
+		nodeIpMap = new HashMap<String, String>();
+		jobIdList = new ArrayList<String>();
+		StringBuilder executeString = new StringBuilder();
+		for (int nodeNumber = 0; nodeNumber < numberOfNodes; nodeNumber++) {
+			System.out.println("Current node number: " + nodeNumber);
+			nodeName = nodeNameBase + "_" + nodeNumber;
+			nodeConfigFileName = configFileName();
+			uploadNodeConfiguration(nodeConfigFileName, localIp);
+//			final String makeQsubScriptExecutable = "chmod +x " + pathToQsubScript + ";";
+			final String submitJobToQsub = pathToQsubScript + " " + nodeName + " " + nodeConfigFileName + "|qsub";
+			executeString.append(submitJobToQsub +";");
+//			currentJobId = executeWithResult(makeQsubScriptExecutable + submitJobToQsub);
+//			jobIdList.add(currentJobId);
+//			executeAndSysout("uname -r");
+		}
+		final String makeQsubScriptExecutable = "chmod +x " + pathToQsubScript;
+		executeAndSysout(makeQsubScriptExecutable);
+	
+//		executeAndSysout("uname -r");
+		
+		String jobIdsFromOutput = executeWithResult(executeString.toString());
+		String[] jobIdArray = jobIdsFromOutput.split("\\\n");
+		System.out.println("jobIdArray size = " + jobIdArray.length);
+		//		executeAndSysout(executeString.toString());
+		//		System.out.println("jobIdsFromOutput = " + jobIdsFromOutput);
+	}
+
+	private void uploadNodeConfiguration(String nodeConfigFileName, String driverIpAddress) throws SSHClientExcpetion {
+		
+				// generate properties file from configuration class and attach
+		// the local ip address as the driver's IP target address.
+		
+		int managementPort = DEFAULT_MANAGEMENT_PORT + currentNodeNumber.intValue();
+		String driverIp;
+		if (driverIpAddress == null) {
+			driverIp = driverIpAddress;
+		} else {
+			driverIp = localIp;
+		}
+		try {
+			InputStream propertyStream = new JPPFNodeConfiguration()
+					.setProperty("jppf.server.host", driverIp)
+					.setProperty("jppf.management.port", String.valueOf(managementPort))
+					.setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-" + sessionId + "_" + currentNodeNumber)
+					.getPropertyStream();
 			sshClient.sftpUpload(propertyStream, DEPLOY_BASE_NAME + "/config/" + nodeConfigFileName);
 		} catch (IOException ex) {
 			Logger.getLogger(TorqueJPPFNodeDeployer.class.getName()).log(Level.SEVERE, null, ex);
@@ -193,6 +276,7 @@ public class TorqueJPPFNodeDeployer {
 
 	private String configFileName() {
 		return DEPLOY_BASE_NAME + "-" + currentNodeNumber + DEPLOY_CONFIG_SUFFIX;
+
 	}
 
 	private String waitForNodeIpToResolve(String jobId) throws SSHClientExcpetion {
@@ -305,4 +389,5 @@ public class TorqueJPPFNodeDeployer {
 			return torqueNode;
 		}
 	}
+
 }
