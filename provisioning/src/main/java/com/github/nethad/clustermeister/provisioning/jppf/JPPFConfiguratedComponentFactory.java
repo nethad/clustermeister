@@ -51,14 +51,18 @@ public class JPPFConfiguratedComponentFactory {
 	/**
 	 * Create a JPPFManagementByJobsClient instance.
 	 * 
-	 * @param configurationSource	the JPPF configuration source.
 	 * @return	the JPPFManagementByJobsClient instance.
 	 */
-	public JPPFManagementByJobsClient createManagementByJobsClient(ConfigurationSource configurationSource) {
+	public JPPFManagementByJobsClient 
+			createManagementByJobsClient(String host, int port) {
 		
 		configPropertyMonitor.enter();
 		try {
-			setConfigProperty(configurationSource);
+			JPPFManagementByJobConfigurationSource source = 
+					new JPPFManagementByJobConfigurationSource();
+			JPPFManagementByJobConfigurationSource.host = host;
+			JPPFManagementByJobConfigurationSource.port = port;
+			setConfigProperty(source);
 			return new JPPFManagementByJobsClient();
 		} finally {
 			configPropertyMonitor.leave();
