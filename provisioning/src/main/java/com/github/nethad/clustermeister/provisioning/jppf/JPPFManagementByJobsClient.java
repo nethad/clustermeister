@@ -16,8 +16,10 @@
 package com.github.nethad.clustermeister.provisioning.jppf;
 
 import com.github.nethad.clustermeister.provisioning.jppf.managementtasks.JPPFConfigReaderTask;
+import com.google.common.collect.Iterables;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 import org.jppf.JPPFException;
 import org.jppf.client.JPPFClient;
 import org.jppf.client.JPPFJob;
@@ -37,10 +39,10 @@ public class JPPFManagementByJobsClient {
 		jPPFClient = new JPPFClient();
 	}
 	
-	public void  test() {
+	public Properties getJPPFConfig(String host, int port) {
 		JPPFJob job = new JPPFJob();
 		try {
-			job.addTask(new JPPFConfigReaderTask(), "localhost", 11198);
+			job.addTask(new JPPFConfigReaderTask(), host, port);
 		} catch (JPPFException ex) {
 			throw new RuntimeException(ex);
 		}
@@ -54,9 +56,8 @@ public class JPPFManagementByJobsClient {
 			throw new RuntimeException(ex);
 		}
 		
-		for (JPPFTask jPPFTask : results) {
-			System.out.println(jPPFTask.getResult());
-		}
+		JPPFTask task = Iterables.getOnlyElement(results);
+		return (Properties) task.getResult();
 	}
 	
 	public void close() {

@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.jppf;
 
+import java.util.Properties;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -30,7 +31,9 @@ public class JPPFManagementByJobsClientTest {
 		JPPFManagementByJobsClient client = JPPFConfiguratedComponentFactory.
 				getInstance().createManagementByJobsClient("176.34.221.185", 11111);
 		
-		client.test();
+		Properties props = client.getJPPFConfig("localhost", 11198);
+		
+		System.out.println(props);
 		
 		client.close();
 	}
