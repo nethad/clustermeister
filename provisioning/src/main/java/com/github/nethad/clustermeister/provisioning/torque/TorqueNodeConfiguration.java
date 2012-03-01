@@ -25,27 +25,22 @@ import com.github.nethad.clustermeister.api.NodeType;
  */
 public class TorqueNodeConfiguration implements NodeConfiguration {
 
-	@Override
 	public NodeType getType() {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
-	@Override
 	public String getUserName() {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
-	@Override
 	public String getPrivateKey() {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
-	@Override
 	public String getDriverAddress() {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
 
-	@Override
 	public boolean isDriverDeployedLocally() {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
