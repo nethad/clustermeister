@@ -16,13 +16,6 @@
 package com.github.nethad.clustermeister.provisioning.jppf;
 
 import com.google.common.util.concurrent.Monitor;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Method;
-import java.lang.reflect.Proxy;
-import java.util.Properties;
-import org.jppf.utils.JPPFConfiguration;
 import org.jppf.utils.JPPFConfiguration.ConfigurationSource;
 
 /**
@@ -55,37 +48,17 @@ public class JPPFConfiguratedComponentFactory {
 		return NewSingletonHolder.INSTANCE;
 	}
 	
-	public ConfigurationSource createConfigurationSource(final Properties properties) {
-		InvocationHandler handler = new InvocationHandler() {
-			@Override
-			public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
-				if(method.getName().equals("getPropertyStream")) {
-					ByteArrayOutputStream baos = new ByteArrayOutputStream();
-					properties.store(baos, "JPPFManagementByJobsClient running configuration.");
-					return new ByteArrayInputStream(baos.toByteArray());
-				} else {
-					throw new UnsupportedOperationException(method.getName() + " is not supported.");
-				}
-			}
-		};
-		JPPFConfiguration.ConfigurationSource source = (JPPFConfiguration.ConfigurationSource)
-				Proxy.newProxyInstance(JPPFConfiguration.ConfigurationSource.class.getClassLoader(), 
-				new Class[]{JPPFConfiguration.ConfigurationSource.class}, handler);
-		
-		return source;
-	}
-	
 	/**
 	 * Create a JPPFManagementByJobsClient instance.
 	 * 
 	 * @param configurationSource	the JPPF configuration source.
 	 * @return	the JPPFManagementByJobsClient instance.
 	 */
-	public JPPFManagementByJobsClient createManagementByJobsClient(Properties properties) {
+	public JPPFManagementByJobsClient createManagementByJobsClient(ConfigurationSource configurationSource) {
 		
 		configPropertyMonitor.enter();
 		try {
-			setConfigProperty(createConfigurationSource(properties));
+			setConfigProperty(configurationSource);
 			return new JPPFManagementByJobsClient();
 		} finally {
 			configPropertyMonitor.leave();
