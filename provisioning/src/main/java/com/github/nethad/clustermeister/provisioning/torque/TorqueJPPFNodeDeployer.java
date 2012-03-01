@@ -129,21 +129,24 @@ public class TorqueJPPFNodeDeployer {
 		if (!isInfrastructureDeployed) {
 			deployInfrastructure();
 		}
-
-		new NodeDeployTask();
-		String nodeNameBase = "CMNode" + sessionId;
-		String nodeName = nodeNameBase + "_" + currentNodeNumber;
-		String nodeConfigFileName = configFileName();
-		uploadNodeConfiguration(nodeConfigFileName, nodeConfiguration.getDriverAddress());
-		final String makeQsubScriptExecutable = "chmod +x " + PATH_TO_QSUB_SCRIPT + ";";
-		final String submitJobToQsub = PATH_TO_QSUB_SCRIPT + " " + nodeName + " " + nodeConfigFileName + "|qsub";
-		String currentJobId = executeWithResult(makeQsubScriptExecutable + submitJobToQsub);
-		jobIdList.add(currentJobId);
-
-		TorqueNode torqueNode = new TorqueNode(NodeType.NODE);
+		NodeDeployTask nodeDeployTask = new NodeDeployTask(nodeConfiguration, currentNodeNumber.intValue());
 		currentNodeNumber.incrementAndGet();
-		return torqueNode;
+		return nodeDeployTask.execute();
+//		String nodeNameBase = "CMNode" + sessionId;
+//		String nodeName = nodeNameBase + "_" + currentNodeNumber;
+//		String nodeConfigFileName = configFileName();
+//		uploadNodeConfiguration(nodeConfigFileName, nodeConfiguration.getDriverAddress());
+//		final String makeQsubScriptExecutable = "chmod +x " + PATH_TO_QSUB_SCRIPT + ";";
+//		final String submitJobToQsub = PATH_TO_QSUB_SCRIPT + " " + nodeName + " " + nodeConfigFileName + "|qsub";
+//		String currentJobId = executeWithResult(makeQsubScriptExecutable + submitJobToQsub);
+//		jobIdList.add(currentJobId);
+//
+//		TorqueNode torqueNode = new TorqueNode(NodeType.NODE);
+//		currentNodeNumber.incrementAndGet();
+//		return torqueNode;
 	}
+
+	
 
 	private void uploadNodeConfiguration(final String nodeConfigFileName, final String driverIpAddress) throws SSHClientExcpetion {
 		// generate properties file from configuration class and attach
@@ -280,8 +283,26 @@ public class TorqueJPPFNodeDeployer {
 
 	private class NodeDeployTask {
 
-		public NodeDeployTask() {
+		private NodeConfiguration nodeConfiguration;
+		private int nodeNumber;
+
+		public NodeDeployTask(NodeConfiguration nodeConfiguration, int nodeNumber) {
+			this.nodeConfiguration = nodeConfiguration;
+			this.nodeNumber = nodeNumber;
 		}
-		
+
+		public TorqueNode execute() throws SSHClientExcpetion {
+			String nodeNameBase = "CMNode" + sessionId;
+			String nodeName = nodeNameBase + "_" + currentNodeNumber;
+			String nodeConfigFileName = configFileName();
+			uploadNodeConfiguration(nodeConfigFileName, nodeConfiguration.getDriverAddress());
+			final String makeQsubScriptExecutable = "chmod +x " + PATH_TO_QSUB_SCRIPT + ";";
+			final String submitJobToQsub = PATH_TO_QSUB_SCRIPT + " " + nodeName + " " + nodeConfigFileName + "|qsub";
+			String currentJobId = executeWithResult(makeQsubScriptExecutable + submitJobToQsub);
+			jobIdList.add(currentJobId);
+
+			TorqueNode torqueNode = new TorqueNode(NodeType.NODE);
+			return torqueNode;
+		}
 	}
 }
