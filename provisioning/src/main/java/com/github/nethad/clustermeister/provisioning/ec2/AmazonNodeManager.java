@@ -242,8 +242,6 @@ public class AmazonNodeManager {
 				}
 			}
 			
-			
-			//TODO: properly shutdown node before instance shutdown/termination
 			switch(shutdownMethod) {
 				case SHUTDOWN: {
 					instanceManager.suspendInstance(node.getInstanceId());
