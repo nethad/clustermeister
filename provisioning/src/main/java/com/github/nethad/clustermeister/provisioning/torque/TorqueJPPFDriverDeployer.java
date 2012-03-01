@@ -16,24 +16,14 @@
 package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.api.Configuration;
-import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientExcpetion;
-import com.google.common.util.concurrent.ListenableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Executor;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jppf.management.JMXDriverConnectionWrapper;
 import org.jppf.process.ProcessLauncher;
-import org.jppf.server.DriverLauncher;
-import org.jppf.server.JPPFDriver;
-import org.jppf.utils.JPPFConfiguration;
 
 /**
  *
@@ -80,7 +70,7 @@ public class TorqueJPPFDriverDeployer {
 //            executeAndSysout("cp -R /home/user/dspicar/jdk-1.7 ~/jdk-1.7");
 
             executeAndSysout("cd " + DEPLOY_BASE_NAME + ";nohup ./startDriver.sh ~/jdk-1.7/bin/java > nohup.out 2>&1");
-			return new TorqueNode(NodeType.DRIVER);
+			return new TorqueNode(NodeType.DRIVER, null);
         } catch (SSHClientExcpetion ex) {
             ex.printStackTrace();
         } finally {
@@ -125,7 +115,7 @@ public class TorqueJPPFDriverDeployer {
     private TorqueNode localSetupAndRun() {
         processLauncher = new ProcessLauncher("org.jppf.server.JPPFDriver");
         processLauncher.run();
-		TorqueNode torqueNode = new TorqueNode(NodeType.DRIVER);
+		TorqueNode torqueNode = new TorqueNode(NodeType.DRIVER, null);
 		return torqueNode;
 		//        try {
 		//            Process process = processLauncher.buildProcess();

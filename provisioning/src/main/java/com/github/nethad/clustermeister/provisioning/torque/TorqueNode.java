@@ -29,9 +29,11 @@ import java.util.Set;
  */
 public class TorqueNode implements Node {
 	private final NodeType nodeType;
+	private String torqueJobId;
 
-	public TorqueNode(NodeType nodeType) {
+	public TorqueNode(NodeType nodeType, String torqueJobId) {
 		this.nodeType = nodeType;
+		this.torqueJobId = torqueJobId;
 	}
 
 	@Override
@@ -57,6 +59,10 @@ public class TorqueNode implements Node {
 	@Override
 	public int getManagementPort() {
 		throw new UnsupportedOperationException("Not supported yet.");
+	}
+	
+	public String getTorqueJobId() {
+		return torqueJobId;
 	}
 	
 }
