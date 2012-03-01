@@ -243,8 +243,8 @@ public class SSHClient {
     }
 
     public void sftpUpload(InputStream stream, String dest) throws SSHClientExcpetion, SftpException {
+	    ChannelSftp channel = null;
 	if (notNull(session) && session.isConnected()) {
-	    ChannelSftp channel;
 	    try {
 		channel = (ChannelSftp) session.openChannel("sftp");
 		channel.connect();
@@ -264,6 +264,10 @@ public class SSHClient {
 		    } catch (IOException ex) {
 			//ignore
 		    }
+		}
+		if (notNull(channel)) {
+			channel.disconnect();
+			logger.info("SFTP channel closed.");
 		}
 	    }
 	} else {
