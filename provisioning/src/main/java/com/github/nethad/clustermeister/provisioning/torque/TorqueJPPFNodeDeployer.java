@@ -49,6 +49,7 @@ public class TorqueJPPFNodeDeployer {
 	private static final String DEPLOY_CONFIG_SUFFIX = ".properties";
 //    private static final String DEPLOY_PROPERTIES = DEPLOY_BASE_NAME + DEPLOY_CONFIG_SUFFIX;
 	private static final String DEPLOY_QSUB = "qsub-node.sh";
+	public static final String PATH_TO_QSUB_SCRIPT = "./" + DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB;
 	private static final int POLLING_INTERVAL = 1000;
 	private String host;
 	private List<String> jobIdList;
@@ -116,11 +117,11 @@ public class TorqueJPPFNodeDeployer {
 
 	private String resolveNodeIpAddresses(String jobId) throws SSHClientExcpetion {
 //		for (String jobId : jobIdList) {
-			waitForJobToBeRunning(jobId);
-			String nodeIp = waitForNodeIpToResolve(jobId);
-			nodeIpMap.put(jobId, nodeIp);
-			System.out.println(jobId + ": " + nodeIp);
-			return nodeIp;
+		waitForJobToBeRunning(jobId);
+		String nodeIp = waitForNodeIpToResolve(jobId);
+		nodeIpMap.put(jobId, nodeIp);
+		System.out.println(jobId + ": " + nodeIp);
+		return nodeIp;
 //		}
 	}
 
@@ -129,17 +130,16 @@ public class TorqueJPPFNodeDeployer {
 			deployInfrastructure();
 		}
 
-		// execute qsub helper script and pipe it into qsub (job submission)
-		String pathToQsubScript = "./" + DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB;
+		new NodeDeployTask();
 		String nodeNameBase = "CMNode" + sessionId;
 		String nodeName = nodeNameBase + "_" + currentNodeNumber;
 		String nodeConfigFileName = configFileName();
 		uploadNodeConfiguration(nodeConfigFileName, nodeConfiguration.getDriverAddress());
-		final String makeQsubScriptExecutable = "chmod +x " + pathToQsubScript + ";";
-		final String submitJobToQsub = pathToQsubScript + " " + nodeName + " " + nodeConfigFileName + "|qsub";
+		final String makeQsubScriptExecutable = "chmod +x " + PATH_TO_QSUB_SCRIPT + ";";
+		final String submitJobToQsub = PATH_TO_QSUB_SCRIPT + " " + nodeName + " " + nodeConfigFileName + "|qsub";
 		String currentJobId = executeWithResult(makeQsubScriptExecutable + submitJobToQsub);
 		jobIdList.add(currentJobId);
-		
+
 		TorqueNode torqueNode = new TorqueNode(NodeType.NODE);
 		currentNodeNumber.incrementAndGet();
 		return torqueNode;
@@ -156,10 +156,7 @@ public class TorqueJPPFNodeDeployer {
 			driverIp = localIp;
 		}
 		try {
-			InputStream propertyStream = new JPPFNodeConfiguration()
-					.setProperty("jppf.server.host", driverIp)
-					.setProperty("jppf.management.port", String.valueOf(managementPort))
-					.getPropertyStream();
+			InputStream propertyStream = new JPPFNodeConfiguration().setProperty("jppf.server.host", driverIp).setProperty("jppf.management.port", String.valueOf(managementPort)).setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-" + sessionId + "_" + currentNodeNumber).getPropertyStream();
 			sshClient.sftpUpload(propertyStream, DEPLOY_BASE_NAME + "/config/" + nodeConfigFileName);
 		} catch (IOException ex) {
 			Logger.getLogger(TorqueJPPFNodeDeployer.class.getName()).log(Level.SEVERE, null, ex);
@@ -279,5 +276,12 @@ public class TorqueJPPFNodeDeployer {
 		} else {
 			throw new IllegalStateException("Job has errors");
 		}
+	}
+
+	private class NodeDeployTask {
+
+		public NodeDeployTask() {
+		}
+		
 	}
 }
