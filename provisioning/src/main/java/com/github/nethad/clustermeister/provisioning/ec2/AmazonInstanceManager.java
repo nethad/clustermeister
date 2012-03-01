@@ -225,8 +225,14 @@ public class AmazonInstanceManager {
 		logger.debug("Trying to connect to node's JMX management...", instanceMetadata.getId());
 		NodeManagementConnector.connectToNodeManagement(wrapper);
 		logger.debug("Connected to JMX management.");
-		return new AmazonNode(getUUID(wrapper), nodeConfig.getType(), 
+		AmazonNode node = new AmazonNode(getUUID(wrapper), nodeConfig.getType(), 
 				getManagementPort(wrapper), instanceMetadata);
+		try {
+			wrapper.close();
+		} catch (Exception ex) {
+			logger.warn("Could not close connection to node management.", ex);
+		}
+		return node;
 	}
 	
 	/**
