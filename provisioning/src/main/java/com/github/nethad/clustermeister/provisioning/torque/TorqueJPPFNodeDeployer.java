@@ -17,12 +17,10 @@ package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
-import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientExcpetion;
-import com.jcraft.jsch.SftpException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -41,15 +39,15 @@ import java.util.logging.Logger;
  *
  * @author thomas
  */
-public class TorqueJPPFNodeDeployer {
+public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
 
-	public static final int DEFAULT_MANAGEMENT_PORT = 11198;
-	private static final String DEPLOY_BASE_NAME = "jppf-node";
+//	private static final int DEFAULT_MANAGEMENT_PORT = 11198;
+//	private static final String DEPLOY_BASE_NAME = "jppf-node";
 	private static final String DEPLOY_ZIP = DEPLOY_BASE_NAME + ".zip";
-	private static final String DEPLOY_CONFIG_SUFFIX = ".properties";
+//	private static final String DEPLOY_CONFIG_SUFFIX = ".properties";
 //    private static final String DEPLOY_PROPERTIES = DEPLOY_BASE_NAME + DEPLOY_CONFIG_SUFFIX;
-	private static final String DEPLOY_QSUB = "qsub-node.sh";
-	public static final String PATH_TO_QSUB_SCRIPT = "./" + DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB;
+//	private static final String DEPLOY_QSUB = "qsub-node.sh";
+//	private static final String PATH_TO_QSUB_SCRIPT = "./" + DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB;
 
 	private static final int POLLING_INTERVAL = 1000;
 	private String host;
@@ -91,7 +89,7 @@ public class TorqueJPPFNodeDeployer {
 
 			prepareLocalIP();
 
-			submitJobs(numberOfNodes);
+			submitJobs_massSubmission(numberOfNodes);
 //	    resolveNodeIpAddresses();
 		} catch (SSHClientExcpetion ex) {
 			System.out.println(ex.getClass().getName() + ": "+ex.getMessage());
@@ -102,7 +100,7 @@ public class TorqueJPPFNodeDeployer {
 		}
 	}
 
-	private void deployInfrastructure() throws SSHClientExcpetion {
+	public synchronized void deployInfrastructure() throws SSHClientExcpetion {
 		if (isInfrastructureDeployed) {
 			return;
 		}
@@ -115,7 +113,10 @@ public class TorqueJPPFNodeDeployer {
 		executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "*");
 
 		uploadResources();
-
+		
+		final String makeQsubScriptExecutable = "chmod +x " + PATH_TO_QSUB_SCRIPT + ";";
+		sshClient.executeWithResult(makeQsubScriptExecutable);
+		
 		prepareLocalIP();
 		isInfrastructureDeployed = true;
 	}
@@ -127,6 +128,7 @@ public class TorqueJPPFNodeDeployer {
 		sshClient.sftpUpload(getResourcePath(DEPLOY_QSUB), DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB);
 	}
 
+	/*
 	private String resolveNodeIpAddresses(String jobId) throws SSHClientExcpetion {
 //		for (String jobId : jobIdList) {
 		waitForJobToBeRunning(jobId);
@@ -136,13 +138,13 @@ public class TorqueJPPFNodeDeployer {
 		return nodeIp;
 //		}
 	}
+	*/
 
 	public TorqueNode submitJob(NodeConfiguration nodeConfiguration) throws SSHClientExcpetion {
 		if (!isInfrastructureDeployed) {
 			deployInfrastructure();
 		}
-		NodeDeployTask nodeDeployTask = new NodeDeployTask(nodeConfiguration, currentNodeNumber.intValue());
-		currentNodeNumber.incrementAndGet();
+		NodeDeployTask nodeDeployTask = new NodeDeployTask(this, currentNodeNumber.getAndIncrement(), nodeConfiguration);
 		return nodeDeployTask.execute();
 //		String nodeNameBase = "CMNode" + sessionId;
 //		String nodeName = nodeNameBase + "_" + currentNodeNumber;
@@ -158,26 +160,7 @@ public class TorqueJPPFNodeDeployer {
 //		return torqueNode;
 	}
 
-	
-
 	/*
-	private void uploadNodeConfiguration(final String nodeConfigFileName, final String driverIpAddress) throws SSHClientExcpetion {
-		// generate properties file from configuration class and attach
-		// the local ip address as the driver's IP target address.
-		int managementPort = DEFAULT_MANAGEMENT_PORT + currentNodeNumber.intValue();
-		String driverIp;
-		if (driverIpAddress == null) {
-			driverIp = driverIpAddress;
-		} else {
-			driverIp = localIp;
-		}
-		try {
-			InputStream propertyStream = new JPPFNodeConfiguration()
-					.setProperty("jppf.server.host", driverIp)
-					.setProperty("jppf.management.port", String.valueOf(managementPort))
-					.setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-" + sessionId + "_" + currentNodeNumber)
-					.getPropertyStream();
-					*/
 	private void resolveNodeIpAddresses() throws SSHClientExcpetion {
 		for (String jobId : jobIdList) {
 			waitForJobToBeRunning(jobId);
@@ -186,8 +169,9 @@ public class TorqueJPPFNodeDeployer {
 			System.out.println(jobId + ": " + nodeIp);
 		}
 	}
+	*/ 
 
-	private void submitJobs(int numberOfNodes) throws SSHClientExcpetion {
+	private void submitJobs_massSubmission(int numberOfNodes) throws SSHClientExcpetion {
 		// assume java is installed (installed in ~/jdk-1.7)
 		// executeAndSysout("cp -R /home/user/dspicar/jdk-1.7 ~/jdk-1.7");
 
@@ -197,7 +181,7 @@ public class TorqueJPPFNodeDeployer {
 		String nodeNameBase = "Node" + sessionId;
 		String nodeName;
 		String nodeConfigFileName;
-		String currentJobId;
+//		String currentJobId;
 		nodeIpMap = new HashMap<String, String>();
 		jobIdList = new ArrayList<String>();
 		StringBuilder executeString = new StringBuilder();
@@ -212,6 +196,7 @@ public class TorqueJPPFNodeDeployer {
 //			currentJobId = executeWithResult(makeQsubScriptExecutable + submitJobToQsub);
 //			jobIdList.add(currentJobId);
 //			executeAndSysout("uname -r");
+			currentNodeNumber.incrementAndGet();
 		}
 		final String makeQsubScriptExecutable = "chmod +x " + pathToQsubScript;
 		executeAndSysout(makeQsubScriptExecutable);
@@ -246,7 +231,7 @@ public class TorqueJPPFNodeDeployer {
 			sshClient.sftpUpload(propertyStream, DEPLOY_BASE_NAME + "/config/" + nodeConfigFileName);
 		} catch (IOException ex) {
 			Logger.getLogger(TorqueJPPFNodeDeployer.class.getName()).log(Level.SEVERE, null, ex);
-		} catch (SftpException ex) {
+		} catch (SSHClientExcpetion ex) {
 			Logger.getLogger(TorqueJPPFNodeDeployer.class.getName()).log(Level.SEVERE, null, ex);
 		}
 	}
@@ -279,6 +264,7 @@ public class TorqueJPPFNodeDeployer {
 
 	}
 
+	/*
 	private String waitForNodeIpToResolve(String jobId) throws SSHClientExcpetion {
 		String nodeIp;
 		do {
@@ -287,7 +273,7 @@ public class TorqueJPPFNodeDeployer {
 			nodeIp = executeWithResult(command);
 		} while (nodeIp.isEmpty());
 		return nodeIp;
-	}
+	} 
 
 	private void waitForJobToBeInList(String jobId) throws SSHClientExcpetion, NumberFormatException {
 		String jobInListCommand = "pbsnodes | grep 'status ='|grep " + jobId + "|wc -l";
@@ -304,6 +290,7 @@ public class TorqueJPPFNodeDeployer {
 			timeoutCounter++;
 		} while (jobInList < 1 && timeoutCounter < timeout);
 	}
+	*/ 
 
 	private String getResourcePath(String resource) {
 		return TorqueJPPFDriverDeployer.class.getResource(resource).getPath();
@@ -365,29 +352,19 @@ public class TorqueJPPFNodeDeployer {
 		}
 	}
 
-	private class NodeDeployTask {
+	@Override
+	public String getDriverAddress() {
+		return localIp;
+	}
 
-		private NodeConfiguration nodeConfiguration;
-		private int nodeNumber;
+	@Override
+	public String getSessionId() {
+		return String.valueOf(sessionId);
+	}
 
-		public NodeDeployTask(NodeConfiguration nodeConfiguration, int nodeNumber) {
-			this.nodeConfiguration = nodeConfiguration;
-			this.nodeNumber = nodeNumber;
-		}
-
-		public TorqueNode execute() throws SSHClientExcpetion {
-			String nodeNameBase = "CMNode" + sessionId;
-			String nodeName = nodeNameBase + "_" + currentNodeNumber;
-			String nodeConfigFileName = configFileName();
-			uploadNodeConfiguration(nodeConfigFileName, nodeConfiguration.getDriverAddress());
-			final String makeQsubScriptExecutable = "chmod +x " + PATH_TO_QSUB_SCRIPT + ";";
-			final String submitJobToQsub = PATH_TO_QSUB_SCRIPT + " " + nodeName + " " + nodeConfigFileName + "|qsub";
-			String currentJobId = executeWithResult(makeQsubScriptExecutable + submitJobToQsub);
-			jobIdList.add(currentJobId);
-
-			TorqueNode torqueNode = new TorqueNode(NodeType.NODE);
-			return torqueNode;
-		}
+	@Override
+	public SSHClient sshClient() {
+		return sshClient;
 	}
 
 }

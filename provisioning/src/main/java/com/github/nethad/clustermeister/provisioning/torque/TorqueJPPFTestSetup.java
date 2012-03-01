@@ -15,6 +15,8 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
+import com.github.nethad.clustermeister.api.NodeConfiguration;
+import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFDriverConfigurationSource;
 
 /**
@@ -54,8 +56,14 @@ public class TorqueJPPFTestSetup {
     }
 
     private void startNodes() {
-        System.out.println("Start "+NUMBER_OF_NODES+" nodes.");
-//        new TorqueJPPFNodeDeployer().execute(NUMBER_OF_NODES);
+		//        System.out.println("Start "+NUMBER_OF_NODES+" nodes.");
+		//        new TorqueJPPFNodeDeployer().execute(NUMBER_OF_NODES);
+		TorqueNodeManager torqueNodeManager = new TorqueNodeManager(null);
+		torqueNodeManager.deployResources();
+		NodeConfiguration nodeConfiguration = new TorqueNodeConfiguration(NodeType.NODE);
+		for (int i = 0; i<NUMBER_OF_NODES; i++) {
+			torqueNodeManager.addNode(nodeConfiguration);
+		}
     }
 
     private class TorqueLocalRunner extends Thread {

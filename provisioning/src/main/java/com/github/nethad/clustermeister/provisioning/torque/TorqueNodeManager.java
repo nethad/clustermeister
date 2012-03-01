@@ -19,19 +19,15 @@ import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonNode;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientExcpetion;
-import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.jppf.server.nio.nodeserver.NodeNioServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * TODO: - functionality like add(deploy)/remove JPPD nodes. - starting/deploying drivers - this is not yet to be
@@ -42,6 +38,8 @@ import org.jppf.server.nio.nodeserver.NodeNioServer;
  */
 public class TorqueNodeManager {
 	public static final int THREAD_POOL_SIZE = 2;
+	
+	private Logger logger = LoggerFactory.getLogger(TorqueNodeManager.class);
 
 	private class AddNormalNodeTask implements Callable<TorqueNode> {
 
@@ -108,11 +106,15 @@ public class TorqueNodeManager {
 	}
 
 	private ListenableFuture<? extends Node> addNormalNode(NodeConfiguration nodeConfiguration) {
-//		try {
-			return executorService.submit(new AddNormalNodeTask(nodeConfiguration));
-//		} catch (SSHClientExcpetion ex) {
-//			Logger.getLogger(TorqueNodeManager.class.getName()).log(Level.SEVERE, null, ex);
-//		}
+		return executorService.submit(new AddNormalNodeTask(nodeConfiguration));
+	}
+	
+	public void deployResources() {
+		try {
+			nodeDeployer.deployInfrastructure();
+		} catch (SSHClientExcpetion ex) {
+			logger.error(null, ex);
+		}
 	}
 	
 }
