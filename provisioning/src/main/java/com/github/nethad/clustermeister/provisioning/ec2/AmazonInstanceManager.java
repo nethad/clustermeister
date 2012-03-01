@@ -17,14 +17,15 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
-import com.github.nethad.clustermeister.provisioning.utils.NodeManagementConnector;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.Monitor;
 import com.google.common.util.concurrent.SettableFuture;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
@@ -39,9 +40,6 @@ import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.ec2.compute.options.EC2TemplateOptions;
-import org.jppf.management.JMXConnectionWrapper;
-import org.jppf.management.JMXDriverConnectionWrapper;
-import org.jppf.management.JMXNodeConnectionWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,6 +76,10 @@ public class AmazonInstanceManager {
     private final ListenableFuture<ComputeServiceContext> contextFuture;
     private final SettableFuture<Template> templateFuture;
 	private final ListeningExecutorService executorService;
+	
+	private final Monitor portCounterMonitor = new Monitor(false);
+	private final Map<String, Integer> instanceToPortCounter = 
+			new HashMap<String, Integer>();
 
 	/**
 	 * Creates a new AmazonInstanceManager.
@@ -164,7 +166,8 @@ public class AmazonInstanceManager {
 			template.getOptions().userMetadata(userMetaData.get());
 		}
 		template.getOptions().as(EC2TemplateOptions.class).
-				inboundPorts(22, 11111, 11112, 11113, 11198, 12198);
+				inboundPorts(22, 11111, 11112, 11113, 
+				AmazonNodeManager.DEFAULT_MANAGEMENT_PORT, 12198);
 
 		// specify your own keypair for use in creating nodes
 		//TODO: remove need to specify keypair in AWS.
@@ -194,27 +197,24 @@ public class AmazonInstanceManager {
 		
 		ComputeServiceContext context = valueOrNotReady(contextFuture);
 		
-		String publicIp = instanceMetadata.getPublicAddresses().iterator().next();
-		JMXConnectionWrapper wrapper;
+		int managementPort;
 		switch(nodeConfig.getType()) {
 			case NODE: {
+				managementPort = getNextNodeManagementPort(instanceMetadata);
 				AmazonEC2JPPFDeployer deployer = 
 						new AmazonEC2JPPFNodeDeployer(context, instanceMetadata, 
-						getLoginCredentials(nodeConfig), nodeConfig.getDriverAddress());
+						getLoginCredentials(nodeConfig), nodeConfig.getDriverAddress(), 
+						managementPort);
 				deployer.run();
-
-				//TODO: management port should be dynamic to allow multiple nodes per instance.
-				wrapper = new JMXNodeConnectionWrapper(publicIp, 11198);
 				break;
 			}
 			case DRIVER: {
+				managementPort = AmazonNodeManager.DEFAULT_MANAGEMENT_PORT;
 				AmazonEC2JPPFDeployer deployer = 
 						new AmazonEC2JPPFDriverDeployer(context, instanceMetadata, 
-						getLoginCredentials(nodeConfig));
+						getLoginCredentials(nodeConfig), managementPort);
 				deployer.run();
 
-				//TODO: management port should be dynamic to allow multiple nodes per instance.
-				wrapper = new JMXDriverConnectionWrapper(publicIp, 11198);
 				break;
 			}
 			default: {
@@ -222,17 +222,44 @@ public class AmazonInstanceManager {
 			}
 		}
 		
-		logger.debug("Trying to connect to node's JMX management...", instanceMetadata.getId());
-		NodeManagementConnector.connectToNodeManagement(wrapper);
-		logger.debug("Connected to JMX management.");
-		AmazonNode node = new AmazonNode(getUUID(wrapper), nodeConfig.getType(), 
-				getManagementPort(wrapper), instanceMetadata);
-		try {
-			wrapper.close();
-		} catch (Exception ex) {
-			logger.warn("Could not close connection to node management.", ex);
-		}
+		AmazonNode node = new AmazonNode(getId(instanceMetadata, managementPort), 
+				nodeConfig.getType(), managementPort, instanceMetadata);
 		return node;
+	}
+
+	private String getId(NodeMetadata instanceMetadata, int managementPort) {
+		return instanceMetadata.getId() + ":" + String.valueOf(managementPort);
+	}
+
+	private int getNextNodeManagementPort(NodeMetadata instanceMetadata) {
+		portCounterMonitor.enter();
+		try {
+			Integer portCounter = instanceToPortCounter.get(instanceMetadata.getId());
+			if(portCounter == null) {
+				portCounter = new Integer(AmazonNodeManager.DEFAULT_MANAGEMENT_PORT + 1);
+				instanceToPortCounter.put(instanceMetadata.getId(), portCounter);
+			} else {
+				portCounter += 1;
+			}
+			return portCounter;
+		} finally {
+			portCounterMonitor.leave();
+		}
+	}
+	
+	private void decrementAndManagePortCounter(String instanceId) {
+		portCounterMonitor.enter();
+		try {
+			Integer portCounter = instanceToPortCounter.get(instanceId);
+			if (portCounter != null) {
+				portCounter -= 1;
+				if (portCounter <= AmazonNodeManager.DEFAULT_MANAGEMENT_PORT) {
+					instanceToPortCounter.remove(instanceId);
+				}
+			}
+		} finally {
+			portCounterMonitor.leave();
+		}
 	}
 	
 	/**
@@ -245,6 +272,7 @@ public class AmazonInstanceManager {
 	void suspendInstance(String instanceId) {
 		logger.info("Suspending instance {}.", instanceId);
 		valueOrNotReady(contextFuture).getComputeService().suspendNode(instanceId);
+		decrementAndManagePortCounter(instanceId);
 		logger.info("Instance {} suspended.", instanceId);
 	}
 	
@@ -258,6 +286,7 @@ public class AmazonInstanceManager {
 	void terminateInstance(String instanceId) {
 		logger.info("Terminating instance {}.", instanceId);
 		valueOrNotReady(contextFuture).getComputeService().destroyNode(instanceId);
+		decrementAndManagePortCounter(instanceId);
 		logger.info("Instance {} terminated.", instanceId);
 	}
 	
@@ -313,30 +342,6 @@ public class AmazonInstanceManager {
 		}
 		return templateBuilder.buildTemplate();
     }
-	
-	private String getUUID(JMXConnectionWrapper wrapper) throws IllegalStateException {
-		String uuid;
-		try {
-			uuid = wrapper.systemInformation().getUuid().getProperty("jppf.uuid");
-		} catch (Exception ex) {
-			logger.error("Could not get UUID for {}", wrapper.getId());
-			throw new IllegalStateException(ex);
-		}
-		logger.debug("Got UUID: {}", uuid);
-		return uuid;
-	}
-	
-	private int getManagementPort(JMXConnectionWrapper wrapper) throws IllegalStateException {
-		int managementPort;
-		try {
-			managementPort = wrapper.getPort();
-		} catch (Exception ex) {
-			logger.error("Could not get management port for {}", wrapper.getId());
-			throw new IllegalStateException(ex);
-		}
-		logger.debug("Got management port: {}", managementPort);
-		return managementPort;
-	}
 	
 	private boolean isImageIdSet() {
 		return (imageId != null && !imageId.isEmpty());
