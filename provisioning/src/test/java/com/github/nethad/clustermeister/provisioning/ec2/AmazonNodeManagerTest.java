@@ -50,7 +50,7 @@ public class AmazonNodeManagerTest {
 		AmazonNodeManager nodeManager = new AmazonNodeManager(config);
 		
 		Optional<String> absentInstanceId = Optional.absent();
-		final Future<Node> d = nodeManager.addNode(new NodeConfiguration() {
+		final Future<? extends Node> d = nodeManager.addNode(new NodeConfiguration() {
 			@Override
 			public NodeType getType() {
 				return NodeType.DRIVER;
@@ -77,7 +77,7 @@ public class AmazonNodeManagerTest {
 			}
 		}, absentInstanceId);
 		
-		final Future<Node> n = nodeManager.addNode(new NodeConfiguration() {
+		final Future<? extends Node> n = nodeManager.addNode(new NodeConfiguration() {
 			@Override
 			public NodeType getType() {
 				return NodeType.NODE;
@@ -109,7 +109,7 @@ public class AmazonNodeManagerTest {
 			}
 		}, absentInstanceId);
 		
-		final Future<Node> n2 = nodeManager.addNode(new NodeConfiguration() {
+		final Future<? extends Node> n2 = nodeManager.addNode(new NodeConfiguration() {
 			@Override
 			public NodeType getType() {
 				return NodeType.NODE;

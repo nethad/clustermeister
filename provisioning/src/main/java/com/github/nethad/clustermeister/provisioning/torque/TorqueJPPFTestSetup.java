@@ -22,7 +22,7 @@ import com.github.nethad.clustermeister.provisioning.jppf.JPPFDriverConfiguratio
  * @author thomas
  */
 public class TorqueJPPFTestSetup {
-    private static final int NUMBER_OF_NODES = 2;
+    private static final int NUMBER_OF_NODES = 6;
 
     public static void main(String... args) {
         new TorqueJPPFTestSetup().execute();
