@@ -17,12 +17,12 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.Node;
-import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.github.nethad.clustermeister.provisioning.utils.NodeManagementConnector;
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeoutException;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jppf.management.JMXDriverConnectionWrapper;
@@ -50,233 +51,260 @@ import org.slf4j.LoggerFactory;
  * @author daniel
  */
 public class AmazonNodeManager {
-	public static final int DEFAULT_MANAGEMENT_PORT = 11198;
-	
-	private final static Logger logger = 
-			LoggerFactory.getLogger(AmazonNodeManager.class);
-	
-	final AmazonInstanceManager amazonInstanceManager;
-	final Configuration configuration;
-	
-	//TODO: make sure this will not cause a memory leak
-	Map<AmazonNode, JPPFManagementByJobsClient> managementClients = 
-			Collections.synchronizedMap(new HashMap<AmazonNode, JPPFManagementByJobsClient>());			
-	private Set<AmazonNode> drivers = new HashSet<AmazonNode>();
-	private Set<AmazonNode> nodes = new HashSet<AmazonNode>();
-	private final Monitor managedNodesMonitor = new Monitor(false);
-	
-	private final ListeningExecutorService executorService;
 
-	public AmazonNodeManager(Configuration configuration) {
-		this.configuration = configuration;
-		executorService = MoreExecutors.listeningDecorator(
-				Executors.newCachedThreadPool());
-		this.amazonInstanceManager = 
-				new AmazonInstanceManager(configuration, executorService);
-	}
-	
-	public Collection<? extends Node> getNodes() {
-		managedNodesMonitor.enter();
-		try {
-			List<AmazonNode> allNodes = 
-					new ArrayList<AmazonNode>(drivers.size() + nodes.size());
-			allNodes.addAll(nodes);
-			allNodes.addAll(drivers);
-			return Collections.unmodifiableCollection(allNodes);
-		} finally {
-			managedNodesMonitor.leave();
-		}
-	}
+    public static final int DEFAULT_MANAGEMENT_PORT = 11198;
+    
+    private final static Logger logger =
+            LoggerFactory.getLogger(AmazonNodeManager.class);
+    
+    final AmazonInstanceManager amazonInstanceManager;
+    
+    final Configuration configuration;
+    
+    //TODO: make sure this will not cause a memory leak
+    Map<AmazonNode, JPPFManagementByJobsClient> managementClients =
+            Collections.synchronizedMap(new HashMap<AmazonNode, JPPFManagementByJobsClient>());
+    private Set<AmazonNode> drivers = new HashSet<AmazonNode>();
+    private Set<AmazonNode> nodes = new HashSet<AmazonNode>();
+    
+    private final Monitor managedNodesMonitor = new Monitor(false);
+    
+    private final ListeningExecutorService executorService;
 
-	public ListenableFuture<? extends Node> addNode(NodeConfiguration nodeConfiguration, 
-			Optional<String> instanceId) {
-		return executorService.submit(new AddNodeTask(nodeConfiguration, instanceId));
-	}
-	
-	/**
-	 * 
-	 * @param node
-	 * @param shutdownMethod
-	 * @return	The future return null upon successful completion. 
-	 */
-	public ListenableFuture<Void> removeNode(AmazonNode node, 
-			AmazonInstanceShutdownMethod shutdownMethod) {
-		return executorService.submit(
-				new RemoveNodeTask(node, shutdownMethod, amazonInstanceManager));
-	}
+    public AmazonNodeManager(Configuration configuration) {
+        this.configuration = configuration;
+        executorService = MoreExecutors.listeningDecorator(
+                Executors.newCachedThreadPool());
+        this.amazonInstanceManager =
+                new AmazonInstanceManager(configuration, executorService);
+    }
 
-	public void close() {
-		if(amazonInstanceManager != null) {
-			managedNodesMonitor.enter();
-			try {
-				drivers.clear();
-				nodes.clear();
-			} finally {
-				managedNodesMonitor.leave();
-			}
-			amazonInstanceManager.close();
-		}
-	}
-	
-	private void addManagedNode(AmazonNode node) {
-		managedNodesMonitor.enter();
-		try {
-			switch(node.getType()) {
-				case NODE: {
-					nodes.add(node);
-					break;
-				}
-				case DRIVER:  {
-					drivers.add(node);
-					String publicIp = Iterables.getFirst(node.getPublicAddresses(), null);
-					managementClients.put(node, JPPFConfiguratedComponentFactory.getInstance().
-							createManagementByJobsClient(publicIp, 11111));
-					break;
-				}
-				default: {
-					throw new IllegalArgumentException("Invalid Node Type.");
-				}
-			}
-		} finally {
-			managedNodesMonitor.leave();
-		}
-	}
-	
-	private void removeManagedNode(AmazonNode node) {
-		managedNodesMonitor.enter();
-		try {
-			switch(node.getType()) {
-				case NODE: {
-					nodes.remove(node);
-					break;
-				}
-				case DRIVER:  {
-					drivers.remove(node);
-					managementClients.remove(node);
-					break;
-				}
-				default: {
-					throw new IllegalArgumentException("Invalid Node Type.");
-				}
-			}
-		} finally {
-			managedNodesMonitor.leave();
-		}
-	}
-	
-	private class AddNodeTask implements Callable<AmazonNode> {
+    public Collection<? extends Node> getNodes() {
+        managedNodesMonitor.enter();
+        try {
+            List<AmazonNode> allNodes =
+                    new ArrayList<AmazonNode>(drivers.size() + nodes.size());
+            allNodes.addAll(nodes);
+            allNodes.addAll(drivers);
+            return Collections.unmodifiableCollection(allNodes);
+        } finally {
+            managedNodesMonitor.leave();
+        }
+    }
 
-		private final NodeConfiguration nodeConfiguration;
-		private final Optional<String> instanceId;
+    public ListenableFuture<? extends Node> addNode(AmazonNodeConfiguration nodeConfiguration,
+            Optional<String> instanceId) {
+        return executorService.submit(new AddNodeTask(nodeConfiguration, instanceId));
+    }
 
-		public AddNodeTask(NodeConfiguration nodeConfiguration, Optional<String> instanceId) {
-			this.nodeConfiguration = nodeConfiguration;
-			this.instanceId = instanceId;
-		}
-		
-		@Override
-		public AmazonNode call() throws Exception {
-			NodeMetadata instanceMetadata;
-			if (!instanceId.isPresent()) {
-				try {
-					Optional<Map<String, String>> noMap = Optional.absent();
-					instanceMetadata = amazonInstanceManager.createInstance(noMap);
-				} catch (RunNodesException ex) {
-					return null;
-				}
-			} else {
-				instanceMetadata = amazonInstanceManager.getInstanceMetadata(instanceId.get());
-			}
-			AmazonNode node;
-			try {
-				node = amazonInstanceManager.deploy(instanceMetadata, nodeConfiguration);
-			} catch (Throwable ex) {
-				if (instanceId.isPresent()) {
-					amazonInstanceManager.suspendInstance(instanceMetadata.getId());
-				} else {
-					amazonInstanceManager.terminateInstance(instanceMetadata.getId());
-				}
-				return null;
-			}
+    /**
+     *
+     * @param node
+     * @param shutdownMethod
+     * @return	The future return null upon successful completion.
+     */
+    public ListenableFuture<Void> removeNode(AmazonNode node,
+            AmazonInstanceShutdownMethod shutdownMethod) {
+        return executorService.submit(
+                new RemoveNodeTask(node, shutdownMethod, amazonInstanceManager));
+    }
 
-			addManagedNode(node);
+    public void close() {
+        if (amazonInstanceManager != null) {
+            managedNodesMonitor.enter();
+            try {
+                drivers.clear();
+                nodes.clear();
+            } finally {
+                managedNodesMonitor.leave();
+            }
+            amazonInstanceManager.close();
+        }
+    }
 
-			return node;
-		}
-	}
-	
-	private class RemoveNodeTask implements Callable<Void> {
+    private void addManagedNode(AmazonNode node) {
+        managedNodesMonitor.enter();
+        try {
+            switch (node.getType()) {
+                case NODE: {
+                    nodes.add(node);
+                    break;
+                }
+                case DRIVER: {
+                    drivers.add(node);
+                    String publicIp = Iterables.getFirst(node.getPublicAddresses(), null);
+                    managementClients.put(node, JPPFConfiguratedComponentFactory.getInstance().
+                            createManagementByJobsClient(publicIp, 11111));
+                    break;
+                }
+                default: {
+                    throw new IllegalArgumentException("Invalid Node Type.");
+                }
+            }
+        } finally {
+            managedNodesMonitor.leave();
+        }
+    }
 
-		private final AmazonNode node;
-		private final AmazonInstanceShutdownMethod shutdownMethod;
-		private final AmazonInstanceManager instanceManager;
+    private void removeManagedNode(AmazonNode node) {
+        managedNodesMonitor.enter();
+        try {
+            switch (node.getType()) {
+                case NODE: {
+                    nodes.remove(node);
+                    break;
+                }
+                case DRIVER: {
+                    drivers.remove(node);
+                    managementClients.remove(node);
+                    break;
+                }
+                default: {
+                    throw new IllegalArgumentException("Invalid Node Type.");
+                }
+            }
+        } finally {
+            managedNodesMonitor.leave();
+        }
+    }
 
-		public RemoveNodeTask(AmazonNode node, AmazonInstanceShutdownMethod shutdownMethod, 
-				AmazonInstanceManager instanceManager) {
-			this.node = node;
-			this.shutdownMethod = shutdownMethod;
-			this.instanceManager = instanceManager;
-		}
+    private class AddNodeTask implements Callable<AmazonNode> {
 
-		@Override
-		public Void call() throws Exception {
-			
-			String publicIp = Iterables.getFirst(node.getPublicAddresses(), null);
-			checkNotNull(publicIp, "Can not get public IP of node " + node + ".");
-			switch(node.getType()) {
-				case DRIVER: {
-					JMXDriverConnectionWrapper wrapper = 
-							new JMXDriverConnectionWrapper(publicIp, node.getManagementPort());
-					NodeManagementConnector.connectToNodeManagement(wrapper);
-					wrapper.restartShutdown(0l, -1l);
-					try {
-						wrapper.close();
-					} catch (Exception ex) {
-						logger.warn("Could not close connection to node management.", ex);
-					}
-					break;
-				}
-				case NODE: {
-					JMXNodeConnectionWrapper wrapper = 
-							new JMXNodeConnectionWrapper(publicIp, node.getManagementPort());
-					NodeManagementConnector.connectToNodeManagement(wrapper);
-					wrapper.shutdown();
-					try {
-						wrapper.close();
-					} catch (Exception ex) {
-						logger.warn("Could not close connection to node management.", ex);
-					}
-					break;
-				}
-				default: {
-					throw new IllegalArgumentException("Invalid node type");
-				}
-			}
-			
-			switch(shutdownMethod) {
-				case SHUTDOWN: {
-					instanceManager.suspendInstance(node.getInstanceId());
-					break;
-				}
-				case TERMINATE: {
-					instanceManager.terminateInstance(node.getInstanceId());
-					break;
-				}
-				case NO_SHUTDOWN: {
-					logger.info("No shutdown specified. Instance continues running...");
-					//do nothing
-					break;
-				}
-				default: {
-					logger.warn("Invalid shutdown method specified. Suspending instance...");
-					instanceManager.suspendInstance(node.getInstanceId());
-					break;
-				}
-			}
-			
-			removeManagedNode(node);
-			
-			return null;
-		}
-	}
+        private final AmazonNodeConfiguration nodeConfiguration;
+        private final Optional<String> instanceId;
+
+        public AddNodeTask(AmazonNodeConfiguration nodeConfiguration, Optional<String> instanceId) {
+            this.nodeConfiguration = nodeConfiguration;
+            this.instanceId = instanceId;
+        }
+
+        @Override
+        public AmazonNode call() throws Exception {
+            NodeMetadata instanceMetadata;
+            if (!instanceId.isPresent()) {
+                try {
+                    Optional<Map<String, String>> noMap = Optional.absent();
+                    instanceMetadata = amazonInstanceManager.createInstance(noMap);
+                } catch (RunNodesException ex) {
+                    return null;
+                }
+            } else {
+                instanceMetadata = amazonInstanceManager.getInstanceMetadata(instanceId.get());
+            }
+            AmazonNode node;
+            try {
+                node = amazonInstanceManager.deploy(instanceMetadata, nodeConfiguration);
+            } catch (Throwable ex) {
+                if (instanceId.isPresent()) {
+                    amazonInstanceManager.suspendInstance(instanceMetadata.getId());
+                } else {
+                    amazonInstanceManager.terminateInstance(instanceMetadata.getId());
+                }
+                return null;
+            }
+
+            addManagedNode(node);
+
+            return node;
+        }
+    }
+
+    private class RemoveNodeTask implements Callable<Void> {
+
+        private final AmazonNode node;
+        private final AmazonInstanceShutdownMethod shutdownMethod;
+        private final AmazonInstanceManager instanceManager;
+
+        public RemoveNodeTask(AmazonNode node, AmazonInstanceShutdownMethod shutdownMethod,
+                AmazonInstanceManager instanceManager) {
+            this.node = node;
+            this.shutdownMethod = shutdownMethod;
+            this.instanceManager = instanceManager;
+        }
+
+        @Override
+        public Void call() throws Exception {
+
+            String publicIp = Iterables.getFirst(node.getPublicAddresses(), null);
+            checkNotNull(publicIp, "Can not get public IP of node " + node + ".");
+            switch (node.getType()) {
+                case DRIVER: {
+                    driverShutdown(publicIp);
+                    break;
+                }
+                case NODE: {
+                    String privateIp = Iterables.getFirst(node.getPrivateAddresses(), null);
+                    AmazonNode driverNode = getDriverForNode(node);
+                    JPPFManagementByJobsClient managementClient = managementClients.get(driverNode);
+                    if(managementClient == null || 
+                            !managementClient.shutdownNode(privateIp, node.getManagementPort())) {
+                        nodeShutdownFallback(publicIp);
+                    }
+                    break;
+                }
+                default: {
+                    throw new IllegalArgumentException("Invalid node type");
+                }
+            }
+
+            switch (shutdownMethod) {
+                case SHUTDOWN: {
+                    instanceManager.suspendInstance(node.getInstanceId());
+                    break;
+                }
+                case TERMINATE: {
+                    instanceManager.terminateInstance(node.getInstanceId());
+                    break;
+                }
+                case NO_SHUTDOWN: {
+                    logger.info("No shutdown specified. Instance continues running...");
+                    //do nothing
+                    break;
+                }
+                default: {
+                    logger.warn("Invalid shutdown method specified. Suspending instance...");
+                    instanceManager.suspendInstance(node.getInstanceId());
+                    break;
+                }
+            }
+
+            removeManagedNode(node);
+
+            return null;
+        }
+        
+        private AmazonNode getDriverForNode(final AmazonNode node) {
+            return Iterables.find(drivers, new Predicate<AmazonNode>() {
+                @Override
+                public boolean apply(AmazonNode input) {
+                    return Iterables.contains(input.getPublicAddresses(), node.getDriverAddress()) 
+                            || Iterables.contains(input.getPrivateAddresses(), node.getDriverAddress());
+                }
+            });
+        }
+
+        private void driverShutdown(String publicIp) throws TimeoutException, Exception {
+            JMXDriverConnectionWrapper wrapper =
+                    new JMXDriverConnectionWrapper(publicIp, node.getManagementPort());
+            NodeManagementConnector.connectToNodeManagement(wrapper);
+            wrapper.restartShutdown(0l, -1l);
+            try {
+                wrapper.close();
+            } catch (Exception ex) {
+                logger.warn("Could not close connection to node management.", ex);
+            }
+        }
+
+        private void nodeShutdownFallback(String publicIp) throws Exception, TimeoutException {
+            JMXNodeConnectionWrapper wrapper =
+                    new JMXNodeConnectionWrapper(publicIp, node.getManagementPort());
+            NodeManagementConnector.connectToNodeManagement(wrapper);
+            wrapper.shutdown();
+            try {
+                wrapper.close();
+            } catch (Exception ex) {
+                logger.warn("Could not close connection to node management.", ex);
+            }
+        }
+    }
 }
