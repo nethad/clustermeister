@@ -20,86 +20,87 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.jppf.management.JMXConnectionWrapper;
 import org.jppf.management.JMXNodeConnectionWrapper;
 import org.jppf.server.protocol.JPPFRunnable;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author thomas
  */
 public class JPPFShutdownTask implements Serializable {
+    
+    private final static org.slf4j.Logger logger =
+            LoggerFactory.getLogger(JPPFShutdownTask.class);
 
-	@JPPFRunnable
-	public void shutdownNodes(List<String> sockets, int myPort) throws TimeoutException, Exception {
-		System.out.println("running");
+    @JPPFRunnable
+    public void shutdownNodes(List<String> sockets, int myPort) throws TimeoutException, Exception {
+        System.out.println("running");
 
-		System.out.println("list size: " + sockets.size());
-		List<Thread> runningThreads = startShutdownTaskThreads(sockets, myPort);
-		
-		waitForAllThreadsToComplete(runningThreads);
-		shutdownThisRunningNode(myPort);
-	}
+        System.out.println("list size: " + sockets.size());
+        List<Thread> runningThreads = startShutdownTaskThreads(sockets, myPort);
 
-	private void shutdownThisRunningNode(int myPort) throws Exception, TimeoutException {
-		System.out.println("shutting down myself");
-		JMXNodeConnectionWrapper wrapper;
-		wrapper = NodeManagementConnector.connectToNodeManagement_node(new JMXNodeConnectionWrapper("localhost", myPort));
-		wrapper.shutdown();
-	}
+        waitForAllThreadsToComplete(runningThreads);
+        shutdownThisRunningNode(myPort);
+    }
 
-	private void waitForAllThreadsToComplete(List<Thread> runningThreads) {
-		for (Thread thread : runningThreads) {
-			try {
-				thread.join();
-			} catch (InterruptedException ex) {
-				continue;
-			}
-		}
-	}
+    private void shutdownThisRunningNode(int myPort) throws Exception, TimeoutException {
+        System.out.println("shutting down myself");
+        JMXNodeConnectionWrapper wrapper;
+        wrapper = NodeManagementConnector.connectToNodeManagement_node(new JMXNodeConnectionWrapper("localhost", myPort));
+        wrapper.shutdown();
+    }
 
-	private List<Thread> startShutdownTaskThreads(List<String> sockets, int myPort) throws NumberFormatException {
-		List<Thread> runningThreads = new ArrayList<Thread>();
-		for (String socket : sockets) {
-			String[] split = socket.split(":");
-			String ip = split[0];
-			int port = Integer.parseInt(split[1]);
+    private void waitForAllThreadsToComplete(List<Thread> runningThreads) {
+        for (Thread thread : runningThreads) {
+            try {
+                thread.join();
+            } catch (InterruptedException ex) {
+                continue;
+            }
+        }
+    }
 
-			System.out.println("current socket: " + ip + ":" + port);
-			if (port != myPort) {
-				Thread t = new ShutdownTaskThread(ip, port);
-				runningThreads.add(t);
-				t.start();
-			}
-		}
-		return runningThreads;
-	}
+    private List<Thread> startShutdownTaskThreads(List<String> sockets, int myPort) throws NumberFormatException {
+        List<Thread> runningThreads = new ArrayList<Thread>();
+        for (String socket : sockets) {
+            String[] split = socket.split(":");
+            String ip = split[0];
+            int port = Integer.parseInt(split[1]);
 
-	private class ShutdownTaskThread extends Thread {
+            System.out.println("current socket: " + ip + ":" + port);
+            if (port != myPort) {
+                Thread t = new ShutdownTaskThread(ip, port);
+                runningThreads.add(t);
+                t.start();
+            }
+        }
+        return runningThreads;
+    }
 
-		private final String ip;
-		private final int port;
+    private class ShutdownTaskThread extends Thread {
 
-		public ShutdownTaskThread(String ip, int port) {
-			this.ip = ip;
-			this.port = port;
-		}
+        private final String ip;
+        private final int port;
 
-		@Override
-		public void run() {
-			try {
-				System.out.println("Shutting down " + ip + ":" + port);
-				JMXNodeConnectionWrapper wrapper = NodeManagementConnector.connectToNodeManagement_node(
-						new JMXNodeConnectionWrapper(ip, port));
-				wrapper.shutdown();
-				wrapper.close();
-			} catch (TimeoutException ex) {
-				Logger.getLogger(JPPFShutdownTask.class.getName()).log(Level.SEVERE, null, ex);
-			} catch (Exception ex) {
-				Logger.getLogger(JPPFShutdownTask.class.getName()).log(Level.SEVERE, null, ex);
-			}
-		}
-	}
+        public ShutdownTaskThread(String ip, int port) {
+            this.ip = ip;
+            this.port = port;
+        }
+
+        @Override
+        public void run() {
+            try {
+                System.out.println("Shutting down " + ip + ":" + port);
+                JMXNodeConnectionWrapper wrapper = NodeManagementConnector.connectToNodeManagement_node(
+                        new JMXNodeConnectionWrapper(ip, port));
+                wrapper.shutdown();
+                wrapper.close();
+            } catch (TimeoutException ex) {
+                logger.warn("Timed out waiting for node management connection.", ex);
+            } catch (Exception ex) {
+                logger.warn("Could not shut down {}:{}. {}", new Object[]{ip, port, ex.getMessage()});
+            }
+        }
+    }
 }
