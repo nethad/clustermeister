@@ -15,9 +15,11 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
+import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFDriverConfigurationSource;
+import com.google.common.util.concurrent.ListenableFuture;
 
 /**
  *
@@ -29,9 +31,11 @@ public class TorqueJPPFTestSetup {
     public static void main(String... args) {
         new TorqueJPPFTestSetup().execute();
     }
+	private TorqueNodeManager torqueNodeManager;
 
     private void execute() {
         System.setProperty("jppf.config.plugin", JPPFDriverConfigurationSource.class.getCanonicalName());
+		torqueNodeManager = new TorqueNodeManager(null);
 
         startDriver();
         startNodes();
@@ -43,22 +47,22 @@ public class TorqueJPPFTestSetup {
 //        ProcessLauncher processLauncher = new ProcessLauncher("org.jppf.server.JPPFDriver");
 //        processLauncher.run();
 
-        TorqueLocalRunner runner = new TorqueLocalRunner();
-        runner.start();
-
-//        try {
-//            Thread.sleep(5000);
-//            System.out.println("runner.stopDriver()");
-//            runner.stopDriver();
-//        } catch (InterruptedException ex) {
-//            Logger.getLogger(TorqueJPPFTestSetup.class.getName()).log(Level.SEVERE, null, ex);
-//        }
+//        TorqueLocalRunner runner = new TorqueLocalRunner();
+//        runner.start();
+		NodeConfiguration nodeConfiguration = new TorqueNodeConfiguration(NodeType.DRIVER);
+		ListenableFuture<? extends Node> node = torqueNodeManager.addNode(nodeConfiguration);
+		System.out.println("driver = " + node);
+		//        try {
+		//            Thread.sleep(5000);
+		//            System.out.println("runner.stopDriver()");
+		//            runner.stopDriver();
+		//        } catch (InterruptedException ex) {
+		//            Logger.getLogger(TorqueJPPFTestSetup.class.getName()).log(Level.SEVERE, null, ex);
+		//        }
     }
 
     private void startNodes() {
-		//        System.out.println("Start "+NUMBER_OF_NODES+" nodes.");
-		//        new TorqueJPPFNodeDeployer().execute(NUMBER_OF_NODES);
-		TorqueNodeManager torqueNodeManager = new TorqueNodeManager(null);
+		
 		torqueNodeManager.deployResources();
 		NodeConfiguration nodeConfiguration = new TorqueNodeConfiguration(NodeType.NODE);
 		for (int i = 0; i<NUMBER_OF_NODES; i++) {
