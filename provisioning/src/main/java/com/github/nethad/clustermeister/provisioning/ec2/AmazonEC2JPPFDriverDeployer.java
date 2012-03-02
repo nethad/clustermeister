@@ -53,22 +53,23 @@ public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
                 credentials(loginCredentials).build());
         client.connect();
         try {
-            execute("rm -rf jppf-driver*", client);
+            final String folderName = getFolderName();
+            execute("rm -rf " + folderName, client);
             upload(client, getClass().getResourceAsStream("jppf-driver.zip"),
-                    "/home/ec2-user/jppf-driver.zip");
-            execute("unzip jppf-driver.zip", client);
-            execute("chmod +x jppf-driver/startDriver.sh", client);
+                    "/home/ec2-user/" + folderName + ".zip");
+            execute("unzip " + folderName + ".zip -d " + folderName, client);
+            execute("chmod +x " + folderName + "/jppf-driver/startDriver.sh", client);
             upload(client, getRunningConfig(nodeProperties),
-                    "jppf-driver/config/jppf-driver.properties");
+                    folderName + "/jppf-driver/config/jppf-driver.properties");
 
             logger.info("Starting JPPF-Driver on {}...", metadata.getId());
-            final String script = "cd /home/ec2-user/jppf-driver\nnohup ./startDriver.sh > nohup.out 2>&1";
+            final String script = "cd /home/ec2-user/" + folderName + "/jppf-driver\nnohup ./startDriver.sh > nohup.out 2>&1";
             RunScriptOptions options = new RunScriptOptions().overrideLoginPrivateKey(
                     loginCredentials.getPrivateKey()).
                     overrideLoginUser(loginCredentials.getUser()).
                     blockOnComplete(false).
                     runAsRoot(false).
-                    nameTask("jppf-driver-start");
+                    nameTask(folderName + "-start");
             logExecResponse(context.getComputeService().
                     runScriptOnNode(metadata.getId(), script, options));
             logger.info("JPPF-Driver started.");

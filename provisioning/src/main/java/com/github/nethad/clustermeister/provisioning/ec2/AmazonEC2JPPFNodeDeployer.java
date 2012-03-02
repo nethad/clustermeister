@@ -57,22 +57,23 @@ public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
                 credentials(loginCredentials).build());
         client.connect();
         try {
-            execute("rm -rf jppf-node*", client);
+            final String folderName = getFolderName();
+            execute("rm -rf " + folderName, client);
             upload(client, getClass().getResourceAsStream("jppf-node.zip"),
-                    "/home/ec2-user/jppf-node.zip");
-            execute("unzip jppf-node.zip", client);
-            execute("chmod +x jppf-node/startNode.sh", client);
+                    "/home/ec2-user/" + folderName + ".zip");
+            execute("unzip " + folderName + ".zip -d " + folderName, client);
+            execute("chmod +x " + folderName + "/jppf-node/startNode.sh", client);
             upload(client, getRunningConfig(nodeProperties),
-                    "jppf-node/config/jppf-node.properties");
+                    folderName + "/jppf-node/config/jppf-node.properties");
 
             logger.info("Starting JPPF-Node on {}...", metadata.getId());
-            final String script = "cd /home/ec2-user/jppf-node\nnohup ./startNode.sh > nohup.out 2>&1";
+            final String script = "cd /home/ec2-user/" + folderName + "/jppf-node\nnohup ./startNode.sh > nohup.out 2>&1";
             RunScriptOptions options = new RunScriptOptions().overrideLoginPrivateKey(
                     loginCredentials.getPrivateKey()).
                     overrideLoginUser(loginCredentials.getUser()).
                     blockOnComplete(false).
                     runAsRoot(false).
-                    nameTask("jppf-node-start");
+                    nameTask(folderName + "-start");
             logExecResponse(context.getComputeService().
                     runScriptOnNode(metadata.getId(), script, options));
             logger.info("JPPF-Node started.");
