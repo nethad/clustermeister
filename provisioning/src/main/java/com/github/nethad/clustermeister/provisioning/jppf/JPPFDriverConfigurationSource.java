@@ -28,6 +28,9 @@ import org.jppf.utils.JPPFConfiguration;
  */
 public class JPPFDriverConfigurationSource implements JPPFConfiguration.ConfigurationSource {
 
+	public static int serverPort = 11111;
+	public static int managementPort = 11198;
+	
     public static String host = "localhost";
     Properties properties = new Properties();
 
@@ -37,6 +40,9 @@ public class JPPFDriverConfigurationSource implements JPPFConfiguration.Configur
 //        properties.setProperty("jppf.discovery.port", "11111");
         
         properties.setProperty("jppf.server.host", "localhost");
+		
+		properties.setProperty("jppf.server.port", String.valueOf(serverPort));
+		properties.setProperty("jppf.management.port", String.valueOf(managementPort));
         
         properties.setProperty("jppf.peer.server_1.server.host", "host_1");
         properties.setProperty("jppf.peer.server_1.server.port", "11111");

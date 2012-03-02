@@ -49,5 +49,9 @@ public class JPPFNodeConfiguration {
         properties.store(baos, "");
         return new ByteArrayInputStream(baos.toByteArray());
     }
+
+	public String getProperty(String key) {
+		return properties.getProperty(key);
+	}
     
 }
