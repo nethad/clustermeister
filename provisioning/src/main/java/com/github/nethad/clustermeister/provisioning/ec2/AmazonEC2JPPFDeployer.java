@@ -41,12 +41,14 @@ public abstract class AmazonEC2JPPFDeployer implements Runnable {
 	final LoginCredentials loginCredentials;
 	final ComputeServiceContext context;
 	final NodeMetadata metadata;
+	final int managementPort;
 
 	public AmazonEC2JPPFDeployer(LoginCredentials loginCredentials, 
-			ComputeServiceContext context, NodeMetadata metadata) {
+			ComputeServiceContext context, NodeMetadata metadata, int managementPort) {
 		this.loginCredentials = loginCredentials;
 		this.context = context;
 		this.metadata = metadata;
+		this.managementPort = managementPort;
 	}
 
 	ExecResponse execute(String command, SshClient client) {

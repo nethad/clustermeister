@@ -35,8 +35,8 @@ public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
 			LoggerFactory.getLogger(AmazonEC2JPPFDriverDeployer.class);
 	
 	public AmazonEC2JPPFDriverDeployer(ComputeServiceContext context, 
-			NodeMetadata metadata, LoginCredentials credentials) {
-		super(credentials, context, metadata);
+			NodeMetadata metadata, LoginCredentials credentials, int managementPort) {
+		super(credentials, context, metadata, managementPort);
 	}
 	
 	@Override
@@ -44,8 +44,7 @@ public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
 		final String publicIp = metadata.getPublicAddresses().iterator().next();
 		final String privateIp = metadata.getPrivateAddresses().iterator().next();
 		logger.info("Deploying JPPF-Driver to {} ({}).", metadata.getId(), publicIp);
-		Properties nodeProperties = getSettings(
-				privateIp);
+		Properties nodeProperties = getSettings(privateIp, managementPort);
 		
 		SshClient client = context.utils().sshForNode().apply(
 				NodeMetadataBuilder.fromNodeMetadata(metadata).
@@ -79,10 +78,11 @@ public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
 		logger.info("JPPF-Driver deployed on {}.", metadata.getId());
 	}
 	
-	private Properties getSettings(String managementHost) {
+	private Properties getSettings(String managementHost, int managementPort) {
 		Properties nodeProperties = getPropertiesFromStream(
 				this.getClass().getResourceAsStream("jppf-driver.properties"));
 		nodeProperties.setProperty("jppf.management.host", managementHost);
+		nodeProperties.setProperty("jppf.management.port", String.valueOf(managementPort));
 		return nodeProperties;
 	}
 }
