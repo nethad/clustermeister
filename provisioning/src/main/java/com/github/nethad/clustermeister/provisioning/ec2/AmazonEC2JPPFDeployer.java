@@ -100,6 +100,11 @@ public abstract class AmazonEC2JPPFDeployer implements Runnable {
         return new ByteArrayInputStream(runningConfig.toByteArray());
     }
     
+    protected String getFolderName() {
+        return "jppf-" + nodeConfiguration.getType().toString().toLowerCase() + "-" + 
+                metadata.getId().replace("/", "_") + "_" + nodeConfiguration.getManagementPort();
+    }
+    
     protected String getPrivateIp() {
         String privateIp = Iterables.getFirst(metadata.getPrivateAddresses(), null);
         checkState(privateIp != null, "No private IP set.");

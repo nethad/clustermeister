@@ -194,6 +194,7 @@ public class AmazonInstanceManager {
         switch (nodeConfig.getType()) {
             case NODE: {
                 managementPort = getNextNodeManagementPort(instanceMetadata);
+                nodeConfig.setManagementPort(managementPort);
                 AmazonEC2JPPFDeployer deployer =
                         new AmazonEC2JPPFNodeDeployer(context, instanceMetadata,
                         getLoginCredentials(nodeConfig), nodeConfig);
@@ -202,6 +203,7 @@ public class AmazonInstanceManager {
             }
             case DRIVER: {
                 managementPort = AmazonNodeManager.DEFAULT_MANAGEMENT_PORT;
+                nodeConfig.setManagementPort(managementPort);
                 AmazonEC2JPPFDeployer deployer =
                         new AmazonEC2JPPFDriverDeployer(context, instanceMetadata,
                         getLoginCredentials(nodeConfig), nodeConfig);
