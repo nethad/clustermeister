@@ -25,14 +25,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jppf.JPPFException;
 import org.jppf.client.JPPFClient;
 import org.jppf.client.JPPFJob;
-import org.jppf.client.JPPFResultCollector;
-import org.jppf.client.event.ClientEvent;
-import org.jppf.client.event.ClientListener;
 import org.jppf.management.JMXDriverConnectionWrapper;
 import org.jppf.management.JPPFManagementInfo;
 import org.jppf.node.policy.Equal;
@@ -47,6 +42,7 @@ public class JPPFManagementByJobsClient {
 
     private final static org.slf4j.Logger logger =
             LoggerFactory.getLogger(JPPFManagementByJobsClient.class);
+    
     private final JPPFClient jPPFClient;
 
     /**
@@ -98,40 +94,34 @@ public class JPPFManagementByJobsClient {
 
     public void shutdownAllNodes(String driverHost, int managementPort) {
         try {
-
-//			ShutdownRunner runner = new ShutdownRunner();
-            JMXDriverConnectionWrapper wrapper = NodeManagementConnector.openDriverConnection(driverHost, managementPort);
+            JMXDriverConnectionWrapper wrapper = 
+                    NodeManagementConnector.openDriverConnection(driverHost, managementPort);
             List<String> sockets = new ArrayList<String>();
             for (JPPFManagementInfo nodeInfo : wrapper.nodesInformation()) {
-//				System.out.println("M Port: " + nodeInfo.getPort());
                 sockets.add(nodeInfo.getHost() + ":" + nodeInfo.getPort());
             }
 
             JPPFJob job = new JPPFJob();
-            System.out.println("UUID: " + job.getUuid());
-            job.setName("Shut down job");
+            job.setName("Shutdown Job");
             String[] split = sockets.get(0).split(":");
             int port = Integer.parseInt(split[1]);
-            System.out.println("chose port: " + port);
-            System.out.println("list size: " + sockets.size());
+            logger.debug("Chose node with port {} as executor.", port);
             job.addTask(new JPPFShutdownTask(), sockets, port);
             job.getSLA().setMaxNodes(1);
             job.getSLA().setExecutionPolicy(new Equal("jppf.management.port", port));
 
             job.setBlocking(false);
-            JPPFResultCollector collector = new JPPFResultCollector(job);
-            job.setResultListener(collector);
             jPPFClient.submit(job);
 
-            System.out.println("waiting...");
+            logger.debug("Waiting for all nodes to shut down...");
             while (wrapper.nodesInformation().size() > 0) {
                 Thread.sleep(1000);
             }
-            System.out.println("canceling job");
+            logger.debug("All nodes are shut down. Canceling Job: {}", job.getName());
             wrapper.cancelJob(job.getUuid());
             wrapper.close();
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.warn("Failed to shut down all nodes.", e);
         } finally {
             if (jPPFClient != null) {
                 jPPFClient.close();
@@ -141,12 +131,13 @@ public class JPPFManagementByJobsClient {
 
     public void shutdownDriver(String driverHost, int managementPort) {
         try {
-            JMXDriverConnectionWrapper wrapper = NodeManagementConnector.openDriverConnection(driverHost, managementPort);
+            JMXDriverConnectionWrapper wrapper = 
+                    NodeManagementConnector.openDriverConnection(driverHost, managementPort);
             wrapper.restartShutdown(0L, -1L);
         } catch (TimeoutException ex) {
-            Logger.getLogger(JPPFManagementByJobsClient.class.getName()).log(Level.SEVERE, null, ex);
+            logger.warn("Timed out waiting for driver management connection.", ex);
         } catch (Exception ex) {
-            Logger.getLogger(JPPFManagementByJobsClient.class.getName()).log(Level.SEVERE, null, ex);
+            logger.warn("Could not shut down driver.", ex);
         }
     }
 
