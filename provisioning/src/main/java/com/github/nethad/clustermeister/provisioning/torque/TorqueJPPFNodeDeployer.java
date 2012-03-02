@@ -19,6 +19,7 @@ import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
+import com.github.nethad.clustermeister.provisioning.utils.PublicIp;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientExcpetion;
 import java.io.BufferedReader;
@@ -81,6 +82,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
 
 			sshClient = new SSHClient(privateKeyFilePath);
 			sshClient.connect(user, host, port);
+			
 
 			// remove previously uploaded files (might be outdated/not necessary)
 			executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "*");
@@ -140,12 +142,14 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
 	}
 	*/
 
-	public TorqueNode submitJob(NodeConfiguration nodeConfiguration) throws SSHClientExcpetion {
+	public TorqueNode submitJob(NodeConfiguration nodeConfiguration, TorqueNodeManagement torqueNodeManagement) throws SSHClientExcpetion {
 		if (!isInfrastructureDeployed) {
 			deployInfrastructure();
 		}
 		NodeDeployTask nodeDeployTask = new NodeDeployTask(this, currentNodeNumber.getAndIncrement(), nodeConfiguration);
-		return nodeDeployTask.execute();
+		final TorqueNode torqueNode = nodeDeployTask.execute();
+		torqueNodeManagement.addManagedNode(torqueNode);
+		return torqueNode;
 //		String nodeNameBase = "CMNode" + sessionId;
 //		String nodeName = nodeNameBase + "_" + currentNodeNumber;
 //		String nodeConfigFileName = configFileName();
@@ -238,25 +242,27 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
 
 	private void prepareLocalIP() {
 		//		localHost = InetAddress.getLocalHost().getHostAddress();
-		URL whatismyip;
-		BufferedReader in = null;
-		try {
-			whatismyip = new URL("http://automation.whatismyip.com/n09230945.asp");
-			in = new BufferedReader(new InputStreamReader(
-					whatismyip.openStream()));
-			localIp = in.readLine(); //you get the IP as a String
-			System.out.println("localIp = " + localIp);
-		} catch (MalformedURLException ex) {
-			Logger.getLogger(TorqueJPPFNodeDeployer.class.getName()).log(Level.SEVERE, null, ex);
-		} catch (IOException ex) {
-			Logger.getLogger(TorqueJPPFNodeDeployer.class.getName()).log(Level.SEVERE, null, ex);
-		} finally {
-			try {
-				in.close();
-			} catch (IOException ex) {
-				Logger.getLogger(TorqueJPPFNodeDeployer.class.getName()).log(Level.SEVERE, null, ex);
-			}
-		}
+		localIp = PublicIp.getPublicIp();
+		System.out.println("localIp = " + localIp);
+//		URL whatismyip;
+//		BufferedReader in = null;
+//		try {
+//			whatismyip = new URL("http://automation.whatismyip.com/n09230945.asp");
+//			in = new BufferedReader(new InputStreamReader(
+//					whatismyip.openStream()));
+//			localIp = in.readLine(); //you get the IP as a String
+//			System.out.println("localIp = " + localIp);
+//		} catch (MalformedURLException ex) {
+//			Logger.getLogger(TorqueJPPFNodeDeployer.class.getName()).log(Level.SEVERE, null, ex);
+//		} catch (IOException ex) {
+//			Logger.getLogger(TorqueJPPFNodeDeployer.class.getName()).log(Level.SEVERE, null, ex);
+//		} finally {
+//			try {
+//				in.close();
+//			} catch (IOException ex) {
+//				Logger.getLogger(TorqueJPPFNodeDeployer.class.getName()).log(Level.SEVERE, null, ex);
+//			}
+//		}
 	}
 
 	private String configFileName() {
@@ -365,6 +371,10 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
 	@Override
 	public SSHClient sshClient() {
 		return sshClient;
+	}
+
+	public void disconnectSshConnection() {
+		sshClient.disconnect();
 	}
 
 }

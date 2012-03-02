@@ -17,7 +17,11 @@ package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeType;
+import com.github.nethad.clustermeister.provisioning.ec2.AmazonNode;
+import com.google.common.base.Objects;
+import java.util.HashSet;
 import java.util.Set;
+import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
 import org.apache.commons.lang3.builder.ToStringStyle;
 
@@ -32,15 +36,23 @@ import org.apache.commons.lang3.builder.ToStringStyle;
 public class TorqueNode implements Node {
 	private final NodeType nodeType;
 	private String torqueJobId;
+	private Set<String> publicAddresses = new HashSet<String>();
+	private Set<String> privateAddresses = new HashSet<String>();
+	private final int serverPort;
+	private final int managementPort;
 
-	public TorqueNode(NodeType nodeType, String torqueJobId) {
+	public TorqueNode(NodeType nodeType, String torqueJobId, String publicAddress, String privateAddress, int serverPort, int managementPort) {
 		this.nodeType = nodeType;
 		this.torqueJobId = torqueJobId;
+		this.publicAddresses.add(publicAddress);
+		this.privateAddresses.add(privateAddress);
+		this.serverPort = serverPort;
+		this.managementPort = managementPort;
 	}
 
 	@Override
 	public String getID() {
-		throw new UnsupportedOperationException("Not supported yet.");
+		return getTorqueJobId();
 	}
 
 	@Override
@@ -50,17 +62,17 @@ public class TorqueNode implements Node {
 
 	@Override
 	public Set<String> getPublicAddresses() {
-		throw new UnsupportedOperationException("Not supported yet.");
+		return publicAddresses;
 	}
 
 	@Override
 	public Set<String> getPrivateAddresses() {
-		throw new UnsupportedOperationException("Not supported yet.");
+		return privateAddresses;
 	}
 
 	@Override
 	public int getManagementPort() {
-		throw new UnsupportedOperationException("Not supported yet.");
+		return managementPort;
 	}
 	
 	public String getTorqueJobId() {
@@ -72,11 +84,42 @@ public class TorqueNode implements Node {
 		return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).
 				append(getType()).
 				append(getTorqueJobId()).
+				append("public", getPublicAddresses()).
+				append("private", getPrivateAddresses()).
+				append(getServerPort()).
+				append(getManagementPort()).
 				toString();
 //		return "[TorqueNode; type="+getType()+",torqueJobId="+getTorqueJobId()+"]";
 	}
 	
-			
+		@Override
+	public boolean equals(Object obj) {
+		if(obj == null) {
+			return false;
+		}
+		if(obj == this) {
+			return true;
+		}
+		if(obj.getClass() != (getClass())) {
+			return false;
+		}
+		TorqueNode otherNode = (TorqueNode) obj;
+		return new EqualsBuilder().
+				append(getID(), otherNode.getID()).
+				isEquals();
+	}
+
+	@Override
+	public int hashCode() {
+		return Objects.hashCode(getID());
+	}
+
+	/**
+	 * @return the serverPort
+	 */
+	public int getServerPort() {
+		return serverPort;
+	}
 	
 	
 	

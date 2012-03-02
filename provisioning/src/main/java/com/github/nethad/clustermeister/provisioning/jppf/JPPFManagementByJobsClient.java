@@ -47,12 +47,10 @@ public class JPPFManagementByJobsClient {
 
     private final static org.slf4j.Logger logger =
             LoggerFactory.getLogger(JPPFManagementByJobsClient.class);
-    
     private final JPPFClient jPPFClient;
 
     /**
-     * Default constructor: intended to be used only by
-     * JPPFConfiguratedComponentFactory.
+     * Default constructor: intended to be used only by JPPFConfiguratedComponentFactory.
      */
     JPPFManagementByJobsClient() {
         jPPFClient = new JPPFClient();
@@ -94,7 +92,7 @@ public class JPPFManagementByJobsClient {
             logger.warn("Failed to shut down node.", ex);
             return false;
         }
-        
+
         return true;
     }
 
