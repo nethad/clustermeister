@@ -31,6 +31,8 @@ import org.jppf.JPPFException;
 import org.jppf.client.JPPFClient;
 import org.jppf.client.JPPFJob;
 import org.jppf.client.JPPFResultCollector;
+import org.jppf.client.event.ClientEvent;
+import org.jppf.client.event.ClientListener;
 import org.jppf.management.JMXDriverConnectionWrapper;
 import org.jppf.management.JPPFManagementInfo;
 import org.jppf.node.policy.Equal;
@@ -85,7 +87,7 @@ public class JPPFManagementByJobsClient {
         try {
             job.addTask(new ShutdownSingleNodeTask(), nodeHost, managementPort);
             job.getSLA().setMaxNodes(1);
-            job.setBlocking(true);
+            job.setBlocking(false);
             job.getSLA().setSuspended(false);
             jPPFClient.submit(job);
         } catch (Exception ex) {
