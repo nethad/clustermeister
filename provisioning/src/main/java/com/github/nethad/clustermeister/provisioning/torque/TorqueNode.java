@@ -18,6 +18,8 @@ package com.github.nethad.clustermeister.provisioning.torque;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeType;
 import java.util.Set;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
  * TODO: lightweight class with information about created nodes.
@@ -64,5 +66,18 @@ public class TorqueNode implements Node {
 	public String getTorqueJobId() {
 		return torqueJobId;
 	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).
+				append(getType()).
+				append(getTorqueJobId()).
+				toString();
+//		return "[TorqueNode; type="+getType()+",torqueJobId="+getTorqueJobId()+"]";
+	}
+	
+			
+	
+	
 	
 }
