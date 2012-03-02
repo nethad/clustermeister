@@ -17,12 +17,22 @@ package com.github.nethad.clustermeister.provisioning.utils;
 
 import java.util.concurrent.TimeoutException;
 import org.jppf.management.JMXConnectionWrapper;
+import org.jppf.management.JMXDriverConnectionWrapper;
+import org.jppf.management.JMXNodeConnectionWrapper;
 
 /**
  *
  * @author daniel
  */
 public final class NodeManagementConnector {
+	
+	public static JMXNodeConnectionWrapper connectToNodeManagement_node(JMXNodeConnectionWrapper wrapper) throws TimeoutException {
+		return (JMXNodeConnectionWrapper) connectToNodeManagement(wrapper);
+	}
+	
+	public static JMXDriverConnectionWrapper connectToNodeManagement_driver(JMXDriverConnectionWrapper wrapper) throws TimeoutException {
+		return (JMXDriverConnectionWrapper) connectToNodeManagement(wrapper);
+	}
 	
 	public static JMXConnectionWrapper connectToNodeManagement(JMXConnectionWrapper wrapper) 
 			throws TimeoutException {
@@ -45,5 +55,13 @@ public final class NodeManagementConnector {
 		} else {
 			throw new TimeoutException("Timed out while for node JMX management to become available.");
 		}
+	}
+	
+	public static JMXNodeConnectionWrapper openNodeConnection(String host, int port) throws TimeoutException {
+		return connectToNodeManagement_node(new JMXNodeConnectionWrapper(host, port));
+	}
+	
+	public static JMXDriverConnectionWrapper openDriverConnection(String host, int port) throws TimeoutException {
+		return connectToNodeManagement_driver(new JMXDriverConnectionWrapper(host, port));
 	}
 }
