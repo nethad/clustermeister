@@ -18,6 +18,7 @@ package com.github.nethad.clustermeister.provisioning.torque;
 import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFDriverConfigurationSource;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientExcpetion;
@@ -114,9 +115,10 @@ public class TorqueJPPFDriverDeployer {
     }
 
     private TorqueNode localSetupAndRun() {
-		System.setProperty("jppf.config.plugin", JPPFDriverConfigurationSource.class.getCanonicalName());
-        processLauncher = new ProcessLauncher("org.jppf.server.JPPFDriver");
-        processLauncher.run();
+//		System.setProperty("jppf.config.plugin", JPPFDriverConfigurationSource.class.getCanonicalName());
+//        processLauncher = new ProcessLauncher("org.jppf.server.JPPFDriver");
+//        processLauncher.run();
+		JPPFConfiguratedComponentFactory.getInstance().createLocalDriver();
 		TorqueNode torqueNode = new TorqueNode(NodeType.DRIVER, null);
 		return torqueNode;
 		//        try {
