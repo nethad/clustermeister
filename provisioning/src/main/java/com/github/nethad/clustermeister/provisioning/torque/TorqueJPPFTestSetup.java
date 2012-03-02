@@ -18,8 +18,13 @@ package com.github.nethad.clustermeister.provisioning.torque;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFDriverConfigurationSource;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.google.common.util.concurrent.ListenableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -32,33 +37,37 @@ public class TorqueJPPFTestSetup {
         new TorqueJPPFTestSetup().execute();
     }
 	private TorqueNodeManager torqueNodeManager;
+	private Node driverNode;
 
     private void execute() {
-        System.setProperty("jppf.config.plugin", JPPFDriverConfigurationSource.class.getCanonicalName());
+        
 		torqueNodeManager = new TorqueNodeManager(null);
 
         startDriver();
         startNodes();
+		try {
+			Thread.sleep(10000);
+		} catch (InterruptedException ex) {
+			// nop
+		}
+		JPPFManagementByJobsClient client = JPPFConfiguratedComponentFactory.getInstance().createManagementByJobsClient("localhost", 11111);
+		client.shutdownAllNodes("localhost", 11198);
+		client.shutdownDriver("localhost", 11198);
     }
 
     private void startDriver() {
-//        JPPFDriver.main("noLauncher");
-
-//        ProcessLauncher processLauncher = new ProcessLauncher("org.jppf.server.JPPFDriver");
-//        processLauncher.run();
-
 //        TorqueLocalRunner runner = new TorqueLocalRunner();
 //        runner.start();
 		NodeConfiguration nodeConfiguration = new TorqueNodeConfiguration(NodeType.DRIVER);
 		ListenableFuture<? extends Node> node = torqueNodeManager.addNode(nodeConfiguration);
-		System.out.println("driver = " + node);
-		//        try {
-		//            Thread.sleep(5000);
-		//            System.out.println("runner.stopDriver()");
-		//            runner.stopDriver();
-		//        } catch (InterruptedException ex) {
-		//            Logger.getLogger(TorqueJPPFTestSetup.class.getName()).log(Level.SEVERE, null, ex);
-		//        }
+//		try {
+//			driverNode = node.get();
+//		} catch (InterruptedException ex) {
+//			Logger.getLogger(TorqueJPPFTestSetup.class.getName()).log(Level.SEVERE, null, ex);
+//		} catch (ExecutionException ex) {
+//			Logger.getLogger(TorqueJPPFTestSetup.class.getName()).log(Level.SEVERE, null, ex);
+//		}
+//		System.out.println("driver = " + driverNode);
     }
 
     private void startNodes() {
