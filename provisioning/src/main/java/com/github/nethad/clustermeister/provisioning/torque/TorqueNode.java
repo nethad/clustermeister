@@ -18,6 +18,8 @@ package com.github.nethad.clustermeister.provisioning.torque;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeType;
 import java.util.Set;
+import org.apache.commons.lang3.builder.ToStringBuilder;
+import org.apache.commons.lang3.builder.ToStringStyle;
 
 /**
  * TODO: lightweight class with information about created nodes.
@@ -28,6 +30,13 @@ import java.util.Set;
  * @author daniel
  */
 public class TorqueNode implements Node {
+	private final NodeType nodeType;
+	private String torqueJobId;
+
+	public TorqueNode(NodeType nodeType, String torqueJobId) {
+		this.nodeType = nodeType;
+		this.torqueJobId = torqueJobId;
+	}
 
 	@Override
 	public String getID() {
@@ -36,7 +45,7 @@ public class TorqueNode implements Node {
 
 	@Override
 	public NodeType getType() {
-		throw new UnsupportedOperationException("Not supported yet.");
+		return nodeType;
 	}
 
 	@Override
@@ -53,5 +62,22 @@ public class TorqueNode implements Node {
 	public int getManagementPort() {
 		throw new UnsupportedOperationException("Not supported yet.");
 	}
+	
+	public String getTorqueJobId() {
+		return torqueJobId;
+	}
+
+	@Override
+	public String toString() {
+		return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).
+				append(getType()).
+				append(getTorqueJobId()).
+				toString();
+//		return "[TorqueNode; type="+getType()+",torqueJobId="+getTorqueJobId()+"]";
+	}
+	
+			
+	
+	
 	
 }

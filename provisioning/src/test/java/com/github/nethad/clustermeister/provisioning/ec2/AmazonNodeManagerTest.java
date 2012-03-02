@@ -70,6 +70,11 @@ public class AmazonNodeManagerTest {
 			public String getDriverAddress() {
 				return null;
 			}
+
+			@Override
+			public boolean isDriverDeployedLocally() {
+				return false;
+			}
 		}, absentInstanceId);
 		
 		final Future<? extends Node> n = nodeManager.addNode(new NodeConfiguration() {
@@ -97,6 +102,11 @@ public class AmazonNodeManagerTest {
 					return null;
 				}
 			}
+
+			@Override
+			public boolean isDriverDeployedLocally() {
+				return false;
+			}
 		}, absentInstanceId);
 		
 		final Future<? extends Node> n2 = nodeManager.addNode(new NodeConfiguration() {
@@ -123,6 +133,11 @@ public class AmazonNodeManagerTest {
 					logger.error("Failed to get Driver IP.", ex);
 					return null;
 				}
+			}
+
+			@Override
+			public boolean isDriverDeployedLocally() {
+				return false;
 			}
 		}, absentInstanceId);
 		

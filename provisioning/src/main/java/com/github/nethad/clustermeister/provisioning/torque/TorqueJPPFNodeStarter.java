@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.api;
+package com.github.nethad.clustermeister.provisioning.torque;
 
 /**
  *
- * @author daniel
+ * @author thomas
  */
-public interface NodeConfiguration {
-	public NodeType getType();
+public class TorqueJPPFNodeStarter {
+
+	public TorqueJPPFNodeStarter() {
+		
+	}
 	
-	public String getUserName();
 	
-	public String getPrivateKey();
 	
-	public String getDriverAddress();
-	
-	public boolean isDriverDeployedLocally();
 }
