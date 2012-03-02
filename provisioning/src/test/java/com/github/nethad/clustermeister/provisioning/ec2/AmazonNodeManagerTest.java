@@ -142,15 +142,24 @@ public class AmazonNodeManagerTest {
 		}, absentInstanceId);
 		
 		//wait for all nodes to be online
-		d.get();
-		n.get();
-		n2.get();
+		Node jppfDriver = d.get();
+		Node jppfNode = n.get();
+		Node jppfNode2 = n2.get();
 		
 		Collection<? extends Node> nodes = nodeManager.getNodes();
 		for (Node node : nodes) {
 			System.out.println(node);
 		}
+		
+		Future<Void> ns2 = nodeManager.removeNode((AmazonNode) jppfNode2, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
+		Future<Void> ns = nodeManager.removeNode((AmazonNode) jppfNode, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
+		Future<Void> ds = nodeManager.removeNode((AmazonNode) jppfDriver, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
 
+		//wait for them to shut down
+		ds.get();
+		ns.get();
+		ns2.get();
+		
 		nodeManager.close();
 	}
 	
