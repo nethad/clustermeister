@@ -117,6 +117,7 @@ public class JPPFManagementByJobsClient {
 		try {
 			JMXDriverConnectionWrapper wrapper = NodeManagementConnector.openDriverConnection(driverHost, managementPort);
 			wrapper.restartShutdown(0L, -1L);
+			wrapper.close();
 		} catch (TimeoutException ex) {
 			Logger.getLogger(JPPFManagementByJobsClient.class.getName()).log(Level.SEVERE, null, ex);
 		} catch (Exception ex) {

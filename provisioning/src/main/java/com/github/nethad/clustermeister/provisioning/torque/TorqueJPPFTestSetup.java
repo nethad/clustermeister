@@ -22,6 +22,8 @@ import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedCompon
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFDriverConfigurationSource;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.google.common.util.concurrent.ListenableFuture;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -36,8 +38,10 @@ public class TorqueJPPFTestSetup {
     public static void main(String... args) {
         new TorqueJPPFTestSetup().execute();
     }
+//	private ListenableFuture<? extends Node> driver;
+//	private List<ListenableFuture<? extends Node>> nodes;
 	private TorqueNodeManager torqueNodeManager;
-	private Node driverNode;
+//	private Node driverNode;
 
     private void execute() {
         
@@ -45,29 +49,37 @@ public class TorqueJPPFTestSetup {
 
         startDriver();
         startNodes();
+		
+		System.out.println("Sleep 10s");
 		try {
 			Thread.sleep(10000);
 		} catch (InterruptedException ex) {
 			// nop
 		}
-		JPPFManagementByJobsClient client = JPPFConfiguratedComponentFactory.getInstance().createManagementByJobsClient("localhost", 11111);
-		client.shutdownAllNodes("localhost", 11198);
-		client.shutdownDriver("localhost", 11198);
+		
+		System.out.println("Number of nodes: "+torqueNodeManager.getNodes().size());
+		
+		System.out.println("Kill all nodes.");
+		torqueNodeManager.removeAllNodes();
+		
+		System.out.println("All nodes removed.");
+		torqueNodeManager.shutdown();
+		
+		System.out.println("Number of nodes: "+torqueNodeManager.getNodes().size());
+//		for (ListenableFuture<? extends Node> node : nodes) {
+//			torqueNodeManager.removeNode((TorqueNode)node);
+//		}
+		
+//		JPPFManagementByJobsClient client = JPPFConfiguratedComponentFactory.getInstance().createManagementByJobsClient("localhost", 11111);
+//		client.shutdownAllNodes("localhost", 11198);
+//		client.shutdownDriver("localhost", 11198);
     }
 
     private void startDriver() {
 //        TorqueLocalRunner runner = new TorqueLocalRunner();
 //        runner.start();
 		NodeConfiguration nodeConfiguration = new TorqueNodeConfiguration(NodeType.DRIVER);
-		ListenableFuture<? extends Node> node = torqueNodeManager.addNode(nodeConfiguration);
-//		try {
-//			driverNode = node.get();
-//		} catch (InterruptedException ex) {
-//			Logger.getLogger(TorqueJPPFTestSetup.class.getName()).log(Level.SEVERE, null, ex);
-//		} catch (ExecutionException ex) {
-//			Logger.getLogger(TorqueJPPFTestSetup.class.getName()).log(Level.SEVERE, null, ex);
-//		}
-//		System.out.println("driver = " + driverNode);
+		torqueNodeManager.addNode(nodeConfiguration);
     }
 
     private void startNodes() {
@@ -77,21 +89,23 @@ public class TorqueJPPFTestSetup {
 		for (int i = 0; i<NUMBER_OF_NODES; i++) {
 			torqueNodeManager.addNode(nodeConfiguration);
 		}
+//		nodes = new ArrayList<ListenableFuture<? extends Node>>();
+//			nodes.add(torqueNodeManager.addNode(nodeConfiguration));
     }
 
-    private class TorqueLocalRunner extends Thread {
-
-        private TorqueJPPFDriverDeployer deployer;
-
-        @Override
-        public void run() {
-            System.out.println("Start driver");
-            deployer = new TorqueJPPFDriverDeployer();
-            deployer.execute();
-        }
-
-        public void stopDriver() {
-            deployer.stopLocalDriver();
-        }
-    }
+//    private class TorqueLocalRunner extends Thread {
+//
+//        private TorqueJPPFDriverDeployer deployer;
+//
+//        @Override
+//        public void run() {
+//            System.out.println("Start driver");
+//            deployer = new TorqueJPPFDriverDeployer();
+//            deployer.execute();
+//        }
+//
+//        public void stopDriver() {
+//            deployer.stopLocalDriver();
+//        }
+//    }
 }

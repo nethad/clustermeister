@@ -25,6 +25,7 @@ import groovy.lang.Lazy;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.logging.Level;
+import org.jppf.utils.JPPFConfiguration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,14 +36,9 @@ import org.slf4j.LoggerFactory;
 class NodeDeployTask {
 	
 	private Logger logger = LoggerFactory.getLogger(NodeDeployTask.class);
-	
-//	public static final int DEFAULT_MANAGEMENT_PORT = 11198;
-//	private static final String DEPLOY_BASE_NAME = "jppf-node";
-//	private static final String DEPLOY_CONFIG_SUFFIX = ".properties";
-//	private static final String PATH_TO_QSUB_SCRIPT = "./" + DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB;
-	
+	private int managementPort;
 	private int nodeNumber;
-//	private final SSHClient sshClient;
+	private int serverPort;
 	private final TorqueNodeDeployment torqueNodeDeployment;
 	private final NodeConfiguration nodeConfiguration;
 
@@ -50,6 +46,7 @@ class NodeDeployTask {
 		this.torqueNodeDeployment = torqueNodeDeployment;
 		this.nodeNumber = nodeNumber;
 		this.nodeConfiguration = nodeConfiguration;
+		managementPort = TorqueNodeDeployment.DEFAULT_MANAGEMENT_PORT + nodeNumber;
 	}
 
 	public TorqueNode execute() throws SSHClientExcpetion {
@@ -61,23 +58,23 @@ class NodeDeployTask {
 		final String submitJobToQsub = TorqueNodeDeployment.PATH_TO_QSUB_SCRIPT + " " + nodeName + " " + nodeConfigFileName + "|qsub";
 		String jobId = sshClient().executeWithResult(submitJobToQsub);
 //		outer.jobIdList.add(currentJobId);
-		TorqueNode torqueNode = new TorqueNode(NodeType.NODE, jobId);
-		
+		TorqueNode torqueNode = new TorqueNode(NodeType.NODE, jobId, null, null, serverPort, managementPort);
 		return torqueNode;
 	}
 	
 	private void uploadNodeConfiguration(String nodeConfigFileName, String driverIpAddress) throws SSHClientExcpetion {
-
-		// generate properties file from configuration class and attach
-		// the local ip address as the driver's IP target address.
-
-		int managementPort = TorqueNodeDeployment.DEFAULT_MANAGEMENT_PORT + nodeNumber;
 		try {
-			InputStream propertyStream = new JPPFNodeConfiguration()
+			JPPFNodeConfiguration configuration = new JPPFNodeConfiguration()
 					.setProperty("jppf.server.host", driverIpAddress)
 					.setProperty("jppf.management.port", String.valueOf(managementPort))
-					.setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-" + torqueNodeDeployment.getSessionId() + "_" + nodeNumber)
-					.getPropertyStream();
+					.setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-" + torqueNodeDeployment.getSessionId() + "_" + nodeNumber);
+			final String configServerPort = configuration.getProperty("jppf.server.port");
+			if (configServerPort == null) {
+				serverPort = TorqueJPPFDriverDeployer.SERVER_PORT;
+			} else {
+				serverPort = Integer.valueOf(configServerPort);
+			}
+			InputStream propertyStream = configuration.getPropertyStream();
 			sshClient().sftpUpload(propertyStream, TorqueNodeDeployment.DEPLOY_BASE_NAME + "/config/" + nodeConfigFileName);
 		} catch (IOException ex) {
 			logger.error(null, ex);
