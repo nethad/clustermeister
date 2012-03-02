@@ -16,17 +16,15 @@
 package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.api.Configuration;
+import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFDriverConfigurationSource;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientExcpetion;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jppf.management.JMXDriverConnectionWrapper;
 import org.jppf.process.ProcessLauncher;
-import org.jppf.server.DriverLauncher;
-import org.jppf.server.JPPFDriver;
-import org.jppf.utils.JPPFConfiguration;
 
 /**
  *
@@ -46,15 +44,15 @@ public class TorqueJPPFDriverDeployer {
 //    private String passphrase;
     private boolean runExternally = false;
 
-    public void execute() {
+    public TorqueNode execute() {
         if (runExternally) {
-            remoteSetupAndRun();
+            return remoteSetupAndRun();
         } else {
-            localSetupAndRun();
+            return localSetupAndRun();
         }
     }
 
-    private void remoteSetupAndRun() {
+    private TorqueNode remoteSetupAndRun() {
 	loadConfiguration();
         sshClient = null;
         try {
@@ -73,6 +71,7 @@ public class TorqueJPPFDriverDeployer {
 //            executeAndSysout("cp -R /home/user/dspicar/jdk-1.7 ~/jdk-1.7");
 
             executeAndSysout("cd " + DEPLOY_BASE_NAME + ";nohup ./startDriver.sh ~/jdk-1.7/bin/java > nohup.out 2>&1");
+			return new TorqueNode(NodeType.DRIVER, null);
         } catch (SSHClientExcpetion ex) {
             ex.printStackTrace();
         } finally {
@@ -80,6 +79,7 @@ public class TorqueJPPFDriverDeployer {
                 sshClient.disconnect();
             }
         }
+		return null;
     }
 
     private String getResourcePath(String resource) {
@@ -113,15 +113,18 @@ public class TorqueJPPFDriverDeployer {
         return this;
     }
 
-    private void localSetupAndRun() {
+    private TorqueNode localSetupAndRun() {
+		System.setProperty("jppf.config.plugin", JPPFDriverConfigurationSource.class.getCanonicalName());
         processLauncher = new ProcessLauncher("org.jppf.server.JPPFDriver");
         processLauncher.run();
-//        try {
-//            Process process = processLauncher.buildProcess();
-//            process.
-//        } catch (Exception ex) {
-//            Logger.getLogger(TorqueJPPFDriverDeployer.class.getName()).log(Level.SEVERE, null, ex);
-//        }
+		TorqueNode torqueNode = new TorqueNode(NodeType.DRIVER, null);
+		return torqueNode;
+		//        try {
+		//            Process process = processLauncher.buildProcess();
+		//            process.
+		//        } catch (Exception ex) {
+		//            Logger.getLogger(TorqueJPPFDriverDeployer.class.getName()).log(Level.SEVERE, null, ex);
+		//        }
     }
 
     public void stopLocalDriver() {

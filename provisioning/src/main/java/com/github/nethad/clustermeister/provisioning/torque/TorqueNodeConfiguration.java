@@ -24,25 +24,49 @@ import com.github.nethad.clustermeister.api.NodeType;
  * @author daniel
  */
 public class TorqueNodeConfiguration implements NodeConfiguration {
+	
+	private NodeType nodeType;
+	private boolean isDriverDeployedLocally;
+	private String userName;
+	private String privateKey;
+	private String driverAddress;
 
+	public TorqueNodeConfiguration(NodeType nodeType) {
+		this.nodeType = nodeType;
+		this.isDriverDeployedLocally = true;
+	}
+	
+	public TorqueNodeConfiguration(NodeType nodeType, String userName, String privateKey, String driverAddress, boolean isDriverDeployedLocally) {
+		this.nodeType = nodeType;
+		this.userName = userName;
+		this.privateKey = privateKey;
+		this.driverAddress = driverAddress;
+		this.isDriverDeployedLocally = true;
+	}
+	
 	@Override
 	public NodeType getType() {
-		throw new UnsupportedOperationException("Not supported yet.");
+		return nodeType;
 	}
 
 	@Override
 	public String getUserName() {
-		throw new UnsupportedOperationException("Not supported yet.");
+		return userName;
 	}
 
 	@Override
 	public String getPrivateKey() {
-		throw new UnsupportedOperationException("Not supported yet.");
+		return privateKey;
 	}
 
 	@Override
 	public String getDriverAddress() {
-		throw new UnsupportedOperationException("Not supported yet.");
+		return driverAddress;
+	}
+
+	@Override
+	public boolean isDriverDeployedLocally() {
+		return isDriverDeployedLocally;
 	}
 	
 }
