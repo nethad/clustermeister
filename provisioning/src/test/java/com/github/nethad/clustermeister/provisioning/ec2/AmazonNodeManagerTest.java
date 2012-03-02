@@ -48,6 +48,7 @@ public class AmazonNodeManagerTest {
 
         AmazonNodeManager nodeManager = new AmazonNodeManager(config);
 
+//        Optional<String> instanceId = Optional.of("eu-west-1/i-62c5e12b");
         Optional<String> absentInstanceId = Optional.absent();
         final Future<? extends Node> d = nodeManager.addNode(new AmazonNodeConfiguration() {
 
@@ -71,6 +72,8 @@ public class AmazonNodeManagerTest {
                 return 11198;
             }
         }, absentInstanceId);
+        
+        Optional<String> driverInstanceId = Optional.of(((AmazonNode)d.get()).getInstanceId());
 
         final Future<? extends Node> n = nodeManager.addNode(new AmazonNodeConfiguration() {
 
@@ -98,12 +101,7 @@ public class AmazonNodeManagerTest {
                     return null;
                 }
             }
-
-            @Override
-            public int getManagementPort() {
-                return 11199;
-            }
-        }, absentInstanceId);
+        }, driverInstanceId);
 
         final Future<? extends Node> n2 = nodeManager.addNode(new AmazonNodeConfiguration() {
 
@@ -132,11 +130,7 @@ public class AmazonNodeManagerTest {
                 }
             }
 
-            @Override
-            public int getManagementPort() {
-                return 11199;
-            }
-        }, absentInstanceId);
+        }, driverInstanceId);
 
         //wait for all nodes to be online
         Node jppfDriver = d.get();
@@ -147,10 +141,13 @@ public class AmazonNodeManagerTest {
         for (Node node : nodes) {
             System.out.println(node);
         }
+        
+        System.out.println("waiting...");
+        Thread.sleep(20000);
 
         Future<Void> ns2 = nodeManager.removeNode((AmazonNode) jppfNode2, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
         Future<Void> ns = nodeManager.removeNode((AmazonNode) jppfNode, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
-        Future<Void> ds = nodeManager.removeNode((AmazonNode) jppfDriver, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
+        Future<Void> ds = nodeManager.removeNode((AmazonNode) jppfDriver, AmazonInstanceShutdownMethod.TERMINATE);
 
         //wait for them to shut down
         ds.get();

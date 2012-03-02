@@ -163,7 +163,8 @@ public class AmazonInstanceManager {
         }
         template.getOptions().as(EC2TemplateOptions.class).
                 inboundPorts(22, 11111, 11112, 11113,
-                AmazonNodeManager.DEFAULT_MANAGEMENT_PORT, 12198);
+                AmazonNodeManager.DEFAULT_MANAGEMENT_PORT, 11199, 11200, 11201, 
+                11202, 11203, 12198);
 
         // specify your own keypair for use in creating nodes
         //TODO: remove need to specify keypair in AWS.

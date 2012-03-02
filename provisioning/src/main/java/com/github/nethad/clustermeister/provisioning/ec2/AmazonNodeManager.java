@@ -22,7 +22,6 @@ import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsCl
 import com.github.nethad.clustermeister.provisioning.utils.NodeManagementConnector;
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
-import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -101,7 +100,7 @@ public class AmazonNodeManager {
      *
      * @param node
      * @param shutdownMethod
-     * @return	The future return null upon successful completion.
+     * @return	The future returns null upon successful completion.
      */
     public ListenableFuture<Void> removeNode(AmazonNode node,
             AmazonInstanceShutdownMethod shutdownMethod) {
@@ -229,17 +228,15 @@ public class AmazonNodeManager {
             checkNotNull(publicIp, "Can not get public IP of node " + node + ".");
             switch (node.getType()) {
                 case DRIVER: {
+                    JPPFManagementByJobsClient client = managementClients.remove(node.getInstanceId());
+                    if(client != null) {
+                        client.close();
+                    }
                     driverShutdown(publicIp);
                     break;
                 }
                 case NODE: {
-                    String privateIp = Iterables.getFirst(node.getPrivateAddresses(), null);
-                    AmazonNode driverNode = getDriverForNode(node);
-                    JPPFManagementByJobsClient managementClient = managementClients.get(driverNode);
-                    if(managementClient == null || 
-                            !managementClient.shutdownNode(privateIp, node.getManagementPort())) {
-                        nodeShutdownFallback(publicIp);
-                    }
+                    nodeShutdown(publicIp);
                     break;
                 }
                 default: {
@@ -272,21 +269,12 @@ public class AmazonNodeManager {
 
             return null;
         }
-        
-        private AmazonNode getDriverForNode(final AmazonNode node) {
-            return Iterables.find(drivers, new Predicate<AmazonNode>() {
-                @Override
-                public boolean apply(AmazonNode input) {
-                    return Iterables.contains(input.getPublicAddresses(), node.getDriverAddress()) 
-                            || Iterables.contains(input.getPrivateAddresses(), node.getDriverAddress());
-                }
-            });
-        }
 
         private void driverShutdown(String publicIp) throws TimeoutException, Exception {
             JMXDriverConnectionWrapper wrapper =
                     new JMXDriverConnectionWrapper(publicIp, node.getManagementPort());
             NodeManagementConnector.connectToNodeManagement(wrapper);
+            logger.info("Shutting driver node {}:{}.", publicIp, node.getManagementPort());
             wrapper.restartShutdown(0l, -1l);
             try {
                 wrapper.close();
@@ -295,10 +283,11 @@ public class AmazonNodeManager {
             }
         }
 
-        private void nodeShutdownFallback(String publicIp) throws Exception, TimeoutException {
+        private void nodeShutdown(String publicIp) throws Exception, TimeoutException {
             JMXNodeConnectionWrapper wrapper =
                     new JMXNodeConnectionWrapper(publicIp, node.getManagementPort());
             NodeManagementConnector.connectToNodeManagement(wrapper);
+            logger.info("Shutting down node {}:{}.", publicIp, node.getManagementPort());
             wrapper.shutdown();
             try {
                 wrapper.close();
