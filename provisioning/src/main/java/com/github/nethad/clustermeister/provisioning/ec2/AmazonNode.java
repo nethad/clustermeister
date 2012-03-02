@@ -29,90 +29,95 @@ import org.jclouds.compute.domain.NodeMetadata;
  * @author daniel
  */
 public class AmazonNode implements Node {
-	final String id;
-	final int managementPort;
-	final NodeType type;
-	NodeMetadata instanceMetadata;
 
-	public AmazonNode(String uuid, NodeType type, int managementPort, NodeMetadata instanceMetadata) {
-		this.instanceMetadata = instanceMetadata;
-		this.type = type;
-		this.id = uuid;
-		this.managementPort = managementPort;
-	}
-	
-	void updateInstanceMetaData(NodeMetadata instanceMetadata) {
-		this.instanceMetadata = instanceMetadata;
-	}
-	
-	NodeMetadata getInstanceMetadata() {
-		return instanceMetadata;
-	}
-	
-	public String getState() {
-		return instanceMetadata.getState().toString();
-	}
+    final String id;
+    final String driverAddress;
+    final int managementPort;
+    final NodeType type;
+    NodeMetadata instanceMetadata;
 
-	public String getInstanceId() {
-		return instanceMetadata.getId();
-	}
-	
-	@Override
-	public String getID() {
-		return id;
-	}
+    public AmazonNode(String id, AmazonNodeConfiguration nodeConfiguration, NodeMetadata instanceMetadata) {
+        this.instanceMetadata = instanceMetadata;
+        this.type = nodeConfiguration.getType();
+        this.id = id;
+        this.managementPort = nodeConfiguration.getManagementPort();
+        this.driverAddress = nodeConfiguration.getDriverAddress();
+    }
 
-	@Override
-	public NodeType getType() {
-		return type;
-	}
+    void updateInstanceMetaData(NodeMetadata instanceMetadata) {
+        this.instanceMetadata = instanceMetadata;
+    }
 
-	@Override
-	public Set<String> getPrivateAddresses() {
-		return instanceMetadata.getPrivateAddresses();
-	}
-	
-	@Override
-	public Set<String> getPublicAddresses() {
-		return instanceMetadata.getPublicAddresses();
-	}
-	
-	@Override
-	public int getManagementPort() {
-		return managementPort;
-	}
+    NodeMetadata getInstanceMetadata() {
+        return instanceMetadata;
+    }
 
-	@Override
-	public String toString() {
-		return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).
-				append(type).
-				append(id).
-				append(instanceMetadata.getId()).
-				append(instanceMetadata.getState()).
-				append("public", instanceMetadata.getPublicAddresses()).
-				append("private", instanceMetadata.getPrivateAddresses()).
-				toString();
-	}
+    public String getState() {
+        return instanceMetadata.getState().toString();
+    }
 
-	@Override
-	public boolean equals(Object obj) {
-		if(obj == null) {
-			return false;
-		}
-		if(obj == this) {
-			return true;
-		}
-		if(obj.getClass() != (getClass())) {
-			return false;
-		}
-		AmazonNode otherNode = (AmazonNode) obj;
-		return new EqualsBuilder().
-				append(id, otherNode.id).
-				isEquals();
-	}
+    public String getInstanceId() {
+        return instanceMetadata.getId();
+    }
 
-	@Override
-	public int hashCode() {
-		return Objects.hashCode(id);
-	}
+    @Override
+    public String getID() {
+        return id;
+    }
+
+    @Override
+    public NodeType getType() {
+        return type;
+    }
+
+    @Override
+    public Set<String> getPrivateAddresses() {
+        return instanceMetadata.getPrivateAddresses();
+    }
+
+    @Override
+    public Set<String> getPublicAddresses() {
+        return instanceMetadata.getPublicAddresses();
+    }
+
+    @Override
+    public int getManagementPort() {
+        return managementPort;
+    }
+
+    public String getDriverAddress() {
+        return driverAddress;
+    }
+
+    @Override
+    public String toString() {
+        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append(type).
+                append(id).
+                append(instanceMetadata.getId()).
+                append(instanceMetadata.getState()).
+                append("public", instanceMetadata.getPublicAddresses()).
+                append("private", instanceMetadata.getPrivateAddresses()).
+                toString();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (obj == this) {
+            return true;
+        }
+        if (obj.getClass() != (getClass())) {
+            return false;
+        }
+        AmazonNode otherNode = (AmazonNode) obj;
+        return new EqualsBuilder().append(id, otherNode.id).
+                isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(id);
+    }
 }
