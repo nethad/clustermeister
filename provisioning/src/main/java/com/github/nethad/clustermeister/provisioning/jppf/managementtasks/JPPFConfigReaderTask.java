@@ -27,7 +27,6 @@ import org.jppf.server.protocol.JPPFRunnable;
 public class JPPFConfigReaderTask implements Serializable {
 	@JPPFRunnable
 	public Properties getProperty(String host, int port) throws Exception {
-		System.out.println("running here");
 		JMXNodeConnectionWrapper wrapper = new JMXNodeConnectionWrapper(host, port);
 		wrapper.connectAndWait(10000);
 		if(wrapper.isConnected()) {
