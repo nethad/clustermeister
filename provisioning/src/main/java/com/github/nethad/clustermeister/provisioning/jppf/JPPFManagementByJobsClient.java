@@ -17,6 +17,7 @@ package com.github.nethad.clustermeister.provisioning.jppf;
 
 import com.github.nethad.clustermeister.provisioning.jppf.managementtasks.JPPFConfigReaderTask;
 import com.github.nethad.clustermeister.provisioning.jppf.managementtasks.JPPFShutdownTask;
+import com.github.nethad.clustermeister.provisioning.jppf.managementtasks.ShutdownSingleNodeTask;
 import com.github.nethad.clustermeister.provisioning.utils.NodeManagementConnector;
 import com.google.common.collect.Iterables;
 import java.util.ArrayList;
@@ -82,7 +83,7 @@ public class JPPFManagementByJobsClient {
     public boolean shutdownNode(String nodeHost, int managementPort) {
         JPPFJob job = new JPPFJob();
         try {
-            job.addTask(new JPPFConfigReaderTask(), nodeHost, managementPort);
+            job.addTask(new ShutdownSingleNodeTask(), nodeHost, managementPort);
             job.getSLA().setMaxNodes(1);
             job.setBlocking(true);
             job.getSLA().setSuspended(false);
