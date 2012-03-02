@@ -21,7 +21,7 @@ import java.util.Properties;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
-import org.jppf.utils.JPPFConfiguration.ConfigurationSource;
+import org.jppf.server.JPPFDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,7 +62,7 @@ public class JPPFConfiguratedComponentFactory {
         return NewSingletonHolder.INSTANCE;
     }
 
-    private static ConfigurationSource createConfigurationSource(Properties properties) {
+    private static String createConfigurationSource(Properties properties) {
         ClassPool classPool = ClassPool.getDefault();
         CtClass classPrototype = classPool.makeClass(
                 "GenericClustermeisterConfigurationSource#" + configClassId++);
@@ -86,7 +86,7 @@ public class JPPFConfiguratedComponentFactory {
             method.append(" }");
             classPrototype.addMethod(CtMethod.make(method.toString(), classPrototype));
             Class clazz = classPrototype.toClass();
-            return (ConfigurationSource) clazz.newInstance();
+            return clazz.getCanonicalName();
         } catch (Exception ex) {
             logger.error("Can not create generic configuration source class.");
             throw new IllegalStateException(ex);
@@ -113,10 +113,20 @@ public class JPPFConfiguratedComponentFactory {
             configPropertyMonitor.leave();
         }
     }
+	
+	public void createLocalDriver() {
+		configPropertyMonitor.enter();
+		try {
+			setConfigProperty(JPPFDriverConfigurationSource.class.getCanonicalName());
+			NonBlockingProcessLauncher processLauncher = new NonBlockingProcessLauncher(JPPFDriver.class.getCanonicalName());
+			processLauncher.runNonBlocking();
+		} finally {
+			configPropertyMonitor.leave();
+		}
+	}
 
-    private void setConfigProperty(ConfigurationSource configurationSource) {
-        System.setProperty(JPPF_CONFIG_PLUGIN,
-                configurationSource.getClass().getCanonicalName());
+    private void setConfigProperty(String className) {
+        System.setProperty(JPPF_CONFIG_PLUGIN, className);
     }
 
     private static class NewSingletonHolder {
