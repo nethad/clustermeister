@@ -19,13 +19,23 @@ import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
+import com.github.nethad.clustermeister.provisioning.ec2.AmazonNode;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
+import com.github.nethad.clustermeister.provisioning.utils.NodeManagementConnector;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientExcpetion;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Predicates;
+import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
+import com.google.common.util.concurrent.Monitor;
 import com.google.common.util.concurrent.MoreExecutors;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
+import org.jppf.management.JMXDriverConnectionWrapper;
+import org.jppf.management.JMXNodeConnectionWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -36,36 +46,81 @@ import org.slf4j.LoggerFactory;
  *
  * @author daniel
  */
-public class TorqueNodeManager {
+public class TorqueNodeManager implements TorqueNodeManagement {
+
 	public static final int THREAD_POOL_SIZE = 2;
-	
 	private Logger logger = LoggerFactory.getLogger(TorqueNodeManager.class);
+	
+	private final Monitor managedNodesMonitor = new Monitor(false);
 
 	private class AddNormalNodeTask implements Callable<TorqueNode> {
 
 		private final NodeConfiguration nodeConfiguration;
-		
-		public AddNormalNodeTask(NodeConfiguration nodeConfiguration) {
+		private final TorqueNodeManagement torqueNodeManagement;
+
+		public AddNormalNodeTask(NodeConfiguration nodeConfiguration, TorqueNodeManagement torqueNodeManagement) {
 			this.nodeConfiguration = nodeConfiguration;
+			this.torqueNodeManagement = torqueNodeManagement;
 		}
 
 		@Override
 		public TorqueNode call() throws Exception {
-			return nodeDeployer.submitJob(nodeConfiguration);
+			return nodeDeployer.submitJob(nodeConfiguration, torqueNodeManagement);
 		}
 	}
 
 	private class AddDriverNodeTask implements Callable<TorqueNode> {
 
-		public AddDriverNodeTask() {
+		private final TorqueNodeManagement torqueNodeManagement;
+
+		public AddDriverNodeTask(TorqueNodeManagement torqueNodeManagement) {
+			this.torqueNodeManagement = torqueNodeManagement;
 		}
 
 		@Override
 		public TorqueNode call() throws Exception {
-			return driverDeployer.execute();
+			return driverDeployer.execute(torqueNodeManagement);
 		}
 	}
+	
+	private class RemoveDriverNodeTask implements Callable<Void> {
+		private String host;
+		private int managementPort;
 
+		public RemoveDriverNodeTask(String host, int managementPort) {
+			this.host = host;
+			this.managementPort = managementPort;
+		}
+
+		@Override
+		public Void call() throws Exception {
+			JMXDriverConnectionWrapper wrapper = 
+					NodeManagementConnector.openDriverConnection(host, managementPort);
+			wrapper.restartShutdown(0L, -1L);
+			wrapper.close();
+			return null;
+		}
+	}
+	
+	private class RemoveNormalNodeTask implements Callable<Void> {
+		private String host;
+		private int managementPort;
+
+		public RemoveNormalNodeTask(String host, int managementPort) {
+			this.host = host;
+			this.managementPort = managementPort;
+		}
+
+		@Override
+		public Void call() throws Exception {
+			JMXNodeConnectionWrapper wrapper = 
+					NodeManagementConnector.openNodeConnection(host, managementPort);
+			wrapper.shutdown();
+			wrapper.close();
+			return null;
+		}
+	}
+	
 	private final Configuration configuration;
 	private Set<TorqueNode> drivers = new HashSet<TorqueNode>();
 	private ListeningExecutorService executorService;
@@ -89,32 +144,121 @@ public class TorqueNodeManager {
 		allNodes.addAll(drivers);
 		return Collections.unmodifiableCollection(allNodes);
 	}
-	
+
 	public ListenableFuture<? extends Node> addNode(NodeConfiguration nodeConfiguration) {
-		if (nodeConfiguration.getType() == NodeType.DRIVER) {
-			return addDriverNode(nodeConfiguration);
-		} else {
-			return addNormalNode(nodeConfiguration);
+		switch (nodeConfiguration.getType()) {
+			case DRIVER:
+				return addDriverNode(nodeConfiguration);
+			case NODE:
+				return addNormalNode(nodeConfiguration);
+			default:
+				throw new IllegalArgumentException("Invalid Node Type.");
 		}
+	}
+	
+	public ListenableFuture<Void> removeNode(TorqueNode torqueNode) {
+		Preconditions.checkNotNull(torqueNode, "torqueNode must not be null.");
+		switch (torqueNode.getType()) {
+			case DRIVER:
+				return removeDriverNode(torqueNode);
+			case NODE:
+				return removeNormalNode(torqueNode);
+			default:
+				throw new IllegalArgumentException("Invalid Node Type.");
+		}
+	}
+	
+	public void removeAllNodes() {
+		TorqueNode firstDriver = drivers.iterator().next();
+		String driverHost = firstDriver.getPrivateAddresses().iterator().next();
+		int serverPort = firstDriver.getServerPort();
+		int managementPort = firstDriver.getManagementPort();
+		
+		JPPFManagementByJobsClient client = JPPFConfiguratedComponentFactory.getInstance()
+				.createManagementByJobsClient(
+					firstDriver.getPrivateAddresses().iterator().next(), serverPort);
+		client.shutdownAllNodes(driverHost, managementPort);
+		drivers.clear();
+		client.shutdownDriver(driverHost, managementPort);
+		nodes.clear();
+	}
+	
+	private ListenableFuture<Void> removeDriverNode(TorqueNode torqueNode) {
+		return executorService.submit(new RemoveDriverNodeTask(
+				Iterables.getFirst(torqueNode.getPublicAddresses(), null), torqueNode.getManagementPort()));
+	}
+	
+	private ListenableFuture<Void> removeNormalNode(TorqueNode torqueNode) {
+		return executorService.submit(new RemoveNormalNodeTask(
+				Iterables.getFirst(torqueNode.getPublicAddresses(), null), torqueNode.getManagementPort()));
 	}
 
 	private ListenableFuture<? extends Node> addDriverNode(NodeConfiguration nodeConfiguration) {
 		if (!nodeConfiguration.isDriverDeployedLocally()) {
 			driverDeployer.runExternally();
 		}
-		return executorService.submit(new AddDriverNodeTask());
+		return executorService.submit(new AddDriverNodeTask(this));
 	}
 
 	private ListenableFuture<? extends Node> addNormalNode(NodeConfiguration nodeConfiguration) {
-		return executorService.submit(new AddNormalNodeTask(nodeConfiguration));
+		return executorService.submit(new AddNormalNodeTask(nodeConfiguration, this));
 	}
-	
+
 	public void deployResources() {
 		try {
 			nodeDeployer.deployInfrastructure();
 		} catch (SSHClientExcpetion ex) {
 			logger.error(null, ex);
 		}
+	}
+
+	@Override
+	public void addManagedNode(TorqueNode torqueNode) {
+		managedNodesMonitor.enter();
+		try {
+			switch (torqueNode.getType()) {
+				case DRIVER:
+					drivers.add(torqueNode);
+					break;
+				case NODE:
+					nodes.add(torqueNode);
+					break;
+				default:
+					throw new IllegalArgumentException("Invalid Node Type.");
+			}
+		} finally {
+			managedNodesMonitor.leave();
+		}
+	}
+
+	@Override
+	public void removeManagedNode(TorqueNode torqueNode) {
+		managedNodesMonitor.enter();
+		try {
+			switch(torqueNode.getType()) {
+				case NODE: {
+					nodes.remove(torqueNode);
+					break;
+				}
+				case DRIVER:  {
+					drivers.remove(torqueNode);
+//					managementClients.remove(node);
+					break;
+				}
+				default: {
+					throw new IllegalArgumentException("Invalid Node Type.");
+				}
+			}
+		} finally {
+			managedNodesMonitor.leave();
+		}
+	}
+	
+	public void shutdown() {
+		nodeDeployer.disconnectSshConnection();
+		executorService.shutdown();
+		List<Runnable> stillRunningThreads = executorService.shutdownNow();
+		System.out.println("stillRunningThreads.size() = " + stillRunningThreads.size());
 	}
 	
 }

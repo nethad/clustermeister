@@ -114,9 +114,11 @@ public class JPPFConfiguratedComponentFactory {
         }
     }
 	
-	public void createLocalDriver() {
+	public void createLocalDriver(int serverPort, int managementPort) {
 		configPropertyMonitor.enter();
 		try {
+			JPPFDriverConfigurationSource.serverPort = serverPort;
+			JPPFDriverConfigurationSource.managementPort = managementPort;
 			setConfigProperty(JPPFDriverConfigurationSource.class.getCanonicalName());
 			NonBlockingProcessLauncher processLauncher = new NonBlockingProcessLauncher(JPPFDriver.class.getCanonicalName());
 			processLauncher.runNonBlocking();
