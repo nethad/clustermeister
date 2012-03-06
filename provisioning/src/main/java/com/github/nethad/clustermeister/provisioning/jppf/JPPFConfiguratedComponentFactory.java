@@ -108,7 +108,7 @@ public class JPPFConfiguratedComponentFactory {
         configPropertyMonitor.enter();
         try {
             setConfigProperty(createConfigurationSource(properties));
-            return new JPPFManagementByJobsClient();
+            return new JPPFManagementByJobsClient(host);
         } finally {
             configPropertyMonitor.leave();
         }
