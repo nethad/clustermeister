@@ -19,7 +19,10 @@ import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.google.common.util.concurrent.ListenableFuture;
+import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -42,24 +45,30 @@ public class TorqueJPPFTestSetup {
 
         startDriver();
         startNodes();
-		
-		System.out.println("Sleep 10s");
-		try {
-			Thread.sleep(5000);
-		} catch (InterruptedException ex) {
-			// nop
-		}
+        try {
+            Thread.sleep(200);
+        } catch (InterruptedException ex) {
+            ex.printStackTrace();
+        }
+        
+        System.out.print("Press ENTER to shutdown: ");
+        try {
+            int read = System.in.read();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
 		
 		System.out.println("Number of nodes: "+torqueNodeManager.getNodes().size());
-		
-		System.out.println("Kill all nodes.");
-		torqueNodeManager.removeAllNodes();
 		
 		System.out.println("All nodes removed.");
 		torqueNodeManager.shutdown();
+        
+		System.out.println("Kill all nodes.");
+		torqueNodeManager.removeAllNodes();
 		
 		System.out.println("Number of nodes: "+torqueNodeManager.getNodes().size());
         System.out.println("Exit.");
+        System.exit(0);
 //		for (ListenableFuture<? extends Node> node : nodes) {
 //			torqueNodeManager.removeNode((TorqueNode)node);
 //		}
