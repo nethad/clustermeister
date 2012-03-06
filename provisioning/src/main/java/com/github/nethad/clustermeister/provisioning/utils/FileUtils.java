@@ -15,9 +15,12 @@
  */
 package com.github.nethad.clustermeister.provisioning.utils;
 
+import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
+import com.google.common.io.InputSupplier;
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.security.MessageDigest;
 import java.util.zip.CRC32;
 
@@ -31,6 +34,15 @@ public class FileUtils {
     private static CRC32 crc32 = new CRC32();
     private final static String HEXES = "0123456789ABCDEF";
 
+    public static synchronized long getCRC32(final InputStream in) throws IOException {
+        return ByteStreams.getChecksum(new InputSupplier<InputStream>() {
+            @Override
+            public InputStream getInput() throws IOException {
+                return in;
+            }
+        }, crc32);
+    }
+    
     public static synchronized long getCRC32ForFile(File file) throws IOException {
         return Files.getChecksum(file, crc32);
     }
@@ -41,10 +53,19 @@ public class FileUtils {
 
     public static String getFileExistsShellCommand(String filePath) {
         StringBuilder sb = new StringBuilder("if  [ -f ");
-        sb.append(filePath);
+        return appendIfElseBoolean(sb, filePath);
+    }
+
+    public static String getDirectoryExistsShellCommand(String dirPath) {
+        StringBuilder sb = new StringBuilder("if  [ -d ");
+        return appendIfElseBoolean(sb, dirPath);
+    }
+    
+    private static String appendIfElseBoolean(StringBuilder sb, String path) {
+        sb.append(path);
         sb.append(" ]; then echo ");
         sb.append(Boolean.TRUE);
-        sb.append("; else; echo ");
+        sb.append("; else echo ");
         sb.append(Boolean.FALSE);
         sb.append("; fi");
         return sb.toString();
