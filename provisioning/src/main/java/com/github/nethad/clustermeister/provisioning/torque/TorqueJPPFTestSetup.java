@@ -29,6 +29,7 @@ import java.util.logging.Logger;
  * @author thomas
  */
 public class TorqueJPPFTestSetup {
+
     private static final int NUMBER_OF_NODES = 6;
 
     public static void main(String... args) {
@@ -36,12 +37,12 @@ public class TorqueJPPFTestSetup {
     }
 //	private ListenableFuture<? extends Node> driver;
 //	private List<ListenableFuture<? extends Node>> nodes;
-	private TorqueNodeManager torqueNodeManager;
+    private TorqueNodeManager torqueNodeManager;
 //	private Node driverNode;
 
     private void execute() {
-        
-		torqueNodeManager = new TorqueNodeManager(null);
+
+        torqueNodeManager = new TorqueNodeManager(null);
 
         startDriver();
         startNodes();
@@ -50,29 +51,32 @@ public class TorqueJPPFTestSetup {
         } catch (InterruptedException ex) {
             ex.printStackTrace();
         }
-        
+
         System.out.print("Press ENTER to shutdown: ");
         try {
             int read = System.in.read();
         } catch (IOException ex) {
             ex.printStackTrace();
         }
-		
-		System.out.println("Number of nodes: "+torqueNodeManager.getNodes().size());
-		
-		System.out.println("All nodes removed.");
-		torqueNodeManager.shutdown();
-        
-		System.out.println("Kill all nodes.");
-		torqueNodeManager.removeAllNodes();
-		
-		System.out.println("Number of nodes: "+torqueNodeManager.getNodes().size());
-        System.out.println("Exit.");
-        System.exit(0);
+
+        torqueNodeManager.shutdown();
+
+        torqueNodeManager.removeAllNodes();
+
+        torqueNodeManager = null;
+
+        System.out.print("Press ENTER to kill the JVM: ");
+        try {
+            int read = System.in.read();
+            System.exit(0);
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+
 //		for (ListenableFuture<? extends Node> node : nodes) {
 //			torqueNodeManager.removeNode((TorqueNode)node);
 //		}
-		
+
 //		JPPFManagementByJobsClient client = JPPFConfiguratedComponentFactory.getInstance().createManagementByJobsClient("localhost", 11111);
 //		client.shutdownAllNodes("localhost", 11198);
 //		client.shutdownDriver("localhost", 11198);
@@ -81,7 +85,7 @@ public class TorqueJPPFTestSetup {
     private void startDriver() {
 //        TorqueLocalRunner runner = new TorqueLocalRunner();
 //        runner.start();
-		NodeConfiguration nodeConfiguration = new TorqueNodeConfiguration(NodeType.DRIVER);
+        NodeConfiguration nodeConfiguration = new TorqueNodeConfiguration(NodeType.DRIVER);
         ListenableFuture<? extends Node> driver = torqueNodeManager.addNode(nodeConfiguration);
         try {
             driver.get();
@@ -93,10 +97,10 @@ public class TorqueJPPFTestSetup {
     }
 
     private void startNodes() {
-		
-		torqueNodeManager.deployResources();
-		NodeConfiguration nodeConfiguration = new TorqueNodeConfiguration(NodeType.NODE);
-		for (int i = 0; i<NUMBER_OF_NODES; i++) {
+
+        torqueNodeManager.deployResources();
+        NodeConfiguration nodeConfiguration = new TorqueNodeConfiguration(NodeType.NODE);
+        for (int i = 0; i < NUMBER_OF_NODES; i++) {
             ListenableFuture<? extends Node> node = torqueNodeManager.addNode(nodeConfiguration);
             try {
                 node.get();
@@ -105,11 +109,10 @@ public class TorqueJPPFTestSetup {
             } catch (ExecutionException ex) {
                 ex.printStackTrace();
             }
-		}
+        }
 //		nodes = new ArrayList<ListenableFuture<? extends Node>>();
 //			nodes.add(torqueNodeManager.addNode(nodeConfiguration));
     }
-
 //    private class TorqueLocalRunner extends Thread {
 //
 //        private TorqueJPPFDriverDeployer deployer;
