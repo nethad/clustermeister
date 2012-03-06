@@ -228,7 +228,7 @@ public class AmazonNodeManager {
             checkNotNull(publicIp, "Can not get public IP of node " + node + ".");
             switch (node.getType()) {
                 case DRIVER: {
-                    JPPFManagementByJobsClient client = managementClients.remove(node.getInstanceId());
+                    JPPFManagementByJobsClient client = managementClients.remove(node);
                     if(client != null) {
                         client.close();
                     }
