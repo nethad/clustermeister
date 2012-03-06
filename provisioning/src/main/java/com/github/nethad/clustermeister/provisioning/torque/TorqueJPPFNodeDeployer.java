@@ -19,9 +19,11 @@ import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
+import com.github.nethad.clustermeister.provisioning.utils.FileUtils;
 import com.github.nethad.clustermeister.provisioning.utils.PublicIp;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientExcpetion;
+import com.google.common.base.Charsets;
 import java.io.*;
 import java.math.BigInteger;
 import java.net.MalformedURLException;
@@ -45,7 +47,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
 //	private static final int DEFAULT_MANAGEMENT_PORT = 11198;
 //	private static final String DEPLOY_BASE_NAME = "jppf-node";
     private static final String DEPLOY_ZIP = DEPLOY_BASE_NAME + ".zip";
-    private static final String MD5SUM_FILE = DEPLOY_BASE_NAME + "/MD5SUM";
+    private static final String CRC32_FILE = DEPLOY_BASE_NAME + "/CRC32";
 //	private static final String DEPLOY_CONFIG_SUFFIX = ".properties";
 //    private static final String DEPLOY_PROPERTIES = DEPLOY_BASE_NAME + DEPLOY_CONFIG_SUFFIX;
 //	private static final String DEPLOY_QSUB = "qsub-node.sh";
@@ -63,7 +65,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
     private boolean isInfrastructureDeployed;
     private AtomicInteger currentNodeNumber;
     private final long sessionId;
-    private String deployZipMd5Sum;
+    private long deployZipCRC32;
 
     public TorqueJPPFNodeDeployer() {
         isInfrastructureDeployed = false;
@@ -109,8 +111,12 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
 
         sshClient = new SSHClient(privateKeyFilePath);
         sshClient.connect(user, host, port);
-        
-        deployZipMd5Sum = md5sumForFile(new File(getResourcePath(DEPLOY_ZIP)));
+        try {
+            deployZipCRC32 = FileUtils.getCRC32ForFile(new File(getResourcePath(DEPLOY_ZIP)));
+        } catch (IOException ex) {
+            //TODO: logger
+            System.err.println("Can not read from File.");
+        }
 
         if (!isResourceAlreadyDeployedAndUpToDate()) {
             // remove previously uploaded files (might be outdated/not necessary)
@@ -131,11 +137,8 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         sshClient.sftpUpload(getResourcePath(DEPLOY_ZIP), DEPLOY_ZIP);
         executeAndSysout("unzip " + DEPLOY_ZIP);
         sshClient.sftpUpload(getResourcePath(DEPLOY_QSUB), DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB);
-        try {
-            sshClient.sftpUpload(new ByteArrayInputStream(deployZipMd5Sum.getBytes("UTF-8")), MD5SUM_FILE);
-        } catch (UnsupportedEncodingException ex) {
-            ex.printStackTrace();
-        }
+        sshClient.sftpUpload(new ByteArrayInputStream(
+                String.valueOf(deployZipCRC32).getBytes(Charsets.UTF_8)), CRC32_FILE);
     }
 
     /*
@@ -323,53 +326,23 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
     }
 
     private boolean isResourceAlreadyDeployedAndUpToDate() {
-        if (!doesFileExistOnRemote(MD5SUM_FILE)) {
+        if (!doesFileExistOnRemote(CRC32_FILE)) {
             return false;
         }
         try {
-            String md5sumRemote = sshClient.executeWithResult("cat " + MD5SUM_FILE);
-            return md5sumRemote.equals(deployZipMd5Sum);
+            String md5sumRemote = sshClient.executeWithResult("cat " + CRC32_FILE);
+            return md5sumRemote.equals(deployZipCRC32);
         } catch (SSHClientExcpetion ex) {
             ex.printStackTrace();
         }
         return false;
     }
 
-    private String md5sumForFile(File file) {
-        FileInputStream fis = null;
-        try {
-            MessageDigest digest = MessageDigest.getInstance("MD5");
-            fis = new FileInputStream(file);
-            byte[] buffer = new byte[8192];
-            int read = 0;
-            while ((read = fis.read(buffer)) > 0) {
-                digest.update(buffer, 0, read);
-            }
-            byte[] md5sum = digest.digest();
-            BigInteger bigInt = new BigInteger(1, md5sum);
-            String output = bigInt.toString(16);
-            return output;
-        } catch (FileNotFoundException ex) {
-            ex.printStackTrace();
-        } catch (IOException ex) {
-            ex.printStackTrace();
-        } catch (NoSuchAlgorithmException ex) {
-            ex.printStackTrace();
-        } finally {
-            try {
-                fis.close();
-            } catch (IOException ex) {
-                ex.printStackTrace();
-            }
-        }
-        return "";
-    }
-
     private boolean doesFileExistOnRemote(String filePath) {
         try {
-            String command = "if  [ -f " + filePath + " ]; then echo true; else; echo false; fi";
+            String command = FileUtils.getFileExistsShellCommand(filePath);
             final String result = sshClient.executeWithResult(command);
-            return Boolean.valueOf(result).booleanValue();
+            return Boolean.parseBoolean(result);
         } catch (SSHClientExcpetion ex) {
             ex.printStackTrace();
         }
