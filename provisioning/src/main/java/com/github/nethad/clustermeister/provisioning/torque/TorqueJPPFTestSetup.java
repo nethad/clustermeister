@@ -18,15 +18,8 @@ package com.github.nethad.clustermeister.provisioning.torque;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFDriverConfigurationSource;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.google.common.util.concurrent.ListenableFuture;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -52,7 +45,7 @@ public class TorqueJPPFTestSetup {
 		
 		System.out.println("Sleep 10s");
 		try {
-			Thread.sleep(10000);
+			Thread.sleep(5000);
 		} catch (InterruptedException ex) {
 			// nop
 		}
@@ -66,6 +59,7 @@ public class TorqueJPPFTestSetup {
 		torqueNodeManager.shutdown();
 		
 		System.out.println("Number of nodes: "+torqueNodeManager.getNodes().size());
+        System.out.println("Exit.");
 //		for (ListenableFuture<? extends Node> node : nodes) {
 //			torqueNodeManager.removeNode((TorqueNode)node);
 //		}
@@ -79,7 +73,14 @@ public class TorqueJPPFTestSetup {
 //        TorqueLocalRunner runner = new TorqueLocalRunner();
 //        runner.start();
 		NodeConfiguration nodeConfiguration = new TorqueNodeConfiguration(NodeType.DRIVER);
-		torqueNodeManager.addNode(nodeConfiguration);
+        ListenableFuture<? extends Node> driver = torqueNodeManager.addNode(nodeConfiguration);
+        try {
+            driver.get();
+        } catch (InterruptedException ex) {
+            ex.printStackTrace();
+        } catch (ExecutionException ex) {
+            ex.printStackTrace();
+        }
     }
 
     private void startNodes() {
@@ -87,7 +88,14 @@ public class TorqueJPPFTestSetup {
 		torqueNodeManager.deployResources();
 		NodeConfiguration nodeConfiguration = new TorqueNodeConfiguration(NodeType.NODE);
 		for (int i = 0; i<NUMBER_OF_NODES; i++) {
-			torqueNodeManager.addNode(nodeConfiguration);
+            ListenableFuture<? extends Node> node = torqueNodeManager.addNode(nodeConfiguration);
+            try {
+                node.get();
+            } catch (InterruptedException ex) {
+                ex.printStackTrace();
+            } catch (ExecutionException ex) {
+                ex.printStackTrace();
+            }
 		}
 //		nodes = new ArrayList<ListenableFuture<? extends Node>>();
 //			nodes.add(torqueNodeManager.addNode(nodeConfiguration));

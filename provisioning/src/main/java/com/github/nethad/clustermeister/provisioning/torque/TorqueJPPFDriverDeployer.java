@@ -140,14 +140,14 @@ public class TorqueJPPFDriverDeployer {
 		//        }
     }
 
-    public void stopLocalDriver() {
-        JMXDriverConnectionWrapper wrapper = new JMXDriverConnectionWrapper("localhost", 11198);
-        wrapper.connect();
-        try {
-            wrapper.restartShutdown(1L, -1L);
-        } catch (Exception ex) {
-            Logger.getLogger(TorqueJPPFTestSetup.class.getName()).log(Level.SEVERE, null, ex);
-        }
-    }
+//    private void stopLocalDriver() {
+//        JMXDriverConnectionWrapper wrapper = new JMXDriverConnectionWrapper("localhost", 11198);
+//        wrapper.connect();
+//        try {
+//            wrapper.restartShutdown(1L, -1L);
+//        } catch (Exception ex) {
+//            Logger.getLogger(TorqueJPPFTestSetup.class.getName()).log(Level.SEVERE, null, ex);
+//        }
+//    }
     
 }
