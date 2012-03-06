@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
+import com.github.nethad.clustermeister.provisioning.utils.FileUtils;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Iterables;
 import java.io.ByteArrayInputStream;
@@ -39,6 +40,12 @@ public abstract class AmazonEC2JPPFDeployer implements Runnable {
 
     private final static Logger logger =
             LoggerFactory.getLogger(AmazonEC2JPPFDeployer.class);
+    
+    static final String CRC32_FILE_DRIVER = "jppf-driver-crc-32";
+    static final String CRC32_FILE_NODE = "jppf-node-crc-32";
+    
+    static final String CLUSTERMEISTER_BIN = "clustermeister-bin";
+    
     final LoginCredentials loginCredentials;
     final ComputeServiceContext context;
     final NodeMetadata metadata;
@@ -65,6 +72,14 @@ public abstract class AmazonEC2JPPFDeployer implements Runnable {
         if (response.getError() != null && !response.getError().isEmpty()) {
             logger.warn("Execution error: {}.", response.getError());
         }
+    }
+    
+    String getStringResult(ExecResponse response) {
+        return response.getOutput().trim();
+    }
+    
+    boolean getBoolResult(ExecResponse response) {
+        return Boolean.parseBoolean(response.getOutput().trim());
     }
 
     void upload(SshClient client, InputStream source, String to) {
@@ -115,5 +130,30 @@ public abstract class AmazonEC2JPPFDeployer implements Runnable {
         String publicIp = Iterables.getFirst(metadata.getPublicAddresses(), null);
         checkState(publicIp != null, "No public IP set.");
         return publicIp;
+    }
+
+    protected Long getChecksum(String filePath) {
+        Long checksum = null;
+        try {
+            final InputStream driverPackage = getClass().getResourceAsStream(filePath);
+            checksum = FileUtils.getCRC32(driverPackage);
+            driverPackage.close();
+        } catch (IOException ex) {
+            logger.warn("Can not compute CRC32 checksum.", ex);
+        }
+        return checksum;
+    }
+
+    protected boolean getUploadNecessary(final String crcFile, SshClient client, 
+            Long checksum) throws NumberFormatException {
+        boolean crcFileExists = getBoolResult(execute(
+                FileUtils.getFileExistsShellCommand(crcFile), client));
+        boolean uploadDriver = true;
+        if (crcFileExists) {
+            long remoteChecksum = Long.parseLong(getStringResult(
+                    execute("cat " + crcFile, client)));
+            uploadDriver = (remoteChecksum != checksum.longValue());
+        }
+        return uploadDriver;
     }
 }
