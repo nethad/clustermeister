@@ -34,6 +34,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
+import java.util.logging.Level;
 import org.jppf.management.JMXDriverConnectionWrapper;
 import org.jppf.management.JMXNodeConnectionWrapper;
 import org.slf4j.Logger;
@@ -125,13 +126,11 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 	private Set<TorqueNode> drivers = new HashSet<TorqueNode>();
 	private ListeningExecutorService executorService;
 	private Set<TorqueNode> nodes = new HashSet<TorqueNode>();
-	private TorqueJPPFNodeDeployer nodeDeployer;
+	private final TorqueJPPFNodeDeployer nodeDeployer;
 	private final TorqueJPPFDriverDeployer driverDeployer;
 
 	public TorqueNodeManager(Configuration configuration) {
 		this.configuration = configuration;
-		executorService = MoreExecutors.listeningDecorator(
-				Executors.newCachedThreadPool());
 		nodeDeployer = new TorqueJPPFNodeDeployer();
 		driverDeployer = new TorqueJPPFDriverDeployer();
 		executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(THREAD_POOL_SIZE));
@@ -178,9 +177,10 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 				.createManagementByJobsClient(
 					firstDriver.getPrivateAddresses().iterator().next(), serverPort);
 		client.shutdownAllNodes(driverHost, managementPort);
-		drivers.clear();
-		client.shutdownDriver(driverHost, managementPort);
 		nodes.clear();
+		client.shutdownDriver(driverHost, managementPort);
+		drivers.clear();
+        client.close();
 	}
 	
 	private ListenableFuture<Void> removeDriverNode(TorqueNode torqueNode) {
