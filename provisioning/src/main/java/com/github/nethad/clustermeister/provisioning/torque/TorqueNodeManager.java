@@ -31,7 +31,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
-import java.util.logging.Level;
 import org.jppf.management.JMXDriverConnectionWrapper;
 import org.jppf.management.JMXNodeConnectionWrapper;
 import org.slf4j.Logger;
@@ -165,6 +164,7 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 	}
 	
 	public void removeAllNodes() {
+        logger.info("Remove all nodes.");
 		TorqueNode firstDriver = drivers.iterator().next();
 		String driverHost = firstDriver.getPrivateAddresses().iterator().next();
 		int serverPort = firstDriver.getServerPort();
@@ -173,9 +173,13 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 		JPPFManagementByJobsClient client = JPPFConfiguratedComponentFactory.getInstance()
 				.createManagementByJobsClient(
 					firstDriver.getPrivateAddresses().iterator().next(), serverPort);
+        
+        logger.info("Shutdown nodes.");
 		client.shutdownAllNodes(driverHost, managementPort);
 		nodes.clear();
         client.close();
+        
+        logger.info("Shutdown driver.");
 		client.shutdownDriver(driverHost, managementPort);
 		drivers.clear();
 	}

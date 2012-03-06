@@ -31,6 +31,8 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.management.Notification;
 import javax.management.NotificationListener;
 import org.jppf.JPPFException;
@@ -204,15 +206,25 @@ public class JPPFManagementByJobsClient {
     }
 
     public void shutdownDriver(String driverHost, int managementPort) {
+        JMXDriverConnectionWrapper wrapper = null;
         try {
-            JMXDriverConnectionWrapper wrapper = 
+            wrapper = 
                     NodeManagementConnector.openDriverConnection(driverHost, managementPort);
-            wrapper.restartShutdown(0L, -1L);
-            wrapper.close();
+            // TODO remove 1s shutdown
+            wrapper.restartShutdown(1*1000L, -1L);
+            
         } catch (TimeoutException ex) {
             logger.warn("Timed out waiting for driver management connection.", ex);
         } catch (Exception ex) {
             logger.warn("Could not shut down driver.", ex);
+        } finally {
+            if (wrapper != null) {
+                try {
+                    wrapper.close();
+                } catch (Exception ex) {
+                    logger.error ("Could not close JMX wrapper", ex);
+                }
+            }
         }
     }
 

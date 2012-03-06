@@ -35,28 +35,30 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author thomas
  */
 public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
+    
+    Logger logger = LoggerFactory.getLogger(TorqueJPPFNodeDeployer.class);
 
 //	private static final int DEFAULT_MANAGEMENT_PORT = 11198;
 //	private static final String DEPLOY_BASE_NAME = "jppf-node";
     private static final String DEPLOY_ZIP = DEPLOY_BASE_NAME + ".zip";
+    private static final String AKKA_ZIP = "akka-libs.zip";
+    private static final String AKKA_REMOTE_ZIP_PATH = DEPLOY_BASE_NAME + "/lib/" + AKKA_ZIP;
     private static final String CRC32_FILE = DEPLOY_BASE_NAME + "/CRC32";
+    private static final String AKKA_CRC32_FILE = DEPLOY_BASE_NAME + "/AKKA_CRC32";
 //	private static final String DEPLOY_CONFIG_SUFFIX = ".properties";
 //    private static final String DEPLOY_PROPERTIES = DEPLOY_BASE_NAME + DEPLOY_CONFIG_SUFFIX;
 //	private static final String DEPLOY_QSUB = "qsub-node.sh";
 //	private static final String PATH_TO_QSUB_SCRIPT = "./" + DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB;
-    private static final int POLLING_INTERVAL = 1000;
     private String host;
-    private List<String> jobIdList;
     private String localIp;
-    private Map<String, String> nodeIpMap;
     private int port;
     private SSHClient sshClient;
     private String user;
@@ -66,42 +68,42 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
     private AtomicInteger currentNodeNumber;
     private final long sessionId;
     private long deployZipCRC32;
+    private long akkaLibsZipCRC32;
+    
 
     public TorqueJPPFNodeDeployer() {
         isInfrastructureDeployed = false;
         currentNodeNumber = new AtomicInteger(0);
-        nodeIpMap = new HashMap<String, String>();
-        jobIdList = new ArrayList<String>();
         sessionId = System.currentTimeMillis();
     }
 
-    public void execute(int numberOfNodes) {
-        sshClient = null;
-
-        try {
-            loadConfiguration();
-
-            sshClient = new SSHClient(privateKeyFilePath);
-            sshClient.connect(user, host, port);
-
-
-            // remove previously uploaded files (might be outdated/not necessary)
-            executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "*");
-
-            uploadResources();
-
-            prepareLocalIP();
-
-            submitJobs_massSubmission(numberOfNodes);
-//	    resolveNodeIpAddresses();
-        } catch (SSHClientExcpetion ex) {
-            System.out.println(ex.getClass().getName() + ": " + ex.getMessage());
-        } finally {
-            if (sshClient != null) {
-                sshClient.disconnect();
-            }
-        }
-    }
+//    private void execute(int numberOfNodes) {
+//        sshClient = null;
+//
+//        try {
+//            loadConfiguration();
+//
+//            sshClient = new SSHClient(privateKeyFilePath);
+//            sshClient.connect(user, host, port);
+//
+//
+//            // remove previously uploaded files (might be outdated/not necessary)
+//            executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "*");
+//
+//            uploadResources();
+//
+//            prepareLocalIP();
+//
+//            submitJobs_massSubmission(numberOfNodes);
+////	    resolveNodeIpAddresses();
+//        } catch (SSHClientExcpetion ex) {
+//            System.out.println(ex.getClass().getName() + ": " + ex.getMessage());
+//        } finally {
+//            if (sshClient != null) {
+//                sshClient.disconnect();
+//            }
+//        }
+//    }
 
     public synchronized void deployInfrastructure() throws SSHClientExcpetion {
         if (isInfrastructureDeployed) {
@@ -113,12 +115,18 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         sshClient.connect(user, host, port);
         try {
             deployZipCRC32 = FileUtils.getCRC32ForFile(new File(getResourcePath(DEPLOY_ZIP)));
+            akkaLibsZipCRC32 = FileUtils.getCRC32ForFile(new File(getResourcePath(AKKA_ZIP)));
         } catch (IOException ex) {
             //TODO: logger
-            System.err.println("Can not read from File.");
+            logger.error("Can not read from File.");
         }
+        
+        // delete config files (separate config files for each node are generated)
+        executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "/config/*");
 
         if (!isResourceAlreadyDeployedAndUpToDate()) {
+            logger.info("Resource is not up to date.");
+            System.out.println("Resource is not up to date.");
             // remove previously uploaded files (might be outdated/not necessary)
             executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "*");
 
@@ -126,8 +134,11 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
 
             final String makeQsubScriptExecutable = "chmod +x " + PATH_TO_QSUB_SCRIPT + ";";
             sshClient.executeWithResult(makeQsubScriptExecutable);
-
+        } else {
+            logger.info("Resource is up to date.");
+            System.out.println("Resource is up to date.");
         }
+        
         prepareLocalIP();
         isInfrastructureDeployed = true;
     }
@@ -136,16 +147,18 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         // upload zip archive with all files, unpack it
         sshClient.sftpUpload(getResourcePath(DEPLOY_ZIP), DEPLOY_ZIP);
         executeAndSysout("unzip " + DEPLOY_ZIP);
+        
+        // upload akka libraries
+        sshClient.sftpUpload(getResourcePath(AKKA_ZIP), AKKA_REMOTE_ZIP_PATH);
+        executeAndSysout("cd "+DEPLOY_BASE_NAME+"/lib/ && unzip " + AKKA_ZIP);
+        
         sshClient.sftpUpload(getResourcePath(DEPLOY_QSUB), DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB);
         sshClient.sftpUpload(new ByteArrayInputStream(
                 String.valueOf(deployZipCRC32).getBytes(Charsets.UTF_8)), CRC32_FILE);
+        sshClient.sftpUpload(new ByteArrayInputStream(
+                String.valueOf(akkaLibsZipCRC32).getBytes(Charsets.UTF_8)), AKKA_CRC32_FILE);
     }
 
-    /*
-     * private String resolveNodeIpAddresses(String jobId) throws SSHClientExcpetion { //	for (String jobId : jobIdList)
-     * { waitForJobToBeRunning(jobId); String nodeIp = waitForNodeIpToResolve(jobId); nodeIpMap.put(jobId, nodeIp);
-     * System.out.println(jobId + ": " + nodeIp); return nodeIp; //	} }
-     */
     public TorqueNode submitJob(NodeConfiguration nodeConfiguration, TorqueNodeManagement torqueNodeManagement) throws SSHClientExcpetion {
         if (!isInfrastructureDeployed) {
             deployInfrastructure();
@@ -154,18 +167,6 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         final TorqueNode torqueNode = nodeDeployTask.execute();
         torqueNodeManagement.addManagedNode(torqueNode);
         return torqueNode;
-//		String nodeNameBase = "CMNode" + sessionId;
-//		String nodeName = nodeNameBase + "_" + currentNodeNumber;
-//		String nodeConfigFileName = configFileName();
-//		uploadNodeConfiguration(nodeConfigFileName, nodeConfiguration.getDriverAddress());
-//		final String makeQsubScriptExecutable = "chmod +x " + PATH_TO_QSUB_SCRIPT + ";";
-//		final String submitJobToQsub = PATH_TO_QSUB_SCRIPT + " " + nodeName + " " + nodeConfigFileName + "|qsub";
-//		String currentJobId = executeWithResult(makeQsubScriptExecutable + submitJobToQsub);
-//		jobIdList.add(currentJobId);
-//
-//		TorqueNode torqueNode = new TorqueNode(NodeType.NODE);
-//		currentNodeNumber.incrementAndGet();
-//		return torqueNode;
     }
 
     /*
@@ -184,8 +185,6 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         String nodeName;
         String nodeConfigFileName;
 //		String currentJobId;
-        nodeIpMap = new HashMap<String, String>();
-        jobIdList = new ArrayList<String>();
         StringBuilder executeString = new StringBuilder();
         for (int nodeNumber = 0; nodeNumber < numberOfNodes; nodeNumber++) {
             System.out.println("Current node number: " + nodeNumber);
@@ -228,16 +227,16 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
             InputStream propertyStream = new JPPFNodeConfiguration().setProperty("jppf.server.host", driverIp).setProperty("jppf.management.port", String.valueOf(managementPort)).setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-" + sessionId + "_" + currentNodeNumber).getPropertyStream();
             sshClient.sftpUpload(propertyStream, DEPLOY_BASE_NAME + "/config/" + nodeConfigFileName);
         } catch (IOException ex) {
-            Logger.getLogger(TorqueJPPFNodeDeployer.class.getName()).log(Level.SEVERE, null, ex);
+            logger.error("Could not read property file.", ex);
         } catch (SSHClientExcpetion ex) {
-            Logger.getLogger(TorqueJPPFNodeDeployer.class.getName()).log(Level.SEVERE, null, ex);
+            logger.error("SSH excpetion", ex);
         }
     }
 
     private void prepareLocalIP() {
         //		localHost = InetAddress.getLocalHost().getHostAddress();
         localIp = PublicIp.getPublicIp();
-        System.out.println("localIp = " + localIp);
+        logger.info("localIp = " + localIp);
     }
 
     private String configFileName() {
@@ -249,14 +248,13 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         return TorqueJPPFDriverDeployer.class.getResource(resource).getPath();
     }
 
+    @Deprecated
     private void executeAndSysout(String command) throws SSHClientExcpetion {
-        System.out.println("$ " + command);
-        String result = sshClient.sshExec(command, System.err);
-        System.out.println("Result: " + result);
+        sshClient.sshExec(command, System.err);
     }
 
+    @Deprecated
     private String executeWithResult(String command) throws SSHClientExcpetion {
-        System.out.println("$ " + command);
         return sshClient.sshExec(command, System.err);
     }
 
@@ -275,34 +273,6 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
 
     private String getStringDefaultEmpty(Configuration config, String key) {
         return config.getString(key, "");
-    }
-
-    private void waitForJobToBeRunning(String jobId) throws SSHClientExcpetion {
-        String jobIdNumber = jobId.split("\\.")[0];
-        String state;
-        do {
-            try {
-                Thread.sleep(POLLING_INTERVAL);
-            } catch (InterruptedException ex) {
-                // do nothing
-            }
-            String command = "qstat -u " + user + "|awk {'print $1,$10'}|grep -P '^[\\d]+'|grep " + jobIdNumber;
-            String result = executeWithResult(command);
-            executeAndSysout(command);
-            state = result.split(" ")[1];
-        } while (checkIfStillHaveToWait(state));
-    }
-
-    private boolean checkIfStillHaveToWait(String state) {
-        if (state.equals("Q")) {
-            return true; // job is queued
-        } else if (state.equals("R")) {
-            return false; // job is running
-        } else if (state.equals("C")) {
-            throw new IllegalStateException("Job is already completed.");
-        } else {
-            throw new IllegalStateException("Job has errors");
-        }
     }
 
     @Override
@@ -326,14 +296,17 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
     }
 
     private boolean isResourceAlreadyDeployedAndUpToDate() {
-        if (!doesFileExistOnRemote(CRC32_FILE)) {
+        if (!doesFileExistOnRemote(CRC32_FILE) || !doesFileExistOnRemote(AKKA_CRC32_FILE)) {
+            logger.info("At least one CRC32 file is missing.");
             return false;
         }
         try {
-            String md5sumRemote = sshClient.executeWithResult("cat " + CRC32_FILE);
-            return md5sumRemote.equals(deployZipCRC32);
+            String md5sumDeployZipRemote = sshClient.executeWithResult("cat " + CRC32_FILE);
+            String md5sumAkkaRemote = sshClient.executeWithResult("cat " + AKKA_CRC32_FILE);
+            return md5sumDeployZipRemote.equals(String.valueOf(deployZipCRC32))
+                   && md5sumAkkaRemote.equals(String.valueOf(akkaLibsZipCRC32));
         } catch (SSHClientExcpetion ex) {
-            ex.printStackTrace();
+            logger.error("SSH exception", ex);
         }
         return false;
     }
@@ -344,7 +317,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
             final String result = sshClient.executeWithResult(command);
             return Boolean.parseBoolean(result);
         } catch (SSHClientExcpetion ex) {
-            ex.printStackTrace();
+            logger.error("SSH exception", ex);
         }
         return false;
     }

@@ -193,7 +193,7 @@ public class SSHClient {
 	public void disconnect() {
 		if (notNull(session)) {
 			session.disconnect();
-			logger.info("Disconnected from {}:{}.",
+			logger.debug("Disconnected from {}:{}.",
 					session.getHost(), session.getPort());
 		}
 	}
@@ -213,7 +213,7 @@ public class SSHClient {
 			try {
 				channel = (ChannelSftp) session.openChannel("sftp");
 				channel.connect();
-				logger.info("Opened SFTP channel.");
+				logger.debug("Opened SFTP channel.");
 				File file = new File(srcPath);
 				if (file.isDirectory()) {
 					copyDirectory(file, destPath, channel);
@@ -227,7 +227,7 @@ public class SSHClient {
 			} finally {
 				if (notNull(channel)) {
 					channel.disconnect();
-					logger.info("SFTP channel closed.");
+					logger.debug("SFTP channel closed.");
 				}
 			}
 		} else {
@@ -241,26 +241,26 @@ public class SSHClient {
 			try {
 				channel = (ChannelSftp) session.openChannel("sftp");
 				channel.connect();
-				logger.info("Opened SFTP channel.");
+				logger.debug("Opened SFTP channel.");
 //		logger.info("Uploading {} to {}/{}.",
 //			new String[]{src.getAbsolutePath(), channel.pwd(), dest});
 				channel.put(stream, dest, ChannelSftp.OVERWRITE);
 			} catch (SftpException sftpe) {
-				java.util.logging.Logger.getLogger(SSHClient.class.getName()).log(Level.SEVERE, null, sftpe);
+				logger.error(null, sftpe);
 				throw new SSHClientExcpetion(sftpe);
 			} catch (JSchException ex) {
-				java.util.logging.Logger.getLogger(SSHClient.class.getName()).log(Level.SEVERE, null, ex);
+				logger.error(null, ex);
 			} finally {
 				if (notNull(stream)) {
 					try {
 						stream.close();
 					} catch (IOException ex) {
-						//ignore
+						logger.error("in finally", ex);
 					}
 				}
 				if (notNull(channel)) {
 					channel.disconnect();
-					logger.info("SFTP channel closed.");
+					logger.debug("SFTP channel closed.");
 				}
 			}
 		} else {
@@ -281,13 +281,14 @@ public class SSHClient {
 				channel = (ChannelExec) session.openChannel("exec");
 				channel.setCommand(command.getBytes("UTF-8"));
 
-				channel.setErrStream(errorOutputStream);
+                // TODO evaluate solution
+//				channel.setErrStream(errorOutputStream);
 
 				BufferedReader in = new BufferedReader(
 						new InputStreamReader(channel.getInputStream()));
 
 				channel.connect();
-				logger.info("Opened SSH Exec channel.");
+				logger.debug("Opened SSH Exec channel.");
 
 				StringBuilder sb = new StringBuilder();
 				String line;
@@ -304,7 +305,7 @@ public class SSHClient {
 			} finally {
 				if (notNull(channel)) {
 					channel.disconnect();
-					logger.info("SSH Exec channel closed.");
+					logger.debug("SSH Exec channel closed.");
 				}
 			}
 		} else {
@@ -313,13 +314,13 @@ public class SSHClient {
 	}
 
 	public void executeAndSysout(String command) throws SSHClientExcpetion {
-		System.out.println("$ " + command);
+        logger.info("ssh-shell$ " + command);
 		String result = sshExec(command, System.err);
-		System.out.println("Result: " + result);
+        logger.info("=> " + result);
 	}
 
 	public String executeWithResult(String command) throws SSHClientExcpetion {
-		System.out.println("$ " + command);
+        logger.info("ssh-shell$ " + command);
 		return sshExec(command, System.err);
 	}
 

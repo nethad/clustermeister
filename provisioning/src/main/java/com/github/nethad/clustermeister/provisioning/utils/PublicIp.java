@@ -21,8 +21,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -31,6 +30,8 @@ import java.util.logging.Logger;
 public class PublicIp {
 	public static final String WHATISMYIP_WEBSERVICE_URL = "http://automation.whatismyip.com/n09230945.asp";
 	private static String publicIp;
+    
+    private static org.slf4j.Logger logger = LoggerFactory.getLogger(PublicIp.class);
 
 	public static String getPublicIp() {
 		if (publicIp != null) {
@@ -44,14 +45,14 @@ public class PublicIp {
 					whatismyip.openStream()));
 			publicIp = in.readLine(); //you get the IP as a String
 		} catch (MalformedURLException ex) {
-			Logger.getLogger(TorqueJPPFNodeDeployer.class.getName()).log(Level.SEVERE, null, ex);
+			logger.error(null, ex);
 		} catch (IOException ex) {
-			Logger.getLogger(TorqueJPPFNodeDeployer.class.getName()).log(Level.SEVERE, null, ex);
+			logger.error(null, ex);
 		} finally {
 			try {
 				in.close();
 			} catch (IOException ex) {
-				Logger.getLogger(TorqueJPPFNodeDeployer.class.getName()).log(Level.SEVERE, null, ex);
+				logger.error(null, ex);
 			}
 		}
 		return publicIp;
