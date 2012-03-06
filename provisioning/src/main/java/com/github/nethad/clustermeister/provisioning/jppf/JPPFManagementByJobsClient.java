@@ -17,14 +17,16 @@ package com.github.nethad.clustermeister.provisioning.jppf;
 
 import com.github.nethad.clustermeister.provisioning.jppf.managementtasks.JPPFConfigReaderTask;
 import com.github.nethad.clustermeister.provisioning.jppf.managementtasks.ShutdownSingleNodeTask;
+import com.github.nethad.clustermeister.provisioning.utils.IPSocket;
 import com.github.nethad.clustermeister.provisioning.utils.NodeManagementConnector;
+import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
-import java.util.Arrays;
+import com.google.common.collect.Lists;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
-import java.util.Set;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -56,14 +58,12 @@ public class JPPFManagementByJobsClient {
             LoggerFactory.getLogger(JPPFManagementByJobsClient.class);
     
     private JPPFClient jPPFClient;
-    private final String driverHost;
     
     /**
      * Default constructor: intended to be used only by JPPFConfiguratedComponentFactory.
      */
-    JPPFManagementByJobsClient(String driverhost) {
+    JPPFManagementByJobsClient() {
         jPPFClient = new JPPFClient();
-        this.driverHost = driverhost;
     }
 
     public Properties getJPPFConfig(String host, int port) {
@@ -96,98 +96,100 @@ public class JPPFManagementByJobsClient {
      * This method is synchronous. It waits for the job to complete before 
      * it returns.
      * 
+     * @param driverHost 
+     *      The driver that the node to shut down is connected to.
+     * @param driverManagementPort 
+     *      The JMX management port of the driver the node to shut down is 
+     *      connected to.
      * @param nodeHost 
      *      The hostname or IP of the node to shut down.
      * @param nodeManagementPort 
      *      The JMX management port of the node to shut down.
-     * @param driverManagementPort 
-     *      The JMX management port of the driver the node to shut down is 
-     *      connected to.
      */
-    public boolean shutdownNode(String nodeHost, int nodeManagementPort, 
-            int driverManagementPort) {
-        try {
-            JPPFJob job = getShutdownNodeJob(nodeHost, nodeManagementPort);
-            Lock lock = new ReentrantLock();
-            Condition jobFinished = lock.newCondition();
-            JMXDriverConnectionWrapper wrapper = 
-                    new JMXDriverConnectionWrapper(driverHost, driverManagementPort);
-            try {
-                sendSignalOnJobReturned(wrapper, lock, jobFinished, job);
-                jPPFClient.submit(job);
-                awaitSignal(lock, jobFinished);
-                if(Arrays.asList(wrapper.getAllJobIds()).contains(job.getUuid())) {
-                    wrapper.cancelJob(job.getUuid());
-                }
-            } finally {
-                wrapper.close();
-            }
-        } catch (Exception ex) {
-            logger.warn("Failed to shut down node.", ex);
-            return false;
-        }
-
-        return true;
-    }
-
-    public void shutdownAllNodes(String driverHost, int managementPort) {
+    public void shutdownNode(String driverHost, int driverManagementPort, 
+            final String nodeHost, final int nodeManagementPort) {
         JMXDriverConnectionWrapper wrapper = null;
         try {
             wrapper = NodeManagementConnector.openDriverConnection(
-                    driverHost, managementPort);
-            Set<JPPFManagementInfo> nodeInfos = new HashSet<JPPFManagementInfo>(
-                    wrapper.nodesInformation().size());
-            
-            for (JPPFManagementInfo nodeInfo : wrapper.nodesInformation()) {
-                nodeInfos.add(nodeInfo);
+                    driverHost, driverManagementPort);
+            Collection<JPPFManagementInfo> nodesInfo = new ArrayList<JPPFManagementInfo>(1);
+            JPPFManagementInfo info = Iterables.find(wrapper.nodesInformation(), 
+                    new Predicate<JPPFManagementInfo>() {
+                @Override
+                public boolean apply(JPPFManagementInfo info) {
+                    return info.getHost().equals(nodeHost) && 
+                            info.getPort() == nodeManagementPort;
+                }
+            }, null);
+            if(info != null) {
+                nodesInfo.add(info);
             }
-            
-            JPPFManagementInfo chosenEntry = 
-                    Iterables.getFirst(nodeInfos, null);
-            String executorHost = chosenEntry.getHost();
-            int executorPort = chosenEntry.getPort();
-            logger.debug("Chose node {}:{} as executor.", executorHost, executorPort);
-            
-            final JPPFJob shutdownExecutorJob = getShutdownNodeJob(executorHost, executorPort);
-            
-            final Lock lock = new ReentrantLock();
-            final Condition lastJobFinished = lock.newCondition();
-            if(nodeInfos.isEmpty()) {
-                logger.debug("No nodes to shut down.");
-                return;
-            } else if(nodeInfos.size() == 1) {
-                sendSignalOnJobReturned(wrapper, lock, lastJobFinished, 
-                        shutdownExecutorJob);
-                jPPFClient.submit(shutdownExecutorJob);
-            } else {
-                final JMXConnectionWrapper finalWrapper = wrapper;
-                JPPFJob job = createShutdownJob(nodeInfos, executorHost, executorPort);
-                job.addJobListener(new JobListener() {
-                    @Override
-                    public void jobStarted(JobEvent event) {
-                        //nop
-                    }
-
-                    @Override
-                    public void jobEnded(JobEvent event) {
-                        if(event.getJob().getPendingTasks().isEmpty()) {
-                            try {
-                                sendSignalOnJobReturned(finalWrapper, lock, lastJobFinished, 
-                                        shutdownExecutorJob);
-                                jPPFClient.submit(shutdownExecutorJob);
-                            } catch (Exception ex) {
-                                logger.error("Could not shut down shutdown executor node.", ex);
-                            }
+            shutdownNodes(nodesInfo, wrapper);
+        } catch (Exception ex) {
+            logger.warn("Failed to shut down node.", ex);
+        } finally {
+            if(wrapper != null) {
+                try {
+                    wrapper.close();
+                } catch (Exception ex) {
+                    logger.warn("Could not close wrapper.", ex);
+                }
+            }
+        }
+    }
+    
+    /**
+     * Shuts down nodes specified by their Management sockets (host and management port).
+     * 
+     * This sends a job to shut down the specified nodes to an arbitrary node 
+     * connected to the driver this JPPFManagementByJobsClient is associated to.
+     * 
+     * This method is synchronous. It waits for the job to complete before 
+     * it returns.
+     * 
+     * @param driverHost 
+     *      The driver that the node to shut down is connected to.
+     * @param driverManagementPort 
+     *      The JMX management port of the driver the node to shut down is 
+     *      connected to.
+     * @param sockets 
+     *      Contains all node sockets to shut down. 
+     *      Note that the port must be the management port of the node.
+     */
+    public void shutdownNodes(String driverHost, int driverManagementPort, 
+            final Collection<IPSocket> sockets) {
+        JMXDriverConnectionWrapper wrapper = null;
+        try {
+            wrapper = NodeManagementConnector.openDriverConnection(
+                    driverHost, driverManagementPort);
+            Iterable<JPPFManagementInfo> matchingNodes = Iterables.filter(wrapper.nodesInformation(),
+                    new Predicate<JPPFManagementInfo>() {
+                        @Override
+                        public boolean apply(JPPFManagementInfo info) {
+                            return sockets.contains(
+                                    new IPSocket(info.getHost(), info.getPort()));
                         }
-                    }
-                });
-                jPPFClient.submit(job);
+                    });
+            shutdownNodes(Lists.newArrayList(matchingNodes), wrapper);
+        } catch (Exception ex) {
+            logger.warn("Failed to shut down node.", ex);
+        } finally {
+            if(wrapper != null) {
+                try {
+                    wrapper.close();
+                } catch (Exception ex) {
+                    logger.warn("Could not close wrapper.", ex);
+                }
             }
+        }
+    }
 
-            logger.debug("Waiting for all nodes to shut down...");
-            awaitSignal(lock, lastJobFinished);
-            logger.debug("All nodes are shut down. Canceling Job: {}", shutdownExecutorJob.getName());
-            wrapper.cancelJob(shutdownExecutorJob.getUuid());
+    public void shutdownAllNodes(String driverHost, int driverManagementPort) {
+        JMXDriverConnectionWrapper wrapper = null;
+        try {
+            wrapper = NodeManagementConnector.openDriverConnection(
+                    driverHost, driverManagementPort);
+            shutdownNodes(wrapper.nodesInformation(), wrapper);
         } catch (Exception e) {
             logger.warn("Failed to shut down all nodes.", e);
         } finally {
@@ -195,7 +197,7 @@ public class JPPFManagementByJobsClient {
                 try {
                     wrapper.close();
                 } catch (Exception ex) {
-                    logger.warn("Could not close wrapper.");
+                    logger.warn("Could not close wrapper.", ex);
                 }
             }
         }
@@ -219,6 +221,53 @@ public class JPPFManagementByJobsClient {
             jPPFClient.close();
             jPPFClient = null;
         }
+    }
+    
+    private void shutdownNodes(Collection<JPPFManagementInfo> nodeInfos, 
+            JMXDriverConnectionWrapper wrapper) throws InterruptedException, Exception {
+        JPPFManagementInfo chosenEntry = 
+                Iterables.getFirst(nodeInfos, null);
+        String executorHost = chosenEntry.getHost();
+        int executorPort = chosenEntry.getPort();
+        logger.debug("Chose node {}:{} as executor.", executorHost, executorPort);
+        final JPPFJob shutdownExecutorJob = getShutdownNodeJob(executorHost, executorPort);
+        final Lock lock = new ReentrantLock();
+        final Condition lastJobFinished = lock.newCondition();
+        if (nodeInfos.isEmpty()) {
+            logger.debug("No nodes to shut down.");
+            return;
+        } else if(nodeInfos.size() == 1) {
+            sendSignalOnJobReturned(wrapper, lock, lastJobFinished, 
+                    shutdownExecutorJob);
+            jPPFClient.submit(shutdownExecutorJob);
+        } else {
+            final JMXConnectionWrapper finalWrapper = wrapper;
+            JPPFJob job = createShutdownJob(nodeInfos, executorHost, executorPort);
+            job.addJobListener(new JobListener() {
+                @Override
+                public void jobStarted(JobEvent event) {
+                    //nop
+                }
+
+                @Override
+                public void jobEnded(JobEvent event) {
+                    if(event.getJob().getPendingTasks().isEmpty()) {
+                        try {
+                            sendSignalOnJobReturned(finalWrapper, lock, lastJobFinished, 
+                                    shutdownExecutorJob);
+                            jPPFClient.submit(shutdownExecutorJob);
+                        } catch (Exception ex) {
+                            logger.error("Could not shut down shutdown executor node.", ex);
+                        }
+                    }
+                }
+            });
+            jPPFClient.submit(job);
+        }
+        logger.debug("Waiting for all nodes to shut down...");
+        awaitSignal(lock, lastJobFinished);
+        logger.debug("All nodes are shut down. Canceling Job: {}", shutdownExecutorJob.getName());
+        wrapper.cancelJob(shutdownExecutorJob.getUuid());
     }
     
     private JPPFJob getShutdownNodeJob(String nodeHost, int managementPort) 
@@ -266,7 +315,7 @@ public class JPPFManagementByJobsClient {
         }
     }
     
-    private JPPFJob createShutdownJob(Set<JPPFManagementInfo> nodeInfos, 
+    private JPPFJob createShutdownJob(Collection<JPPFManagementInfo> nodeInfos, 
             String executorHost, int executorPort) throws JPPFException, NumberFormatException {
         
         JPPFJob job = new JPPFJob();
