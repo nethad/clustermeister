@@ -18,14 +18,11 @@ package com.github.nethad.clustermeister.provisioning.torque;
 import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
-import com.github.nethad.clustermeister.api.NodeType;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonNode;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.github.nethad.clustermeister.provisioning.utils.NodeManagementConnector;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientExcpetion;
 import com.google.common.base.Preconditions;
-import com.google.common.base.Predicates;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -178,9 +175,9 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 					firstDriver.getPrivateAddresses().iterator().next(), serverPort);
 		client.shutdownAllNodes(driverHost, managementPort);
 		nodes.clear();
+        client.close();
 		client.shutdownDriver(driverHost, managementPort);
 		drivers.clear();
-        client.close();
 	}
 	
 	private ListenableFuture<Void> removeDriverNode(TorqueNode torqueNode) {
