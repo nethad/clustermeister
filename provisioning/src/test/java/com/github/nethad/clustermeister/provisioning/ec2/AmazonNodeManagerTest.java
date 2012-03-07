@@ -18,9 +18,10 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
+import com.github.nethad.clustermeister.api.impl.PrivateKeyCredentials;
 import com.google.common.base.Optional;
-import java.io.BufferedReader;
-import java.io.FileReader;
+import com.google.common.collect.Iterables;
+import java.io.FileInputStream;
 import java.util.Collection;
 import java.util.concurrent.Future;
 import org.junit.Ignore;
@@ -49,72 +50,25 @@ public class AmazonNodeManagerTest {
 
 //        Optional<String> instanceId = Optional.of("eu-west-1/i-68cdee21");
         Optional<String> absentInstanceId = Optional.absent();
-        final Future<? extends Node> d = nodeManager.addNode(new AmazonNodeConfiguration() {
-
-            @Override
-            public NodeType getType() {
-                return NodeType.DRIVER;
-            }
-
-            @Override
-            public String getPrivateKey() {
-                return AmazonNodeManagerTest.getPrivateKey(privateKeyFile);
-            }
-
-            @Override
-            public int getManagementPort() {
-                return 11198;
-            }
-        }, absentInstanceId);
+        AmazonNodeConfiguration dc = new AmazonNodeConfiguration();
+        dc.setNodeType(NodeType.DRIVER);
+        dc.setCredentials(new PrivateKeyCredentials("ec2-user", new FileInputStream(privateKeyFile)));
+        final Future<? extends Node> d = nodeManager.addNode(dc, absentInstanceId);
         
         Optional<String> driverInstanceId = Optional.of(((AmazonNode)d.get()).getInstanceId());
+        AmazonNodeConfiguration nc = new AmazonNodeConfiguration();
+        nc.setNodeType(NodeType.NODE);
+        nc.setDriverAddress(Iterables.getFirst(d.get().getPrivateAddresses(), null));
+        nc.setCredentials(new PrivateKeyCredentials("ec2-user", new FileInputStream(privateKeyFile)));
+        final Future<? extends Node> n = nodeManager.addNode(nc, driverInstanceId);
+        
+        AmazonNodeConfiguration nc2 = new AmazonNodeConfiguration();
+        nc2.setNodeType(NodeType.NODE);
+        nc2.setDriverAddress(Iterables.getFirst(d.get().getPrivateAddresses(), null));
+        nc2.setCredentials(new PrivateKeyCredentials("ec2-user", new FileInputStream(privateKeyFile)));
+        final Future<? extends Node> n2 = nodeManager.addNode(nc2, absentInstanceId);
+        
 
-        final Future<? extends Node> n = nodeManager.addNode(new AmazonNodeConfiguration() {
-
-            @Override
-            public NodeType getType() {
-                return NodeType.NODE;
-            }
-
-            @Override
-            public String getPrivateKey() {
-                return AmazonNodeManagerTest.getPrivateKey(privateKeyFile);
-            }
-
-            @Override
-            public String getDriverAddress() {
-                try {
-                    return d.get().getPrivateAddresses().iterator().next();
-                } catch (Throwable ex) {
-                    logger.error("Failed to get Driver IP.", ex);
-                    return null;
-                }
-            }
-        }, driverInstanceId);
-
-        final Future<? extends Node> n2 = nodeManager.addNode(new AmazonNodeConfiguration() {
-
-            @Override
-            public NodeType getType() {
-                return NodeType.NODE;
-            }
-
-            @Override
-            public String getPrivateKey() {
-                return AmazonNodeManagerTest.getPrivateKey(privateKeyFile);
-            }
-
-            @Override
-            public String getDriverAddress() {
-                try {
-                    return d.get().getPrivateAddresses().iterator().next();
-                } catch (Throwable ex) {
-                    logger.error("Failed to get Driver IP.", ex);
-                    return null;
-                }
-            }
-
-        }, absentInstanceId);
 
         //wait for all nodes to be online
         Node jppfDriver = d.get();
@@ -139,21 +93,5 @@ public class AmazonNodeManagerTest {
         //wait for them to shut down
 
         nodeManager.close();
-    }
-
-    synchronized public static String getPrivateKey(String path) {
-        try {
-            BufferedReader reader = new BufferedReader(new FileReader(path));
-            StringBuilder sb = new StringBuilder();
-            String line;
-            while ((line = reader.readLine()) != null) {
-                sb.append(line);
-                sb.append("\n");
-            }
-            reader.close();
-            return sb.toString().trim();
-        } catch (Throwable ex) {
-            throw new RuntimeException(ex);
-        }
     }
 }
