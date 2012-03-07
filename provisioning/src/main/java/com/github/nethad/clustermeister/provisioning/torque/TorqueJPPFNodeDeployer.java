@@ -122,7 +122,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         }
         
         // delete config files (separate config files for each node are generated)
-        executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "/config/*");
+        executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "/config/*.properties");
 
         if (!isResourceAlreadyDeployedAndUpToDate()) {
             logger.info("Resource is not up to date.");
@@ -149,8 +149,9 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         executeAndSysout("unzip " + DEPLOY_ZIP);
         
         // upload akka libraries
-        sshClient.sftpUpload(getResourcePath(AKKA_ZIP), AKKA_REMOTE_ZIP_PATH);
-        executeAndSysout("cd "+DEPLOY_BASE_NAME+"/lib/ && unzip " + AKKA_ZIP);
+        // TODO deactivated akka upload for testing purposes
+//        sshClient.sftpUpload(getResourcePath(AKKA_ZIP), AKKA_REMOTE_ZIP_PATH);
+//        executeAndSysout("cd "+DEPLOY_BASE_NAME+"/lib/ && unzip " + AKKA_ZIP);
         
         sshClient.sftpUpload(getResourcePath(DEPLOY_QSUB), DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB);
         sshClient.sftpUpload(new ByteArrayInputStream(
@@ -224,7 +225,11 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
             driverIp = localIp;
         }
         try {
-            InputStream propertyStream = new JPPFNodeConfiguration().setProperty("jppf.server.host", driverIp).setProperty("jppf.management.port", String.valueOf(managementPort)).setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-" + sessionId + "_" + currentNodeNumber).getPropertyStream();
+            InputStream propertyStream = new JPPFNodeConfiguration()
+                    .setProperty("jppf.server.host", driverIp)
+                    .setProperty("jppf.management.port", String.valueOf(managementPort))
+                    .setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-" + sessionId + "_" + currentNodeNumber)
+                    .getPropertyStream();
             sshClient.sftpUpload(propertyStream, DEPLOY_BASE_NAME + "/config/" + nodeConfigFileName);
         } catch (IOException ex) {
             logger.error("Could not read property file.", ex);
