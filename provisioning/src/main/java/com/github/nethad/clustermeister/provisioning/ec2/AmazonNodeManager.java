@@ -40,6 +40,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.NodeState;
 import org.jppf.management.JMXDriverConnectionWrapper;
 import org.jppf.management.JMXNodeConnectionWrapper;
 import org.slf4j.Logger;
@@ -185,16 +186,24 @@ public class AmazonNodeManager {
                     Optional<Map<String, String>> noMap = Optional.absent();
                     instanceMetadata = amazonInstanceManager.createInstance(noMap);
                 } catch (RunNodesException ex) {
+                    logger.warn("Failed to create instance.", ex);
                     return null;
                 }
             } else {
                 instanceMetadata = amazonInstanceManager.getInstanceMetadata(instanceId.get());
+                if(instanceMetadata.getState() == NodeState.SUSPENDED) {
+                    amazonInstanceManager.resumeInstance(instanceMetadata.getId());
+                }
             }
             AmazonNode node;
             try {
+                logger.info("Deploying JPPF-{} on {}", nodeConfiguration.getType().toString(), 
+                        instanceMetadata.getId());
                 node = amazonInstanceManager.deploy(instanceMetadata, nodeConfiguration);
+                logger.info("JPPF-{} deployed on {}.", nodeConfiguration.getType().toString(), 
+                        instanceMetadata.getId());
             } catch (Throwable ex) {
-                logger.warn("Failed to add node.", ex);
+                logger.warn("Failed to deploy node.", ex);
                 if (instanceId.isPresent()) {
                     amazonInstanceManager.suspendInstance(instanceMetadata.getId());
                 } else {
