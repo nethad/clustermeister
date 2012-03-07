@@ -16,7 +16,6 @@
 package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.google.common.util.concurrent.Monitor;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 import org.jclouds.compute.ComputeServiceContext;

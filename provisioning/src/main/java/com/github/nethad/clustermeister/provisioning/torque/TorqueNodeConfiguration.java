@@ -27,8 +27,6 @@ public class TorqueNodeConfiguration implements NodeConfiguration {
 	
 	private NodeType nodeType;
 	private boolean isDriverDeployedLocally;
-	private String userName;
-	private String privateKey;
 	private String driverAddress;
 
 	public TorqueNodeConfiguration(NodeType nodeType) {
@@ -36,10 +34,8 @@ public class TorqueNodeConfiguration implements NodeConfiguration {
 		this.isDriverDeployedLocally = true;
 	}
 	
-	public TorqueNodeConfiguration(NodeType nodeType, String userName, String privateKey, String driverAddress, boolean isDriverDeployedLocally) {
+	public TorqueNodeConfiguration(NodeType nodeType, String driverAddress, boolean isDriverDeployedLocally) {
 		this.nodeType = nodeType;
-		this.userName = userName;
-		this.privateKey = privateKey;
 		this.driverAddress = driverAddress;
 		this.isDriverDeployedLocally = true;
 	}
@@ -47,16 +43,6 @@ public class TorqueNodeConfiguration implements NodeConfiguration {
 	@Override
 	public NodeType getType() {
 		return nodeType;
-	}
-
-	@Override
-	public String getUserName() {
-		return userName;
-	}
-
-	@Override
-	public String getPrivateKey() {
-		return privateKey;
 	}
 
 	@Override

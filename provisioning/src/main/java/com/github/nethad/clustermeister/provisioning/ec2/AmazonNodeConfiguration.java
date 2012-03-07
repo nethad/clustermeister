@@ -44,7 +44,6 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
         this.userName = userName;
     }
     
-    @Override
     public String getUserName() {
         return userName;
     }
@@ -53,7 +52,6 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
         this.privateKey = privateKey;
     }
     
-    @Override
     public String getPrivateKey() {
         return privateKey;
     }
