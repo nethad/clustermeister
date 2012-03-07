@@ -156,7 +156,6 @@ public class AmazonNodeManager {
                 }
                 case DRIVER: {
                     drivers.remove(node);
-                    managementClients.remove(node);
                     break;
                 }
                 default: {
