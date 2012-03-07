@@ -26,7 +26,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.Monitor;
 import com.google.common.util.concurrent.SettableFuture;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
@@ -128,11 +127,11 @@ public class AmazonInstanceManager {
     /**
      * Performs an Amazon API call to retrieve all AWS EC2 instances.
      *
-     * @return Iterator containing all registered AWS EC2 instances regardless
+     * @return A set containing all registered AWS EC2 instances regardless
      * of state.
      */
-    Iterator<? extends ComputeMetadata> getInstances() {
-        return valueOrNotReady(contextFuture).getComputeService().listNodes().iterator();
+    Set<? extends ComputeMetadata> getInstances() {
+        return valueOrNotReady(contextFuture).getComputeService().listNodes();
     }
 
     /**
@@ -199,7 +198,7 @@ public class AmazonInstanceManager {
                 AmazonEC2JPPFDeployer deployer =
                         new AmazonEC2JPPFNodeDeployer(context, instanceMetadata,
                         getLoginCredentials(nodeConfig), nodeConfig);
-                deployer.run();
+                deployer.deploy();
                 break;
             }
             case DRIVER: {
@@ -208,7 +207,7 @@ public class AmazonInstanceManager {
                 AmazonEC2JPPFDeployer deployer =
                         new AmazonEC2JPPFDriverDeployer(context, instanceMetadata,
                         getLoginCredentials(nodeConfig), nodeConfig);
-                deployer.run();
+                deployer.deploy();
 
                 break;
             }
@@ -268,6 +267,8 @@ public class AmazonInstanceManager {
         logger.info("Suspending instance {}.", instanceId);
         valueOrNotReady(contextFuture).getComputeService().suspendNode(instanceId);
         decrementAndManagePortCounter(instanceId);
+        AmazonEC2JPPFDeployer.removeDriverMonitor(instanceId);
+        AmazonEC2JPPFDeployer.removeNodeMonitor(instanceId);
         logger.info("Instance {} suspended.", instanceId);
     }
 
@@ -282,6 +283,8 @@ public class AmazonInstanceManager {
         logger.info("Terminating instance {}.", instanceId);
         valueOrNotReady(contextFuture).getComputeService().destroyNode(instanceId);
         decrementAndManagePortCounter(instanceId);
+        AmazonEC2JPPFDeployer.removeDriverMonitor(instanceId);
+        AmazonEC2JPPFDeployer.removeNodeMonitor(instanceId);
         logger.info("Instance {} terminated.", instanceId);
     }
 
