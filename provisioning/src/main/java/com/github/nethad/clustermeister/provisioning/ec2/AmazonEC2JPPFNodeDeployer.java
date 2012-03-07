@@ -16,83 +16,57 @@
 package com.github.nethad.clustermeister.provisioning.ec2;
 
 import static com.google.common.base.Preconditions.*;
+import com.google.common.util.concurrent.Monitor;
+import java.io.InputStream;
 import java.util.Properties;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.domain.LoginCredentials;
-import org.jclouds.ssh.SshClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
+ * Do not reuse instances of this class.
  *
  * @author daniel
  */
 public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
-    static final String NODE_ZIP_FILE = "jppf-node.zip";
-    static final String CRC32_FILE_NODE = "jppf-node-crc-32";
-    static final String START_SCRIPT = "/jppf-node/startNode.sh";
+    protected static final String JPPF_SERVER_HOST = "jppf.server.host";
+    private static final String ZIP_FILE = "jppf-node.zip";
+    private static final String CRC32_FILE = CLUSTERMEISTER_BIN + "/jppf-node-crc-32";
+    private static final String JPPF_FOLDER = "/jppf-node/";
+    private static final String PROPERTY_FILE_NAME = "jppf-node.properties";
+    private static final String PROPERTY_FILE_SUBPATH = JPPF_FOLDER + "config/" + PROPERTY_FILE_NAME;
+    private static final String START_SCRIPT = "startNode.sh";
     
-    private final static Logger logger =
-            LoggerFactory.getLogger(AmazonEC2JPPFNodeDeployer.class);
-
     public AmazonEC2JPPFNodeDeployer(ComputeServiceContext context,
             NodeMetadata metadata, LoginCredentials credentials,
             AmazonNodeConfiguration nodeConfiguration) {
-        super(credentials, context, metadata, nodeConfiguration);
+        super(credentials, context, metadata, nodeConfiguration, ZIP_FILE, 
+                CRC32_FILE, PROPERTY_FILE_SUBPATH, START_SCRIPT, JPPF_FOLDER);
     }
 
     @Override
-    public void run() {
-        String publicIp = getPublicIp();
-        String privateIp = getPrivateIp();
-        checkState(nodeConfiguration.getDriverAddress() != null, "No driver address set.");
-
-        logger.info("Deploying JPPF-Node to {} ({}).", metadata.getId(),
-                publicIp);
-        Properties nodeProperties = getSettings(nodeConfiguration.getDriverAddress(),
-                privateIp, nodeConfiguration.getManagementPort());
-
-        SshClient client = getSSHClient();
-        client.connect();
-        try {
-            final String folderName = getFolderName();
-            final String crcFile = CLUSTERMEISTER_BIN + "/" + CRC32_FILE_NODE;
-            long checksum = getChecksum(NODE_ZIP_FILE);
-            
-            if(getUploadNecessary(crcFile, client, checksum)) {
-                uploadAndSetup(folderName, crcFile, checksum, NODE_ZIP_FILE, START_SCRIPT);
-            }
-            logger.debug("Uploading driver config.");
-            upload(client, getRunningConfig(nodeProperties),
-                    folderName + "/jppf-node/config/jppf-node.properties");
-
-            logger.info("Starting JPPF-Node on {}...", metadata.getId());
-            final String script = "cd /home/ec2-user/" + folderName + "/jppf-node\nnohup ./startNode.sh > nohup.out 2>&1";
-            RunScriptOptions options = new RunScriptOptions().overrideLoginPrivateKey(
-                    loginCredentials.getPrivateKey()).
-                    overrideLoginUser(loginCredentials.getUser()).
-                    blockOnComplete(false).
-                    runAsRoot(false).
-                    nameTask(folderName + "-start");
-            logExecResponse(context.getComputeService().
-                    runScriptOnNode(metadata.getId(), script, options));
-            logger.info("JPPF-Node started.");
-        } finally {
-            if (client != null) {
-                client.disconnect();
-            }
-        }
-        logger.info("JPPF-Node deployed on {}.", metadata.getId());
+    protected void checkPrecondition() throws Throwable {
+        checkState(nodeConfiguration.getDriverAddress() != null, 
+                "No driver address set.");
     }
 
-    private Properties getSettings(String driverHost, String managementHost, int managementPort) {
-        Properties nodeProperties = getPropertiesFromStream(
-                this.getClass().getResourceAsStream("jppf-node.properties"));
-        nodeProperties.setProperty("jppf.server.host", driverHost);
-        nodeProperties.setProperty("jppf.management.host", managementHost);
-        nodeProperties.setProperty("jppf.management.port", String.valueOf(managementPort));
-        return nodeProperties;
+    @Override
+    protected Monitor getMonitor() {
+        return getNodeMonitor(metadata);
+    }
+
+    @Override
+    protected Properties getSettings() {
+        final InputStream in = this.getClass().getResourceAsStream(PROPERTY_FILE_NAME);
+        try {
+            Properties nodeProperties = getPropertiesFromStream(in);
+            nodeProperties.setProperty(JPPF_SERVER_HOST, nodeConfiguration.getDriverAddress());
+            nodeProperties.setProperty(JPPF_MANAGEMENT_HOST, getPrivateIp());
+            nodeProperties.setProperty(JPPF_MANAGEMENT_PORT, 
+                    String.valueOf(nodeConfiguration.getManagementPort()));
+            return nodeProperties;
+        } finally {
+            closeInputstream(in);
+        }
     }
 }

@@ -15,79 +15,55 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
+import com.google.common.util.concurrent.Monitor;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.domain.LoginCredentials;
-import org.jclouds.ssh.SshClient;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
- *
+ * Do not reuse instances of this class.
+ * 
  * @author daniel
  */
 public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
-    static final String DRIVER_ZIP_FILE = "jppf-driver.zip";
-    static final String CRC32_FILE_DRIVER = "jppf-driver-crc-32";
-    static final String START_SCRIPT = "/jppf-driver/startDriver.sh";
-
-    private final static Logger logger =
-            LoggerFactory.getLogger(AmazonEC2JPPFDriverDeployer.class);
+    private static final String ZIP_FILE = "jppf-driver.zip";
+    private static final String CRC32_FILE = CLUSTERMEISTER_BIN + "/jppf-driver-crc-32";
+    private static final String JPPF_FOLDER = "/jppf-driver/";
+    private static final String PROPERTY_FILE_NAME = "jppf-driver.properties";
+    private static final String PROPERTY_FILE_SUBPATH = JPPF_FOLDER + "config/" + PROPERTY_FILE_NAME;
+    private static final String START_SCRIPT = "startDriver.sh";
 
     public AmazonEC2JPPFDriverDeployer(ComputeServiceContext context,
             NodeMetadata metadata, LoginCredentials credentials,
             AmazonNodeConfiguration nodeConfiguration) {
-        super(credentials, context, metadata, nodeConfiguration);
+        super(credentials, context, metadata, nodeConfiguration, ZIP_FILE, 
+                CRC32_FILE, PROPERTY_FILE_SUBPATH, START_SCRIPT, JPPF_FOLDER);
     }
 
     @Override
-    public void run() {
-        final String publicIp = getPublicIp();
-        final String privateIp = getPrivateIp();
-        logger.info("Deploying JPPF-Driver to {} ({}).", metadata.getId(), publicIp);
-        Properties nodeProperties = getSettings(privateIp, 
-                nodeConfiguration.getManagementPort());
-
-        SshClient client = getSSHClient();
-        client.connect();
-        try {
-            final String folderName = getFolderName();
-            final String crcFile = CLUSTERMEISTER_BIN + "/" + CRC32_FILE_DRIVER;
-            long checksum = getChecksum(DRIVER_ZIP_FILE);
-            
-            if(getUploadNecessary(crcFile, client, checksum)) {
-                uploadAndSetup(folderName, crcFile, checksum, DRIVER_ZIP_FILE, START_SCRIPT);
-            }
-            logger.debug("Uploading driver config.");
-            upload(client, getRunningConfig(nodeProperties),
-                    folderName + "/jppf-driver/config/jppf-driver.properties");
-
-            logger.info("Starting JPPF-Driver on {}...", metadata.getId());
-            final String script = "cd /home/ec2-user/" + folderName + "/jppf-driver\nnohup ./startDriver.sh > nohup.out 2>&1";
-            RunScriptOptions options = new RunScriptOptions().overrideLoginPrivateKey(
-                    loginCredentials.getPrivateKey()).
-                    overrideLoginUser(loginCredentials.getUser()).
-                    blockOnComplete(false).
-                    runAsRoot(false).
-                    nameTask(folderName + "-start");
-            logExecResponse(context.getComputeService().
-                    runScriptOnNode(metadata.getId(), script, options));
-            logger.info("JPPF-Driver started.");
-        } finally {
-            if (client != null) {
-                client.disconnect();
-            }
-        }
-        logger.info("JPPF-Driver deployed on {}.", metadata.getId());
+    protected void checkPrecondition() throws Throwable {
+        //no precondition
     }
 
-    private Properties getSettings(String managementHost, int managementPort) {
-        Properties nodeProperties = getPropertiesFromStream(
-                this.getClass().getResourceAsStream("jppf-driver.properties"));
-        nodeProperties.setProperty("jppf.management.host", managementHost);
-        nodeProperties.setProperty("jppf.management.port", String.valueOf(managementPort));
-        return nodeProperties;
+    @Override
+    protected Monitor getMonitor() {
+        return getDriverMonitor(metadata);
+    }
+
+    @Override
+    protected Properties getSettings() {
+        final InputStream in = this.getClass().getResourceAsStream(PROPERTY_FILE_NAME);
+        try {
+            Properties nodeProperties = getPropertiesFromStream(in);
+            nodeProperties.setProperty(JPPF_MANAGEMENT_HOST, getPrivateIp());
+            nodeProperties.setProperty(JPPF_MANAGEMENT_PORT, 
+                    String.valueOf(nodeConfiguration.getManagementPort()));
+            return nodeProperties;
+        } finally {
+            closeInputstream(in);
+        }
     }
 }
