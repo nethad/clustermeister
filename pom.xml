@@ -58,10 +58,10 @@
 				<activeByDefault>true</activeByDefault>
 			</activation>
 			<modules>
-				<module>org.jppf.common</module>
 				<module>org.jppf.common-node</module>
-				<module>org.jppf.client</module>
+				<module>org.jppf.common</module>
 				<module>org.jppf.server</module>
+				<module>org.jppf.client</module>
 				<module>api</module>
 				<module>provisioning</module>
 			</modules>
