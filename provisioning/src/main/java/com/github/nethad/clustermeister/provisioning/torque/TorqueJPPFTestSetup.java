@@ -21,8 +21,6 @@ import com.github.nethad.clustermeister.api.NodeType;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  *
@@ -30,7 +28,7 @@ import java.util.logging.Logger;
  */
 public class TorqueJPPFTestSetup {
 
-    private static final int NUMBER_OF_NODES = 6;
+    private static final int NUMBER_OF_NODES = 3;
 
     public static void main(String... args) {
         new TorqueJPPFTestSetup().execute();
