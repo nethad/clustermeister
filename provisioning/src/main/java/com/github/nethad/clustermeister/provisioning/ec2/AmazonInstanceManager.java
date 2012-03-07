@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Configuration;
+import com.github.nethad.clustermeister.api.impl.PrivateKeyCredentials;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.FutureCallback;
@@ -24,6 +25,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.Monitor;
 import com.google.common.util.concurrent.SettableFuture;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -304,7 +306,15 @@ public class AmazonInstanceManager {
     }
 
     private LoginCredentials getLoginCredentials(AmazonNodeConfiguration config) {
-        return new LoginCredentials(config.getUserName(), null, config.getPrivateKey(), true);
+        PrivateKeyCredentials credentials = config.getCredentials().get();
+        
+        try {
+            String privateKey = credentials.getPrivateKey();
+            return new LoginCredentials(credentials.getUser().get(), null, privateKey, true);
+        } catch(IOException ex) {
+            logger.warn("Can not get private key.");
+            throw new IllegalStateException(ex);
+        }
     }
 
     private ListenableFuture<ComputeServiceContext> createContext() {
