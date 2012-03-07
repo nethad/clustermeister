@@ -20,6 +20,10 @@ package com.github.nethad.clustermeister.api;
  * @author thomas
  */
 public interface Configuration {
+    public static final String TORQUE_SSH_USER = "torque.ssh_user";
+    public static final String TORQUE_SSH_PRIVATEKEY = "torque.ssh_privatekey";
+    public static final String TORQUE_SSH_HOST = "torque.ssh_host";
+    public static final String TORQUE_SSH_PORT = "torque.ssh_port";
     
     public String getString(String key, String defaultValue);
     public int getInt(String key, int defaultValue);
