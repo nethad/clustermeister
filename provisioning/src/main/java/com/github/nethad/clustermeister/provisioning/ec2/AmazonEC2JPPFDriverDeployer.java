@@ -49,8 +49,8 @@ public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
 
     @Override
     public void run() {
-        final String publicIp = metadata.getPublicAddresses().iterator().next();
-        final String privateIp = metadata.getPrivateAddresses().iterator().next();
+        final String publicIp = getPublicIp();
+        final String privateIp = getPrivateIp();
         logger.info("Deploying JPPF-Driver to {} ({}).", metadata.getId(), publicIp);
         Properties nodeProperties = getSettings(privateIp, 
                 nodeConfiguration.getManagementPort());
