@@ -263,7 +263,8 @@ public class AmazonNodeManager {
                     break;
                 }
                 case NO_SHUTDOWN: {
-                    logger.info("No shutdown specified. Instance continues running...");
+                    logger.info("{} specified. Instance continues running.", 
+                            AmazonInstanceShutdownMethod.NO_SHUTDOWN.toString());
                     //do nothing
                     break;
                 }
