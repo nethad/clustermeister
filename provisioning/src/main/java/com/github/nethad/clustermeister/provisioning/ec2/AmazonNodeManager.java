@@ -194,6 +194,7 @@ public class AmazonNodeManager {
             try {
                 node = amazonInstanceManager.deploy(instanceMetadata, nodeConfiguration);
             } catch (Throwable ex) {
+                logger.warn("Failed to add node.", ex);
                 if (instanceId.isPresent()) {
                     amazonInstanceManager.suspendInstance(instanceMetadata.getId());
                 } else {

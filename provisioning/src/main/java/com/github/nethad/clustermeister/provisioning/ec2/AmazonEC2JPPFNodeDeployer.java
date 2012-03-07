@@ -15,7 +15,11 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
+import com.google.common.base.Charsets;
 import static com.google.common.base.Preconditions.*;
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Properties;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.NodeMetadata;
@@ -31,7 +35,8 @@ import org.slf4j.LoggerFactory;
  * @author daniel
  */
 public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
-
+    static final String NODE_ZIP_FILE = "jppf-node.zip";
+    
     private final static Logger logger =
             LoggerFactory.getLogger(AmazonEC2JPPFNodeDeployer.class);
 
@@ -58,11 +63,14 @@ public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
         client.connect();
         try {
             final String folderName = getFolderName();
-            execute("rm -rf " + folderName, client);
-            upload(client, getClass().getResourceAsStream("jppf-node.zip"),
-                    "/home/ec2-user/" + folderName + ".zip");
-            execute("unzip " + folderName + ".zip -d " + folderName, client);
-            execute("chmod +x " + folderName + "/jppf-node/startNode.sh", client);
+            final String crcFile = CLUSTERMEISTER_BIN + "/" + CRC32_FILE_NODE;
+            Long checksum = getChecksum(NODE_ZIP_FILE);
+            checkNotNull(checksum, "Checksum is null.");
+            
+            if(getUploadNecessary(crcFile, client, checksum)) {
+                uploadAndSetupNode(folderName, client, crcFile, checksum);
+            }
+            logger.debug("Uploading driver config.");
             upload(client, getRunningConfig(nodeProperties),
                     folderName + "/jppf-node/config/jppf-node.properties");
 
@@ -77,12 +85,30 @@ public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
             logExecResponse(context.getComputeService().
                     runScriptOnNode(metadata.getId(), script, options));
             logger.info("JPPF-Node started.");
+        } catch(IOException ex) {
+            logger.warn("Can not close input stream.", ex);
         } finally {
             if (client != null) {
                 client.disconnect();
             }
         }
         logger.info("JPPF-Node deployed on {}.", metadata.getId());
+    }
+    
+    private void uploadAndSetupNode(final String folderName, SshClient client, 
+            String crcFile, long checksum) throws IOException {
+        logger.debug("Uploading {}", NODE_ZIP_FILE);
+        execute("rm -rf " + folderName + " && mkdir " + CLUSTERMEISTER_BIN, client);
+        final InputStream driverPackage = 
+                    getClass().getResourceAsStream(NODE_ZIP_FILE);
+        upload(client, driverPackage, "/home/ec2-user/" + CLUSTERMEISTER_BIN + "/" + 
+                NODE_ZIP_FILE);
+        driverPackage.close();
+        upload(client, new ByteArrayInputStream(
+                String.valueOf(checksum).getBytes(Charsets.UTF_8)), crcFile);
+        execute("unzip " + CLUSTERMEISTER_BIN + "/" + NODE_ZIP_FILE + " -d " + 
+                folderName + " && chmod +x " + folderName + 
+                "/jppf-driver/startDriver.sh", client);
     }
 
     private Properties getSettings(String driverHost, String managementHost, int managementPort) {
