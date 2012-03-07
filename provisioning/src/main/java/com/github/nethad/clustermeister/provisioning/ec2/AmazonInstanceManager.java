@@ -159,10 +159,15 @@ public class AmazonInstanceManager {
         if (userMetaData.isPresent()) {
             template.getOptions().userMetadata(userMetaData.get());
         }
-        template.getOptions().as(EC2TemplateOptions.class).
-                inboundPorts(22, 11111, 11112, 11113,
-                AmazonNodeManager.DEFAULT_MANAGEMENT_PORT, 11199, 11200, 11201, 
-                11202, 11203, 12198);
+        template.getOptions().
+                inboundPorts(
+                AmazonNodeManager.DEFAULT_SSH_PORT, 
+                AmazonNodeManager.DEFAULT_SERVER_PORT, 
+                AmazonNodeManager.DEFAULT_SERVER_CLIENT_PORT, 
+                AmazonNodeManager.DEFAULT_SERVER_NODE_PORT, //TODO: may not be needed
+                AmazonNodeManager.DEFAULT_MANAGEMENT_PORT, 
+                11199, 11200, 11201, 11202, 11203, //TODO: excess management ports, remove need for these
+                AmazonNodeManager.DEFAULT_MANAGEMENT_RMI_PORT);
 
         // specify your own keypair for use in creating nodes
         //TODO: remove need to specify keypair in AWS.
@@ -354,7 +359,7 @@ public class AmazonInstanceManager {
         try {
             return future.get();
         } catch (Exception ex) {
-            throw new IllegalStateException("InstanceManager is not ready.");
+            throw new IllegalStateException("InstanceManager is not ready.", ex);
         }
     }
 }
