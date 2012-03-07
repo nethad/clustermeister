@@ -25,7 +25,7 @@ import com.github.nethad.clustermeister.api.NodeType;
 public class AmazonNodeConfiguration implements NodeConfiguration {
 
     private NodeType nodeType = NodeType.NODE;
-    private String userName = "";
+    private String userName = "ec2-user";
     private String privateKey = "";
     private String driverAddress = "";
     private boolean driverDeployedLocally = false;
