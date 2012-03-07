@@ -16,14 +16,12 @@
 package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.google.common.base.Charsets;
-import static com.google.common.base.Preconditions.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.NodeMetadataBuilder;
 import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.ssh.SshClient;
@@ -55,15 +53,12 @@ public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
         Properties nodeProperties = getSettings(privateIp, 
                 nodeConfiguration.getManagementPort());
 
-        SshClient client = context.utils().sshForNode().apply(
-                NodeMetadataBuilder.fromNodeMetadata(metadata).
-                credentials(loginCredentials).build());
+        SshClient client = getSSHClient();
         client.connect();
         try {
             final String folderName = getFolderName();
             final String crcFile = CLUSTERMEISTER_BIN + "/" + CRC32_FILE_DRIVER;
-            Long checksum = getChecksum(DRIVER_ZIP_FILE);
-            checkNotNull(checksum, "Checksum is null.");
+            long checksum = getChecksum(DRIVER_ZIP_FILE);
             
             if(getUploadNecessary(crcFile, client, checksum)) {
                 uploadAndSetupDriver(folderName, client, crcFile, checksum);

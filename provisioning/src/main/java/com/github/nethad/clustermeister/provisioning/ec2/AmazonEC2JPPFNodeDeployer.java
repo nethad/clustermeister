@@ -23,7 +23,6 @@ import java.io.InputStream;
 import java.util.Properties;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.NodeMetadataBuilder;
 import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.ssh.SshClient;
@@ -59,15 +58,12 @@ public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
         Properties nodeProperties = getSettings(nodeConfiguration.getDriverAddress(),
                 privateIp, nodeConfiguration.getManagementPort());
 
-        SshClient client = context.utils().sshForNode().apply(
-                NodeMetadataBuilder.fromNodeMetadata(metadata).
-                credentials(loginCredentials).build());
+        SshClient client = getSSHClient();
         client.connect();
         try {
             final String folderName = getFolderName();
             final String crcFile = CLUSTERMEISTER_BIN + "/" + CRC32_FILE_NODE;
-            Long checksum = getChecksum(NODE_ZIP_FILE);
-            checkNotNull(checksum, "Checksum is null.");
+            long checksum = getChecksum(NODE_ZIP_FILE);
             
             if(getUploadNecessary(crcFile, client, checksum)) {
                 uploadAndSetupNode(folderName, client, crcFile, checksum);

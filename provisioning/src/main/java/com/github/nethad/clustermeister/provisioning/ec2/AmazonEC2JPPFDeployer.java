@@ -26,6 +26,7 @@ import java.util.Properties;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.NodeMetadataBuilder;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.io.Payloads;
 import org.jclouds.ssh.SshClient;
@@ -48,6 +49,8 @@ public abstract class AmazonEC2JPPFDeployer implements Runnable {
     final NodeMetadata metadata;
     final AmazonNodeConfiguration nodeConfiguration;
 
+    private SshClient sshClient = null;
+    
     public AmazonEC2JPPFDeployer(LoginCredentials loginCredentials,
             ComputeServiceContext context, NodeMetadata metadata,
             AmazonNodeConfiguration nodeConfiguration) {
@@ -129,28 +132,44 @@ public abstract class AmazonEC2JPPFDeployer implements Runnable {
         return publicIp;
     }
 
-    protected Long getChecksum(String filePath) {
+    protected long getChecksum(String filePath) {
         Long checksum = null;
+        final InputStream driverPackage = getClass().getResourceAsStream(filePath);
         try {
-            final InputStream driverPackage = getClass().getResourceAsStream(filePath);
             checksum = FileUtils.getCRC32(driverPackage);
-            driverPackage.close();
+            return checksum.longValue();
         } catch (IOException ex) {
             logger.warn("Can not compute CRC32 checksum.", ex);
+            checkNotNull(checksum, "Checksum is null.");
+            return checksum.longValue();
+        } finally {
+            try {
+                driverPackage.close();
+            } catch (IOException ex) {
+                logger.warn("Can not close Inputstream.", ex);
+            }
         }
-        return checksum;
     }
 
     protected boolean getUploadNecessary(final String crcFile, SshClient client, 
-            Long checksum) throws NumberFormatException {
+            long checksum) throws NumberFormatException {
         boolean crcFileExists = getBoolResult(execute(
                 FileUtils.getFileExistsShellCommand(crcFile), client));
         boolean uploadDriver = true;
         if (crcFileExists) {
             long remoteChecksum = Long.parseLong(getStringResult(
                     execute("cat " + crcFile, client)));
-            uploadDriver = (remoteChecksum != checksum.longValue());
+            uploadDriver = (remoteChecksum != checksum);
         }
         return uploadDriver;
+    }
+
+    protected SshClient getSSHClient() {
+        if(sshClient == null) {
+            sshClient = context.utils().sshForNode().apply(
+                NodeMetadataBuilder.fromNodeMetadata(metadata).
+                credentials(loginCredentials).build());
+        }
+        return sshClient;
     }
 }
