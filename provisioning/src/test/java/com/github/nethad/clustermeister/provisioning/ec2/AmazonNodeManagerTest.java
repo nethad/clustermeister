@@ -48,8 +48,8 @@ public class AmazonNodeManagerTest {
 
         AmazonNodeManager nodeManager = new AmazonNodeManager(config);
 
-//        Optional<String> instanceId = Optional.of("eu-west-1/i-62c5e12b");
-        Optional<String> absentInstanceId = Optional.absent();
+        Optional<String> instanceId = Optional.of("eu-west-1/i-68cdee21");
+//        Optional<String> absentInstanceId = Optional.absent();
         final Future<? extends Node> d = nodeManager.addNode(new AmazonNodeConfiguration() {
 
             @Override
@@ -71,10 +71,10 @@ public class AmazonNodeManagerTest {
             public int getManagementPort() {
                 return 11198;
             }
-        }, absentInstanceId);
+        }, instanceId);
         
-        Optional<String> driverInstanceId = Optional.of(((AmazonNode)d.get()).getInstanceId());
-
+//        Optional<String> driverInstanceId = Optional.of(((AmazonNode)d.get()).getInstanceId());
+//
         final Future<? extends Node> n = nodeManager.addNode(new AmazonNodeConfiguration() {
 
             @Override
@@ -101,58 +101,58 @@ public class AmazonNodeManagerTest {
                     return null;
                 }
             }
-        }, driverInstanceId);
-
-        final Future<? extends Node> n2 = nodeManager.addNode(new AmazonNodeConfiguration() {
-
-            @Override
-            public NodeType getType() {
-                return NodeType.NODE;
-            }
-
-            @Override
-            public String getUserName() {
-                return userName;
-            }
-
-            @Override
-            public String getPrivateKey() {
-                return AmazonNodeManagerTest.getPrivateKey(privateKeyFile);
-            }
-
-            @Override
-            public String getDriverAddress() {
-                try {
-                    return d.get().getPrivateAddresses().iterator().next();
-                } catch (Throwable ex) {
-                    logger.error("Failed to get Driver IP.", ex);
-                    return null;
-                }
-            }
-
-        }, driverInstanceId);
+        }, instanceId);
+//
+//        final Future<? extends Node> n2 = nodeManager.addNode(new AmazonNodeConfiguration() {
+//
+//            @Override
+//            public NodeType getType() {
+//                return NodeType.NODE;
+//            }
+//
+//            @Override
+//            public String getUserName() {
+//                return userName;
+//            }
+//
+//            @Override
+//            public String getPrivateKey() {
+//                return AmazonNodeManagerTest.getPrivateKey(privateKeyFile);
+//            }
+//
+//            @Override
+//            public String getDriverAddress() {
+//                try {
+//                    return d.get().getPrivateAddresses().iterator().next();
+//                } catch (Throwable ex) {
+//                    logger.error("Failed to get Driver IP.", ex);
+//                    return null;
+//                }
+//            }
+//
+//        }, driverInstanceId);
 
         //wait for all nodes to be online
         Node jppfDriver = d.get();
         Node jppfNode = n.get();
-        Node jppfNode2 = n2.get();
+//        Node jppfNode2 = n2.get();
 
         Collection<? extends Node> nodes = nodeManager.getNodes();
         for (Node node : nodes) {
             System.out.println(node);
         }
         
-        System.out.println("waiting...");
-        Thread.sleep(20000);
-
-        Future<Void> ns2 = nodeManager.removeNode((AmazonNode) jppfNode2, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
-        Future<Void> ns = nodeManager.removeNode((AmazonNode) jppfNode, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
-        Future<Void> ds = nodeManager.removeNode((AmazonNode) jppfDriver, AmazonInstanceShutdownMethod.TERMINATE);
-
-        //wait for them to shut down
-        ds.get();
-        ns.get();
-        ns2.get();
+//        System.out.println("waiting...");
+//        Thread.sleep(20000);
+//
+//        Future<Void> ns2 = nodeManager.removeNode((AmazonNode) jppfNode2, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
+//        Future<Void> ns = nodeManager.removeNode((AmazonNode) jppfNode, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
+//        Future<Void> ds = nodeManager.removeNode((AmazonNode) jppfDriver, AmazonInstanceShutdownMethod.TERMINATE);
+//
+//        //wait for them to shut down
+//        ds.get();
+//        ns.get();
+//        ns2.get();
 
         nodeManager.close();
     }
