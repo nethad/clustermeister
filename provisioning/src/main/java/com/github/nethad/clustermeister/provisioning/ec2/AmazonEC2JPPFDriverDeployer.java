@@ -15,10 +15,6 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
-import com.google.common.base.Charsets;
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
 import java.util.Properties;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.NodeMetadata;
@@ -35,6 +31,7 @@ import org.slf4j.LoggerFactory;
 public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
     static final String DRIVER_ZIP_FILE = "jppf-driver.zip";
     static final String CRC32_FILE_DRIVER = "jppf-driver-crc-32";
+    static final String START_SCRIPT = "/jppf-driver/startDriver.sh";
 
     private final static Logger logger =
             LoggerFactory.getLogger(AmazonEC2JPPFDriverDeployer.class);
@@ -61,7 +58,7 @@ public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
             long checksum = getChecksum(DRIVER_ZIP_FILE);
             
             if(getUploadNecessary(crcFile, client, checksum)) {
-                uploadAndSetupDriver(folderName, client, crcFile, checksum);
+                uploadAndSetup(folderName, crcFile, checksum, DRIVER_ZIP_FILE, START_SCRIPT);
             }
             logger.debug("Uploading driver config.");
             upload(client, getRunningConfig(nodeProperties),
@@ -78,30 +75,12 @@ public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
             logExecResponse(context.getComputeService().
                     runScriptOnNode(metadata.getId(), script, options));
             logger.info("JPPF-Driver started.");
-        } catch(IOException ex) {
-            logger.warn("Can not close input stream.", ex);
         } finally {
             if (client != null) {
                 client.disconnect();
             }
         }
         logger.info("JPPF-Driver deployed on {}.", metadata.getId());
-    }
-
-    private void uploadAndSetupDriver(final String folderName, SshClient client, 
-            String crcFile, long checksum) throws IOException {
-        logger.debug("Uploading {}", DRIVER_ZIP_FILE);
-        execute("rm -rf " + folderName + " && mkdir " + CLUSTERMEISTER_BIN, client);
-        final InputStream driverPackage = 
-                    getClass().getResourceAsStream(DRIVER_ZIP_FILE);
-        upload(client, driverPackage, "/home/ec2-user/" + CLUSTERMEISTER_BIN + "/" + 
-                DRIVER_ZIP_FILE);
-        driverPackage.close();
-        upload(client, new ByteArrayInputStream(
-                String.valueOf(checksum).getBytes(Charsets.UTF_8)), crcFile);
-        execute("unzip " + CLUSTERMEISTER_BIN + "/" + DRIVER_ZIP_FILE + " -d " + 
-                folderName + " && chmod +x " + folderName + 
-                "/jppf-driver/startDriver.sh", client);
     }
 
     private Properties getSettings(String managementHost, int managementPort) {

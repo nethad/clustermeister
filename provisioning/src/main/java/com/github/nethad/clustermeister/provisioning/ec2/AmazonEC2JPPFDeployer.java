@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.provisioning.utils.FileUtils;
+import com.google.common.base.Charsets;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Iterables;
 import java.io.ByteArrayInputStream;
@@ -134,9 +135,9 @@ public abstract class AmazonEC2JPPFDeployer implements Runnable {
 
     protected long getChecksum(String filePath) {
         Long checksum = null;
-        final InputStream driverPackage = getClass().getResourceAsStream(filePath);
+        final InputStream file = getClass().getResourceAsStream(filePath);
         try {
-            checksum = FileUtils.getCRC32(driverPackage);
+            checksum = FileUtils.getCRC32(file);
             return checksum.longValue();
         } catch (IOException ex) {
             logger.warn("Can not compute CRC32 checksum.", ex);
@@ -144,7 +145,7 @@ public abstract class AmazonEC2JPPFDeployer implements Runnable {
             return checksum.longValue();
         } finally {
             try {
-                driverPackage.close();
+                file.close();
             } catch (IOException ex) {
                 logger.warn("Can not close Inputstream.", ex);
             }
@@ -171,5 +172,26 @@ public abstract class AmazonEC2JPPFDeployer implements Runnable {
                 credentials(loginCredentials).build());
         }
         return sshClient;
+    }
+
+    protected void uploadAndSetup(final String folderName, String crcFile, 
+            long checksum, String zipFileName, String startScript) {
+        logger.debug("Uploading {}", zipFileName);
+        execute("rm -rf " + folderName + " && mkdir " + CLUSTERMEISTER_BIN, getSSHClient());
+        final InputStream file = getClass().getResourceAsStream(zipFileName);
+        try {
+            upload(getSSHClient(), file, "/home/ec2-user/" + CLUSTERMEISTER_BIN + "/" + zipFileName);
+        } finally {
+            try {
+                file.close();
+            } catch (IOException ex) {
+                logger.warn("Can not close Inputstream.", ex);
+            }
+        }
+        upload(getSSHClient(), new ByteArrayInputStream(
+                String.valueOf(checksum).getBytes(Charsets.UTF_8)), crcFile);
+        execute("unzip " + CLUSTERMEISTER_BIN + "/" + zipFileName + " -d " + 
+                folderName + " && chmod +x " + folderName + 
+                "/" + startScript, getSSHClient());
     }
 }
