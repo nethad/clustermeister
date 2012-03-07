@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
  */
 public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
     static final String DRIVER_ZIP_FILE = "jppf-driver.zip";
+    static final String CRC32_FILE_DRIVER = "jppf-driver-crc-32";
 
     private final static Logger logger =
             LoggerFactory.getLogger(AmazonEC2JPPFDriverDeployer.class);

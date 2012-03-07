@@ -41,9 +41,6 @@ public abstract class AmazonEC2JPPFDeployer implements Runnable {
     private final static Logger logger =
             LoggerFactory.getLogger(AmazonEC2JPPFDeployer.class);
     
-    static final String CRC32_FILE_DRIVER = "jppf-driver-crc-32";
-    static final String CRC32_FILE_NODE = "jppf-node-crc-32";
-    
     static final String CLUSTERMEISTER_BIN = "clustermeister-bin";
     
     final LoginCredentials loginCredentials;

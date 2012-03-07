@@ -37,6 +37,8 @@ import org.slf4j.LoggerFactory;
 public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
     static final String NODE_ZIP_FILE = "jppf-node.zip";
     
+    static final String CRC32_FILE_NODE = "jppf-node-crc-32";
+    
     private final static Logger logger =
             LoggerFactory.getLogger(AmazonEC2JPPFNodeDeployer.class);
 
