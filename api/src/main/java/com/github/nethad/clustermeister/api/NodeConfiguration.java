@@ -22,10 +22,6 @@ package com.github.nethad.clustermeister.api;
 public interface NodeConfiguration {
 	public NodeType getType();
 	
-	public String getUserName();
-	
-	public String getPrivateKey();
-	
 	public String getDriverAddress();
 	
 	public boolean isDriverDeployedLocally();

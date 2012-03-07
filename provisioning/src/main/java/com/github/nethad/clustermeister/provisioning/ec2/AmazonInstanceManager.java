@@ -16,7 +16,6 @@
 package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Configuration;
-import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.FutureCallback;
@@ -299,7 +298,7 @@ public class AmazonInstanceManager {
         logger.info("Instance {} resumed.", instanceId);
     }
 
-    private LoginCredentials getLoginCredentials(NodeConfiguration config) {
+    private LoginCredentials getLoginCredentials(AmazonNodeConfiguration config) {
         return new LoginCredentials(config.getUserName(), null, config.getPrivateKey(), true);
     }
 
