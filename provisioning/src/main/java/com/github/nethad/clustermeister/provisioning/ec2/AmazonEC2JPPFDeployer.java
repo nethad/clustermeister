@@ -60,29 +60,29 @@ public abstract class AmazonEC2JPPFDeployer implements Runnable {
         this.nodeConfiguration = nodeConfiguration;
     }
 
-    ExecResponse execute(String command, SshClient client) {
+    protected ExecResponse execute(String command, SshClient client) {
         logger.info("Executing {}", command);
         ExecResponse response = client.exec(command);
         logExecResponse(response);
         return response;
     }
 
-    void logExecResponse(ExecResponse response) {
+    protected void logExecResponse(ExecResponse response) {
         logger.info("Exit Code: {}", response.getExitCode());
         if (response.getError() != null && !response.getError().isEmpty()) {
             logger.warn("Execution error: {}.", response.getError());
         }
     }
     
-    String getStringResult(ExecResponse response) {
+    protected String getStringResult(ExecResponse response) {
         return response.getOutput().trim();
     }
     
-    boolean getBoolResult(ExecResponse response) {
+    protected boolean getBoolResult(ExecResponse response) {
         return Boolean.parseBoolean(response.getOutput().trim());
     }
 
-    void upload(SshClient client, InputStream source, String to) {
+    protected void upload(SshClient client, InputStream source, String to) {
         logger.info("Uploading {}", to);
         client.put(to, Payloads.newInputStreamPayload(source));
         if (source != null) {
