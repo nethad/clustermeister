@@ -42,7 +42,6 @@ public class AmazonNodeManagerTest {
     public void testSomeMethod() throws InterruptedException, Exception {
         final String settings = "/home/daniel/clustermeister-amazonapi.properties";
         final String privateKeyFile = "/home/daniel/Desktop/EC2/EC2_keypair.pem";
-        final String userName = "ec2-user";
 
         FileConfiguration config = new FileConfiguration(settings);
 
@@ -55,11 +54,6 @@ public class AmazonNodeManagerTest {
             @Override
             public NodeType getType() {
                 return NodeType.DRIVER;
-            }
-
-            @Override
-            public String getUserName() {
-                return userName;
             }
 
             @Override
@@ -83,11 +77,6 @@ public class AmazonNodeManagerTest {
             }
 
             @Override
-            public String getUserName() {
-                return userName;
-            }
-
-            @Override
             public String getPrivateKey() {
                 return AmazonNodeManagerTest.getPrivateKey(privateKeyFile);
             }
@@ -108,11 +97,6 @@ public class AmazonNodeManagerTest {
             @Override
             public NodeType getType() {
                 return NodeType.NODE;
-            }
-
-            @Override
-            public String getUserName() {
-                return userName;
             }
 
             @Override
