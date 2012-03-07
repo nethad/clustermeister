@@ -29,13 +29,15 @@ public class JPPFNodeConfiguration {
     
     Properties properties = new Properties();
 
-    public JPPFNodeConfiguration() {
+    public JPPFNodeConfiguration() {       
         properties.setProperty("jppf.management.enabled", "true");
         properties.setProperty("jppf.discovery.enabled", "false");
         properties.setProperty("reconnect.max.time", "60");
         
-        properties.setProperty("jppf.jvm.options", "-Xmx128m -Djava.util.logging.config.file=config/logging-driver.properties");
+        properties.setProperty("jppf.jvm.options", "-Xms64m -Xmx512m -Djava.util.logging.config.file=config/logging-driver.properties");
         properties.setProperty("jppf.classloader.delegation", "parent");
+        
+//        properties.setProperty("jppf.classloader.cache.size", "1000");
     }
     
     public JPPFNodeConfiguration setProperty(String key, String value) {
