@@ -42,10 +42,11 @@ class AmazonT1MicroTemplateBuilder extends AmazonTemplateBuilder {
 
 	@Override
 	Template buildTemplate() {
-		logger.info("Building Template[{}, {}, {}]...", new Object[]{locationId,
-					InstanceType.T1_MICRO, OsFamily.AMZN_LINUX});
+		logger.info("Building Template[{}, {}, {}]...", 
+                        new Object[]{locationId, InstanceType.T1_MICRO, OsFamily.AMZN_LINUX});
 		Template template = context.getComputeService().templateBuilder().
-				locationId(locationId).hardwareId(InstanceType.T1_MICRO).osFamily(OsFamily.AMZN_LINUX).build();
+                        locationId(locationId).hardwareId(InstanceType.T1_MICRO).
+                        osFamily(OsFamily.AMZN_LINUX).build();
 		logger.info("Template built.");
 
 		return template;
