@@ -310,7 +310,7 @@ public class AmazonInstanceManager {
         
         try {
             String privateKey = credentials.getPrivateKey();
-            return new LoginCredentials(credentials.getUser().get(), null, privateKey, true);
+            return new LoginCredentials(credentials.getUser(), null, privateKey, true);
         } catch(IOException ex) {
             logger.warn("Can not get private key.");
             throw new IllegalStateException(ex);
