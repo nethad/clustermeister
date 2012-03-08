@@ -25,11 +25,11 @@ import java.io.IOException;
 import java.nio.charset.Charset;
 
 /**
- * A class representing user name and private key credentials.
+ * A class representing user name and key pair credentials.
  *
  * @author daniel
  */
-public class PrivateKeyCredentials extends Credentials {
+public class KeyPairCredentials extends Credentials {
     
     /**
      * A source to read the private key from.
@@ -54,7 +54,7 @@ public class PrivateKeyCredentials extends Credentials {
      *      {@link #setKeySourceCharset(java.nio.charset.Charset)}.
      *      The private key must not have a pass phrase.
      */
-    public PrivateKeyCredentials(String user, File privateKeySource) {
+    public KeyPairCredentials(String user, File privateKeySource) {
         this(user, privateKeySource, Optional.<File>absent());
     }
     
@@ -74,7 +74,7 @@ public class PrivateKeyCredentials extends Credentials {
      *      encoded in UTF-8. This can be changed with 
      *      {@link #setKeySourceCharset(java.nio.charset.Charset)}.
      */
-    public PrivateKeyCredentials(String user, File privateKeySource, File publicKeySource) {
+    public KeyPairCredentials(String user, File privateKeySource, File publicKeySource) {
         this(user, privateKeySource, Optional.fromNullable(publicKeySource));
     }
     
@@ -94,7 +94,7 @@ public class PrivateKeyCredentials extends Credentials {
      *      encoded in UTF-8. This can be changed with 
      *      {@link #setKeySourceCharset(java.nio.charset.Charset)}.
      */
-    protected PrivateKeyCredentials(String user, File privateKeySource, 
+    protected KeyPairCredentials(String user, File privateKeySource, 
             Optional<File> publicKeySource) {
         super(user);
         checkArgument(privateKeySource != null && 
