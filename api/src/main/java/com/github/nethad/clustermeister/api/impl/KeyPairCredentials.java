@@ -17,6 +17,7 @@ package com.github.nethad.clustermeister.api.impl;
 
 import com.github.nethad.clustermeister.api.Credentials;
 import com.google.common.base.Charsets;
+import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.io.Files;
@@ -124,5 +125,55 @@ public class KeyPairCredentials extends Credentials {
      */
     public String getPrivateKey() throws IOException {
         return Files.toString(privatekeySource, charset);
+    }
+
+    /**
+     * Get the public key.
+     * 
+     * @return  the public key as a String.
+     * @throws IOException 
+     *      when an error occurs while reading from {@link #publicKeySource}. 
+     */
+    public Optional<String> getPublicKey() throws IOException {
+        Optional<String> publicKey;
+        if(publickeySource.isPresent()) {
+            publicKey = Optional.of(Files.toString(publickeySource.get(), charset));
+        } else {
+            publicKey = Optional.absent();
+        }
+        
+        return publicKey;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (obj == this) {
+            return true;
+        }
+        if (obj.getClass() != (getClass())) {
+            return false;
+        }
+        KeyPairCredentials other = (KeyPairCredentials) obj;
+        boolean same = Objects.equal(user, other.user) && 
+                Objects.equal(privatekeySource, other.privatekeySource) && 
+                Objects.equal(publickeySource, other.publickeySource);
+        
+        return same;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(user, privatekeySource, publickeySource);
+    }
+
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(this).
+                addValue(user).
+                add("privateKey", privatekeySource.getPath()).
+                add("publicKey", publickeySource.toString()).toString();
     }
 }
