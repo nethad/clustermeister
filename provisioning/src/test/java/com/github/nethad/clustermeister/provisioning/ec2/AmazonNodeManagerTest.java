@@ -17,8 +17,9 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeType;
+import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
-import com.github.nethad.clustermeister.api.impl.PrivateKeyCredentials;
+import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import java.io.File;
@@ -35,6 +36,8 @@ import org.slf4j.LoggerFactory;
  */
 @Ignore("Depends on local configuration.")
 public class AmazonNodeManagerTest {
+    public static final String KEYPAIR = "EC2_keypair";
+    public static final String PRIVATE_KEY = "/home/daniel/Desktop/EC2/EC2_keypair.pem";
 
     private final static Logger logger =
             LoggerFactory.getLogger(AmazonNodeManagerTest.class);
@@ -42,7 +45,6 @@ public class AmazonNodeManagerTest {
     @Test
     public void testSomeMethod() throws InterruptedException, Exception {
         final String settings = "/home/daniel/clustermeister-amazonapi.properties";
-        final String privateKeyFile = "/home/daniel/Desktop/EC2/EC2_keypair.pem";
 
         FileConfiguration config = new FileConfiguration(settings);
 
@@ -52,20 +54,20 @@ public class AmazonNodeManagerTest {
         Optional<String> absentInstanceId = Optional.absent();
         AmazonNodeConfiguration dc = new AmazonNodeConfiguration();
         dc.setNodeType(NodeType.DRIVER);
-        dc.setCredentials(new PrivateKeyCredentials("ec2-user", new File(privateKeyFile)));
+        dc.setCredentials(getCredentials());
         final Future<? extends Node> d = nodeManager.addNode(dc, absentInstanceId);
         
         Optional<String> driverInstanceId = Optional.of(((AmazonNode)d.get()).getInstanceId());
         AmazonNodeConfiguration nc = new AmazonNodeConfiguration();
         nc.setNodeType(NodeType.NODE);
         nc.setDriverAddress(Iterables.getFirst(d.get().getPrivateAddresses(), null));
-        nc.setCredentials(new PrivateKeyCredentials("ec2-user", new File(privateKeyFile)));
+        nc.setCredentials(getCredentials());
         final Future<? extends Node> n = nodeManager.addNode(nc, driverInstanceId);
         
         AmazonNodeConfiguration nc2 = new AmazonNodeConfiguration();
         nc2.setNodeType(NodeType.NODE);
         nc2.setDriverAddress(Iterables.getFirst(d.get().getPrivateAddresses(), null));
-        nc2.setCredentials(new PrivateKeyCredentials("ec2-user", new File(privateKeyFile)));
+        nc2.setCredentials(getCredentials());
         final Future<? extends Node> n2 = nodeManager.addNode(nc2, absentInstanceId);
         
 
@@ -93,5 +95,9 @@ public class AmazonNodeManagerTest {
         //wait for them to shut down
 
         nodeManager.close();
+    }
+    
+    private static KeyPairCredentials getCredentials() {
+        return new AmazonConfiguredKeyPairCredentials(new File(PRIVATE_KEY), KEYPAIR);
     }
 }

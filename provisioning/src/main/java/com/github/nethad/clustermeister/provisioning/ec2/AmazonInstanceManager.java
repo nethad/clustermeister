@@ -16,7 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Configuration;
-import com.github.nethad.clustermeister.api.impl.PrivateKeyCredentials;
+import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.FutureCallback;
@@ -306,7 +306,7 @@ public class AmazonInstanceManager {
     }
 
     private LoginCredentials getLoginCredentials(AmazonNodeConfiguration config) {
-        PrivateKeyCredentials credentials = config.getCredentials().get();
+        KeyPairCredentials credentials = config.getCredentials().get();
         
         try {
             String privateKey = credentials.getPrivateKey();
