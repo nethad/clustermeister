@@ -340,7 +340,6 @@ public class AmazonInstanceManager {
         logger.debug("Loading Configuration...");
         accessKeyId = configuration.getString("accessKeyId", "").trim();
         secretKey = configuration.getString("secretKey", "").trim();
-        keyPair = configuration.getString("keyPair", "").trim();
         locationId = configuration.getString("locationId", "").trim();
         imageId = configuration.getString("imageId", "").trim();
     }
