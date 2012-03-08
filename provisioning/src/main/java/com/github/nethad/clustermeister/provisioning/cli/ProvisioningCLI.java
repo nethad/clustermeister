@@ -15,12 +15,10 @@
  */
 package com.github.nethad.clustermeister.provisioning.cli;
 
-import com.github.nethad.clustermeister.api.Configuration;
-import com.github.nethad.clustermeister.api.impl.FileConfiguration;
-import com.github.nethad.clustermeister.provisioning.torque.TorqueJPPFDriverDeployer;
 import com.google.common.annotations.VisibleForTesting;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import org.apache.commons.cli.*;
 
 /**
@@ -41,22 +39,51 @@ public class ProvisioningCLI {
     }
     private String configFilePath;
     private int numberOfNodes;
+    private Options options;
     private Provider provider;
+    private Provisioning provisioning;
+    private UserInputEvaluation userInputEvaluation;
 
     protected void startCLI(String[] args) {
         if (args.length == 0) {
-            startREPL();
+            HelpFormatter formatter = new HelpFormatter();
+            formatter.printHelp( "clustermeister", getOptions());
         } else {
             try {
                 parseArguments(args);
+                System.out.println("Config File Path: "+configFilePath);
+                provisioning = new Provisioning(configFilePath, numberOfNodes, provider);
+                System.out.println("Starting up "+numberOfNodes+" "+provider+" nodes.");
+                provisioning.execute();
+                startREPL();
             } catch (ParseException ex) {
                 System.err.println("Terminated: " + ex.getMessage());
             }
         }
+        // TODO this is necessary because JPPFClient still has running threads which 
+        // won't shut down with close().
+        System.exit(0);
+    }
+    
+    private void startREPL() {
+        userInputEvaluation = new UserInputEvaluation(provisioning);
+        String userInput;
+        while(!(userInput = nextUserInput()).equals("exit")) {
+            userInputEvaluation.evaluate(userInput.trim());
+        }
     }
 
-    private void startREPL() {
-        throw new UnsupportedOperationException("REPL is not yet implemented");
+    private String nextUserInput() {
+        System.out.print("cm$ ");
+        BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
+        while (true) {
+            try {
+                return userInput.readLine();
+            } catch (IOException e) {
+                System.err.println("Could not read your input ("+e.getMessage()+")");
+            }
+            return nextUserInput();
+        }
     }
 
     protected void parseArguments(String[] args) throws ParseException {
@@ -68,10 +95,12 @@ public class ProvisioningCLI {
     }
 
     private Options getOptions() {
-        Options options = new Options();
-        options.addOption("c", OPTION_CONFIG_FILE, true, "define the path to your configuration.properties");
-        options.addOption("n", OPTION_NUMBER_OF_NODES, true, "specify the number of nodes to be started");
-        options.addOption("p", OPTION_PROVIDER, true, "specify the provider to use, either 'amazon' or 'torque'");
+        if (options == null) {
+            options = new Options();
+            options.addOption("c", OPTION_CONFIG_FILE, true, "define the path to your configuration.properties, default: "+DEFAULT_CONFIG_FILE);
+            options.addOption("n", OPTION_NUMBER_OF_NODES, true, "specify the number of nodes to be started, mandatory");
+            options.addOption("p", OPTION_PROVIDER, true, "specify the provider to use, either 'amazon' or 'torque', default: "+DEFAULT_PROVIDER);
+        }
         return options;
     }
     
@@ -89,4 +118,6 @@ public class ProvisioningCLI {
     protected Provider getProvider() {
         return provider;
     }
+
+
 }
