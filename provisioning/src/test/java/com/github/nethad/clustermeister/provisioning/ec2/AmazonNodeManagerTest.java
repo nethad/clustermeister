@@ -21,7 +21,7 @@ import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.api.impl.PrivateKeyCredentials;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
-import java.io.FileInputStream;
+import java.io.File;
 import java.util.Collection;
 import java.util.concurrent.Future;
 import org.junit.Ignore;
@@ -52,20 +52,20 @@ public class AmazonNodeManagerTest {
         Optional<String> absentInstanceId = Optional.absent();
         AmazonNodeConfiguration dc = new AmazonNodeConfiguration();
         dc.setNodeType(NodeType.DRIVER);
-        dc.setCredentials(new PrivateKeyCredentials("ec2-user", new FileInputStream(privateKeyFile)));
+        dc.setCredentials(new PrivateKeyCredentials("ec2-user", new File(privateKeyFile)));
         final Future<? extends Node> d = nodeManager.addNode(dc, absentInstanceId);
         
         Optional<String> driverInstanceId = Optional.of(((AmazonNode)d.get()).getInstanceId());
         AmazonNodeConfiguration nc = new AmazonNodeConfiguration();
         nc.setNodeType(NodeType.NODE);
         nc.setDriverAddress(Iterables.getFirst(d.get().getPrivateAddresses(), null));
-        nc.setCredentials(new PrivateKeyCredentials("ec2-user", new FileInputStream(privateKeyFile)));
+        nc.setCredentials(new PrivateKeyCredentials("ec2-user", new File(privateKeyFile)));
         final Future<? extends Node> n = nodeManager.addNode(nc, driverInstanceId);
         
         AmazonNodeConfiguration nc2 = new AmazonNodeConfiguration();
         nc2.setNodeType(NodeType.NODE);
         nc2.setDriverAddress(Iterables.getFirst(d.get().getPrivateAddresses(), null));
-        nc2.setCredentials(new PrivateKeyCredentials("ec2-user", new FileInputStream(privateKeyFile)));
+        nc2.setCredentials(new PrivateKeyCredentials("ec2-user", new File(privateKeyFile)));
         final Future<? extends Node> n2 = nodeManager.addNode(nc2, absentInstanceId);
         
 
