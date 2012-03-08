@@ -24,6 +24,11 @@ import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeConfigurat
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.github.nethad.clustermeister.provisioning.utils.PublicIp;
 import com.google.common.util.concurrent.ListenableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -32,10 +37,12 @@ import com.google.common.util.concurrent.ListenableFuture;
 public class Provisioning {
     
     private String configFilePath;
+    private String driverHost;
     private int numberOfNodes;
     private Provider provider;
     private Configuration configuration;
     private TorqueNodeManager torqueNodeManager;
+    private Logger logger = LoggerFactory.getLogger(Provisioning.class);
 
     public Provisioning(String configFilePath, int numberOfNodes, Provider provider) {
         this.configFilePath = configFilePath;
@@ -57,6 +64,31 @@ public class Provisioning {
         }
     }
     
+    public void shutdown() {
+        shutdownTorque();
+    }
+    
+    public void addNode() {
+        ListenableFuture<? extends Node> node = torqueNodeManager.addNode(new TorqueNodeConfiguration(NodeType.NODE, driverHost, true));
+        try {
+            node.get(10, TimeUnit.SECONDS);
+        } catch (InterruptedException ex) {
+            logger.warn("Waited for node to start up", ex);
+        } catch (ExecutionException ex) {
+            logger.warn("Waited for node to start up", ex);
+        } catch (TimeoutException ex) {
+            logger.warn("Waited for node to start up", ex);
+        }
+    }
+    
+    protected Provider getProvider() {
+        return provider;
+    }
+    
+    protected int getNumberOfRunningNodes() {
+        return torqueNodeManager.getNodes().size();
+    }
+    
     private void readConfigFile() {
         configuration = new FileConfiguration(configFilePath);
     }
@@ -68,9 +100,19 @@ public class Provisioning {
     private void startTorque() {
         torqueNodeManager = new TorqueNodeManager(configuration);
         ListenableFuture<? extends Node> driver = torqueNodeManager.addNode(getTorqueDriverConfiguration());
-        String driverHost = PublicIp.getPublicIp();
+        driverHost = PublicIp.getPublicIp();
+        ListenableFuture<? extends Node> lastNode = null;
         for (int i = 0; i < numberOfNodes; i++) {
-            torqueNodeManager.addNode(getTorqueNodeConfiguration(driverHost));
+            lastNode = torqueNodeManager.addNode(getTorqueNodeConfiguration(driverHost));
+        }
+        try {
+            lastNode.get(10, TimeUnit.SECONDS);
+        } catch (InterruptedException ex) {
+            logger.warn("Waited for last node to start up", ex);
+        } catch (ExecutionException ex) {
+            logger.warn("Waited for last node to start up", ex);
+        } catch (TimeoutException ex) {
+            logger.warn("Waited for last node to start up", ex);
         }
     }
     
@@ -86,7 +128,6 @@ public class Provisioning {
     private TorqueNodeConfiguration getTorqueNodeConfiguration(String driverHost) {
         return new TorqueNodeConfiguration(NodeType.NODE, driverHost, true);
     }
-
 
     
 }
