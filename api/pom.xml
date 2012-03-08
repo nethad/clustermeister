@@ -28,6 +28,11 @@
             <artifactId>org.jppf.common-node</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.github.nethad.clustermeister</groupId>
+            <artifactId>org.jppf.server</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
         </dependency>
@@ -35,6 +40,12 @@
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.jvnet.opendmk</groupId>
+            <artifactId>jmxremote_optional</artifactId>
+            <version>1.0_01-ea</version>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
 </project>
