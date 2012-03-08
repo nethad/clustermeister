@@ -69,9 +69,11 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
     private final long sessionId;
     private long deployZipCRC32;
     private long akkaLibsZipCRC32;
+    private final Configuration configuration;
     
 
-    public TorqueJPPFNodeDeployer() {
+    public TorqueJPPFNodeDeployer(Configuration configuration) {
+        this.configuration = configuration;
         isInfrastructureDeployed = false;
         currentNodeNumber = new AtomicInteger(0);
         sessionId = System.currentTimeMillis();
@@ -114,21 +116,20 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         sshClient = new SSHClient(privateKeyFilePath);
         sshClient.connect(user, host, port);
         try {
-            deployZipCRC32 = FileUtils.getCRC32ForFile(new File(getResourcePath(DEPLOY_ZIP)));
-            akkaLibsZipCRC32 = FileUtils.getCRC32ForFile(new File(getResourcePath(AKKA_ZIP)));
+            deployZipCRC32 = FileUtils.getCRC32(getResourceStream(DEPLOY_ZIP));
+            akkaLibsZipCRC32 = FileUtils.getCRC32(getResourceStream(AKKA_ZIP));
         } catch (IOException ex) {
-            //TODO: logger
-            logger.error("Can not read from File.");
+            logger.error("Can not read resource.", ex);
         }
         
         // delete config files (separate config files for each node are generated)
-        executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "/config/*.properties");
+        sshClient.executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "/config/*.properties");
 
         if (!isResourceAlreadyDeployedAndUpToDate()) {
             logger.info("Resource is not up to date.");
             System.out.println("Resource is not up to date.");
             // remove previously uploaded files (might be outdated/not necessary)
-            executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "*");
+            sshClient.executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "*");
 
             uploadResources();
 
@@ -145,15 +146,15 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
 
     private void uploadResources() throws SSHClientExcpetion {
         // upload zip archive with all files, unpack it
-        sshClient.sftpUpload(getResourcePath(DEPLOY_ZIP), DEPLOY_ZIP);
-        executeAndSysout("unzip " + DEPLOY_ZIP);
+        sshClient.sftpUpload(getResourceStream(DEPLOY_ZIP), DEPLOY_ZIP);
+        sshClient.executeAndSysout("unzip " + DEPLOY_ZIP);
         
         // upload akka libraries
         // TODO deactivated akka upload for testing purposes
 //        sshClient.sftpUpload(getResourcePath(AKKA_ZIP), AKKA_REMOTE_ZIP_PATH);
 //        executeAndSysout("cd "+DEPLOY_BASE_NAME+"/lib/ && unzip " + AKKA_ZIP);
         
-        sshClient.sftpUpload(getResourcePath(DEPLOY_QSUB), DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB);
+        sshClient.sftpUpload(getResourceStream(DEPLOY_QSUB), DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB);
         sshClient.sftpUpload(new ByteArrayInputStream(
                 String.valueOf(deployZipCRC32).getBytes(Charsets.UTF_8)), CRC32_FILE);
         sshClient.sftpUpload(new ByteArrayInputStream(
@@ -201,11 +202,11 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
             currentNodeNumber.incrementAndGet();
         }
         final String makeQsubScriptExecutable = "chmod +x " + pathToQsubScript;
-        executeAndSysout(makeQsubScriptExecutable);
+        sshClient.executeAndSysout(makeQsubScriptExecutable);
 
 //		executeAndSysout("uname -r");
 
-        String jobIdsFromOutput = executeWithResult(executeString.toString());
+        String jobIdsFromOutput = sshClient.executeWithResult(executeString.toString());
         String[] jobIdArray = jobIdsFromOutput.split("\\\n");
         System.out.println("jobIdArray size = " + jobIdArray.length);
         //		executeAndSysout(executeString.toString());
@@ -249,35 +250,35 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
 
     }
 
-    private String getResourcePath(String resource) {
-        return TorqueJPPFDriverDeployer.class.getResource(resource).getPath();
-    }
-
-    @Deprecated
-    private void executeAndSysout(String command) throws SSHClientExcpetion {
-        sshClient.sshExec(command, System.err);
-    }
-
-    @Deprecated
-    private String executeWithResult(String command) throws SSHClientExcpetion {
-        return sshClient.sshExec(command, System.err);
-    }
+//    @Deprecated
+//    private String getResourcePath(String resource) {
+//        return TorqueJPPFDriverDeployer.class.getResource(resource).getPath();
+//    }
+//
+//    @Deprecated
+//    private void executeAndSysout(String command) throws SSHClientExcpetion {
+//        sshClient.sshExec(command, System.err);
+//    }
+//
+//    @Deprecated
+//    private String executeWithResult(String command) throws SSHClientExcpetion {
+//        return sshClient.sshExec(command, System.err);
+//    }
 
     private void loadConfiguration() {
-        String home = System.getProperty("user.home");
-        String separator = System.getProperty("file.separator");
-        Configuration config = new FileConfiguration(home + separator + ".clustermeister" + separator + "torque.properties");
+//        String home = System.getProperty("user.home");
+//        String separator = System.getProperty("file.separator");
+//        Configuration config = new FileConfiguration(home + separator + ".clustermeister" + separator + "torque.properties");
 
-        host = getStringDefaultEmpty(config, "host");
-        port = config.getInt("port", 22);
-        user = getStringDefaultEmpty(config, "user");
-        privateKeyFilePath = getStringDefaultEmpty(config, "privateKey");
-//        passphrase = getStringDefaultempty(config, "passphrase");
-
-    }
-
-    private String getStringDefaultEmpty(Configuration config, String key) {
-        return config.getString(key, "");
+//        host = getStringDefaultEmpty(config, "host");
+//        port = config.getInt("port", 22);
+//        user = getStringDefaultEmpty(config, "user");
+//        privateKeyFilePath = getStringDefaultEmpty(config, "privateKey");
+        
+          host = configuration.getString(Configuration.TORQUE_SSH_HOST, "");
+          port = configuration.getInt(Configuration.TORQUE_SSH_PORT, 22);
+          user = configuration.getString(Configuration.TORQUE_SSH_USER, "");
+          privateKeyFilePath = configuration.getString(Configuration.TORQUE_SSH_PRIVATEKEY, "");
     }
 
     @Override
@@ -325,5 +326,9 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
             logger.error("SSH exception", ex);
         }
         return false;
+    }
+
+    private InputStream getResourceStream(String resource) {
+        return TorqueJPPFDriverDeployer.class.getResourceAsStream(resource);
     }
 }

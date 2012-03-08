@@ -127,7 +127,7 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 
 	public TorqueNodeManager(Configuration configuration) {
 		this.configuration = configuration;
-		nodeDeployer = new TorqueJPPFNodeDeployer();
+		nodeDeployer = new TorqueJPPFNodeDeployer(configuration);
 		driverDeployer = new TorqueJPPFDriverDeployer();
 		executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(THREAD_POOL_SIZE));
 	}
