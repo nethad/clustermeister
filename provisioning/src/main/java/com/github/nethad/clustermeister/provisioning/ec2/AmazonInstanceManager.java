@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Configuration;
+import com.github.nethad.clustermeister.api.impl.PrivateKeyCredentials;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.FutureCallback;
@@ -24,6 +25,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.Monitor;
 import com.google.common.util.concurrent.SettableFuture;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Properties;
@@ -159,10 +161,15 @@ public class AmazonInstanceManager {
         if (userMetaData.isPresent()) {
             template.getOptions().userMetadata(userMetaData.get());
         }
-        template.getOptions().as(EC2TemplateOptions.class).
-                inboundPorts(22, 11111, 11112, 11113,
-                AmazonNodeManager.DEFAULT_MANAGEMENT_PORT, 11199, 11200, 11201, 
-                11202, 11203, 12198);
+        template.getOptions().
+                inboundPorts(
+                AmazonNodeManager.DEFAULT_SSH_PORT, 
+                AmazonNodeManager.DEFAULT_SERVER_PORT, 
+                AmazonNodeManager.DEFAULT_SERVER_CLIENT_PORT, 
+                AmazonNodeManager.DEFAULT_SERVER_NODE_PORT, //TODO: may not be needed
+                AmazonNodeManager.DEFAULT_MANAGEMENT_PORT, 
+                11199, 11200, 11201, 11202, 11203, //TODO: excess management ports, remove need for these
+                AmazonNodeManager.DEFAULT_MANAGEMENT_RMI_PORT);
 
         // specify your own keypair for use in creating nodes
         //TODO: remove need to specify keypair in AWS.
@@ -299,7 +306,15 @@ public class AmazonInstanceManager {
     }
 
     private LoginCredentials getLoginCredentials(AmazonNodeConfiguration config) {
-        return new LoginCredentials(config.getUserName(), null, config.getPrivateKey(), true);
+        PrivateKeyCredentials credentials = config.getCredentials().get();
+        
+        try {
+            String privateKey = credentials.getPrivateKey();
+            return new LoginCredentials(credentials.getUser().get(), null, privateKey, true);
+        } catch(IOException ex) {
+            logger.warn("Can not get private key.");
+            throw new IllegalStateException(ex);
+        }
     }
 
     private ListenableFuture<ComputeServiceContext> createContext() {
@@ -354,7 +369,7 @@ public class AmazonInstanceManager {
         try {
             return future.get();
         } catch (Exception ex) {
-            throw new IllegalStateException("InstanceManager is not ready.");
+            throw new IllegalStateException("InstanceManager is not ready.", ex);
         }
     }
 }
