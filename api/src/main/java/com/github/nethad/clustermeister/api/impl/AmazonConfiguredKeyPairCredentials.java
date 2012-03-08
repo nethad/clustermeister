@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.api.impl;
 
+import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import java.io.File;
 
@@ -52,7 +53,8 @@ public class AmazonConfiguredKeyPairCredentials extends KeyPairCredentials {
      * 
      * @see #DEFAULT_USER
      */
-    public AmazonConfiguredKeyPairCredentials(File privateKeySource, String amazonKeyPairName) {
+    public AmazonConfiguredKeyPairCredentials(File privateKeySource, 
+            String amazonKeyPairName) {
         this(DEFAULT_USER, privateKeySource, amazonKeyPairName);
     }
     
@@ -82,5 +84,36 @@ public class AmazonConfiguredKeyPairCredentials extends KeyPairCredentials {
      */
     public String getAmazonKeyPairName() {
         return amazonKeyPairName;
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (obj == this) {
+            return true;
+        }
+        if (obj.getClass() != (getClass())) {
+            return false;
+        }
+        AmazonConfiguredKeyPairCredentials other = 
+                (AmazonConfiguredKeyPairCredentials) obj;
+        return amazonKeyPairName.equals(other.amazonKeyPairName) && 
+                super.equals(obj);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(user, privatekeySource, publickeySource, 
+                amazonKeyPairName);
+    }
+
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(this).
+                addValue(user).
+                add("privateKey", privatekeySource).
+                add("Key Pair", amazonKeyPairName).toString();
     }
 }

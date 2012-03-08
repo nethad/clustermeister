@@ -28,7 +28,6 @@ public abstract class Credentials {
      * A user name.
      */
     protected final String user;
-
     
     /**
      * Creates a Credential with a user name.
@@ -39,7 +38,6 @@ public abstract class Credentials {
         Preconditions.checkArgument(user != null && !user.isEmpty(), "Invalid user.");
         this.user = user;
     }
-    
 
     /**
      * Returns the user name.
@@ -48,5 +46,15 @@ public abstract class Credentials {
      */
     public String getUser() {
         return user;
+    }
+    
+    /**
+     * Casts this instance to the type represented by {@code clazz}.
+     * 
+     * @param clazz     the class representing the type to cast to.
+     * @return {@code this} as instance of clazz. 
+     */
+    public <T> T as(Class<T> clazz) {
+        return clazz.cast(this);
     }
 }

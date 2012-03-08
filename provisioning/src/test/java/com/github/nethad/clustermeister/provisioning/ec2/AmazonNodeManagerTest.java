@@ -38,6 +38,8 @@ import org.slf4j.LoggerFactory;
 public class AmazonNodeManagerTest {
     public static final String KEYPAIR = "EC2_keypair";
     public static final String PRIVATE_KEY = "/home/daniel/Desktop/EC2/EC2_keypair.pem";
+    public static final String OTHER_PRIVATE_KEY = "/home/daniel/Desktop/EC2/otherkey_rsa";
+    public static final String OTHER_PUBLIC_KEY = "/home/daniel/Desktop/EC2/otherkey_rsa.pub";
 
     private final static Logger logger =
             LoggerFactory.getLogger(AmazonNodeManagerTest.class);
@@ -50,7 +52,7 @@ public class AmazonNodeManagerTest {
 
         AmazonNodeManager nodeManager = new AmazonNodeManager(config);
 
-//        Optional<String> instanceId = Optional.of("eu-west-1/i-68cdee21");
+//        Optional<String> instanceId = Optional.of("eu-west-1/i-9c3f13d5");
         Optional<String> absentInstanceId = Optional.absent();
         AmazonNodeConfiguration dc = new AmazonNodeConfiguration();
         dc.setNodeType(NodeType.DRIVER);
@@ -61,8 +63,8 @@ public class AmazonNodeManagerTest {
         AmazonNodeConfiguration nc = new AmazonNodeConfiguration();
         nc.setNodeType(NodeType.NODE);
         nc.setDriverAddress(Iterables.getFirst(d.get().getPrivateAddresses(), null));
-        nc.setCredentials(getCredentials());
-        final Future<? extends Node> n = nodeManager.addNode(nc, driverInstanceId);
+        nc.setCredentials(getOtherCredentials());
+        final Future<? extends Node> n = nodeManager.addNode(nc, absentInstanceId);
         
         AmazonNodeConfiguration nc2 = new AmazonNodeConfiguration();
         nc2.setNodeType(NodeType.NODE);
@@ -99,5 +101,10 @@ public class AmazonNodeManagerTest {
     
     private static KeyPairCredentials getCredentials() {
         return new AmazonConfiguredKeyPairCredentials(new File(PRIVATE_KEY), KEYPAIR);
+    }
+    
+    private static KeyPairCredentials getOtherCredentials() {
+        return new KeyPairCredentials("fridolin", new File(OTHER_PRIVATE_KEY), 
+                new File(OTHER_PUBLIC_KEY));
     }
 }

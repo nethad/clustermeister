@@ -16,7 +16,10 @@
 package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Configuration;
+import com.github.nethad.clustermeister.api.Credentials;
+import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
+import com.github.nethad.clustermeister.api.impl.PasswordCredentials;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.FutureCallback;
@@ -68,7 +71,6 @@ public class AmazonInstanceManager {
             LoggerFactory.getLogger(AmazonInstanceManager.class);
     private String accessKeyId;
     private String secretKey;
-    private String keyPair;
     private String locationId;
     private String imageId;
     private final ListenableFuture<ComputeServiceContext> contextFuture;
@@ -122,6 +124,7 @@ public class AmazonInstanceManager {
         } catch (Exception ex) {
             //do nothing, instance manager is in corrupt state and 
             //context could not be created.
+            logger.warn("Failed to close {}", getClass().getSimpleName());
         }
     }
 
@@ -153,7 +156,8 @@ public class AmazonInstanceManager {
      *
      * @throws RunNodesException	If the instance could not be started.
      */
-    NodeMetadata createInstance(Optional<Map<String, String>> userMetaData) throws RunNodesException {
+    NodeMetadata createInstance(AmazonNodeConfiguration nodeConfiguration, 
+            Optional<Map<String, String>> userMetaData) throws RunNodesException {
         logger.info("Creating a new instance...");
         ComputeServiceContext context = valueOrNotReady(contextFuture);
         Template template = valueOrNotReady(templateFuture);
@@ -170,14 +174,19 @@ public class AmazonInstanceManager {
                 AmazonNodeManager.DEFAULT_MANAGEMENT_PORT, 
                 11199, 11200, 11201, 11202, 11203, //TODO: excess management ports, remove need for these
                 AmazonNodeManager.DEFAULT_MANAGEMENT_RMI_PORT);
-
-        // specify your own keypair for use in creating nodes
-        //TODO: remove need to specify keypair in AWS.
-        template.getOptions().as(EC2TemplateOptions.class).keyPair(keyPair);
+        
+        setLoginCredentials(template, nodeConfiguration);
+        
         Set<? extends NodeMetadata> instances = context.getComputeService().
                 createNodesInGroup(GROUP_NAME, 1, template);
 
         NodeMetadata metadata = Iterables.getOnlyElement(instances);
+        if(!nodeConfiguration.getCredentials().isPresent()) {
+            //TODO: generated credentials need to be persited somehow for re-use
+            nodeConfiguration.setCredentials(new AmazonGeneratedKeyPairCredentials(
+                    AmazonConfiguredKeyPairCredentials.DEFAULT_USER, 
+                    metadata.getCredentials().getPrivateKey()));
+        }
         logger.info("Instance {} created.", metadata.getId());
         return metadata;
     }
@@ -203,7 +212,7 @@ public class AmazonInstanceManager {
                 nodeConfig.setManagementPort(managementPort);
                 AmazonEC2JPPFDeployer deployer =
                         new AmazonEC2JPPFNodeDeployer(context, instanceMetadata,
-                        getLoginCredentials(nodeConfig), nodeConfig);
+                        buildLoginCredentials(nodeConfig), nodeConfig);
                 deployer.deploy();
                 break;
             }
@@ -212,7 +221,7 @@ public class AmazonInstanceManager {
                 nodeConfig.setManagementPort(managementPort);
                 AmazonEC2JPPFDeployer deployer =
                         new AmazonEC2JPPFDriverDeployer(context, instanceMetadata,
-                        getLoginCredentials(nodeConfig), nodeConfig);
+                        buildLoginCredentials(nodeConfig), nodeConfig);
                 deployer.deploy();
 
                 break;
@@ -304,16 +313,51 @@ public class AmazonInstanceManager {
         valueOrNotReady(contextFuture).getComputeService().resumeNode(instanceId);
         logger.info("Instance {} resumed.", instanceId);
     }
+    
+    private void setLoginCredentials(Template template, AmazonNodeConfiguration nodeConfiguration) {
+        final EC2TemplateOptions awsOptions = 
+                template.getOptions().as(EC2TemplateOptions.class);
+        if(nodeConfiguration.getCredentials().isPresent()) {
+            Credentials credentials = nodeConfiguration.getCredentials().get();
+            if(credentials instanceof AmazonConfiguredKeyPairCredentials) {
+                awsOptions.keyPair(credentials.as(AmazonConfiguredKeyPairCredentials.class).
+                        getAmazonKeyPairName());
+            } else if(credentials instanceof KeyPairCredentials){
+                KeyPairCredentials keyPairCredentials = credentials.as(KeyPairCredentials.class);
+                try {
+                    Optional<String> publicKey = keyPairCredentials.getPublicKey();
+                    if(publicKey.isPresent()) {
+                        awsOptions.authorizePublicKey(publicKey.get());
+                    } else {
+                        awsOptions.dontAuthorizePublicKey();
+                    }
+                } catch(IOException ex) {
+                    logger.warn("Can not authorize public key.", ex);
+                }
+                awsOptions.overrideLoginCredentials(buildLoginCredentials(nodeConfiguration));
+            } else {
+                awsOptions.overrideLoginCredentials(buildLoginCredentials(nodeConfiguration));
+            }
+        } else {
+            //TODO: ???
+        }
+    }
 
-    private LoginCredentials getLoginCredentials(AmazonNodeConfiguration config) {
-        KeyPairCredentials credentials = config.getCredentials().get();
-        
-        try {
-            String privateKey = credentials.getPrivateKey();
-            return new LoginCredentials(credentials.getUser(), null, privateKey, true);
-        } catch(IOException ex) {
-            logger.warn("Can not get private key.");
-            throw new IllegalStateException(ex);
+    private LoginCredentials buildLoginCredentials(AmazonNodeConfiguration config) {
+        Credentials credentials = config.getCredentials().get();
+        if(credentials instanceof KeyPairCredentials) {
+            try {
+                String privateKey = credentials.as(KeyPairCredentials.class).getPrivateKey();
+                return new LoginCredentials(credentials.getUser(), null, privateKey, true);
+            } catch(IOException ex) {
+                logger.warn("Can not get private key.");
+                throw new IllegalStateException("Can not get private key.", ex);
+            }
+        } else if(credentials instanceof PasswordCredentials) {
+                String password = credentials.as(PasswordCredentials.class).getPassword();
+            return new LoginCredentials(credentials.getUser(), password, null, true);
+        } else {
+            throw new IllegalStateException("Unsupported credentials.");
         }
     }
 
