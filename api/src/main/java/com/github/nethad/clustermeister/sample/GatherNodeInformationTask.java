@@ -15,41 +15,67 @@
  */
 package com.github.nethad.clustermeister.sample;
 
-import java.util.ArrayList;
-import java.util.List;
+import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
+import java.util.concurrent.TimeoutException;
 import org.jppf.management.JMXNodeConnectionWrapper;
+import org.jppf.management.JPPFSystemInformation;
 import org.jppf.server.protocol.JPPFTask;
+import org.jppf.utils.TypedProperties;
 
 /**
  *
  * @author thomas
  */
 public class GatherNodeInformationTask extends JPPFTask {
-    private final List<Integer> ports;
 
-    public GatherNodeInformationTask(List<Integer> ports) {
-        this.ports = ports;
+    private final int myPort;
+
+    public GatherNodeInformationTask(int myPort) {
+        this.myPort = myPort;
     }
 
     @Override
     public void run() {
-        List<String> nodeInfos = new ArrayList<String>();
-        for (Integer port : ports) {
-            JMXNodeConnectionWrapper wrapper = new JMXNodeConnectionWrapper("localhost", port);
-            wrapper.connectAndWait(10000);
-            if(wrapper.isConnected()) {
+        JMXNodeConnectionWrapper wrapper = null;
+        try {
+            wrapper = NodeManagementConnector.openNodeConnection("localhost", myPort);
+            JPPFSystemInformation sysInfo = wrapper.systemInformation();
+            StringBuilder sb = new StringBuilder("node info:\n");
+            addLine(sb, "jppf.uuid", sysInfo.getUuid());
+            addLine(sb, "processsing.threads", sysInfo.getJppf());
+            addLine(sb, "ipv4.addresses", sysInfo.getNetwork());
+            addLine(sb, "os.name", sysInfo.getSystem());
+            addLine(sb, "totalMemory", sysInfo.getRuntime());
+            addLine(sb, "availableProcessors", sysInfo.getRuntime());
+            
+            sb.append("[[ env ]] \n\n").append(sysInfo.getEnv().asString()).append("\n");
+            sb.append("[[ storage ]] \n\n").append(sysInfo.getStorage().asString()).append("\n");
+            
+            String nodeInfo = sb.toString();
+            setResult(nodeInfo);
+        } catch (TimeoutException ex) {
+            setException(ex);
+        } catch (Exception ex) {
+            setException(ex);
+        } finally {
+            if (wrapper != null) {
                 try {
-                    String uuid = wrapper.systemInformation().getUuid().getProperty("jppf.uuid");
-                    String cores = wrapper.systemInformation().getRuntime().getProperty("processing.threads");
-                    nodeInfos.add(uuid +" "+cores);
+                    wrapper.close();
                 } catch (Exception ex) {
                     setException(ex);
                 }
-            } else {
-                throw new IllegalStateException("Wrapper not connected!");
             }
         }
-        setResult(nodeInfos);
     }
+    
+    private void addLine(StringBuilder sb, String key, TypedProperties properties) {
+        sb.append(key + " = ").append(properties.getProperties(key)).append("\n");
+    }
+
+    @Override
+    public String toString() {
+        return super.toString() + "; port: "+myPort;
+    }
+    
     
 }

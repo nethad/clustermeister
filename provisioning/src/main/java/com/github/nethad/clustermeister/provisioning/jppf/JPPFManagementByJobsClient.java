@@ -18,7 +18,7 @@ package com.github.nethad.clustermeister.provisioning.jppf;
 import com.github.nethad.clustermeister.provisioning.jppf.managementtasks.JPPFConfigReaderTask;
 import com.github.nethad.clustermeister.provisioning.jppf.managementtasks.ShutdownSingleNodeTask;
 import com.github.nethad.clustermeister.provisioning.utils.IPSocket;
-import com.github.nethad.clustermeister.provisioning.utils.NodeManagementConnector;
+import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;

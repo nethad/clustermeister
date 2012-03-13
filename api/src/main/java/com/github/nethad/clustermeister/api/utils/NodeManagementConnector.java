@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.utils;
+package com.github.nethad.clustermeister.api.utils;
 
 import java.util.concurrent.TimeoutException;
 import org.jppf.management.JMXConnectionWrapper;
@@ -26,13 +26,13 @@ import org.jppf.management.JMXNodeConnectionWrapper;
  */
 public final class NodeManagementConnector {
 
-    public static JMXNodeConnectionWrapper connectToNodeManagement_node(
+    private static JMXNodeConnectionWrapper connectToNodeManagement_node(
             JMXNodeConnectionWrapper wrapper) throws TimeoutException {
 
         return (JMXNodeConnectionWrapper) connectToNodeManagement(wrapper);
     }
 
-    public static JMXDriverConnectionWrapper connectToNodeManagement_driver(
+    private static JMXDriverConnectionWrapper connectToNodeManagement_driver(
             JMXDriverConnectionWrapper wrapper) throws TimeoutException {
 
         return (JMXDriverConnectionWrapper) connectToNodeManagement(wrapper);

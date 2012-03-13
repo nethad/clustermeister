@@ -20,7 +20,7 @@ import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
-import com.github.nethad.clustermeister.provisioning.utils.NodeManagementConnector;
+import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientExcpetion;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;

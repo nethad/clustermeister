@@ -15,7 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.jppf.managementtasks;
 
-import com.github.nethad.clustermeister.provisioning.utils.NodeManagementConnector;
+import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import java.io.Serializable;
 import java.util.concurrent.TimeoutException;
 import org.jppf.management.JMXNodeConnectionWrapper;
