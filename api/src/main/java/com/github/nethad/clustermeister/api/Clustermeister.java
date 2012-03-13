@@ -27,5 +27,7 @@ public interface Clustermeister {
     public ExecutorService getExecutorService();
 
     public JPPFClient getJppfClient();
+
+    public void shutdown();
     
 }
