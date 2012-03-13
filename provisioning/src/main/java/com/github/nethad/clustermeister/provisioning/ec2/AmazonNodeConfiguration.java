@@ -15,9 +15,9 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
+import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
-import com.github.nethad.clustermeister.api.impl.PrivateKeyCredentials;
 import com.google.common.base.Optional;
 
 /**
@@ -27,7 +27,7 @@ import com.google.common.base.Optional;
 public class AmazonNodeConfiguration implements NodeConfiguration {
 
     private NodeType nodeType = NodeType.NODE;
-    private Optional<PrivateKeyCredentials> credentials = Optional.absent();
+    private Optional<Credentials> credentials = Optional.absent();
     private String driverAddress = "";
     private boolean driverDeployedLocally = false;
     private int managementPort = AmazonNodeManager.DEFAULT_MANAGEMENT_PORT;
@@ -41,11 +41,11 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
         return nodeType;
     }
 
-    public void setCredentials(PrivateKeyCredentials credentials) {
+    public void setCredentials(Credentials credentials) {
         this.credentials = Optional.fromNullable(credentials);
     }
 
-    public Optional<PrivateKeyCredentials> getCredentials() {
+    public Optional<Credentials> getCredentials() {
         return credentials;
     }
     
