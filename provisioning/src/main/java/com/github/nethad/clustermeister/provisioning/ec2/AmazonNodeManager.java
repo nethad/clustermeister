@@ -188,7 +188,8 @@ public class AmazonNodeManager {
             if (!instanceId.isPresent()) {
                 try {
                     Optional<Map<String, String>> noMap = Optional.absent();
-                    instanceMetadata = amazonInstanceManager.createInstance(noMap);
+                    instanceMetadata = amazonInstanceManager.createInstance(
+                            nodeConfiguration, noMap);
                 } catch (RunNodesException ex) {
                     logger.warn("Failed to create instance.", ex);
                     return null;

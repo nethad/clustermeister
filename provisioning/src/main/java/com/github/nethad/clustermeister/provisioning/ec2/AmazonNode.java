@@ -31,17 +31,13 @@ import org.jclouds.compute.domain.NodeMetadata;
 public class AmazonNode implements Node {
 
     final String id;
-    final String driverAddress;
-    final int managementPort;
-    final NodeType type;
     NodeMetadata instanceMetadata;
+    AmazonNodeConfiguration nodeConfiguration;
 
     public AmazonNode(String id, AmazonNodeConfiguration nodeConfiguration, NodeMetadata instanceMetadata) {
+        this.nodeConfiguration = nodeConfiguration;
         this.instanceMetadata = instanceMetadata;
-        this.type = nodeConfiguration.getType();
         this.id = id;
-        this.managementPort = nodeConfiguration.getManagementPort();
-        this.driverAddress = nodeConfiguration.getDriverAddress();
     }
 
     void updateInstanceMetaData(NodeMetadata instanceMetadata) {
@@ -67,7 +63,7 @@ public class AmazonNode implements Node {
 
     @Override
     public NodeType getType() {
-        return type;
+        return nodeConfiguration.getType();
     }
 
     @Override
@@ -82,16 +78,17 @@ public class AmazonNode implements Node {
 
     @Override
     public int getManagementPort() {
-        return managementPort;
+        return nodeConfiguration.getManagementPort();
     }
 
     public String getDriverAddress() {
-        return driverAddress;
+        return nodeConfiguration.getDriverAddress();
     }
 
     @Override
     public String toString() {
-        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).append(type).
+        return new ToStringBuilder(this, ToStringStyle.SHORT_PREFIX_STYLE).
+                append(nodeConfiguration.getType()).
                 append(id).
                 append(instanceMetadata.getId()).
                 append(instanceMetadata.getState()).

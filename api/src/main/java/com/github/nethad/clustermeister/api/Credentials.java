@@ -15,7 +15,7 @@
  */
 package com.github.nethad.clustermeister.api;
 
-import com.google.common.base.Optional;
+import com.google.common.base.Preconditions;
 
 /**
  * Credentials.
@@ -27,14 +27,7 @@ public abstract class Credentials {
     /**
      * A user name.
      */
-    protected final Optional<String> user;
-
-    /**
-     * Creates a Credential.
-     */
-    public Credentials() {
-        this.user = Optional.absent();
-    }
+    protected final String user;
     
     /**
      * Creates a Credential with a user name.
@@ -42,15 +35,7 @@ public abstract class Credentials {
      * @param user the user name.
      */
     public Credentials(String user) {
-        this(Optional.fromNullable(user));
-    }
-    
-    /**
-     * Creates a Credential with a user name.
-     * 
-     * @param user the user name.
-     */
-    protected Credentials(Optional<String> user) {
+        Preconditions.checkArgument(user != null && !user.isEmpty(), "Invalid user.");
         this.user = user;
     }
 
@@ -59,16 +44,15 @@ public abstract class Credentials {
      * 
      * @return  the user name. 
      */
-    public Optional<String> getUser() {
+    public String getUser() {
         return user;
     }
     
     /**
-     * Cast this to an instance of {@code clazz}.
+     * Casts this instance to the type represented by {@code clazz}.
      * 
-     * @param clazz the type to cast {@code this} to.
-     * @return {@code this} as an instance of type {@code clazz}.
-     * @throws ClassCastException when {@code this} can not be cast to {@code clazz}.
+     * @param clazz     the class representing the type to cast to.
+     * @return {@code this} as instance of clazz. 
      */
     public <T> T as(Class<T> clazz) {
         return clazz.cast(this);
