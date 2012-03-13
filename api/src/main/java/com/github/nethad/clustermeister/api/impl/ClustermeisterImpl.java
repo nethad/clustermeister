@@ -30,7 +30,7 @@ public class ClustermeisterImpl implements Clustermeister {
     private JPPFClient jppfClient;
 
     public ClustermeisterImpl() {
-        jppfClient = new JPPFClient("clustermeister");
+        jppfClient = new JPPFClient("clustermeister_"+System.currentTimeMillis());
         executorService = new JPPFExecutorService(jppfClient);
     }
     
@@ -48,7 +48,9 @@ public class ClustermeisterImpl implements Clustermeister {
     public void shutdown() {
         executorService.shutdown();
         List<Runnable> runnables = executorService.shutdownNow();
-        System.out.println("Runnables, size = "+runnables.size());
+        if (runnables != null) {
+            System.out.println("Runnables, size = "+runnables.size());
+        }
         jppfClient.close();
     }
     

@@ -17,13 +17,21 @@ package com.github.nethad.clustermeister.sample;
 
 import com.github.nethad.clustermeister.api.Clustermeister;
 import com.github.nethad.clustermeister.api.impl.ClustermeisterFactory;
+import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.*;
 import org.jppf.JPPFException;
 import org.jppf.client.JPPFClient;
+import org.jppf.client.JPPFClientConnectionStatus;
 import org.jppf.client.JPPFJob;
+import org.jppf.client.JPPFResultCollector;
+import org.jppf.client.event.ClientConnectionStatusEvent;
+import org.jppf.management.JMXDriverConnectionWrapper;
+import org.jppf.management.JPPFManagementInfo;
+import org.jppf.node.policy.Equal;
 import org.jppf.server.protocol.JPPFTask;
 
 /**
@@ -40,7 +48,8 @@ public class ClustermeisterSample implements Serializable {
     private void execute() {
 //        executorServiceApi();
 //        jppfApi();
-        custom();
+//        custom();
+        gatherNodeInfo();
     }
 
     private void executorServiceApi() {
@@ -89,6 +98,40 @@ public class ClustermeisterSample implements Serializable {
         }
         System.exit(0);
     }
+    
+    private void gatherNodeInfo() {
+        Clustermeister clustermeister = ClustermeisterFactory.create();
+        JPPFClient client = clustermeister.getJppfClient();
+        List<JPPFResultCollector> collectorList = new ArrayList<JPPFResultCollector>();
+        try {
+            JMXDriverConnectionWrapper wrapper = NodeManagementConnector.openDriverConnection("localhost", 11198);
+            for (JPPFManagementInfo node : wrapper.nodesInformation()) {
+                JPPFJob job = createJobForNode(node);
+                JPPFResultCollector collector = new JPPFResultCollector(job);
+                job.setResultListener(collector);
+                collectorList.add(collector);
+                client.submit(job);
+            }
+            System.out.println("Submitted all jobs, wait for results...");
+            for (JPPFResultCollector collector : collectorList) {
+                List<JPPFTask> tasks = collector.waitForResults();
+                for (JPPFTask task : tasks) {
+                    if (task.getException() != null) {
+                        throw new RuntimeException(task.getException());
+                    } else {
+                        String result = (String)task.getResult();
+                        System.out.println("Task query = "+result);
+                    }
+                }
+            }
+        } catch (TimeoutException ex) {
+            throw new RuntimeException(ex);
+        } catch (Exception ex) {
+            throw new RuntimeException(ex);
+        } finally {
+            clustermeister.shutdown();
+        }
+    }
 
     private void custom() {
         // gather all node information
@@ -126,6 +169,23 @@ public class ClustermeisterSample implements Serializable {
             if (jppfClient != null) {
                 jppfClient.close();
             }
+        }
+    }
+
+    private JPPFJob createJobForNode(JPPFManagementInfo node) {
+        try {
+            JPPFJob job = new JPPFJob();
+            final GatherNodeInformationTask task = new GatherNodeInformationTask(node.getPort());
+            job.addTask(task);
+            System.out.println("task = "+task.toString());
+            
+            job.setBlocking(false);
+//            job.getSLA().setCancelUponClientDisconnect(true);
+            job.getSLA().setMaxNodes(1);
+            job.getSLA().setExecutionPolicy(new Equal("jppf.uuid", true, node.getId()));
+            return job;
+        } catch (JPPFException ex) {
+            throw new RuntimeException(ex);
         }
     }
 }
