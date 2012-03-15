@@ -19,6 +19,10 @@ import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.google.common.base.Optional;
+import org.jclouds.compute.domain.OsFamily;
+import org.jclouds.compute.domain.Template;
+import org.jclouds.compute.domain.TemplateBuilder;
+import org.jclouds.ec2.domain.InstanceType;
 
 /**
  *
@@ -28,6 +32,8 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
 
     private NodeType nodeType = NodeType.NODE;
     private Optional<Credentials> credentials = Optional.absent();
+    private Optional<String> region = Optional.absent();
+    private Optional<String> imageId = Optional.absent();
     private String driverAddress = "";
     private boolean driverDeployedLocally = false;
     private int managementPort = AmazonNodeManager.DEFAULT_MANAGEMENT_PORT;
@@ -67,11 +73,41 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
         return driverDeployedLocally;
     }
 
-    public void setManagementPort(int managementPort) {
+
+    public void setRegion(String region) {
+        this.region = Optional.fromNullable(region);
+    }
+    
+    public Optional<String> getRegion() {
+        return region;
+    }
+
+    public void setImageId(String imageId) {
+        this.imageId = Optional.fromNullable(imageId);
+    }
+    
+    public Optional<String> getImageId() {
+        return imageId;
+    }
+    
+    void setManagementPort(int managementPort) {
         this.managementPort = managementPort;
     }
 
-    public int getManagementPort() {
+    int getManagementPort() {
         return managementPort;
+    }
+    
+    Template getTemplate(TemplateBuilder templateBuilder) {
+        if(imageId.isPresent()) {
+            templateBuilder.imageId(imageId.get());
+        } else {
+            if(region.isPresent()) {
+                templateBuilder.locationId(region.get());
+            }
+            templateBuilder.hardwareId(InstanceType.T1_MICRO);
+            templateBuilder.osFamily(OsFamily.AMZN_LINUX);
+        }
+        return templateBuilder.build();
     }
 }

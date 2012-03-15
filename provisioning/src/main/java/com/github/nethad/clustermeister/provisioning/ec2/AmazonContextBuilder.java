@@ -31,28 +31,26 @@ import org.jclouds.ssh.jsch.config.JschSshClientModule;
  */
 public class AmazonContextBuilder implements Callable<ComputeServiceContext> {
 
-	private final String accessKeyId;
-	private final String secretKey;
-	private final Properties overrides;
+    private final String accessKeyId;
+    private final String secretKey;
+    private final Properties overrides;
 
-	public AmazonContextBuilder(String accessKeyId, String secretKey, 
-			Optional<Properties> overrides) {
-		this.accessKeyId = accessKeyId;
-		this.secretKey = secretKey;
-		if(overrides.isPresent()) {
-			this.overrides = overrides.get();
-		} else {
-			this.overrides = new Properties();
-		}
-	}
-	
-	@Override
-	public ComputeServiceContext call() throws Exception {
-		return new ComputeServiceContextFactory().
-				createContext("aws-ec2", accessKeyId, secretKey, 
-				ImmutableSet.of(new JschSshClientModule(), 
-				new SLF4JLoggingModule(), new EnterpriseConfigurationModule()),
-				overrides);
-	}
-	
+    public AmazonContextBuilder(String accessKeyId, String secretKey,
+            Optional<Properties> overrides) {
+        this.accessKeyId = accessKeyId;
+        this.secretKey = secretKey;
+        if (overrides.isPresent()) {
+            this.overrides = overrides.get();
+        } else {
+            this.overrides = new Properties();
+        }
+    }
+
+    @Override
+    public ComputeServiceContext call() throws Exception {
+        return new ComputeServiceContextFactory().createContext("aws-ec2", accessKeyId, secretKey,
+                ImmutableSet.of(new JschSshClientModule(),
+                new SLF4JLoggingModule(), new EnterpriseConfigurationModule()),
+                overrides);
+    }
 }
