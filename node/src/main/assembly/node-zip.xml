@@ -8,7 +8,7 @@
     <includeBaseDirectory>false</includeBaseDirectory>
     <dependencySets>
         <dependencySet>
-            <outputDirectory>lib</outputDirectory>
+            <outputDirectory>jppf-node/lib</outputDirectory>
             <includes>
                 <include>com.github.nethad.clustermeister:org.jppf.common-node</include>
                 <include>log4j:log4j</include>
@@ -20,8 +20,8 @@
     </dependencySets>
     <fileSets>
         <fileSet>
-            <outputDirectory>config</outputDirectory>
-            <directory>src/main/resources/config</directory>
+            <directory>src/main/resources/jppf-node</directory>
+            <outputDirectory>jppf-node</outputDirectory>
             <filtered>false</filtered>
             <fileMode>0644</fileMode>
             <directoryMode>0755</directoryMode>
@@ -29,18 +29,8 @@
     </fileSets>
     <files>
         <file>
-            <source>src/main/resources/startNode.bat</source>
-            <fileMode>0644</fileMode>
-            <filtered>false</filtered>
-        </file>
-        <file>
-            <source>src/main/resources/startNode.sh</source>
-            <fileMode>0644</fileMode>
-            <filtered>false</filtered>
-        </file>
-        <file>
             <source>${project.build.directory}/${project.build.finalName}.${project.packaging}</source>
-            <outputDirectory>lib</outputDirectory>
+            <outputDirectory>jppf-node/lib</outputDirectory>
             <fileMode>0644</fileMode>
             <filtered>false</filtered>
         </file>
