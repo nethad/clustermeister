@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.jppf;
 
 import com.github.nethad.clustermeister.provisioning.jppf.managementtasks.JPPFConfigReaderTask;
+import com.github.nethad.clustermeister.provisioning.jppf.managementtasks.ShutdownExecutingNode;
 import com.github.nethad.clustermeister.provisioning.jppf.managementtasks.ShutdownSingleNodeTask;
 import com.github.nethad.clustermeister.provisioning.utils.IPSocket;
 import com.github.nethad.clustermeister.provisioning.utils.NodeManagementConnector;
@@ -31,8 +32,6 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.management.Notification;
 import javax.management.NotificationListener;
 import org.jppf.JPPFException;
@@ -232,24 +231,23 @@ public class JPPFManagementByJobsClient {
 
     private void shutdownNodes(Collection<JPPFManagementInfo> nodeInfos,
             JMXDriverConnectionWrapper wrapper) throws InterruptedException, Exception {
-        JPPFManagementInfo chosenEntry =
-                Iterables.getFirst(nodeInfos, null);
-        String executorHost = chosenEntry.getHost();
-        int executorPort = chosenEntry.getPort();
-        logger.debug("Chose node {}:{} as executor.", executorHost, executorPort);
-        final JPPFJob shutdownExecutorJob = getShutdownNodeJob(executorHost, executorPort);
-        final Lock lock = new ReentrantLock();
-        final Condition lastJobFinished = lock.newCondition();
+        
         if (nodeInfos.isEmpty()) {
             logger.debug("No nodes to shut down.");
             return;
-        } else if (nodeInfos.size() == 1) {
+        }
+        JPPFManagementInfo chosenEntry = Iterables.getFirst(nodeInfos, null);
+        logger.debug("Chose node {} as executor.", chosenEntry.getId());
+        final JPPFJob shutdownExecutorJob = getShutdownExecutingNodeJob(chosenEntry.getId());
+        final Lock lock = new ReentrantLock();
+        final Condition lastJobFinished = lock.newCondition();
+        if (nodeInfos.size() == 1) {
             sendSignalOnJobReturned(wrapper, lock, lastJobFinished,
                     shutdownExecutorJob);
             jPPFClient.submit(shutdownExecutorJob);
         } else {
             final JMXConnectionWrapper finalWrapper = wrapper;
-            JPPFJob job = createShutdownJob(nodeInfos, executorHost, executorPort);
+            JPPFJob job = createShutdownJob(nodeInfos, chosenEntry.getId());
             job.addJobListener(new JobListener() {
 
                 @Override
@@ -274,19 +272,30 @@ public class JPPFManagementByJobsClient {
         }
         logger.debug("Waiting for all nodes to shut down...");
         awaitSignal(lock, lastJobFinished);
-        logger.debug("All nodes are shut down. Canceling Job: {}", shutdownExecutorJob.getName());
-        wrapper.cancelJob(shutdownExecutorJob.getUuid());
+        logger.debug("All nodes are shut down.");
     }
 
-    private JPPFJob getShutdownNodeJob(String nodeHost, int managementPort)
-            throws JPPFException, Exception {
+    private JPPFJob getShutdownNodeJob(String nodeHost, int managementPort) throws JPPFException {
 
-        JPPFJob job = new JPPFJob();
-        job.setName("Shutdown " + nodeHost + ":" + managementPort);
+        JPPFJob job = getJobSkeleton("Shutdown " + nodeHost + ":" + managementPort,
+                1, false, false);
         job.addTask(new ShutdownSingleNodeTask(), nodeHost, managementPort);
-        job.getSLA().setMaxNodes(1);
-        job.setBlocking(false);
-        job.getSLA().setSuspended(false);
+        return job;
+    }
+    
+    private JPPFJob getShutdownExecutingNodeJob(String nodeUUID) throws JPPFException {
+        JPPFJob job = getJobSkeleton("Shutdown " + nodeUUID, 1, false, false);
+        job.addTask(new ShutdownExecutingNode(), job.getUuid());
+        job.getSLA().setExecutionPolicy(new Equal("jppf.uuid", false, nodeUUID));
+        return job;
+    }
+    
+    private JPPFJob getJobSkeleton(String name, int maxNodes, boolean blocking, boolean suspended) {
+        JPPFJob job = new JPPFJob();
+        job.setName(name);
+        job.getSLA().setMaxNodes(maxNodes);
+        job.setBlocking(blocking);
+        job.getSLA().setSuspended(suspended);
         return job;
     }
 
@@ -319,27 +328,22 @@ public class JPPFManagementByJobsClient {
         lock.lock();
         try {
             lastJobFinished.await();
+            Thread.sleep(50); //just wait a wee bit more.
         } finally {
             lock.unlock();
         }
     }
 
     private JPPFJob createShutdownJob(Collection<JPPFManagementInfo> nodeInfos,
-            String executorHost, int executorPort) throws JPPFException, NumberFormatException {
+            String executorUUID) throws JPPFException, NumberFormatException {
 
-        JPPFJob job = new JPPFJob();
-        job.setName("Shutdown nodes");
-        String uuid = null;
+        JPPFJob job = getJobSkeleton("Shutdown nodes", 1, false, false);
         for (JPPFManagementInfo nodeInfo : nodeInfos) {
-            if (nodeInfo.getPort() != executorPort || !nodeInfo.getHost().equals(executorHost)) {
+            if (!nodeInfo.getId().equals(executorUUID)) {
                 job.addTask(new ShutdownSingleNodeTask(), nodeInfo.getHost(), nodeInfo.getPort());
-            } else {
-                uuid = nodeInfo.getId();
             }
         }
-        job.getSLA().setMaxNodes(1);
-        job.getSLA().setExecutionPolicy(new Equal("jppf.uuid", false, uuid));
-        job.setBlocking(false);
+        job.getSLA().setExecutionPolicy(new Equal("jppf.uuid", false, executorUUID));
         return job;
     }
 }
