@@ -35,12 +35,12 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
-import org.jclouds.aws.ec2.reference.AWSEC2Constants;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.Template;
+import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.ec2.compute.options.EC2TemplateOptions;
 import org.slf4j.Logger;
@@ -71,10 +71,8 @@ public class AmazonInstanceManager {
             LoggerFactory.getLogger(AmazonInstanceManager.class);
     private String accessKeyId;
     private String secretKey;
-    private String locationId;
-    private String imageId;
     private final ListenableFuture<ComputeServiceContext> contextFuture;
-    private final SettableFuture<Template> templateFuture;
+    private final SettableFuture<TemplateBuilder> templateBuilderFuture;
     private final ListeningExecutorService executorService;
     private final Monitor portCounterMonitor = new Monitor(false);
     private final Map<String, Integer> instanceToPortCounter =
@@ -93,20 +91,19 @@ public class AmazonInstanceManager {
     AmazonInstanceManager(Configuration config, ListeningExecutorService executorService) {
         this.executorService = executorService;
         loadConfiguration(config);
-        templateFuture = SettableFuture.create();
+        templateBuilderFuture = SettableFuture.create();
         //from here the configuration must be loaded.
         contextFuture = createContext();
-        //after the context is ready, build the template.
         Futures.addCallback(contextFuture, new FutureCallback<ComputeServiceContext>() {
 
             @Override
-            public void onSuccess(ComputeServiceContext result) {
-                templateFuture.set(buildTemplate(result));
+            public void onSuccess(ComputeServiceContext context) {
+                templateBuilderFuture.set(context.getComputeService().templateBuilder());
             }
 
             @Override
             public void onFailure(Throwable t) {
-                templateFuture.setException(t);
+                templateBuilderFuture.setException(t);
                 throw new RuntimeException(t);
             }
         }, executorService);
@@ -160,7 +157,8 @@ public class AmazonInstanceManager {
             Optional<Map<String, String>> userMetaData) throws RunNodesException {
         logger.info("Creating a new instance...");
         ComputeServiceContext context = valueOrNotReady(contextFuture);
-        Template template = valueOrNotReady(templateFuture);
+        Template template = nodeConfiguration.getTemplate(
+                valueOrNotReady(templateBuilderFuture));
 
         if (userMetaData.isPresent()) {
             template.getOptions().userMetadata(userMetaData.get());
@@ -364,19 +362,15 @@ public class AmazonInstanceManager {
     private ListenableFuture<ComputeServiceContext> createContext() {
         logger.debug("Creating Context...");
 
-        Optional<Properties> overrides;
-        if (isImageIdSet()) {
-            //Optimization: lazy image fetching
-            //set AMI queries to nothing
-            Properties properties = new Properties();
-            properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY, "");
-            properties.setProperty(AWSEC2Constants.PROPERTY_EC2_CC_AMI_QUERY, "");
-            overrides = Optional.of(properties);
-        } else {
-            overrides = Optional.absent();
-        }
+        //TODO: how to enable lazy image fetching?
+//        //Optimization: lazy image fetching
+//        //set AMI queries to nothing
+//        Properties properties = new Properties();
+//        properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY, "");
+//        properties.setProperty(AWSEC2Constants.PROPERTY_EC2_CC_AMI_QUERY, "");
         return executorService.submit(
-                new AmazonContextBuilder(accessKeyId, secretKey, overrides));
+                new AmazonContextBuilder(accessKeyId, secretKey, 
+                Optional.<Properties>absent()));
 
     }
 
@@ -384,22 +378,6 @@ public class AmazonInstanceManager {
         logger.debug("Loading Configuration...");
         accessKeyId = configuration.getString("accessKeyId", "").trim();
         secretKey = configuration.getString("secretKey", "").trim();
-        locationId = configuration.getString("locationId", "").trim();
-        imageId = configuration.getString("imageId", "").trim();
-    }
-
-    private Template buildTemplate(ComputeServiceContext context) {
-        AmazonTemplateBuilder templateBuilder;
-        if (isImageIdSet()) {
-            templateBuilder = new AmazonImageIdTemplateBuilder(context, imageId);
-        } else {
-            templateBuilder = new AmazonT1MicroTemplateBuilder(context, locationId);
-        }
-        return templateBuilder.buildTemplate();
-    }
-
-    private boolean isImageIdSet() {
-        return (imageId != null && !imageId.isEmpty());
     }
 
     /**
