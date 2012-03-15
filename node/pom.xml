@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.github.nethad.clustermeister</groupId>
+        <artifactId>clustermeister</artifactId>
+        <version>0.1-SNAPSHOT</version>
+    </parent>
+    <groupId>com.github.nethad.clustermeister</groupId>
+    <artifactId>node</artifactId>
+    <version>0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <name>Clustermeister Node</name>
+    <description>
+        Clustermeister customization of a JPPF Node.
+    </description>
+    <dependencies>
+        <dependency>
+            <groupId>com.github.nethad.clustermeister</groupId>
+            <artifactId>org.jppf.common-node</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-log4j12</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.jvnet.opendmk</groupId>
+            <artifactId>jmxremote_optional</artifactId>
+        </dependency>
+    </dependencies>
+    <build>
+        <plugins>
+            <plugin>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <configuration>
+                    <finalName>jppf</finalName>
+                    <descriptors>
+                        <descriptor>src/main/assembly/node-zip.xml</descriptor>
+                    </descriptors>
+                </configuration>
+                <executions>
+                    <execution>
+                        <id>make-zip</id> 
+                        <phase>package</phase>
+                        <goals>
+                            <goal>single</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+        <resources>
+            <resource>
+                <directory>src/main/resources</directory>
+                <filtering>false</filtering>
+                <excludes>
+                    <exclude>startNode.*</exclude>
+                    <exclude>config/*</exclude>
+                </excludes>
+            </resource>
+        </resources>
+    </build>
+</project>
+
