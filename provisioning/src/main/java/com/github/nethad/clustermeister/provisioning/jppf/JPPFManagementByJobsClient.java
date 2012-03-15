@@ -119,8 +119,10 @@ public class JPPFManagementByJobsClient {
                     }, null);
             if (info != null) {
                 nodesInfo.add(info);
+                shutdownNodes(nodesInfo, wrapper);
+            } else {
+                logger.warn("No such node ({}:{}) connected to driver.", nodeHost, nodeManagementPort);
             }
-            shutdownNodes(nodesInfo, wrapper);
         } catch (Exception ex) {
             logger.warn("Failed to shut down node.", ex);
         } finally {
