@@ -15,22 +15,17 @@
  */
 package com.github.nethad.clustermeister.api;
 
-import java.util.Collection;
-import java.util.concurrent.ExecutorService;
-import org.jppf.client.JPPFClient;
+import java.util.concurrent.Callable;
+import java.util.concurrent.Future;
 
 /**
  *
  * @author thomas
  */
-public interface Clustermeister {
-
-    public ExecutorService getExecutorService();
-
-    public JPPFClient getJppfClient();
+public interface ExecutorNode extends Node {
     
-    public Collection<ExecutorNode> getAllNodes();
-
-    public void shutdown();
+    public NodeCapabilities getCapabilities();
+    
+    public <T> Future<T> execute(Callable<T> callable);
     
 }
