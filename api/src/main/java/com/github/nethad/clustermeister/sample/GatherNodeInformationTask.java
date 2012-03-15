@@ -16,6 +16,8 @@
 package com.github.nethad.clustermeister.sample;
 
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.TimeoutException;
 import org.jppf.management.JMXNodeConnectionWrapper;
 import org.jppf.management.JPPFSystemInformation;
@@ -27,8 +29,16 @@ import org.jppf.utils.TypedProperties;
  * @author thomas
  */
 public class GatherNodeInformationTask extends JPPFTask {
+    public static final String AVAILABLE_PROCESSORS = "availableProcessors";
+    public static final String IPV4_ADDRESSES = "ipv4.addresses";
+    private static final String LOCALHOST = "localhost";
+    public static final String OS_NAME = "os.name";
+    public static final String PROCESSING_THREADS = "processsing.threads";
+    public static final String TOTAL_MEMORY = "totalMemory";
+    public static final String UUID = "jppf.uuid";
 
     private final int myPort;
+    private Map<Object, Object> propertiesMap;
 
     public GatherNodeInformationTask(int myPort) {
         this.myPort = myPort;
@@ -38,21 +48,23 @@ public class GatherNodeInformationTask extends JPPFTask {
     public void run() {
         JMXNodeConnectionWrapper wrapper = null;
         try {
-            wrapper = NodeManagementConnector.openNodeConnection("localhost", myPort);
+            wrapper = NodeManagementConnector.openNodeConnection(LOCALHOST, myPort);
             JPPFSystemInformation sysInfo = wrapper.systemInformation();
-            StringBuilder sb = new StringBuilder("node info:\n");
-            addLine(sb, "jppf.uuid", sysInfo.getUuid());
-            addLine(sb, "processsing.threads", sysInfo.getJppf());
-            addLine(sb, "ipv4.addresses", sysInfo.getNetwork());
-            addLine(sb, "os.name", sysInfo.getSystem());
-            addLine(sb, "totalMemory", sysInfo.getRuntime());
-            addLine(sb, "availableProcessors", sysInfo.getRuntime());
+            propertiesMap = new HashMap<Object, Object>();
             
-            sb.append("[[ env ]] \n\n").append(sysInfo.getEnv().asString()).append("\n");
-            sb.append("[[ storage ]] \n\n").append(sysInfo.getStorage().asString()).append("\n");
+            addProperty(UUID, sysInfo.getUuid());
+            addProperty(PROCESSING_THREADS, sysInfo.getJppf());
+            addProperty(IPV4_ADDRESSES, sysInfo.getNetwork());
+            addProperty(OS_NAME, sysInfo.getSystem());
+            addProperty(TOTAL_MEMORY, sysInfo.getRuntime());
+            addProperty(AVAILABLE_PROCESSORS, sysInfo.getRuntime());
             
-            String nodeInfo = sb.toString();
-            setResult(nodeInfo);
+//            sb.append("[[ env ]] \n\n").append(sysInfo.getEnv().asString()).append("\n");
+//            sb.append("[[ storage ]] \n\n").append(sysInfo.getStorage().asString()).append("\n");
+            
+//            String nodeInfo = sb.toString();
+            TypedProperties typedProperties = new TypedProperties(propertiesMap);
+            setResult(typedProperties);
         } catch (TimeoutException ex) {
             setException(ex);
         } catch (Exception ex) {
@@ -70,6 +82,10 @@ public class GatherNodeInformationTask extends JPPFTask {
     
     private void addLine(StringBuilder sb, String key, TypedProperties properties) {
         sb.append(key + " = ").append(properties.getProperties(key)).append("\n");
+    }
+    
+    private void addProperty(String key, TypedProperties fromProperties) {
+        propertiesMap.put(key, fromProperties.getProperty(key));
     }
 
     @Override

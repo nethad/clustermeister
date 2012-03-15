@@ -16,24 +16,43 @@
 package com.github.nethad.clustermeister.api.impl;
 
 import com.github.nethad.clustermeister.api.Clustermeister;
+import com.github.nethad.clustermeister.api.ExecutorNode;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import org.jppf.client.JPPFClient;
+import org.jppf.client.JPPFResultCollector;
 import org.jppf.client.concurrent.JPPFExecutorService;
+import org.jppf.server.protocol.JPPFTask;
+import org.jppf.utils.TypedProperties;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author thomas
  */
 public class ClustermeisterImpl implements Clustermeister {
+
     private JPPFExecutorService executorService;
     private JPPFClient jppfClient;
+    private Logger logger = LoggerFactory.getLogger(ClustermeisterImpl.class);
+    private Collection<ExecutorNode> nodes;
+
 
     public ClustermeisterImpl() {
-        jppfClient = new JPPFClient("clustermeister_"+System.currentTimeMillis());
+        jppfClient = new JPPFClient("clustermeister_" + System.currentTimeMillis());
         executorService = new JPPFExecutorService(jppfClient);
+        nodes = new LinkedList<ExecutorNode>();
     }
-    
+
+    protected void gatherNodeInformation() {
+        nodes = new GatherNodeInformation(jppfClient).getNodes();
+    }
+
     @Override
     public ExecutorService getExecutorService() {
         return executorService;
@@ -49,9 +68,14 @@ public class ClustermeisterImpl implements Clustermeister {
         executorService.shutdown();
         List<Runnable> runnables = executorService.shutdownNow();
         if (runnables != null) {
-            System.out.println("Runnables, size = "+runnables.size());
+            System.out.println("Runnables, size = " + runnables.size());
         }
         jppfClient.close();
     }
-    
+
+    @Override
+    public Collection<ExecutorNode> getAllNodes() {
+        return this.nodes;
+    }
+
 }

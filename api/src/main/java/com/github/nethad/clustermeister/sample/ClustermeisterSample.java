@@ -16,10 +16,13 @@
 package com.github.nethad.clustermeister.sample;
 
 import com.github.nethad.clustermeister.api.Clustermeister;
+import com.github.nethad.clustermeister.api.ExecutorNode;
 import com.github.nethad.clustermeister.api.impl.ClustermeisterFactory;
+import com.github.nethad.clustermeister.api.impl.ClustermeisterImpl;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.*;
@@ -98,39 +101,50 @@ public class ClustermeisterSample implements Serializable {
         }
         System.exit(0);
     }
-    
+
     private void gatherNodeInfo() {
-        Clustermeister clustermeister = ClustermeisterFactory.create();
-        JPPFClient client = clustermeister.getJppfClient();
-        List<JPPFResultCollector> collectorList = new ArrayList<JPPFResultCollector>();
+        Clustermeister clustermeister = null;
         try {
-            JMXDriverConnectionWrapper wrapper = NodeManagementConnector.openDriverConnection("localhost", 11198);
-            for (JPPFManagementInfo node : wrapper.nodesInformation()) {
-                JPPFJob job = createJobForNode(node);
-                JPPFResultCollector collector = new JPPFResultCollector(job);
-                job.setResultListener(collector);
-                collectorList.add(collector);
-                client.submit(job);
+            clustermeister = ClustermeisterFactory.create();
+            Collection<ExecutorNode> nodes = clustermeister.getAllNodes();
+            for (ExecutorNode executorNode : nodes) {
+                System.out.println("executorNode " + executorNode.getID());
             }
-            System.out.println("Submitted all jobs, wait for results...");
-            for (JPPFResultCollector collector : collectorList) {
-                List<JPPFTask> tasks = collector.waitForResults();
-                for (JPPFTask task : tasks) {
-                    if (task.getException() != null) {
-                        throw new RuntimeException(task.getException());
-                    } else {
-                        String result = (String)task.getResult();
-                        System.out.println("Task query = "+result);
-                    }
-                }
-            }
-        } catch (TimeoutException ex) {
-            throw new RuntimeException(ex);
-        } catch (Exception ex) {
-            throw new RuntimeException(ex);
         } finally {
             clustermeister.shutdown();
+
         }
+        //        Clustermeister clustermeister = ClustermeisterFactory.create();
+        //        JPPFClient client = clustermeister.getJppfClient();
+        //        List<JPPFResultCollector> collectorList = new ArrayList<JPPFResultCollector>();
+        //        try {
+        //            JMXDriverConnectionWrapper wrapper = NodeManagementConnector.openDriverConnection("localhost", 11198);
+        //            for (JPPFManagementInfo node : wrapper.nodesInformation()) {
+        //                JPPFJob job = createJobForNode(node);
+        //                JPPFResultCollector collector = new JPPFResultCollector(job);
+        //                job.setResultListener(collector);
+        //                collectorList.add(collector);
+        //                client.submit(job);
+        //            }
+        //            System.out.println("Submitted all jobs, wait for results...");
+        //            for (JPPFResultCollector collector : collectorList) {
+        //                List<JPPFTask> tasks = collector.waitForResults();
+        //                for (JPPFTask task : tasks) {
+        //                    if (task.getException() != null) {
+        //                        throw new RuntimeException(task.getException());
+        //                    } else {
+        //                        String result = (String)task.getResult();
+        //                        System.out.println("Task query = "+result);
+        //                    }
+        //                }
+        //            }
+        //        } catch (TimeoutException ex) {
+        //            throw new RuntimeException(ex);
+        //        } catch (Exception ex) {
+        //            throw new RuntimeException(ex);
+        //        } finally {
+        //            clustermeister.shutdown();
+        //        }
     }
 
     private void custom() {
@@ -139,8 +153,8 @@ public class ClustermeisterSample implements Serializable {
         // 2) create job and for each node a task that gathers UUID and processors
         // 3) submit job and wait for results
         // 4) process result list and create local data structure for each node
-        
-        
+
+
         JPPFClient jppfClient = new JPPFClient("akkaClientUUID");
         try {
             JPPFJob job = new JPPFJob();
@@ -177,8 +191,8 @@ public class ClustermeisterSample implements Serializable {
             JPPFJob job = new JPPFJob();
             final GatherNodeInformationTask task = new GatherNodeInformationTask(node.getPort());
             job.addTask(task);
-            System.out.println("task = "+task.toString());
-            
+            System.out.println("task = " + task.toString());
+
             job.setBlocking(false);
 //            job.getSLA().setCancelUponClientDisconnect(true);
             job.getSLA().setMaxNodes(1);

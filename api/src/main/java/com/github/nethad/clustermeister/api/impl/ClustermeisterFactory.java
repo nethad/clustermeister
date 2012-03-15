@@ -26,6 +26,7 @@ public class ClustermeisterFactory {
     public static Clustermeister create() {
         System.setProperty("jppf.config.plugin", JPPFClientConfiguration.class.getCanonicalName());
         ClustermeisterImpl clustermeister = new ClustermeisterImpl();
+        clustermeister.gatherNodeInformation();
         return clustermeister;
     }
     

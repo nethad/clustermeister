@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.api;
 
+import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import org.jppf.client.JPPFClient;
 
@@ -27,6 +28,8 @@ public interface Clustermeister {
     public ExecutorService getExecutorService();
 
     public JPPFClient getJppfClient();
+    
+    public Collection<ExecutorNode> getAllNodes();
 
     public void shutdown();
     
