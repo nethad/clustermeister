@@ -73,13 +73,6 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
         return driverDeployedLocally;
     }
 
-    public void setManagementPort(int managementPort) {
-        this.managementPort = managementPort;
-    }
-
-    public int getManagementPort() {
-        return managementPort;
-    }
 
     public void setRegion(String region) {
         this.region = Optional.fromNullable(region);
@@ -95,6 +88,14 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
     
     public Optional<String> getImageId() {
         return imageId;
+    }
+    
+    void setManagementPort(int managementPort) {
+        this.managementPort = managementPort;
+    }
+
+    int getManagementPort() {
+        return managementPort;
     }
     
     Template getTemplate(TemplateBuilder templateBuilder) {
