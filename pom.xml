@@ -51,6 +51,10 @@
         <developerConnection>scm:git:git@github.com:nethad/clustermeister.git</developerConnection>
     </scm>
 
+    <properties>
+        <jppf.node.version>0.1-SNAPSHOT</jppf.node.version>
+    </properties>
+
     <profiles>
         <profile>
             <id>release</id>
@@ -131,6 +135,11 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.4.3</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>2.4</version>
+                </plugin>
             </plugins>
         </pluginManagement>
         <plugins>
@@ -208,6 +217,13 @@
                 <groupId>com.github.nethad.clustermeister</groupId>
                 <artifactId>node</artifactId>
                 <version>0.1-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.nethad.clustermeister</groupId>
+                <artifactId>node</artifactId>
+                <classifier>node</classifier>
+                <type>zip</type>
+                <version>${jppf.node.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.github.nethad.clustermeister</groupId>

@@ -258,7 +258,7 @@ public abstract class AmazonEC2JPPFDeployer {
         if(localChecksum != null) {
             return localChecksum.longValue();
         }
-        final InputStream file = getClass().getResourceAsStream(filePath);
+        final InputStream file = getClass().getResourceAsStream("/" + filePath);
         try {
             localChecksum = FileUtils.getCRC32(file);
             return localChecksum.longValue();
@@ -298,7 +298,7 @@ public abstract class AmazonEC2JPPFDeployer {
 
     protected void uploadJPPF() {
         logger.debug("Uploading {}", zipFile);
-        final InputStream file = getClass().getResourceAsStream(zipFile);
+        final InputStream file = getClass().getResourceAsStream("/" + zipFile);
         try {
             upload(file, "/home/ec2-user/" + CLUSTERMEISTER_BIN + "/" + zipFile);
         } finally {
