@@ -36,6 +36,7 @@ import org.slf4j.LoggerFactory;
  */
 @Ignore("Depends on local configuration.")
 public class AmazonNodeManagerTest {
+    public static final String EU_WEST_1C = "eu-west-1c";
     public static final String KEYPAIR = "EC2_keypair";
     public static final String PRIVATE_KEY = "/home/daniel/Desktop/EC2/EC2_keypair.pem";
     public static final String OTHER_PRIVATE_KEY = "/home/daniel/Desktop/EC2/otherkey_rsa";
@@ -55,18 +56,21 @@ public class AmazonNodeManagerTest {
 //        Optional<String> instanceId = Optional.of("eu-west-1/i-9c3f13d5");
         Optional<String> absentInstanceId = Optional.absent();
         AmazonNodeConfiguration dc = new AmazonNodeConfiguration();
+        dc.setRegion(EU_WEST_1C);
         dc.setNodeType(NodeType.DRIVER);
         dc.setCredentials(getCredentials());
         final Future<? extends Node> d = nodeManager.addNode(dc, absentInstanceId);
         
-        Optional<String> driverInstanceId = Optional.of(((AmazonNode)d.get()).getInstanceId());
+//        Optional<String> driverInstanceId = Optional.of(((AmazonNode)d.get()).getInstanceId());
         AmazonNodeConfiguration nc = new AmazonNodeConfiguration();
+        dc.setRegion(EU_WEST_1C);
         nc.setNodeType(NodeType.NODE);
         nc.setDriverAddress(Iterables.getFirst(d.get().getPrivateAddresses(), null));
         nc.setCredentials(getOtherCredentials());
         final Future<? extends Node> n = nodeManager.addNode(nc, absentInstanceId);
         
         AmazonNodeConfiguration nc2 = new AmazonNodeConfiguration();
+        dc.setRegion(EU_WEST_1C);
         nc2.setNodeType(NodeType.NODE);
         nc2.setDriverAddress(Iterables.getFirst(d.get().getPrivateAddresses(), null));
         nc2.setCredentials(getCredentials());
@@ -91,10 +95,10 @@ public class AmazonNodeManagerTest {
         Future<Void> ns = nodeManager.removeNode((AmazonNode) jppfNode, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
         ns.get();
         Future<Void> ds = nodeManager.removeNode((AmazonNode) jppfDriver, AmazonInstanceShutdownMethod.TERMINATE);
-        ds.get();
-        ns2.get();
 
         //wait for them to shut down
+        ds.get();
+        ns2.get();
 
         nodeManager.close();
     }
@@ -104,7 +108,7 @@ public class AmazonNodeManagerTest {
     }
     
     private static KeyPairCredentials getOtherCredentials() {
-        return new KeyPairCredentials("fridolin", new File(OTHER_PRIVATE_KEY), 
+        return new KeyPairCredentials("ec2-user", new File(OTHER_PRIVATE_KEY), 
                 new File(OTHER_PUBLIC_KEY));
     }
 }
