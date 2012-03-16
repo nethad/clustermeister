@@ -26,8 +26,8 @@ public interface TorqueNodeDeployment {
 	public static final int DEFAULT_MANAGEMENT_PORT = 11198;
 	public static final String DEPLOY_BASE_NAME = "jppf-node";
 	public static final String DEPLOY_CONFIG_SUFFIX = ".properties";
-	public static final String DEPLOY_QSUB = "qsub-node.sh";
-	public static final String PATH_TO_QSUB_SCRIPT = "./" + DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB;
+//	public static final String DEPLOY_QSUB = "qsub-node.sh";
+//	public static final String PATH_TO_QSUB_SCRIPT = "./" + DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB;
 
 	public String getDriverAddress();
 

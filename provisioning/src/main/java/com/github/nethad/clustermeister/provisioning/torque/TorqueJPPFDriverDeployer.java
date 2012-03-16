@@ -22,7 +22,8 @@ import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedCompon
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFDriverConfigurationSource;
 import com.github.nethad.clustermeister.provisioning.utils.PublicIp;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
-import com.github.nethad.clustermeister.provisioning.utils.SSHClientExcpetion;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClientImpl;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jppf.management.JMXDriverConnectionWrapper;
@@ -64,25 +65,25 @@ public class TorqueJPPFDriverDeployer {
         sshClient = null;
         try {
 
-            sshClient = new SSHClient(privateKeyFilePath);
+            sshClient = new SSHClientImpl(privateKeyFilePath);
             sshClient.connect(user, host, port);
-            executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "*");
+            sshClient.executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "*");
 
             sshClient.sftpUpload(getResourcePath(DEPLOY_ZIP), DEPLOY_ZIP);
-            executeAndSysout("unzip " + DEPLOY_ZIP);
+            sshClient.executeAndSysout("unzip " + DEPLOY_ZIP);
 
             sshClient.sftpUpload(getResourcePath(DEPLOY_PROPERTIES), DEPLOY_BASE_NAME + "/config/" + DEPLOY_PROPERTIES);
-            executeAndSysout("chmod +x " + DEPLOY_BASE_NAME + "/startDriver.sh");
+            sshClient.executeAndSysout("chmod +x " + DEPLOY_BASE_NAME + "/startDriver.sh");
 
             // assume java is installed (installed in ~/jdk-1.7)
 //            executeAndSysout("cp -R /home/user/dspicar/jdk-1.7 ~/jdk-1.7");
 
-            executeAndSysout("cd " + DEPLOY_BASE_NAME + ";nohup ./startDriver.sh ~/jdk-1.7/bin/java > nohup.out 2>&1");
+            sshClient.executeAndSysout("cd " + DEPLOY_BASE_NAME + ";nohup ./startDriver.sh ~/jdk-1.7/bin/java > nohup.out 2>&1");
 			// TODO this is a dummy initialization
 			final TorqueNode torqueNode = new TorqueNode(NodeType.DRIVER, null, null, null, SERVER_PORT, MANAGEMENT_PORT);
 			torqueNodeManagement.addManagedNode(torqueNode);
 			return torqueNode;
-        } catch (SSHClientExcpetion ex) {
+        } catch (SSHClientException ex) {
             ex.printStackTrace();
         } finally {
             if (sshClient != null) {
@@ -96,10 +97,10 @@ public class TorqueJPPFDriverDeployer {
         return TorqueJPPFDriverDeployer.class.getResource(resource).getPath();
     }
 
-    private void executeAndSysout(String command) throws SSHClientExcpetion {
-        String result = sshClient.sshExec(command, System.err);
-        System.out.println("Result: " + result);
-    }
+//    private void executeAndSysout(String command) throws SSHClientException {
+//        String result = sshClient.sshExec(command, System.err);
+//        System.out.println("Result: " + result);
+//    }
 
     private void loadConfiguration() {
         String home = System.getProperty("user.home");

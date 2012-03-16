@@ -18,6 +18,7 @@ package com.github.nethad.clustermeister.provisioning.torque;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
+import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -39,8 +40,8 @@ public class TorqueJPPFTestSetup {
 //	private Node driverNode;
 
     private void execute() {
-
-        torqueNodeManager = new TorqueNodeManager(null);
+        final String configurationFilePath = System.getProperty("user.home") + "/.clustermeister/configuration.properties";
+        torqueNodeManager = new TorqueNodeManager(new FileConfiguration(configurationFilePath));
 
         startDriver();
         startNodes();
