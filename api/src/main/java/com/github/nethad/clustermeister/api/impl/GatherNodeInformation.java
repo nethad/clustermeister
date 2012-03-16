@@ -26,6 +26,7 @@ import java.net.InetAddress;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -51,19 +52,18 @@ class GatherNodeInformation {
     public static final String DRIVER_HOST = "localhost";
     public static final int DRIVER_MGMT_PORT = 11198;
     private Logger logger = LoggerFactory.getLogger(GatherNodeInformation.class);
-    private ListeningExecutorService threadPoolExecutorService;
     private final Lock lock = new ReentrantLock();
     private final Condition lastJobFinished = lock.newCondition();
     private JMXDriverConnectionWrapper wrapper;
     private final JPPFClient client;
     private AtomicInteger nodeCounter = new AtomicInteger(0);
     private Collection<ExecutorNode> nodes;
+    private final ThreadsExecutorService threadsExecutorService;
 
-    public GatherNodeInformation(JPPFClient client) {
+    public GatherNodeInformation(JPPFClient client, ThreadsExecutorService threadsExecutorService) {
         this.client = client;
         this.nodes = new LinkedList<ExecutorNode>();
-        threadPoolExecutorService = MoreExecutors.listeningDecorator(
-                Executors.newCachedThreadPool());
+        this.threadsExecutorService = threadsExecutorService;
     }
 
     public Collection<ExecutorNode> getNodes() {
@@ -96,7 +96,6 @@ class GatherNodeInformation {
                     // ignore
                 }
             }
-            threadPoolExecutorService.shutdown();
         }
         return nodes;
     }
@@ -117,7 +116,7 @@ class GatherNodeInformation {
     }
 
     private void nonBlockingResultCollector(JPPFResultCollector collector) {
-        ListenableFuture<TypedProperties> result = threadPoolExecutorService.submit(new ResultCollectorThread(collector));
+        ListenableFuture<TypedProperties> result = threadsExecutorService.submit(new ResultCollectorCallable<TypedProperties>(collector));
         Futures.addCallback(result, new FutureCallback<TypedProperties>() {
 
             @Override
@@ -134,7 +133,7 @@ class GatherNodeInformation {
     
     @VisibleForTesting
     void addExecutorNode(TypedProperties result) {
-        ExecutorNodeImpl executorNode = new ExecutorNodeImpl();
+        ExecutorNodeImpl executorNode = new ExecutorNodeImpl(client, threadsExecutorService);
         executorNode.setId(result.getProperty(GatherNodeInformationTask.UUID));
 //        System.out.println(result.getProperty(GatherNodeInformationTask.IPV4_ADDRESSES));
         List<String> allIpAddresses = extractAddressesFromString(result.getProperty(GatherNodeInformationTask.IPV4_ADDRESSES));
@@ -218,27 +217,5 @@ class GatherNodeInformation {
     private boolean isPublicAddress(String ipAddress) {
         InetAddress inetAddress = InetAddresses.forString(ipAddress);
         return !inetAddress.isSiteLocalAddress() && !inetAddress.isLoopbackAddress() && !inetAddress.isLinkLocalAddress();
-    }
-
-    public class ResultCollectorThread implements Callable<TypedProperties> {
-
-        private JPPFResultCollector collector;
-
-        public ResultCollectorThread(JPPFResultCollector collector) {
-            this.collector = collector;
-        }
-
-        @Override
-        public TypedProperties call() throws Exception {
-            List<JPPFTask> tasks = collector.waitForResults();
-            if (tasks.size() != 1) {
-                throw new Exception("There should only be 1 task.");
-            }
-            JPPFTask task = tasks.get(0);
-            if (task.getException() != null) {
-                throw new RuntimeException(task.getException());
-            }
-            return (TypedProperties) task.getResult();
-        }
     }
 }

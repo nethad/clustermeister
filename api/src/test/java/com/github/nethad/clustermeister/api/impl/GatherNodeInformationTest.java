@@ -32,7 +32,7 @@ public class GatherNodeInformationTest {
 
     @Before
     public void setup() {
-        gatherNodeInformation = new GatherNodeInformation(null);
+        gatherNodeInformation = new GatherNodeInformation(null, null);
         ipAddresses = "192.168.1.107|192.168.1.107 node01.comp.uzh.ch|130.23.42.76 localhost|127.0.0.1";
     }
 

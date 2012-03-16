@@ -13,20 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.api;
+package com.github.nethad.clustermeister.api.impl;
 
-import com.google.common.util.concurrent.ListenableFuture;
 import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
+import org.jppf.server.protocol.JPPFTask;
 
 /**
  *
  * @author thomas
  */
-public interface ExecutorNode extends Node {
-    
-    public NodeCapabilities getCapabilities();
-    
-    public <T> ListenableFuture<T> execute(Callable<T> callable);
+public class ExecutorNodeTask<T> extends JPPFTask {
+    private final Callable<T> callable;
+
+    public ExecutorNodeTask(Callable<T> callable) {
+        this.callable = callable;
+    }
+
+    @Override
+    public void run() {
+        try {
+            T result = callable.call();
+            setResult(result);
+        } catch (Exception ex) {
+            setException(ex);
+        }
+    }
     
 }
