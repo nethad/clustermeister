@@ -18,10 +18,21 @@ package com.github.nethad.clustermeister.api.impl;
 import com.github.nethad.clustermeister.api.ExecutorNode;
 import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeType;
+import com.github.nethad.clustermeister.sample.GatherNodeInformationTask;
+import com.google.common.util.concurrent.ListenableFuture;
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
+import org.jppf.JPPFException;
+import org.jppf.client.JPPFClient;
+import org.jppf.client.JPPFJob;
+import org.jppf.client.JPPFResultCollector;
+import org.jppf.client.concurrent.JPPFTaskFuture;
+import org.jppf.node.policy.Equal;
+import org.jppf.server.protocol.JPPFTask;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -33,6 +44,14 @@ public class ExecutorNodeImpl implements ExecutorNode {
     private String uuid;
     private Set<String> publicAddresses = new HashSet<String>();
     private Set<String> privateAddresses = new HashSet<String>();
+    private final JPPFClient client;
+    private Logger logger = LoggerFactory.getLogger(ExecutorNodeImpl.class);
+    private final ThreadsExecutorService threadsExecutorService;
+
+    public ExecutorNodeImpl(JPPFClient client, ThreadsExecutorService threadsExecutorService) {
+        this.client = client;
+        this.threadsExecutorService = threadsExecutorService;
+    }
 
     @Override
     public NodeCapabilities getCapabilities() {
@@ -44,8 +63,31 @@ public class ExecutorNodeImpl implements ExecutorNode {
     }
 
     @Override
-    public <T> Future<T> execute(Callable<T> callable) {
-        throw new UnsupportedOperationException("Not supported yet.");
+    public <T> ListenableFuture<T> execute(Callable<T> callable) {
+//        JPPFTaskFuture<T> taskFuture = new JPPFTaskFuture<T>(null, 0);
+        
+        
+        JPPFJob job = new JPPFJob();
+        ExecutorNodeTask<T> task = new ExecutorNodeTask<T>(callable);
+        try {
+            job.addTask(task);
+            job.setBlocking(false);
+//            job.getSLA().setCancelUponClientDisconnect(true);
+            job.getSLA().setMaxNodes(1);
+            job.getSLA().setExecutionPolicy(new Equal(GatherNodeInformationTask.UUID, true, getID()));
+
+            JPPFResultCollector collector = new JPPFResultCollector(job);
+            job.setResultListener(collector);
+            client.submit(job);
+            
+            ListenableFuture<T> submit = threadsExecutorService.submit(new ResultCollectorCallable<T>(collector));
+            return submit;
+        } catch (JPPFException ex) {
+            logger.error("Could not execute task on node "+getID(), ex);
+        } catch (Exception ex) {
+            logger.error("Could not execute task on node "+getID(), ex);
+        } 
+        return null;
     }
 
     @Override
@@ -84,7 +126,5 @@ public class ExecutorNodeImpl implements ExecutorNode {
     public int getManagementPort() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
-
-
     
 }

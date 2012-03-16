@@ -41,16 +41,18 @@ public class ClustermeisterImpl implements Clustermeister {
     private JPPFClient jppfClient;
     private Logger logger = LoggerFactory.getLogger(ClustermeisterImpl.class);
     private Collection<ExecutorNode> nodes;
+    private ThreadsExecutorService threadsExecutorService;
 
 
     public ClustermeisterImpl() {
         jppfClient = new JPPFClient("clustermeister_" + System.currentTimeMillis());
         executorService = new JPPFExecutorService(jppfClient);
         nodes = new LinkedList<ExecutorNode>();
+        threadsExecutorService = new ThreadsExecutorService();
     }
 
     protected void gatherNodeInformation() {
-        nodes = new GatherNodeInformation(jppfClient).getNodes();
+        nodes = new GatherNodeInformation(jppfClient, threadsExecutorService).getNodes();
     }
 
     @Override
@@ -70,6 +72,7 @@ public class ClustermeisterImpl implements Clustermeister {
         if (runnables != null) {
             System.out.println("Runnables, size = " + runnables.size());
         }
+        threadsExecutorService.shutdown();
         jppfClient.close();
     }
 

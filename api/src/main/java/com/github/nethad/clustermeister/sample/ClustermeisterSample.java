@@ -20,10 +20,14 @@ import com.github.nethad.clustermeister.api.ExecutorNode;
 import com.github.nethad.clustermeister.api.impl.ClustermeisterFactory;
 import com.github.nethad.clustermeister.api.impl.ClustermeisterImpl;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
 import org.jppf.JPPFException;
@@ -107,44 +111,27 @@ public class ClustermeisterSample implements Serializable {
         try {
             clustermeister = ClustermeisterFactory.create();
             Collection<ExecutorNode> nodes = clustermeister.getAllNodes();
+            List<ListenableFuture<String>> list = new LinkedList<ListenableFuture<String>>();
             for (ExecutorNode executorNode : nodes) {
                 System.out.println("executorNode " + executorNode.getID());
+                ListenableFuture<String> future = executorNode.execute(new SampleCallable());
+                list.add(future);
             }
+            for (ListenableFuture<String> future : list) {
+                try {
+                    String get = future.get();
+                    System.out.println("Yay! result = "+get);
+                } catch (InterruptedException ex) {
+                    System.out.println(ex.getMessage());
+                } catch (ExecutionException ex) {
+                    System.out.println(ex.getMessage());
+                }
+            }
+            
         } finally {
             clustermeister.shutdown();
 
         }
-        //        Clustermeister clustermeister = ClustermeisterFactory.create();
-        //        JPPFClient client = clustermeister.getJppfClient();
-        //        List<JPPFResultCollector> collectorList = new ArrayList<JPPFResultCollector>();
-        //        try {
-        //            JMXDriverConnectionWrapper wrapper = NodeManagementConnector.openDriverConnection("localhost", 11198);
-        //            for (JPPFManagementInfo node : wrapper.nodesInformation()) {
-        //                JPPFJob job = createJobForNode(node);
-        //                JPPFResultCollector collector = new JPPFResultCollector(job);
-        //                job.setResultListener(collector);
-        //                collectorList.add(collector);
-        //                client.submit(job);
-        //            }
-        //            System.out.println("Submitted all jobs, wait for results...");
-        //            for (JPPFResultCollector collector : collectorList) {
-        //                List<JPPFTask> tasks = collector.waitForResults();
-        //                for (JPPFTask task : tasks) {
-        //                    if (task.getException() != null) {
-        //                        throw new RuntimeException(task.getException());
-        //                    } else {
-        //                        String result = (String)task.getResult();
-        //                        System.out.println("Task query = "+result);
-        //                    }
-        //                }
-        //            }
-        //        } catch (TimeoutException ex) {
-        //            throw new RuntimeException(ex);
-        //        } catch (Exception ex) {
-        //            throw new RuntimeException(ex);
-        //        } finally {
-        //            clustermeister.shutdown();
-        //        }
     }
 
     private void custom() {
@@ -185,21 +172,14 @@ public class ClustermeisterSample implements Serializable {
             }
         }
     }
+    
+    public class SampleCallable implements Callable<String>, Serializable {
 
-    private JPPFJob createJobForNode(JPPFManagementInfo node) {
-        try {
-            JPPFJob job = new JPPFJob();
-            final GatherNodeInformationTask task = new GatherNodeInformationTask(node.getPort());
-            job.addTask(task);
-            System.out.println("task = " + task.toString());
-
-            job.setBlocking(false);
-//            job.getSLA().setCancelUponClientDisconnect(true);
-            job.getSLA().setMaxNodes(1);
-            job.getSLA().setExecutionPolicy(new Equal("jppf.uuid", true, node.getId()));
-            return job;
-        } catch (JPPFException ex) {
-            throw new RuntimeException(ex);
+        @Override
+        public String call() throws Exception {
+            return "It works!";
         }
+        
     }
+    
 }

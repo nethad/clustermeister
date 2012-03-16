@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.api;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 
@@ -26,6 +27,6 @@ public interface ExecutorNode extends Node {
     
     public NodeCapabilities getCapabilities();
     
-    public <T> Future<T> execute(Callable<T> callable);
+    public <T> ListenableFuture<T> execute(Callable<T> callable);
     
 }
