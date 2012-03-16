@@ -15,10 +15,11 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
-import org.junit.Test;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThat;
 import org.junit.Before;
-import static org.junit.Assert.*;
-import static org.hamcrest.CoreMatchers.*;
+import org.junit.Test;
 
 /**
  *
@@ -40,7 +41,15 @@ public class NodeDeployTaskTest {
         assertEquals("SGVsbG8gV29ybGQ=", result);
     }
     
+    @Test
     public void isValidEmail() {
+        assertThat(nodeDeployTask.isValidEmail(null), is(false));
         assertThat(nodeDeployTask.isValidEmail(""), is(false));
+        assertThat(nodeDeployTask.isValidEmail("test"), is(false));
+        assertThat(nodeDeployTask.isValidEmail("test.test.com"), is(false));
+        assertThat(nodeDeployTask.isValidEmail("test@examplecom"), is(false));
+        assertThat(nodeDeployTask.isValidEmail("test.test@examplecom"), is(false));
+        assertThat(nodeDeployTask.isValidEmail("test@example.com"), is(true));
+        assertThat(nodeDeployTask.isValidEmail("test.test@example.com"), is(true));
     }
 }

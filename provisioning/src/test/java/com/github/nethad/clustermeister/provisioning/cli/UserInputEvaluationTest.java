@@ -44,6 +44,15 @@ public class UserInputEvaluationTest {
     }
     
     @Test
+    public void addnodesCommand_fail() {
+        userInputEvaluation.evaluate("addnodes 10");
+        verify(provisioning, never()).addNodes(anyInt(), anyInt());
+        
+        userInputEvaluation.evaluate("addnodes");
+        verify(provisioning, never()).addNodes(anyInt(), anyInt());
+    }
+
+    @Test
     public void stateCommand() {
         when(provisioning.getNumberOfRunningNodes()).thenReturn(0);
         when(provisioning.getProvider()).thenReturn(Provider.TORQUE);
