@@ -31,7 +31,12 @@ public class CommandLineTextBuilder {
     }
     
     public void addLine(String left, Object right) {
-        sb.append(left).append(TAB).append(right.toString()).append(NEWLINE);
+        sb.append(left).append(TAB).append(TAB).append(right.toString()).append(NEWLINE);
+    }
+    
+    public void addLine(String command, String arguments, Object right) {
+        sb.append(command).append(" ").append(arguments).append(NEWLINE)
+                .append(TAB).append(right.toString()).append(NEWLINE);
     }
 
     @Override

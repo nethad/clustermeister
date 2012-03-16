@@ -13,31 +13,34 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.cli;
+package com.github.nethad.clustermeister.provisioning.torque;
 
-import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.Before;
+import static org.junit.Assert.*;
+import static org.hamcrest.CoreMatchers.*;
 
 /**
  *
  * @author thomas
  */
-@Ignore("Depends on local configuration")
-public class CLISystemTest {
-    private ProvisioningCLI provisioningCLI;
+public class NodeDeployTaskTest {
+    private NodeDeployTask nodeDeployTask;
     
+
     @Before
     public void setup() {
-        provisioningCLI = new ProvisioningCLI();
+        nodeDeployTask = new NodeDeployTask(null, 0, null, null);
     }
     
     @Test
-    public void startupThreeTorqueNodes() throws Exception {
-        provisioningCLI.parseArguments(new String[]{"-n", "3"});
-        Provisioning provisioning = new Provisioning("/home/thomas/.clustermeister/configuration.properties", Provider.TORQUE);
-        provisioning.execute();
-        Thread.sleep(10000);
+    public void base64Encode() {
+        String toEncode = "Hello World";
+        String result = nodeDeployTask.base64Encode(toEncode);
+        assertEquals("SGVsbG8gV29ybGQ=", result);
     }
     
+    public void isValidEmail() {
+        assertThat(nodeDeployTask.isValidEmail(""), is(false));
+    }
 }

@@ -24,6 +24,7 @@ public interface Configuration {
     public static final String TORQUE_SSH_PRIVATEKEY = "torque.ssh_privatekey";
     public static final String TORQUE_SSH_HOST = "torque.ssh_host";
     public static final String TORQUE_SSH_PORT = "torque.ssh_port";
+    public static final String TORQUE_EMAIL_NOTIFY = "torque.email_notify";
     
     public String getString(String key, String defaultValue);
     public int getInt(String key, int defaultValue);

@@ -38,15 +38,13 @@ public class Provisioning {
     
     private String configFilePath;
     private String driverHost;
-    private int numberOfNodes;
     private Provider provider;
     private Configuration configuration;
     private TorqueNodeManager torqueNodeManager;
     private Logger logger = LoggerFactory.getLogger(Provisioning.class);
 
-    public Provisioning(String configFilePath, int numberOfNodes, Provider provider) {
+    public Provisioning(String configFilePath, Provider provider) {
         this.configFilePath = configFilePath;
-        this.numberOfNodes = numberOfNodes;
         this.provider = provider;
     }
     
@@ -68,16 +66,21 @@ public class Provisioning {
         shutdownTorque();
     }
     
-    public void addNode() {
-        ListenableFuture<? extends Node> node = torqueNodeManager.addNode(new TorqueNodeConfiguration(NodeType.NODE, driverHost, true));
+    void addNodes(int numberOfNodes, int numberOfCpusPerNode) {
+        final TorqueNodeConfiguration torqueNodeConfiguration = 
+                new TorqueNodeConfiguration(NodeType.NODE, driverHost, true, numberOfCpusPerNode);
+        ListenableFuture<? extends Node> lastNode = null;
+        for (int i = 0; i < numberOfNodes; i++) {
+            lastNode = torqueNodeManager.addNode(torqueNodeConfiguration);
+        }
         try {
-            node.get(10, TimeUnit.SECONDS);
+            lastNode.get(10, TimeUnit.SECONDS);
         } catch (InterruptedException ex) {
-            logger.warn("Waited for node to start up", ex);
+            logger.warn("Waited for last node to start up", ex);
         } catch (ExecutionException ex) {
-            logger.warn("Waited for node to start up", ex);
+            logger.warn("Waited for last node to start up", ex);
         } catch (TimeoutException ex) {
-            logger.warn("Waited for node to start up", ex);
+            logger.warn("Waited for last node to start up", ex);
         }
     }
     
@@ -101,19 +104,6 @@ public class Provisioning {
         torqueNodeManager = new TorqueNodeManager(configuration);
         ListenableFuture<? extends Node> driver = torqueNodeManager.addNode(getTorqueDriverConfiguration());
         driverHost = PublicIp.getPublicIp();
-        ListenableFuture<? extends Node> lastNode = null;
-        for (int i = 0; i < numberOfNodes; i++) {
-            lastNode = torqueNodeManager.addNode(getTorqueNodeConfiguration(driverHost));
-        }
-        try {
-            lastNode.get(10, TimeUnit.SECONDS);
-        } catch (InterruptedException ex) {
-            logger.warn("Waited for last node to start up", ex);
-        } catch (ExecutionException ex) {
-            logger.warn("Waited for last node to start up", ex);
-        } catch (TimeoutException ex) {
-            logger.warn("Waited for last node to start up", ex);
-        }
     }
     
     private void shutdownTorque() {
@@ -122,12 +112,10 @@ public class Provisioning {
     }
     
     private TorqueNodeConfiguration getTorqueDriverConfiguration() {
-        return new TorqueNodeConfiguration(NodeType.DRIVER, "", true);
+        return new TorqueNodeConfiguration(NodeType.DRIVER, "", true, 1);
     }
-    
-    private TorqueNodeConfiguration getTorqueNodeConfiguration(String driverHost) {
-        return new TorqueNodeConfiguration(NodeType.NODE, driverHost, true);
-    }
+
+
 
     
 }

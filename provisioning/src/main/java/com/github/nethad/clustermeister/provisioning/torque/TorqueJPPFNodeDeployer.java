@@ -48,7 +48,8 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
 
 //	private static final int DEFAULT_MANAGEMENT_PORT = 11198;
 //	private static final String DEPLOY_BASE_NAME = "jppf-node";
-    private static final String DEPLOY_ZIP = DEPLOY_BASE_NAME + ".zip";
+    private static final String DEPLOY_ZIP_NAME = DEPLOY_BASE_NAME + ".zip";
+    private static final String LOCAL_DEPLOY_ZIP_PATH = "/" + DEPLOY_ZIP_NAME;
     private static final String AKKA_ZIP = "akka-libs.zip";
     private static final String AKKA_REMOTE_ZIP_PATH = DEPLOY_BASE_NAME + "/lib/" + AKKA_ZIP;
     private static final String CRC32_FILE = DEPLOY_BASE_NAME + "/CRC32";
@@ -70,6 +71,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
     private long deployZipCRC32;
     private long akkaLibsZipCRC32;
     private final Configuration configuration;
+    private String email;
     
 
     public TorqueJPPFNodeDeployer(Configuration configuration) {
@@ -78,34 +80,6 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         currentNodeNumber = new AtomicInteger(0);
         sessionId = System.currentTimeMillis();
     }
-
-//    private void execute(int numberOfNodes) {
-//        sshClient = null;
-//
-//        try {
-//            loadConfiguration();
-//
-//            sshClient = new SSHClient(privateKeyFilePath);
-//            sshClient.connect(user, host, port);
-//
-//
-//            // remove previously uploaded files (might be outdated/not necessary)
-//            executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "*");
-//
-//            uploadResources();
-//
-//            prepareLocalIP();
-//
-//            submitJobs_massSubmission(numberOfNodes);
-////	    resolveNodeIpAddresses();
-//        } catch (SSHClientExcpetion ex) {
-//            System.out.println(ex.getClass().getName() + ": " + ex.getMessage());
-//        } finally {
-//            if (sshClient != null) {
-//                sshClient.disconnect();
-//            }
-//        }
-//    }
 
     public synchronized void deployInfrastructure() throws SSHClientExcpetion {
         if (isInfrastructureDeployed) {
@@ -116,7 +90,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         sshClient = new SSHClient(privateKeyFilePath);
         sshClient.connect(user, host, port);
         try {
-            deployZipCRC32 = FileUtils.getCRC32(getResourceStream(DEPLOY_ZIP));
+            deployZipCRC32 = FileUtils.getCRC32(getResourceStream(LOCAL_DEPLOY_ZIP_PATH));
             akkaLibsZipCRC32 = FileUtils.getCRC32(getResourceStream(AKKA_ZIP));
         } catch (IOException ex) {
             logger.error("Can not read resource.", ex);
@@ -146,8 +120,8 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
 
     private void uploadResources() throws SSHClientExcpetion {
         // upload zip archive with all files, unpack it
-        sshClient.sftpUpload(getResourceStream(DEPLOY_ZIP), DEPLOY_ZIP);
-        sshClient.executeAndSysout("unzip " + DEPLOY_ZIP);
+        sshClient.sftpUpload(getResourceStream(LOCAL_DEPLOY_ZIP_PATH), DEPLOY_ZIP_NAME);
+        sshClient.executeAndSysout("unzip " + DEPLOY_ZIP_NAME);
         
         // upload akka libraries
         // TODO deactivated akka upload for testing purposes
@@ -165,78 +139,10 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         if (!isInfrastructureDeployed) {
             deployInfrastructure();
         }
-        NodeDeployTask nodeDeployTask = new NodeDeployTask(this, currentNodeNumber.getAndIncrement(), nodeConfiguration);
+        NodeDeployTask nodeDeployTask = new NodeDeployTask(this, currentNodeNumber.getAndIncrement(), nodeConfiguration, email);
         final TorqueNode torqueNode = nodeDeployTask.execute();
         torqueNodeManagement.addManagedNode(torqueNode);
         return torqueNode;
-    }
-
-    /*
-     * private void resolveNodeIpAddresses() throws SSHClientExcpetion { for (String jobId : jobIdList) {
-     * waitForJobToBeRunning(jobId); String nodeIp = waitForNodeIpToResolve(jobId); nodeIpMap.put(jobId, nodeIp);
-     * System.out.println(jobId + ": " + nodeIp); } }
-     */
-    private void submitJobs_massSubmission(int numberOfNodes) throws SSHClientExcpetion {
-        // assume java is installed (installed in ~/jdk-1.7)
-        // executeAndSysout("cp -R /home/user/dspicar/jdk-1.7 ~/jdk-1.7");
-
-        // execute qsub helper script and pipe it into qsub (job submission)
-        String pathToQsubScript = "./" + DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB;
-
-        String nodeNameBase = "Node" + sessionId;
-        String nodeName;
-        String nodeConfigFileName;
-//		String currentJobId;
-        StringBuilder executeString = new StringBuilder();
-        for (int nodeNumber = 0; nodeNumber < numberOfNodes; nodeNumber++) {
-            System.out.println("Current node number: " + nodeNumber);
-            nodeName = nodeNameBase + "_" + nodeNumber;
-            nodeConfigFileName = configFileName();
-            uploadNodeConfiguration(nodeConfigFileName, localIp);
-//			final String makeQsubScriptExecutable = "chmod +x " + pathToQsubScript + ";";
-            final String submitJobToQsub = pathToQsubScript + " " + nodeName + " " + nodeConfigFileName + "|qsub";
-            executeString.append(submitJobToQsub + ";");
-//			currentJobId = executeWithResult(makeQsubScriptExecutable + submitJobToQsub);
-//			jobIdList.add(currentJobId);
-//			executeAndSysout("uname -r");
-            currentNodeNumber.incrementAndGet();
-        }
-        final String makeQsubScriptExecutable = "chmod +x " + pathToQsubScript;
-        sshClient.executeAndSysout(makeQsubScriptExecutable);
-
-//		executeAndSysout("uname -r");
-
-        String jobIdsFromOutput = sshClient.executeWithResult(executeString.toString());
-        String[] jobIdArray = jobIdsFromOutput.split("\\\n");
-        System.out.println("jobIdArray size = " + jobIdArray.length);
-        //		executeAndSysout(executeString.toString());
-        //		System.out.println("jobIdsFromOutput = " + jobIdsFromOutput);
-    }
-
-    private void uploadNodeConfiguration(String nodeConfigFileName, String driverIpAddress) throws SSHClientExcpetion {
-
-        // generate properties file from configuration class and attach
-        // the local ip address as the driver's IP target address.
-
-        int managementPort = DEFAULT_MANAGEMENT_PORT + currentNodeNumber.intValue();
-        String driverIp;
-        if (driverIpAddress == null) {
-            driverIp = driverIpAddress;
-        } else {
-            driverIp = localIp;
-        }
-        try {
-            InputStream propertyStream = new JPPFNodeConfiguration()
-                    .setProperty("jppf.server.host", driverIp)
-                    .setProperty("jppf.management.port", String.valueOf(managementPort))
-                    .setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-" + sessionId + "_" + currentNodeNumber)
-                    .getPropertyStream();
-            sshClient.sftpUpload(propertyStream, DEPLOY_BASE_NAME + "/config/" + nodeConfigFileName);
-        } catch (IOException ex) {
-            logger.error("Could not read property file.", ex);
-        } catch (SSHClientExcpetion ex) {
-            logger.error("SSH excpetion", ex);
-        }
     }
 
     private void prepareLocalIP() {
@@ -244,41 +150,14 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         localIp = PublicIp.getPublicIp();
         logger.info("localIp = " + localIp);
     }
-
-    private String configFileName() {
-        return DEPLOY_BASE_NAME + "-" + currentNodeNumber + DEPLOY_CONFIG_SUFFIX;
-
-    }
-
-//    @Deprecated
-//    private String getResourcePath(String resource) {
-//        return TorqueJPPFDriverDeployer.class.getResource(resource).getPath();
-//    }
-//
-//    @Deprecated
-//    private void executeAndSysout(String command) throws SSHClientExcpetion {
-//        sshClient.sshExec(command, System.err);
-//    }
-//
-//    @Deprecated
-//    private String executeWithResult(String command) throws SSHClientExcpetion {
-//        return sshClient.sshExec(command, System.err);
-//    }
-
-    private void loadConfiguration() {
-//        String home = System.getProperty("user.home");
-//        String separator = System.getProperty("file.separator");
-//        Configuration config = new FileConfiguration(home + separator + ".clustermeister" + separator + "torque.properties");
-
-//        host = getStringDefaultEmpty(config, "host");
-//        port = config.getInt("port", 22);
-//        user = getStringDefaultEmpty(config, "user");
-//        privateKeyFilePath = getStringDefaultEmpty(config, "privateKey");
-        
+    
+    private void loadConfiguration() {     
           host = configuration.getString(Configuration.TORQUE_SSH_HOST, "");
           port = configuration.getInt(Configuration.TORQUE_SSH_PORT, 22);
           user = configuration.getString(Configuration.TORQUE_SSH_USER, "");
           privateKeyFilePath = configuration.getString(Configuration.TORQUE_SSH_PRIVATEKEY, "");
+          email = configuration.getString(Configuration.TORQUE_EMAIL_NOTIFY, "");
+          logger.info("EMAIL = "+email);
     }
 
     @Override

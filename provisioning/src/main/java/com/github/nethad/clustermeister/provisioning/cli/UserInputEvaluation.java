@@ -15,6 +15,8 @@
  */
 package com.github.nethad.clustermeister.provisioning.cli;
 
+import java.util.StringTokenizer;
+
 /**
  *
  * @author thomas
@@ -24,7 +26,8 @@ public class UserInputEvaluation {
     private static final String COMMAND_HELP_QUESTIONMARK = "?";
     private static final String COMMAND_STATE = "state";
     private static final String COMMAND_SHUTDOWN = "shutdown";
-    private static final String COMMAND_ADDNODE = "addnode";
+    private static final String COMMAND_ADDNODES = "addnodes";
+    private static final String COMMAND_EXIT = "exit";
     
     private final Provisioning provisioning;
 
@@ -33,14 +36,19 @@ public class UserInputEvaluation {
     }
 
     public void evaluate(String userInput) {
-        if (userInput.equalsIgnoreCase(COMMAND_HELP) || userInput.equalsIgnoreCase(COMMAND_HELP_QUESTIONMARK)) {
+        final StringTokenizer tokenizer = new StringTokenizer(userInput);
+        if (!tokenizer.hasMoreTokens()) {
+            return;
+        }
+        final String command = tokenizer.nextToken();
+        if (command.equalsIgnoreCase(COMMAND_HELP) || command.equalsIgnoreCase(COMMAND_HELP_QUESTIONMARK)) {
             help();
-        } else if (userInput.equalsIgnoreCase(COMMAND_STATE)) {
+        } else if (command.equalsIgnoreCase(COMMAND_STATE)) {
             state();
-        } else if (userInput.equalsIgnoreCase(COMMAND_SHUTDOWN)) {
+        } else if (command.equalsIgnoreCase(COMMAND_SHUTDOWN)) {
             shutdown();
-        } else if (userInput.equalsIgnoreCase(COMMAND_ADDNODE)) {
-           addNode();  
+        } else if (command.equalsIgnoreCase(COMMAND_ADDNODES)) {
+           addNodes(tokenizer);
         } else {
             unknownCommand();
         }
@@ -52,7 +60,8 @@ public class UserInputEvaluation {
         cltb.addLine(COMMAND_HELP_QUESTIONMARK, "Print out this help.");
         cltb.addLine(COMMAND_STATE, "Show the current state.");
         cltb.addLine(COMMAND_SHUTDOWN, "Shuts down all running drivers and nodes.");
-        cltb.addLine(COMMAND_ADDNODE, "Adds a node to the current setup.");
+        cltb.addLine(COMMAND_ADDNODES, "[numberOfNodes] [CPUsperNode]", "Adds a node to the current setup.");
+        cltb.addLine(COMMAND_EXIT, "Exits this command line.");
         cltb.print();
     }
 
@@ -71,7 +80,14 @@ public class UserInputEvaluation {
         provisioning.shutdown();
     }
 
-    private void addNode() {
-        provisioning.addNode();
+    private void addNodes(StringTokenizer tokenizer) {
+        int countTokens = tokenizer.countTokens();
+        if (countTokens == 2) {
+            int numberOfNodes = Integer.valueOf(tokenizer.nextToken());
+            int numberOfCpus = Integer.valueOf(tokenizer.nextToken());
+            provisioning.addNodes(numberOfNodes, numberOfCpus);
+        } else {
+            // print help
+        }
     }
 }
