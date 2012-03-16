@@ -21,7 +21,9 @@ import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
-import com.github.nethad.clustermeister.provisioning.utils.SSHClientExcpetion;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClientImpl;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -122,12 +124,18 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 	private Set<TorqueNode> drivers = new HashSet<TorqueNode>();
 	private ListeningExecutorService executorService;
 	private Set<TorqueNode> nodes = new HashSet<TorqueNode>();
-	private final TorqueJPPFNodeDeployer nodeDeployer;
+	private TorqueJPPFNodeDeployer nodeDeployer = null;
 	private final TorqueJPPFDriverDeployer driverDeployer;
 
 	public TorqueNodeManager(Configuration configuration) {
 		this.configuration = configuration;
-		nodeDeployer = new TorqueJPPFNodeDeployer(configuration);
+        SSHClient sshClient;
+        try {
+            sshClient = new SSHClientImpl(configuration.getString(Configuration.TORQUE_SSH_PRIVATEKEY, ""));
+            nodeDeployer = new TorqueJPPFNodeDeployer(configuration, sshClient);
+        } catch (SSHClientException ex) {
+            logger.error("Could not initialize SSH client.", ex);
+        }
 		driverDeployer = new TorqueJPPFDriverDeployer();
 		executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(THREAD_POOL_SIZE));
 	}
@@ -208,7 +216,7 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 	public void deployResources() {
 		try {
 			nodeDeployer.deployInfrastructure();
-		} catch (SSHClientExcpetion ex) {
+		} catch (SSHClientException ex) {
 			logger.error(null, ex);
 		}
 	}

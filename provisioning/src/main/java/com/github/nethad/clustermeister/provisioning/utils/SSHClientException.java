@@ -20,14 +20,14 @@ package com.github.nethad.clustermeister.provisioning.utils;
  *
  * @author daniel
  */
-public class SSHClientExcpetion extends Exception {
+public class SSHClientException extends Exception {
 	
 	/**
 	 * Constructs a new SSH client exception with null as its detail message. 
 	 * The cause is not initialized, and may subsequently be initialized by a 
 	 * call to {@link Exception#initCause(java.lang.Throwable)}.
 	 */
-	public SSHClientExcpetion() {
+	public SSHClientException() {
 		super();
 	}
 
@@ -40,7 +40,7 @@ public class SSHClientExcpetion extends Exception {
 	 *		the detail message. The detail message is saved for later retrieval 
 	 *		by the {@link Exception#getMessage()} method.
 	 */
-	public SSHClientExcpetion(String message) {
+	public SSHClientException(String message) {
 		super(message);
 	}
 
@@ -56,7 +56,7 @@ public class SSHClientExcpetion extends Exception {
 	 *		{@link Exception#getCause()} method). (A null value is permitted, 
 	 *		and indicates that the cause is nonexistent or unknown.)
 	 */
-	public SSHClientExcpetion(Throwable cause) {
+	public SSHClientException(Throwable cause) {
 		super(cause);
 	}
 
@@ -73,7 +73,7 @@ public class SSHClientExcpetion extends Exception {
 	 *		{@link Exception#getCause()} method). (A null value is permitted, 
 	 *		and indicates that the cause is nonexistent or unknown.)
 	 */
-	public SSHClientExcpetion(String message, Throwable cause) {
+	public SSHClientException(String message, Throwable cause) {
 		super(message, cause);
 	}
 }

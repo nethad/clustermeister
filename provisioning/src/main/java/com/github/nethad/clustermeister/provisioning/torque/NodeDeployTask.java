@@ -19,12 +19,11 @@ import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
-import com.github.nethad.clustermeister.provisioning.utils.SSHClientExcpetion;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.InputStream;
 import javax.xml.bind.DatatypeConverter;
-import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,30 +49,23 @@ class NodeDeployTask {
         this.email = email;
 	}
 
-	public TorqueNode execute() throws SSHClientExcpetion {
+	public TorqueNode execute() throws SSHClientException {
 		String nodeNameBase = "CMNode" + torqueNodeDeployment.getSessionId();
 		String nodeName = nodeNameBase + "_" + nodeNumber;
 		String nodeConfigFileName = configFileName();
 		uploadNodeConfiguration(nodeConfigFileName, driverAddress());
-        //		final String submitJobToQsub = TorqueNodeDeployment.PATH_TO_QSUB_SCRIPT + " " + nodeName + " " + nodeConfigFileName + "|qsub";
-        //        Base64.encodeBase64String(script.getBytes).replace("\n", "").replace("\r", "");
-//        String base64 = DatatypeConverter.printBase64Binary(new String("blah").getBytes());
         
         final String base64EncodedQsubScript = base64Encode(qsubScript(nodeName, nodeConfigFileName));
         String submitJobToQsub = "echo \""+base64EncodedQsubScript+"\"| base64 -d | qsub";
-//        sshClient().executeAndSysout("echo \""+base64EncodedQsubScript+"\"");
 		String jobId = sshClient().executeWithResult(submitJobToQsub);
-//		outer.jobIdList.add(currentJobId);
 		TorqueNode torqueNode = new TorqueNode(NodeType.NODE, jobId, null, null, serverPort, managementPort);
 		return torqueNode;
 	}
 	
-	private void uploadNodeConfiguration(String nodeConfigFileName, String driverIpAddress) throws SSHClientExcpetion {
+    @VisibleForTesting
+	void uploadNodeConfiguration(String nodeConfigFileName, String driverIpAddress) throws SSHClientException {
 		try {
-			JPPFNodeConfiguration configuration = new JPPFNodeConfiguration()
-					.setProperty("jppf.server.host", driverIpAddress)
-					.setProperty("jppf.management.port", String.valueOf(managementPort))
-					.setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-" + torqueNodeDeployment.getSessionId() + "_" + nodeNumber);
+			JPPFNodeConfiguration configuration = createNodeConfiguration(driverIpAddress);
 			final String configServerPort = configuration.getProperty("jppf.server.port");
 			if (configServerPort == null) {
 				serverPort = TorqueJPPFDriverDeployer.SERVER_PORT;
@@ -86,6 +78,14 @@ class NodeDeployTask {
 			logger.error(null, ex);
 		}
 	}
+
+    JPPFNodeConfiguration createNodeConfiguration(String driverIpAddress) {
+        JPPFNodeConfiguration configuration = new JPPFNodeConfiguration()
+                .setProperty("jppf.server.host", driverIpAddress)
+                .setProperty("jppf.management.port", String.valueOf(managementPort))
+                .setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-" + torqueNodeDeployment.getSessionId() + "_" + nodeNumber);
+        return configuration;
+    }
 		
 	private String configFileName() {
 		return TorqueNodeDeployment.DEPLOY_BASE_NAME + "-" + nodeNumber + TorqueNodeDeployment.DEPLOY_CONFIG_SUFFIX;

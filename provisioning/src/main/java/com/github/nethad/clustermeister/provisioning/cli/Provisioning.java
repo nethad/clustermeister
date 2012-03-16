@@ -104,6 +104,13 @@ public class Provisioning {
         torqueNodeManager = new TorqueNodeManager(configuration);
         ListenableFuture<? extends Node> driver = torqueNodeManager.addNode(getTorqueDriverConfiguration());
         driverHost = PublicIp.getPublicIp();
+        try {
+            driver.get();
+        } catch (InterruptedException ex) {
+            logger.error("Error while waiting for driver to start up.", ex);
+        } catch (ExecutionException ex) {
+            logger.error("Error while waiting for driver to start up.", ex);
+        }
     }
     
     private void shutdownTorque() {

@@ -15,32 +15,46 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
+import com.github.nethad.clustermeister.api.NodeConfiguration;
+import com.github.nethad.clustermeister.api.NodeType;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
+import java.io.InputStream;
 import static org.hamcrest.CoreMatchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import org.junit.Before;
 import org.junit.Test;
+import static org.mockito.Mockito.*;
 
 /**
  *
  * @author thomas
  */
 public class NodeDeployTaskTest {
+
     private NodeDeployTask nodeDeployTask;
-    
+    private SSHClient sshClient;
+    private TorqueNodeConfiguration torqueNodeConfiguration;
+    private TorqueNodeDeployment torqueNodeDeployment;
 
     @Before
     public void setup() {
-        nodeDeployTask = new NodeDeployTask(null, 0, null, null);
+        torqueNodeDeployment = mock(TorqueNodeDeployment.class);
+        sshClient = mock(SSHClient.class);
+        when(torqueNodeDeployment.sshClient()).thenReturn(sshClient);
+        torqueNodeConfiguration = new TorqueNodeConfiguration(NodeType.NODE, "driverIp", true, 1);
+        nodeDeployTask = new NodeDeployTask(torqueNodeDeployment, 10, torqueNodeConfiguration, "test@example.com");
     }
-    
+
     @Test
     public void base64Encode() {
         String toEncode = "Hello World";
         String result = nodeDeployTask.base64Encode(toEncode);
         assertEquals("SGVsbG8gV29ybGQ=", result);
     }
-    
+
     @Test
     public void isValidEmail() {
         assertThat(nodeDeployTask.isValidEmail(null), is(false));
@@ -51,5 +65,29 @@ public class NodeDeployTaskTest {
         assertThat(nodeDeployTask.isValidEmail("test.test@examplecom"), is(false));
         assertThat(nodeDeployTask.isValidEmail("test@example.com"), is(true));
         assertThat(nodeDeployTask.isValidEmail("test.test@example.com"), is(true));
+    }
+    
+    @Test
+    public void createNodeConfiguration() {
+        JPPFNodeConfiguration nodeConfiguration = nodeDeployTask.createNodeConfiguration("driverIp");
+        assertThat(nodeConfiguration.getProperty("jppf.server.host"), is("driverIp"));
+        assertThat(nodeConfiguration.getProperty("jppf.management.port"), is(String.valueOf(TorqueNodeDeployment.DEFAULT_MANAGEMENT_PORT+10)));
+        
+    }
+
+    @Test
+    public void uploadNodeConfiguration() throws Exception {
+        nodeDeployTask.uploadNodeConfiguration("config", "driverIp");
+        verify(sshClient).sftpUpload(any(InputStream.class), eq("jppf-node/config/config"));
+    }
+    
+    @Test
+    public void execute() throws Exception {
+        when(sshClient.executeWithResult(anyString())).thenReturn("42");
+        TorqueNode torqueNode = nodeDeployTask.execute();
+        verify(sshClient).executeWithResult(contains("qsub"));
+        assertThat(torqueNode.getTorqueJobId(), is("42"));
+        assertThat(torqueNode.getManagementPort(), is(TorqueNodeDeployment.DEFAULT_MANAGEMENT_PORT+10));
+        assertThat(torqueNode.getType(), is(NodeType.NODE));
     }
 }
