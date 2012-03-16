@@ -36,7 +36,6 @@
         <dependency>
             <groupId>org.jvnet.opendmk</groupId>
             <artifactId>jmxremote_optional</artifactId>
-            <version>1.0_01-ea</version>
             <scope>runtime</scope>
         </dependency>
         <dependency>
@@ -88,18 +87,36 @@
  
     <build>
         <plugins>
-<!--	    <plugin>
-		<groupId>org.apache.maven.plugins</groupId>
-		<artifactId>maven-jar-plugin</artifactId>
-		<configuration>
-		    <archive>
-			<manifest>
-			    <addClasspath>true</addClasspath>
-			    <mainClass>com.github.nethad.clustermeister.provisioning.torque.JMXNodeTest</mainClass>
-			</manifest>
-		    </archive>
-		</configuration>
-	    </plugin>-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-jppf-node</id>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.github.nethad.clustermeister</groupId>
+                                    <artifactId>node</artifactId>
+                                    <version>${jppf.node.version}</version>
+                                    <type>zip</type>
+                                    <classifier>node</classifier>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}/classes</outputDirectory>
+                                    <destFileName>jppf-node.zip</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <overWriteReleases>true</overWriteReleases>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
             <plugin>
                 <artifactId>maven-assembly-plugin</artifactId>
                 <configuration>

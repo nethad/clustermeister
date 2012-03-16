@@ -61,6 +61,7 @@ public abstract class AmazonEC2JPPFDeployer {
     protected final String crc32File;
     protected final String propertyFile;
     protected final String startScript;
+    protected final String startScriptArguments;
     protected final String jppfFolder;
     
     protected final LoginCredentials loginCredentials;
@@ -122,7 +123,7 @@ public abstract class AmazonEC2JPPFDeployer {
             ComputeServiceContext context, NodeMetadata metadata,
             AmazonNodeConfiguration nodeConfiguration, String zipFile, 
             String crc32File, String propertyFile, String startScript, 
-            String jppfFolder) {
+            String startScriptArguments, String jppfFolder) {
         this.loginCredentials = loginCredentials;
         this.context = context;
         this.metadata = metadata;
@@ -131,6 +132,7 @@ public abstract class AmazonEC2JPPFDeployer {
         this.crc32File = crc32File;
         this.propertyFile = propertyFile;
         this.startScript = startScript;
+        this.startScriptArguments = startScriptArguments;
         this.jppfFolder = jppfFolder;
     }
     
@@ -258,7 +260,7 @@ public abstract class AmazonEC2JPPFDeployer {
         if(localChecksum != null) {
             return localChecksum.longValue();
         }
-        final InputStream file = getClass().getResourceAsStream(filePath);
+        final InputStream file = getClass().getResourceAsStream("/" + filePath);
         try {
             localChecksum = FileUtils.getCRC32(file);
             return localChecksum.longValue();
@@ -298,7 +300,7 @@ public abstract class AmazonEC2JPPFDeployer {
 
     protected void uploadJPPF() {
         logger.debug("Uploading {}", zipFile);
-        final InputStream file = getClass().getResourceAsStream(zipFile);
+        final InputStream file = getClass().getResourceAsStream("/" + zipFile);
         try {
             upload(file, "/home/ec2-user/" + CLUSTERMEISTER_BIN + "/" + zipFile);
         } finally {
@@ -314,14 +316,21 @@ public abstract class AmazonEC2JPPFDeployer {
     }
 
     protected void startJPPF() {
-        final String script = "cd /home/ec2-user/" + getDirectoryName() + jppfFolder +
-                " && nohup ./" + startScript + " > nohup.out 2>&1";
+        final StringBuilder script = new StringBuilder("cd /home/ec2-user/").
+                append(getDirectoryName()).
+                append(jppfFolder).
+                append(" && nohup ./").
+                append(startScript);
+        if(startScriptArguments != null && !startScriptArguments.isEmpty()) {
+            script.append(" ").append(startScriptArguments);
+        }
+        script.append(" > nohup.out 2>&1");
         RunScriptOptions options = new RunScriptOptions().overrideLoginPrivateKey(
                 loginCredentials.getPrivateKey()).overrideLoginUser(
                 loginCredentials.getUser()).blockOnComplete(false).
                 runAsRoot(false).nameTask(getDirectoryName() + "-start");
         logExecResponse(context.getComputeService().
-                runScriptOnNode(metadata.getId(), script, options));
+                runScriptOnNode(metadata.getId(), script.toString(), options));
     }
 
     protected void closeInputstream(final InputStream in) {
