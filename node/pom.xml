@@ -51,11 +51,10 @@
         </plugins>
         <resources>
             <resource>
-                <directory>src/main/resources/jppf-node</directory>
+                <directory>src/main/resources</directory>
                 <filtering>false</filtering>
                 <excludes>
-                    <exclude>startNode.*</exclude>
-                    <exclude>config/*</exclude>
+                    <exclude>jppf-node/**/*</exclude>
                 </excludes>
             </resource>
         </resources>
