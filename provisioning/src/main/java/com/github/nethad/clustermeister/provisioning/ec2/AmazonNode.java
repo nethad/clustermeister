@@ -18,6 +18,8 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.google.common.base.Objects;
+import com.google.common.base.Optional;
+import com.google.common.collect.Iterables;
 import java.util.Set;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.ToStringBuilder;
@@ -33,6 +35,7 @@ public class AmazonNode implements Node {
     final String id;
     NodeMetadata instanceMetadata;
     AmazonNodeConfiguration nodeConfiguration;
+    Optional<AmazonNode> driver;
 
     public AmazonNode(String id, AmazonNodeConfiguration nodeConfiguration, NodeMetadata instanceMetadata) {
         this.nodeConfiguration = nodeConfiguration;
@@ -70,10 +73,18 @@ public class AmazonNode implements Node {
     public Set<String> getPrivateAddresses() {
         return instanceMetadata.getPrivateAddresses();
     }
+    
+    public String getFirstPrivateAddress() {
+        return Iterables.getFirst(instanceMetadata.getPrivateAddresses(), null);
+    }
 
     @Override
     public Set<String> getPublicAddresses() {
         return instanceMetadata.getPublicAddresses();
+    }
+    
+    public String getFirstPublicAddress() {
+        return Iterables.getFirst(instanceMetadata.getPublicAddresses(), null);
     }
 
     @Override
@@ -83,6 +94,14 @@ public class AmazonNode implements Node {
 
     public String getDriverAddress() {
         return nodeConfiguration.getDriverAddress();
+    }
+    
+    public void setDriver(AmazonNode driver) {
+        this.driver = Optional.fromNullable(driver);
+    }
+    
+    public Optional<AmazonNode> getDriver() {
+        return driver;
     }
 
     @Override
