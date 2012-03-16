@@ -29,8 +29,6 @@ public class ProvisioningCLI {
 
     private static final String OPTION_CONFIG_FILE = "config";
     private static final String DEFAULT_CONFIG_FILE = System.getProperty("user.home") + "/.clustermeister/configuration.properties";
-    private static final String OPTION_NUMBER_OF_NODES = "nodes";
-    private static final String DEFAULT_NUMBER_OF_NODES = "3";
     private static final String OPTION_PROVIDER = "provider";
     private static final String DEFAULT_PROVIDER = "torque";
 
@@ -38,7 +36,6 @@ public class ProvisioningCLI {
         new ProvisioningCLI().startCLI(args);
     }
     private String configFilePath;
-    private int numberOfNodes;
     private Options options;
     private Provider provider;
     private Provisioning provisioning;
@@ -52,8 +49,7 @@ public class ProvisioningCLI {
             try {
                 parseArguments(args);
                 System.out.println("Config File Path: "+configFilePath);
-                provisioning = new Provisioning(configFilePath, numberOfNodes, provider);
-                System.out.println("Starting up "+numberOfNodes+" "+provider+" nodes.");
+                provisioning = new Provisioning(configFilePath, provider);
                 provisioning.execute();
                 startREPL();
             } catch (ParseException ex) {
@@ -90,7 +86,6 @@ public class ProvisioningCLI {
         CommandLineParser parser = new PosixParser();
         CommandLine cmd = parser.parse(getOptions(), args);
         configFilePath = cmd.getOptionValue(OPTION_CONFIG_FILE, DEFAULT_CONFIG_FILE);
-        numberOfNodes = Integer.parseInt(cmd.getOptionValue(OPTION_NUMBER_OF_NODES, DEFAULT_NUMBER_OF_NODES));
         provider = Provider.fromString(cmd.getOptionValue(OPTION_PROVIDER, DEFAULT_PROVIDER));
     }
 
@@ -98,7 +93,6 @@ public class ProvisioningCLI {
         if (options == null) {
             options = new Options();
             options.addOption("c", OPTION_CONFIG_FILE, true, "define the path to your configuration.properties, default: "+DEFAULT_CONFIG_FILE);
-            options.addOption("n", OPTION_NUMBER_OF_NODES, true, "specify the number of nodes to be started, mandatory");
             options.addOption("p", OPTION_PROVIDER, true, "specify the provider to use, either 'amazon' or 'torque', default: "+DEFAULT_PROVIDER);
         }
         return options;
@@ -107,11 +101,6 @@ public class ProvisioningCLI {
     @VisibleForTesting
     protected String getConfigFilePath() {
         return configFilePath;
-    }
-    
-    @VisibleForTesting
-    protected int getNumberOfNodes() {
-        return numberOfNodes;
     }
     
     @VisibleForTesting

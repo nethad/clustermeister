@@ -20,12 +20,11 @@ import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientExcpetion;
-import com.jcraft.jsch.SftpException;
-import groovy.lang.Lazy;
+import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.logging.Level;
-import org.jppf.utils.JPPFConfiguration;
+import javax.xml.bind.DatatypeConverter;
+import org.apache.commons.codec.binary.Base64;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,12 +40,14 @@ class NodeDeployTask {
 	private int serverPort;
 	private final TorqueNodeDeployment torqueNodeDeployment;
 	private final NodeConfiguration nodeConfiguration;
+    private final String email;
 
-	public NodeDeployTask(TorqueNodeDeployment torqueNodeDeployment, int nodeNumber, NodeConfiguration nodeConfiguration) {
+	public NodeDeployTask(TorqueNodeDeployment torqueNodeDeployment, int nodeNumber, NodeConfiguration nodeConfiguration, String email) {
 		this.torqueNodeDeployment = torqueNodeDeployment;
 		this.nodeNumber = nodeNumber;
 		this.nodeConfiguration = nodeConfiguration;
 		managementPort = TorqueNodeDeployment.DEFAULT_MANAGEMENT_PORT + nodeNumber;
+        this.email = email;
 	}
 
 	public TorqueNode execute() throws SSHClientExcpetion {
@@ -54,8 +55,13 @@ class NodeDeployTask {
 		String nodeName = nodeNameBase + "_" + nodeNumber;
 		String nodeConfigFileName = configFileName();
 		uploadNodeConfiguration(nodeConfigFileName, driverAddress());
-		
-		final String submitJobToQsub = TorqueNodeDeployment.PATH_TO_QSUB_SCRIPT + " " + nodeName + " " + nodeConfigFileName + "|qsub";
+        //		final String submitJobToQsub = TorqueNodeDeployment.PATH_TO_QSUB_SCRIPT + " " + nodeName + " " + nodeConfigFileName + "|qsub";
+        //        Base64.encodeBase64String(script.getBytes).replace("\n", "").replace("\r", "");
+//        String base64 = DatatypeConverter.printBase64Binary(new String("blah").getBytes());
+        
+        final String base64EncodedQsubScript = base64Encode(qsubScript(nodeName, nodeConfigFileName));
+        String submitJobToQsub = "echo \""+base64EncodedQsubScript+"\"| base64 -d | qsub";
+//        sshClient().executeAndSysout("echo \""+base64EncodedQsubScript+"\"");
 		String jobId = sshClient().executeWithResult(submitJobToQsub);
 //		outer.jobIdList.add(currentJobId);
 		TorqueNode torqueNode = new TorqueNode(NodeType.NODE, jobId, null, null, serverPort, managementPort);
@@ -102,5 +108,40 @@ class NodeDeployTask {
 		}
 		
 	}
+
+    public String base64Encode(String toEncode) {
+        return DatatypeConverter.printBase64Binary(toEncode.getBytes());
+    }
+
+    private String qsubScript(String nodeName, String nodeConfigFileName) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("#PBS -N ").append(nodeName).append("\n")
+            .append("#PBS -l nodes=1:ppn=1\n")
+            .append("#PBS -p 0\n")
+            .append("#PBS -j oe\n")
+            .append("#PBS -m b\n")
+            .append("#PBS -m e\n")
+            .append("#PBS -m a\n")
+            .append("#PBS -V\n")
+            .append("#PBS -o out/").append(nodeName).append(".out\n")
+            .append("#PBS -e err/").append(nodeName).append(".err\n");
+        if (isValidEmail(email)) {
+            sb.append("#PBS -M ").append(email).append("\n");
+        }
+            sb.append("\n")
+            .append("workingDir=/home/torque/tmp/${USER}.${PBS_JOBID}\n")
+            .append("cp -r ~/jppf-node $workingDir/jppf-node\n")
+            .append("cd $workingDir/jppf-node\n")
+            .append("chmod +x startNode.sh\n")
+            .append("./startNode.sh ").append(nodeConfigFileName).append("\n");
+//            .append("cmd=\"./startNode.sh ").append(nodeConfigFileName).append("\"\n")
+//            .append("$cmd\n");
+        return sb.toString();
+    }
+
+    @VisibleForTesting
+    boolean isValidEmail(String email) {
+        return (email != null && email.matches(".*@.*\\..*"));
+    }
 	
 }

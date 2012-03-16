@@ -28,16 +28,18 @@ public class TorqueNodeConfiguration implements NodeConfiguration {
 	private NodeType nodeType;
 	private boolean isDriverDeployedLocally;
 	private String driverAddress;
+    private int numberOfCpus;
 
 	public TorqueNodeConfiguration(NodeType nodeType) {
 		this.nodeType = nodeType;
 		this.isDriverDeployedLocally = true;
 	}
 	
-	public TorqueNodeConfiguration(NodeType nodeType, String driverAddress, boolean isDriverDeployedLocally) {
+	public TorqueNodeConfiguration(NodeType nodeType, String driverAddress, boolean isDriverDeployedLocally, int numberOfCpus) {
 		this.nodeType = nodeType;
 		this.driverAddress = driverAddress;
 		this.isDriverDeployedLocally = true;
+        this.numberOfCpus = numberOfCpus;
 	}
 	
 	@Override
@@ -54,5 +56,9 @@ public class TorqueNodeConfiguration implements NodeConfiguration {
 	public boolean isDriverDeployedLocally() {
 		return isDriverDeployedLocally;
 	}
+
+    public int getNumberOfCpus() {
+        return numberOfCpus;
+    }
 	
 }

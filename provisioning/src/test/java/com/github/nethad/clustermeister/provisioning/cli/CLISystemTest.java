@@ -35,7 +35,7 @@ public class CLISystemTest {
     @Test
     public void startupThreeTorqueNodes() throws Exception {
         provisioningCLI.parseArguments(new String[]{"-n", "3"});
-        Provisioning provisioning = new Provisioning("/home/thomas/.clustermeister/configuration.properties", 3, Provider.TORQUE);
+        Provisioning provisioning = new Provisioning("/home/thomas/.clustermeister/configuration.properties", Provider.TORQUE);
         provisioning.execute();
         Thread.sleep(10000);
     }

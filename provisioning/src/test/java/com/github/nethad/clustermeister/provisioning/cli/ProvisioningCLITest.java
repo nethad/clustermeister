@@ -46,10 +46,9 @@ public class ProvisioningCLITest {
     @Test
     public void testMain() throws Exception {
         final String configPath = "/home/user/.clustermeister/configuration.properties";
-        final String argLine = "--config "+configPath+" --nodes 42 --provider amazon";
+        final String argLine = "--config "+configPath+" --provider amazon";
         provisioningCLI.parseArguments(buildArgs(argLine));
         assertEquals(configPath, provisioningCLI.getConfigFilePath());
-        assertEquals(42, provisioningCLI.getNumberOfNodes());
         assertEquals(Provider.AMAZON, provisioningCLI.getProvider());
     }
 }
