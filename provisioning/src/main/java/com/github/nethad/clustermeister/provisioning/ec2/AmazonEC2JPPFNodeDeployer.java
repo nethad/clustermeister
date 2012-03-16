@@ -36,12 +36,14 @@ public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
     private static final String PROPERTY_FILE_NAME = "jppf-node.properties";
     private static final String PROPERTY_FILE_SUBPATH = JPPF_FOLDER + "config/" + PROPERTY_FILE_NAME;
     private static final String START_SCRIPT = "startNode.sh";
+    private static final String START_SCRIPT_ARGUMENTS = "jppf-node.properties";
     
     public AmazonEC2JPPFNodeDeployer(ComputeServiceContext context,
             NodeMetadata metadata, LoginCredentials credentials,
             AmazonNodeConfiguration nodeConfiguration) {
         super(credentials, context, metadata, nodeConfiguration, ZIP_FILE, 
-                CRC32_FILE, PROPERTY_FILE_SUBPATH, START_SCRIPT, JPPF_FOLDER);
+                CRC32_FILE, PROPERTY_FILE_SUBPATH, START_SCRIPT, 
+                START_SCRIPT_ARGUMENTS, JPPF_FOLDER);
     }
 
     @Override

@@ -25,16 +25,17 @@ import org.junit.Test;
  */
 @Ignore("Depends on local configuration.")
 public class JPPFManagementByJobsClientTest {
-	@Test
-	public void testSomeMethod() throws InterruptedException {
-		
-		JPPFManagementByJobsClient client = JPPFConfiguratedComponentFactory.
-				getInstance().createManagementByJobsClient("176.34.221.185", 11111);
-		
-		Properties props = client.getJPPFConfig("localhost", 11198);
-		
-		System.out.println(props);
-		
-		client.close();
-	}
+
+    @Test
+    public void testSomeMethod() throws InterruptedException {
+
+        JPPFManagementByJobsClient client = JPPFConfiguratedComponentFactory.
+                getInstance().createManagementByJobsClient("localhost", 11111);
+
+        Properties props = client.getJPPFConfig("localhost", 11198);
+
+        System.out.println(props);
+        
+        client.close();
+    }
 }
