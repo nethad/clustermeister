@@ -87,7 +87,7 @@ public class UserInputEvaluation {
             int numberOfCpus = Integer.valueOf(tokenizer.nextToken());
             provisioning.addNodes(numberOfNodes, numberOfCpus);
         } else {
-            // print help
+            help();
         }
     }
 }
