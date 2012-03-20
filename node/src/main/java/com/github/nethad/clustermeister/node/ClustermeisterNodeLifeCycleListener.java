@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.node;
 
+import org.jppf.node.NodeRunner;
 import org.jppf.node.event.NodeLifeCycleEvent;
 import org.jppf.node.event.NodeLifeCycleListener;
 
@@ -24,24 +25,25 @@ import org.jppf.node.event.NodeLifeCycleListener;
  * @author daniel
  */
 public class ClustermeisterNodeLifeCycleListener implements NodeLifeCycleListener {
+
     @Override
     public void nodeStarting(NodeLifeCycleEvent event) {
-        System.out.println("Hello");
+        //make sure the UUID is printed to standard out in a well defined format.
+        System.out.println(ClustermeisterNodeLauncher.UUID_PREFIX + NodeRunner.getUuid());
     }
 
     @Override
     public void nodeEnding(NodeLifeCycleEvent event) {
-        System.out.println("Bye");
+        //nop
     }
 
     @Override
     public void jobStarting(NodeLifeCycleEvent event) {
-        System.out.println("Working");
+        //nop
     }
 
     @Override
     public void jobEnding(NodeLifeCycleEvent event) {
-        System.out.println("Idling");
+        //nop
     }
-    
 }
