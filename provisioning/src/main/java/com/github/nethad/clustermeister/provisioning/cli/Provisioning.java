@@ -68,7 +68,8 @@ public class Provisioning {
     
     void addNodes(int numberOfNodes, int numberOfCpusPerNode) {
         final TorqueNodeConfiguration torqueNodeConfiguration = 
-                new TorqueNodeConfiguration(NodeType.NODE, driverHost, true, numberOfCpusPerNode);
+                TorqueNodeConfiguration.configurationForNode(driverHost, numberOfCpusPerNode);
+        
         ListenableFuture<? extends Node> lastNode = null;
         for (int i = 0; i < numberOfNodes; i++) {
             lastNode = torqueNodeManager.addNode(torqueNodeConfiguration);

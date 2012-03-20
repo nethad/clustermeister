@@ -38,10 +38,10 @@ class NodeDeployTask {
 	private int nodeNumber;
 	private int serverPort;
 	private final TorqueNodeDeployment torqueNodeDeployment;
-	private final NodeConfiguration nodeConfiguration;
+	private final TorqueNodeConfiguration nodeConfiguration;
     private final String email;
 
-	public NodeDeployTask(TorqueNodeDeployment torqueNodeDeployment, int nodeNumber, NodeConfiguration nodeConfiguration, String email) {
+	public NodeDeployTask(TorqueNodeDeployment torqueNodeDeployment, int nodeNumber, TorqueNodeConfiguration nodeConfiguration, String email) {
 		this.torqueNodeDeployment = torqueNodeDeployment;
 		this.nodeNumber = nodeNumber;
 		this.nodeConfiguration = nodeConfiguration;
@@ -55,7 +55,8 @@ class NodeDeployTask {
 		String nodeConfigFileName = configFileName();
 		uploadNodeConfiguration(nodeConfigFileName, driverAddress());
         
-        final String base64EncodedQsubScript = base64Encode(qsubScript(nodeName, nodeConfigFileName));
+        final String qsubScript = qsubScript(nodeName, nodeConfigFileName, nodeConfiguration.getNumberOfCpus());
+        final String base64EncodedQsubScript = base64Encode(qsubScript);
         String submitJobToQsub = "echo \""+base64EncodedQsubScript+"\"| base64 -d | qsub";
 		String jobId = sshClient().executeWithResult(submitJobToQsub);
 		TorqueNode torqueNode = new TorqueNode(NodeType.NODE, jobId, null, null, serverPort, managementPort);
@@ -83,7 +84,8 @@ class NodeDeployTask {
         JPPFNodeConfiguration configuration = new JPPFNodeConfiguration()
                 .setProperty("jppf.server.host", driverIpAddress)
                 .setProperty("jppf.management.port", String.valueOf(managementPort))
-                .setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-" + torqueNodeDeployment.getSessionId() + "_" + nodeNumber);
+                .setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-" + torqueNodeDeployment.getSessionId() + "_" + nodeNumber)
+                .setProperty("processing.threads", String.valueOf(nodeConfiguration.getNumberOfCpus()));
         return configuration;
     }
 		
@@ -113,10 +115,10 @@ class NodeDeployTask {
         return DatatypeConverter.printBase64Binary(toEncode.getBytes());
     }
 
-    private String qsubScript(String nodeName, String nodeConfigFileName) {
+    private String qsubScript(String nodeName, String nodeConfigFileName, int numberOfCpus) {
         StringBuilder sb = new StringBuilder();
         sb.append("#PBS -N ").append(nodeName).append("\n")
-            .append("#PBS -l nodes=1:ppn=1\n")
+            .append("#PBS -l nodes=1:ppn=").append(numberOfCpus).append("\n")
             .append("#PBS -p 0\n")
             .append("#PBS -j oe\n")
             .append("#PBS -m b\n")

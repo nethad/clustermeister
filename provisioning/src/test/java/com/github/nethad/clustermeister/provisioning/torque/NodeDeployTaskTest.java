@@ -33,6 +33,7 @@ import static org.mockito.Mockito.*;
  * @author thomas
  */
 public class NodeDeployTaskTest {
+    public static final int NUMBER_OF_CPUS = 42;
 
     private NodeDeployTask nodeDeployTask;
     private SSHClient sshClient;
@@ -44,7 +45,7 @@ public class NodeDeployTaskTest {
         torqueNodeDeployment = mock(TorqueNodeDeployment.class);
         sshClient = mock(SSHClient.class);
         when(torqueNodeDeployment.sshClient()).thenReturn(sshClient);
-        torqueNodeConfiguration = new TorqueNodeConfiguration(NodeType.NODE, "driverIp", true, 1);
+        torqueNodeConfiguration = new TorqueNodeConfiguration(NodeType.NODE, "driverIp", true, NUMBER_OF_CPUS);
         nodeDeployTask = new NodeDeployTask(torqueNodeDeployment, 10, torqueNodeConfiguration, "test@example.com");
     }
 
@@ -72,7 +73,7 @@ public class NodeDeployTaskTest {
         JPPFNodeConfiguration nodeConfiguration = nodeDeployTask.createNodeConfiguration("driverIp");
         assertThat(nodeConfiguration.getProperty("jppf.server.host"), is("driverIp"));
         assertThat(nodeConfiguration.getProperty("jppf.management.port"), is(String.valueOf(TorqueNodeDeployment.DEFAULT_MANAGEMENT_PORT+10)));
-        
+        assertThat(nodeConfiguration.getProperty("processing.threads"), is(String.valueOf(NUMBER_OF_CPUS)));
     }
 
     @Test

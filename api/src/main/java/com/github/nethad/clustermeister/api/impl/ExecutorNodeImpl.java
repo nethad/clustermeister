@@ -55,7 +55,7 @@ public class ExecutorNodeImpl implements ExecutorNode {
 
     @Override
     public NodeCapabilities getCapabilities() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return nodeCapabilities;
     }
     
     public void setNodeCapabilities(NodeCapabilities nodeCapabilities) {
