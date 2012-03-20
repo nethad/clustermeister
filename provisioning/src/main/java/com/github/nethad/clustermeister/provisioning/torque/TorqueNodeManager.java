@@ -54,10 +54,10 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 
 	private class AddNormalNodeTask implements Callable<TorqueNode> {
 
-		private final NodeConfiguration nodeConfiguration;
+		private final TorqueNodeConfiguration nodeConfiguration;
 		private final TorqueNodeManagement torqueNodeManagement;
 
-		public AddNormalNodeTask(NodeConfiguration nodeConfiguration, TorqueNodeManagement torqueNodeManagement) {
+		public AddNormalNodeTask(TorqueNodeConfiguration nodeConfiguration, TorqueNodeManagement torqueNodeManagement) {
 			this.nodeConfiguration = nodeConfiguration;
 			this.torqueNodeManagement = torqueNodeManagement;
 		}
@@ -148,7 +148,7 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 		return Collections.unmodifiableCollection(allNodes);
 	}
 
-	public ListenableFuture<? extends Node> addNode(NodeConfiguration nodeConfiguration) {
+	public ListenableFuture<? extends Node> addNode(TorqueNodeConfiguration nodeConfiguration) {
 		switch (nodeConfiguration.getType()) {
 			case DRIVER:
 				return addDriverNode(nodeConfiguration);
@@ -202,14 +202,14 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 				Iterables.getFirst(torqueNode.getPublicAddresses(), null), torqueNode.getManagementPort()));
 	}
 
-	private ListenableFuture<? extends Node> addDriverNode(NodeConfiguration nodeConfiguration) {
+	private ListenableFuture<? extends Node> addDriverNode(TorqueNodeConfiguration nodeConfiguration) {
 		if (!nodeConfiguration.isDriverDeployedLocally()) {
 			driverDeployer.runExternally();
 		}
 		return executorService.submit(new AddDriverNodeTask(this));
 	}
 
-	private ListenableFuture<? extends Node> addNormalNode(NodeConfiguration nodeConfiguration) {
+	private ListenableFuture<? extends Node> addNormalNode(TorqueNodeConfiguration nodeConfiguration) {
 		return executorService.submit(new AddNormalNodeTask(nodeConfiguration, this));
 	}
 

@@ -139,7 +139,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
                 String.valueOf(akkaLibsZipCRC32).getBytes(Charsets.UTF_8)), AKKA_CRC32_FILE);
     }
 
-    public TorqueNode submitJob(NodeConfiguration nodeConfiguration, TorqueNodeManagement torqueNodeManagement) throws SSHClientException {
+    public TorqueNode submitJob(TorqueNodeConfiguration nodeConfiguration, TorqueNodeManagement torqueNodeManagement) throws SSHClientException {
         if (!isInfrastructureDeployed) {
             deployInfrastructure();
         }
