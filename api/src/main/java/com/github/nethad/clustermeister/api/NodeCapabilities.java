@@ -22,5 +22,7 @@ package com.github.nethad.clustermeister.api;
 public interface NodeCapabilities {
     
     public int getNumberOfProcessors();
+    public int getNumberOfProcessingThreads();
+    public String getJppfConfig();
     
 }

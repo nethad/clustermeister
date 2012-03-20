@@ -84,7 +84,7 @@ public class TorqueJPPFTestSetup {
     private void startDriver() {
 //        TorqueLocalRunner runner = new TorqueLocalRunner();
 //        runner.start();
-        NodeConfiguration nodeConfiguration = new TorqueNodeConfiguration(NodeType.DRIVER);
+        TorqueNodeConfiguration nodeConfiguration = TorqueNodeConfiguration.configurationForDriver(true);
         ListenableFuture<? extends Node> driver = torqueNodeManager.addNode(nodeConfiguration);
         try {
             driver.get();
@@ -98,7 +98,7 @@ public class TorqueJPPFTestSetup {
     private void startNodes() {
 
         torqueNodeManager.deployResources();
-        NodeConfiguration nodeConfiguration = new TorqueNodeConfiguration(NodeType.NODE);
+        TorqueNodeConfiguration nodeConfiguration = TorqueNodeConfiguration.configurationForNode("", 1);
         for (int i = 0; i < NUMBER_OF_NODES; i++) {
             ListenableFuture<? extends Node> node = torqueNodeManager.addNode(nodeConfiguration);
             try {

@@ -34,6 +34,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author daniel
  */
+@Deprecated
 public class SSHClientImpl implements SSHClient {
 
     private final static Logger logger =

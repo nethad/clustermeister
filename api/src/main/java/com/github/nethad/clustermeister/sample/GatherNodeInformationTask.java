@@ -33,7 +33,7 @@ public class GatherNodeInformationTask extends JPPFTask {
     public static final String IPV4_ADDRESSES = "ipv4.addresses";
     private static final String LOCALHOST = "localhost";
     public static final String OS_NAME = "os.name";
-    public static final String PROCESSING_THREADS = "processsing.threads";
+    public static final String PROCESSING_THREADS = "processing.threads";
     public static final String TOTAL_MEMORY = "totalMemory";
     public static final String UUID = "jppf.uuid";
 
@@ -52,8 +52,14 @@ public class GatherNodeInformationTask extends JPPFTask {
             JPPFSystemInformation sysInfo = wrapper.systemInformation();
             propertiesMap = new HashMap<Object, Object>();
             
+            if (sysInfo == null) {
+                setException(new Exception("Could not get system information."));
+                return;
+            }
+            
             addProperty(UUID, sysInfo.getUuid());
             addProperty(PROCESSING_THREADS, sysInfo.getJppf());
+            propertiesMap.put("jppfconfig", sysInfo.getJppf().asString());
             addProperty(IPV4_ADDRESSES, sysInfo.getNetwork());
             addProperty(OS_NAME, sysInfo.getSystem());
             addProperty(TOTAL_MEMORY, sysInfo.getRuntime());
@@ -78,10 +84,6 @@ public class GatherNodeInformationTask extends JPPFTask {
                 }
             }
         }
-    }
-    
-    private void addLine(StringBuilder sb, String key, TypedProperties properties) {
-        sb.append(key + " = ").append(properties.getProperties(key)).append("\n");
     }
     
     private void addProperty(String key, TypedProperties fromProperties) {
