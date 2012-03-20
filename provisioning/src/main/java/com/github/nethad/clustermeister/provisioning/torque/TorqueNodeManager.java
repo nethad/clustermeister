@@ -21,6 +21,7 @@ import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
+import com.github.nethad.clustermeister.provisioning.utils.GanymedSSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientImpl;
@@ -129,14 +130,9 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 
 	public TorqueNodeManager(Configuration configuration) {
 		this.configuration = configuration;
-        SSHClient sshClient;
-        try {
-            sshClient = new SSHClientImpl(configuration.getString(Configuration.TORQUE_SSH_PRIVATEKEY, ""));
-            nodeDeployer = new TorqueJPPFNodeDeployer(configuration, sshClient);
-        } catch (SSHClientException ex) {
-            logger.error("Could not initialize SSH client.", ex);
-        }
-		driverDeployer = new TorqueJPPFDriverDeployer();
+        SSHClient sshClient = new GanymedSSHClient(configuration.getString(Configuration.TORQUE_SSH_PRIVATEKEY, ""));
+        nodeDeployer = new TorqueJPPFNodeDeployer(configuration, sshClient);
+        driverDeployer = new TorqueJPPFDriverDeployer();
 		executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(THREAD_POOL_SIZE));
 	}
 
