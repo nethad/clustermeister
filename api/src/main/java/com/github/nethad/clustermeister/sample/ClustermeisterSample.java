@@ -18,27 +18,16 @@ package com.github.nethad.clustermeister.sample;
 import com.github.nethad.clustermeister.api.Clustermeister;
 import com.github.nethad.clustermeister.api.ExecutorNode;
 import com.github.nethad.clustermeister.api.impl.ClustermeisterFactory;
-import com.github.nethad.clustermeister.api.impl.ClustermeisterImpl;
-import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.*;
 import org.jppf.JPPFException;
 import org.jppf.client.JPPFClient;
-import org.jppf.client.JPPFClientConnectionStatus;
 import org.jppf.client.JPPFJob;
-import org.jppf.client.JPPFResultCollector;
-import org.jppf.client.event.ClientConnectionStatusEvent;
-import org.jppf.management.JMXDriverConnectionWrapper;
-import org.jppf.management.JPPFManagementInfo;
-import org.jppf.node.policy.Equal;
 import org.jppf.server.protocol.JPPFTask;
 
 /**
@@ -111,9 +100,13 @@ public class ClustermeisterSample implements Serializable {
         try {
             clustermeister = ClustermeisterFactory.create();
             Collection<ExecutorNode> nodes = clustermeister.getAllNodes();
+            
             List<ListenableFuture<String>> list = new LinkedList<ListenableFuture<String>>();
             for (ExecutorNode executorNode : nodes) {
                 System.out.println("executorNode " + executorNode.getID());
+                System.out.println("executorNode processors = " + executorNode.getCapabilities().getNumberOfProcessors());
+                System.out.println("executorNode processing threads = " + executorNode.getCapabilities().getNumberOfProcessingThreads());
+//                System.out.println("executorNode jppf config\n" + executorNode.getCapabilities().getJppfConfig());
                 ListenableFuture<String> future = executorNode.execute(new SampleCallable());
                 list.add(future);
             }

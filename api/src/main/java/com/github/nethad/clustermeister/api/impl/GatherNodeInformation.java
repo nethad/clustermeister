@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.api.impl;
 
 import com.github.nethad.clustermeister.api.ExecutorNode;
+import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import com.github.nethad.clustermeister.sample.GatherNodeInformationTask;
 import com.google.common.annotations.VisibleForTesting;
@@ -127,20 +128,27 @@ class GatherNodeInformation {
             @Override
             public void onFailure(Throwable t) {
                 logger.error("Node information query was not successful.", t);
+                onNodeResultReturned();
             }
         });
     }
     
     @VisibleForTesting
     void addExecutorNode(TypedProperties result) {
+        System.out.println("PROCESSING_THREADS is "+GatherNodeInformationTask.PROCESSING_THREADS);
         ExecutorNodeImpl executorNode = new ExecutorNodeImpl(client, threadsExecutorService);
         executorNode.setId(result.getProperty(GatherNodeInformationTask.UUID));
+        NodeCapabilities nodeCapabilities = new NodeCapabilitiesImpl(
+                result.getInt(GatherNodeInformationTask.AVAILABLE_PROCESSORS),
+                result.getInt(GatherNodeInformationTask.PROCESSING_THREADS),
+                result.getString("jppfconfig"));
+        executorNode.setNodeCapabilities(nodeCapabilities);
 //        System.out.println(result.getProperty(GatherNodeInformationTask.IPV4_ADDRESSES));
         List<String> allIpAddresses = extractAddressesFromString(result.getProperty(GatherNodeInformationTask.IPV4_ADDRESSES));
         executorNode.addPrivateAddresses(getAllPrivateAddresses(allIpAddresses));
         executorNode.addPublicAddresses(getAllPublicAddresses(allIpAddresses));
         nodes.add(executorNode);
-        onNodeAdded();
+        onNodeResultReturned();
     }
 
     private void awaitTermination(final Lock lock, final Condition lastJobFinished) throws RuntimeException {
@@ -155,7 +163,7 @@ class GatherNodeInformation {
         }
     }
 
-    private void onNodeAdded() {
+    private void onNodeResultReturned() {
         int nodeCount = nodeCounter.decrementAndGet();
         if (nodeCount == 0) {
             lock.lock();
