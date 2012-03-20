@@ -20,10 +20,7 @@ import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFDriverConfigurationSource;
-import com.github.nethad.clustermeister.provisioning.utils.PublicIp;
-import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
-import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
-import com.github.nethad.clustermeister.provisioning.utils.SSHClientImpl;
+import com.github.nethad.clustermeister.provisioning.utils.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import org.jppf.management.JMXDriverConnectionWrapper;
@@ -65,7 +62,7 @@ public class TorqueJPPFDriverDeployer {
         sshClient = null;
         try {
 
-            sshClient = new SSHClientImpl(privateKeyFilePath);
+            sshClient = new GanymedSSHClient(privateKeyFilePath);
             sshClient.connect(user, host, port);
             sshClient.executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "*");
 
