@@ -21,7 +21,6 @@ import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
-import com.github.nethad.clustermeister.provisioning.utils.GanymedSSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientImpl;
@@ -126,15 +125,27 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 	private ListeningExecutorService executorService;
 	private Set<TorqueNode> nodes = new HashSet<TorqueNode>();
 	private TorqueJPPFNodeDeployer nodeDeployer = null;
-	private final TorqueJPPFDriverDeployer driverDeployer;
+	private TorqueJPPFDriverDeployer driverDeployer;
 
 	public TorqueNodeManager(Configuration configuration) {
 		this.configuration = configuration;
-        SSHClient sshClient = new GanymedSSHClient(configuration.getString(Configuration.TORQUE_SSH_PRIVATEKEY, ""));
-        nodeDeployer = new TorqueJPPFNodeDeployer(configuration, sshClient);
-        driverDeployer = new TorqueJPPFDriverDeployer();
-		executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(THREAD_POOL_SIZE));
+        try {
+            TorqueConfiguration torqueConfiguration = buildTorqueConfiguration();
+            String privateKeyPath = torqueConfiguration.getPrivateKeyPath();
+            SSHClient sshClient = new SSHClientImpl(privateKeyPath);
+            nodeDeployer = new TorqueJPPFNodeDeployer(buildTorqueConfiguration(), sshClient);
+            driverDeployer = new TorqueJPPFDriverDeployer();
+            executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(THREAD_POOL_SIZE));
+        }  catch (ConfigurationValueMissingException ex) {
+            logger.error("Configuration value is missing.", ex);
+        } catch (SSHClientException ex) {
+            logger.error("Could not start ssh client. Something is wrong with your private key or its path.", ex);
+        }
 	}
+    
+    private TorqueConfiguration buildTorqueConfiguration() throws ConfigurationValueMissingException {
+        return TorqueConfiguration.buildFromConfig(configuration);
+    }
 
 	public Collection<? extends Node> getNodes() {
 		List<TorqueNode> allNodes =

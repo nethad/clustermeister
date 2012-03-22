@@ -25,7 +25,9 @@ import org.slf4j.LoggerFactory;
 /**
  *
  * @author thomas
+ * @deprecated You should use {@link SSHClientImpl}
  */
+@Deprecated
 public class GanymedSSHClient implements SSHClient {
 
     private Logger logger = LoggerFactory.getLogger(GanymedSSHClient.class);

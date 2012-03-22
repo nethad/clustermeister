@@ -24,6 +24,7 @@ import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeConfigurat
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.github.nethad.clustermeister.provisioning.utils.PublicIp;
 import com.google.common.util.concurrent.ListenableFuture;
+import java.io.File;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -94,6 +95,9 @@ public class Provisioning {
     }
     
     private void readConfigFile() {
+        if (!(new File(configFilePath).exists())) {
+            logger.error("Configuration file \""+configFilePath+"\" does not exist.");
+        }
         configuration = new FileConfiguration(configFilePath);
     }
 
