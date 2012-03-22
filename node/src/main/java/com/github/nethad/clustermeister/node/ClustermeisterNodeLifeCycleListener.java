@@ -15,9 +15,14 @@
  */
 package com.github.nethad.clustermeister.node;
 
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.PrintStream;
 import org.jppf.node.NodeRunner;
 import org.jppf.node.event.NodeLifeCycleEvent;
 import org.jppf.node.event.NodeLifeCycleListener;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Custom Clustermeister JPPF Node Life Cycle Listener.
@@ -26,11 +31,22 @@ import org.jppf.node.event.NodeLifeCycleListener;
  */
 public class ClustermeisterNodeLifeCycleListener implements NodeLifeCycleListener {
 
+    protected final static Logger logger =
+            LoggerFactory.getLogger(ClustermeisterNodeLifeCycleListener.class);
+    
     @Override
     public void nodeStarting(NodeLifeCycleEvent event) {
         //make sure the UUID is printed to standard out in a well defined format.
-        System.out.println(ClustermeisterLauncher.UUID_PREFIX + NodeRunner.getUuid());
-        //register stream gobbler to take care of emptying (and printing) the standard streams.
+        System.out.println(Constants.UUID_PREFIX + NodeRunner.getUuid());
+        System.out.flush();
+        
+        //redirect stdout/stderr to files as the parent process' streams will die soon.
+        try {
+            System.setOut(new PrintStream(new FileOutputStream(Constants.STDOUT_LOG)));
+            System.setErr(new PrintStream(new FileOutputStream(Constants.STDERR_LOG)));
+        } catch (FileNotFoundException ex) {
+            logger.warn("Could not create log file.", ex);
+        }
     }
 
     @Override
