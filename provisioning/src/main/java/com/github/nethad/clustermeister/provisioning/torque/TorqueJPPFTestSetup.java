@@ -98,7 +98,7 @@ public class TorqueJPPFTestSetup {
     private void startNodes() {
 
         torqueNodeManager.deployResources();
-        TorqueNodeConfiguration nodeConfiguration = TorqueNodeConfiguration.configurationForNode("", 1);
+        TorqueNodeConfiguration nodeConfiguration = TorqueNodeConfiguration.configurationForNode(null, 1);
         for (int i = 0; i < NUMBER_OF_NODES; i++) {
             ListenableFuture<? extends Node> node = torqueNodeManager.addNode(nodeConfiguration);
             try {
