@@ -290,6 +290,11 @@
                 <artifactId>jmxremote_optional</artifactId>
                 <version>1.0_01-ea</version>
             </dependency>
+            <dependency>
+                <groupId>com.google.inject</groupId>
+                <artifactId>guice</artifactId>
+                <version>3.0</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
