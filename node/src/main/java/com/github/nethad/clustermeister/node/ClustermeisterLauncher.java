@@ -37,25 +37,10 @@ public abstract class ClustermeisterLauncher {
             LoggerFactory.getLogger(ClustermeisterLauncher.class);
     
     /**
-     * Well-defined UUID prefix.
-     */
-    public static final String UUID_PREFIX = "UUID=";
-    
-    /**
-     * UTF-8 charset string ("UTF-8").
-     */
-    protected static final String UTF8 = "UTF-8";
-
-    /**
      * Custom Process Launcher.
      */
     protected ClustermeisterProcessLauncher processLauncher = null;
 
-    /**
-     * The thread that handles launching of the JPPF-node.
-     */
-    protected Thread jppfThread = null; 
-    
     /**
      * Starts the JPPF process (a new JVM).
      * 
@@ -63,7 +48,7 @@ public abstract class ClustermeisterLauncher {
      */
     protected void startUp(String runner) throws Exception {
         processLauncher = new ClustermeisterProcessLauncher(runner);
-        jppfThread = new Thread(new Runnable() {
+        Thread jppfThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 processLauncher.run();
@@ -74,12 +59,12 @@ public abstract class ClustermeisterLauncher {
     
     private void waitForUUID(InputStream in, PrintStream sout) 
             throws IOException {
-        BufferedReader reader = new BufferedReader(new InputStreamReader(in, UTF8));
+        BufferedReader reader = new BufferedReader(new InputStreamReader(in, Constants.UTF8));
         System.out.println("Waiting for UUID.");
         String line;
         while((line = reader.readLine()) != null) {
             sout.println(line);
-            if(line.startsWith(UUID_PREFIX)) {
+            if(line.startsWith(Constants.UUID_PREFIX)) {
                 sout.println("Got UUID.");
                 break;
             }
@@ -124,14 +109,14 @@ public abstract class ClustermeisterLauncher {
         } catch (IOException ex) {
             logger.warn("Can not read from pipe output stream of the JPPF sub-process.", ex);
         } finally {
+            //restore output stream.
+            System.setOut(sout);
             closeStream(in);
             closeStream(out);
             //divert the spawned processes error and output streams to a logger.
             if(processLauncher != null) {
                 processLauncher.switchStreams();
             }
-            //restore output stream.
-            System.setOut(sout);
             sout.flush();
         }
     }

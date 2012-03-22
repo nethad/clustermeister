@@ -15,26 +15,29 @@
  */
 package com.github.nethad.clustermeister.node;
 
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.PrintStream;
-import org.jppf.startup.JPPFDriverStartupSPI;
-
 /**
- * Custom Clustermeister JPPF-Node startup class.
+ * Shared constants.
  *
  * @author daniel
  */
-public class ClustermeisterNodeStartUp implements JPPFDriverStartupSPI {
-
-    @Override
-    public void run() {
-        try {
-            System.out.println("OUTPUT SET");
-            System.out.flush();
-            System.setOut(new PrintStream(new FileOutputStream("lala.out")));
-        } catch (FileNotFoundException ex) {
-            ex.printStackTrace();
-        }
-    }
+public class Constants {
+    /**
+     * UTF-8 charset string ("UTF-8").
+     */
+    public static final String UTF8 = "UTF-8";
+    
+    /**
+     * Well-defined UUID prefix.
+     */
+    public static final String UUID_PREFIX = "UUID=";
+    
+    /**
+     * Standard out log file name.
+     */
+    public static final String STDOUT_LOG = "stdout.log";
+    
+    /**
+     * Standard err log file name.
+     */
+    public static final String STDERR_LOG = "stderr.log";
 }
