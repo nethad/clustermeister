@@ -2,21 +2,15 @@
 /api/target/
 /ext/org.jppf.common/target/
 /org.jppf.common/target/
-/org (copy).jppf.common/target/
 /org.jppf.client/target/
 /org.jppf.node/target/
 /org.jppf.common-node/target/
-/org (copy).jppf.client/target/
 /org.jppf.server/target/
-/org (copy).jppf.server/target/
 
 /provisioning/nbactions.xml
 
 #ignore backup files
 *~
-/api (copy)/target/
 /node/target/
-/node (copy)/target/
 /driver/target/
-/provisioning (copy)/target/
 /cli/target/
