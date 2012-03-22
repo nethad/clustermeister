@@ -17,6 +17,7 @@ package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.AfterClass;
@@ -34,6 +35,8 @@ import static org.hamcrest.CoreMatchers.*;
 public class TorqueJPPFNodeDeployerTest {
     private SSHClient sshClient;
     private TorqueJPPFNodeDeployer torqueJPPFNodeDeployer;
+    
+    static final String PACKAGE_PREFIX = "/com/github/nethad/clustermeister/provisioning/torque";
 
     @Before
     public void setup() throws ConfigurationValueMissingException {
@@ -50,7 +53,19 @@ public class TorqueJPPFNodeDeployerTest {
             boolean isResourceAlreadyDeployedAndUpToDate() {
                 return true;
             }
+
+            @Override
+            InputStream getResourceStream(String resource) {
+                if(resource.contains("node")) {
+                    return super.getResourceStream(PACKAGE_PREFIX + resource);
+                } else {
+                    return super.getResourceStream(resource);
+                }
+            }
+            
+            
         };
+        
     }
     
     @Test

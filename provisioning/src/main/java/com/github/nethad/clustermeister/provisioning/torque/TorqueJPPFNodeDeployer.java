@@ -211,7 +211,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         return false;
     }
 
-    private InputStream getResourceStream(String resource) {
+    InputStream getResourceStream(String resource) {
         return TorqueJPPFDriverDeployer.class.getResourceAsStream(resource);
     }
 }
