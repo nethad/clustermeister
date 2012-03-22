@@ -53,28 +53,28 @@ public class AmazonNodeManagerTest {
 
         AmazonNodeManager nodeManager = new AmazonNodeManager(config);
 
-//        Optional<String> instanceId = Optional.of("eu-west-1/i-9c3f13d5");
-        Optional<String> absentInstanceId = Optional.absent();
+        Optional<String> instanceId = Optional.of("eu-west-1/i-b07f47f9");
+//        Optional<String> absentInstanceId = Optional.absent();
         AmazonNodeConfiguration dc = new AmazonNodeConfiguration();
         dc.setRegion(EU_WEST_1C);
         dc.setNodeType(NodeType.DRIVER);
         dc.setCredentials(getCredentials());
-        final Future<? extends Node> d = nodeManager.addNode(dc, absentInstanceId);
+        final Future<? extends Node> d = nodeManager.addNode(dc, instanceId);
         
 //        Optional<String> driverInstanceId = Optional.of(((AmazonNode)d.get()).getInstanceId());
         AmazonNodeConfiguration nc = new AmazonNodeConfiguration();
         nc.setRegion(EU_WEST_1C);
         nc.setNodeType(NodeType.NODE);
         nc.setDriverAddress(Iterables.getFirst(d.get().getPrivateAddresses(), null));
-        nc.setCredentials(getOtherCredentials());
-        final Future<? extends Node> n = nodeManager.addNode(nc, absentInstanceId);
+        nc.setCredentials(getCredentials());
+        final Future<? extends Node> n = nodeManager.addNode(nc, instanceId);
         
         AmazonNodeConfiguration nc2 = new AmazonNodeConfiguration();
         nc2.setRegion(EU_WEST_1C);
         nc2.setNodeType(NodeType.NODE);
         nc2.setDriverAddress(Iterables.getFirst(d.get().getPrivateAddresses(), null));
         nc2.setCredentials(getCredentials());
-        final Future<? extends Node> n2 = nodeManager.addNode(nc2, absentInstanceId);
+        final Future<? extends Node> n2 = nodeManager.addNode(nc2, instanceId);
         
 
 
@@ -94,11 +94,6 @@ public class AmazonNodeManagerTest {
         Future<Void> ds = nodeManager.removeNode((AmazonNode) jppfDriver, AmazonInstanceShutdownMethod.TERMINATE);
         Future<Void> ns = nodeManager.removeNode((AmazonNode) jppfNode, AmazonInstanceShutdownMethod.TERMINATE);
         Future<Void> ns2 = nodeManager.removeNode((AmazonNode) jppfNode2, AmazonInstanceShutdownMethod.TERMINATE);
-
-        //wait for them to shut down
-        ds.get();
-        ns.get();
-        ns2.get();
 
         nodeManager.close();
     }
