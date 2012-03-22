@@ -29,7 +29,7 @@ public class ClustermeisterNodeLifeCycleListener implements NodeLifeCycleListene
     @Override
     public void nodeStarting(NodeLifeCycleEvent event) {
         //make sure the UUID is printed to standard out in a well defined format.
-        System.out.println(ClustermeisterNodeLauncher.UUID_PREFIX + NodeRunner.getUuid());
+        System.out.println(ClustermeisterLauncher.UUID_PREFIX + NodeRunner.getUuid());
     }
 
     @Override
