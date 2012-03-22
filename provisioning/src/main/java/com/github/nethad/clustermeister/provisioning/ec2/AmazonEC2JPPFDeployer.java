@@ -31,7 +31,6 @@ import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeMetadataBuilder;
-import org.jclouds.compute.options.RunScriptOptions;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.io.Payloads;
 import org.jclouds.ssh.SshClient;
@@ -47,6 +46,7 @@ public abstract class AmazonEC2JPPFDeployer {
     protected final static Logger logger =
             LoggerFactory.getLogger(AmazonEC2JPPFDeployer.class);
     
+    protected static final String INIT_LOG = "init.log";
     protected static final String CLUSTERMEISTER_BIN = "clustermeister-bin";
     
     private static final Monitor driverMM = new Monitor(false);
@@ -142,7 +142,7 @@ public abstract class AmazonEC2JPPFDeployer {
     
     protected abstract Monitor getMonitor();
     
-    public void deploy() {
+    public String deploy() {
         SshClient ssh = getSSHClient();
         ssh.connect();
         try {
@@ -165,7 +165,8 @@ public abstract class AmazonEC2JPPFDeployer {
             uploadConfiguration(getSettings());
 
             logger.debug("Starting JPPF-{} on {}...", nodeTypeStr, metadata.getId());
-            startJPPF();
+            String output = startJPPF();
+            System.out.println("lalalal " + output);
             logger.debug("JPPF-{} deployed on {}.", nodeTypeStr, metadata.getId());
         } catch(Throwable ex){
             logger.debug("Deployment of JPPF-{} failed.", nodeConfiguration.getType().toString());
@@ -175,6 +176,7 @@ public abstract class AmazonEC2JPPFDeployer {
                 ssh.disconnect();
             }
         }
+        return null;
     }
     
     protected void prepareJPPF() {
@@ -184,15 +186,16 @@ public abstract class AmazonEC2JPPFDeployer {
     protected ExecResponse execute(String command) {
         logger.trace("Executing {}", command);
         ExecResponse response = getSSHClient().exec(command);
-        logExecResponse(response);
-        return response;
+        return logExecResponse(response);
     }
 
-    protected void logExecResponse(ExecResponse response) {
+    protected ExecResponse logExecResponse(ExecResponse response) {
         logger.trace("Exit Code: {}", response.getExitCode());
         if (response.getError() != null && !response.getError().isEmpty()) {
             logger.warn("Execution error: {}.", response.getError());
         }
+        
+        return response;
     }
     
     protected String getStringResult(ExecResponse response) {
@@ -315,7 +318,7 @@ public abstract class AmazonEC2JPPFDeployer {
         upload(getRunningConfig(nodeProperties), getDirectoryName() + propertyFile);
     }
 
-    protected void startJPPF() {
+    protected String startJPPF() {
         final StringBuilder script = new StringBuilder("cd /home/ec2-user/").
                 append(getDirectoryName()).
                 append(jppfFolder).
@@ -324,13 +327,10 @@ public abstract class AmazonEC2JPPFDeployer {
         if(startScriptArguments != null && !startScriptArguments.isEmpty()) {
             script.append(" ").append(startScriptArguments);
         }
-        script.append(" > nohup.out 2>&1");
-        RunScriptOptions options = new RunScriptOptions().overrideLoginPrivateKey(
-                loginCredentials.getPrivateKey()).overrideLoginUser(
-                loginCredentials.getUser()).blockOnComplete(false).
-                runAsRoot(false).nameTask(getDirectoryName() + "-start");
-        logExecResponse(context.getComputeService().
-                runScriptOnNode(metadata.getId(), script.toString(), options));
+        script.append(" > ").
+                append(INIT_LOG).
+                append(" 2>&1");
+        return execute(script.toString()).getOutput();
     }
 
     protected void closeInputstream(final InputStream in) {

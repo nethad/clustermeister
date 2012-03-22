@@ -67,7 +67,7 @@ public class FileUtils {
         sb.append(Boolean.TRUE);
         sb.append("; else echo ");
         sb.append(Boolean.FALSE);
-        sb.append("; fi");
+        sb.append("; fi; exit 0");
         return sb.toString();
     }
     
