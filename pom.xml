@@ -341,4 +341,11 @@
             </plugin>
         </plugins>
     </reporting>
+    <distributionManagement>
+        <!-- where to deploy the artifacts -->
+        <snapshotRepository>
+            <id>ifi-snapshot-repo</id>
+            <url>https://maven.ifi.uzh.ch/maven2/content/repositories/private-snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
 </project>
