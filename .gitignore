@@ -16,3 +16,7 @@
 *~
 /api (copy)/target/
 /node/target/
+/node (copy)/target/
+/driver/target/
+/provisioning (copy)/target/
+/cli/target/
