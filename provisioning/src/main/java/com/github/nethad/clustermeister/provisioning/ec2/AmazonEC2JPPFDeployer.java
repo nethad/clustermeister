@@ -283,7 +283,7 @@ public abstract class AmazonEC2JPPFDeployer {
         if (crcFileExists) {
             try {
                 long remoteChecksum = Long.parseLong(getStringResult(
-                        execute("cat " + crc32File)));
+                        execute("cat " + crc32File + "; exit 0")));
                 uploadDriver = (remoteChecksum != getChecksum(zipFile));
             } catch (NumberFormatException ex) {
                 logger.warn("Invalid remote checksum.", ex);
