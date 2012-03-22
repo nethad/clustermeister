@@ -29,7 +29,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Launches a JPPF-Node in a new spawned process (independent JVM) and returns
- * the node is initialized.
+ * when the node is initialized.
  *
  * @author daniel
  */
