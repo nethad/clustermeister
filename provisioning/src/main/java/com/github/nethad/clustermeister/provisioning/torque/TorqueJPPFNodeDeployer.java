@@ -68,11 +68,11 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
     private final long sessionId;
     private long deployZipCRC32;
     private long akkaLibsZipCRC32;
-    private final Configuration configuration;
+    private final TorqueConfiguration configuration;
     private String email;
     
 
-    public TorqueJPPFNodeDeployer(Configuration configuration, SSHClient sshClient) {
+    public TorqueJPPFNodeDeployer(TorqueConfiguration configuration, SSHClient sshClient) {
         this.configuration = configuration;
         isInfrastructureDeployed = false;
         currentNodeNumber = new AtomicInteger(0);
@@ -156,12 +156,11 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
     }
     
     private void loadConfiguration() {     
-          host = configuration.getString(Configuration.TORQUE_SSH_HOST, "");
-          port = configuration.getInt(Configuration.TORQUE_SSH_PORT, 22);
-          user = configuration.getString(Configuration.TORQUE_SSH_USER, "");
-          privateKeyFilePath = configuration.getString(Configuration.TORQUE_SSH_PRIVATEKEY, "");
-          email = configuration.getString(Configuration.TORQUE_EMAIL_NOTIFY, "");
-          logger.info("EMAIL = "+email);
+          host = configuration.getSshHost();
+          port = configuration.getSshPort();
+          user = configuration.getSshUser();
+          privateKeyFilePath = configuration.getPrivateKeyPath();
+          email = configuration.getEmailNotify();
     }
 
     @Override

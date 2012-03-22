@@ -36,14 +36,14 @@ public class TorqueJPPFNodeDeployerTest {
     private TorqueJPPFNodeDeployer torqueJPPFNodeDeployer;
 
     @Before
-    public void setup() {
+    public void setup() throws ConfigurationValueMissingException {
         Map<String, Object> configValues = new HashMap<String, Object>();
-        configValues.put(Configuration.TORQUE_EMAIL_NOTIFY, "test@example.com");
-        configValues.put(Configuration.TORQUE_SSH_HOST, "ssh.example.com");
-        configValues.put(Configuration.TORQUE_SSH_PORT, 30);
-        configValues.put(Configuration.TORQUE_SSH_PRIVATEKEY, "/path/to/the/private/key");
-        configValues.put(Configuration.TORQUE_SSH_USER, "user");
-        ConfigurationForTesting configuration = new ConfigurationForTesting(configValues);
+        configValues.put(TorqueConfiguration.TORQUE_EMAIL_NOTIFY, "test@example.com");
+        configValues.put(TorqueConfiguration.TORQUE_SSH_HOST, "ssh.example.com");
+        configValues.put(TorqueConfiguration.TORQUE_SSH_PORT, 30);
+        configValues.put(TorqueConfiguration.TORQUE_SSH_PRIVATEKEY, "/path/to/the/private/key");
+        configValues.put(TorqueConfiguration.TORQUE_SSH_USER, "user");
+        TorqueConfiguration configuration = TorqueConfiguration.buildFromConfig(new ConfigurationForTesting(configValues));
         sshClient = mock(SSHClient.class);
         torqueJPPFNodeDeployer = new TorqueJPPFNodeDeployer(configuration, sshClient) {
             @Override

@@ -34,7 +34,6 @@ import org.slf4j.LoggerFactory;
  *
  * @author daniel
  */
-@Deprecated
 public class SSHClientImpl implements SSHClient {
 
     private final static Logger logger =
@@ -135,6 +134,10 @@ public class SSHClientImpl implements SSHClient {
         } catch (JSchException ex) {
             throw new SSHClientException(ex);
         }
+    }
+    
+    public SSHClientImpl() {
+        // default constructor
     }
 
     /**
@@ -443,6 +446,16 @@ public class SSHClientImpl implements SSHClient {
             return;
         } else {
             throw new SSHClientException("No connection to server.");
+        }
+    }
+
+    @Override
+    public void setPrivateKey(String privateKeyPath) throws SSHClientException {
+        jsch = new JSch();
+        try {
+            jsch.addIdentity(privateKeyPath, (String) null);
+        } catch (JSchException ex) {
+            throw new SSHClientException(ex);
         }
     }
 }

@@ -62,7 +62,7 @@ public class TorqueJPPFDriverDeployer {
         sshClient = null;
         try {
 
-            sshClient = new GanymedSSHClient(privateKeyFilePath);
+            sshClient = new SSHClientImpl(privateKeyFilePath);
             sshClient.connect(user, host, port);
             sshClient.executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "*");
 

@@ -45,7 +45,7 @@ class NodeDeployTask {
 		this.torqueNodeDeployment = torqueNodeDeployment;
 		this.nodeNumber = nodeNumber;
 		this.nodeConfiguration = nodeConfiguration;
-		managementPort = TorqueNodeDeployment.DEFAULT_MANAGEMENT_PORT + nodeNumber;
+		this.managementPort = TorqueNodeDeployment.DEFAULT_MANAGEMENT_PORT + nodeNumber;
         this.email = email;
 	}
 
