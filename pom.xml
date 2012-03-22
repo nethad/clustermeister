@@ -75,11 +75,11 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <modules>
-<!--		<module>driver</module>-->
+		<module>driver</module>
                 <module>node</module>
                 <module>api</module>
                 <module>provisioning</module>
-<!--                <module>cli</module>-->
+                <module>cli</module>
             </modules>
         </profile>
     </profiles>

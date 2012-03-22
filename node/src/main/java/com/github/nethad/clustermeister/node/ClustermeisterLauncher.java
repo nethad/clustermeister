@@ -39,7 +39,7 @@ public abstract class ClustermeisterLauncher {
     /**
      * Well-defined UUID prefix.
      */
-    protected static final String UUID_PREFIX = "UUID=";
+    public static final String UUID_PREFIX = "UUID=";
     
     /**
      * UTF-8 charset string ("UTF-8").

@@ -30,6 +30,7 @@ public class ClustermeisterNodeLifeCycleListener implements NodeLifeCycleListene
     public void nodeStarting(NodeLifeCycleEvent event) {
         //make sure the UUID is printed to standard out in a well defined format.
         System.out.println(ClustermeisterLauncher.UUID_PREFIX + NodeRunner.getUuid());
+        //register stream gobbler to take care of emptying (and printing) the standard streams.
     }
 
     @Override
