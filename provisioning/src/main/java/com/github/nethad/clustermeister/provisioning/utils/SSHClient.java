@@ -36,5 +36,7 @@ public interface SSHClient {
     public void sftpUpload(InputStream stream, String dest) throws SSHClientException;
     
     public void disconnect();
+
+    public void setPrivateKey(String privateKeyPath) throws SSHClientException;
     
 }

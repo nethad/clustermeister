@@ -135,6 +135,10 @@ public class SSHClientImpl implements SSHClient {
             throw new SSHClientException(ex);
         }
     }
+    
+    public SSHClientImpl() {
+        // default constructor
+    }
 
     /**
      * Open a connection to the SSH Daemon/Server on default port (TCP 22).
@@ -442,6 +446,16 @@ public class SSHClientImpl implements SSHClient {
             return;
         } else {
             throw new SSHClientException("No connection to server.");
+        }
+    }
+
+    @Override
+    public void setPrivateKey(String privateKeyPath) throws SSHClientException {
+        jsch = new JSch();
+        try {
+            jsch.addIdentity(privateKeyPath, (String) null);
+        } catch (JSchException ex) {
+            throw new SSHClientException(ex);
         }
     }
 }

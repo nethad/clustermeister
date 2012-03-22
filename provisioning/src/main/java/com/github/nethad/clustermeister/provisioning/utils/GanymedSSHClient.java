@@ -32,10 +32,14 @@ public class GanymedSSHClient implements SSHClient {
 
     private Logger logger = LoggerFactory.getLogger(GanymedSSHClient.class);
     private Connection connection;
-    private final String privateKeyFilePath;
+    private String privateKeyFilePath;
 
     public GanymedSSHClient(String privateKeyFilePath) {
         this.privateKeyFilePath = privateKeyFilePath;
+    }
+    
+    public GanymedSSHClient() {
+        // default constructor.
     }
 
     @Override
@@ -172,5 +176,10 @@ public class GanymedSSHClient implements SSHClient {
         } catch (IOException ex) {
             throw new SSHClientException("Could not open session", ex);
         }
+    }
+
+    @Override
+    public void setPrivateKey(String privateKeyPath) throws SSHClientException {
+        this.privateKeyFilePath = privateKeyPath;
     }
 }
