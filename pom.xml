@@ -347,5 +347,9 @@
             <id>ifi-snapshot-repo</id>
             <url>https://maven.ifi.uzh.ch/maven2/content/repositories/private-snapshots</url>
         </snapshotRepository>
+        <repository>
+            <id>ifi-release-repo</id>
+            <url>https://maven.ifi.uzh.ch/maven2/content/repositories/private/</url>
+        </repository>
     </distributionManagement>
 </project>
