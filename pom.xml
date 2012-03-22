@@ -53,22 +53,33 @@
 
     <properties>
         <jppf.node.version>0.1-SNAPSHOT</jppf.node.version>
+        <jppf.driver.version>0.1-SNAPSHOT</jppf.driver.version>
     </properties>
 
     <profiles>
         <profile>
-            <id>release</id>
+            <id>clustermeister-ext</id>
             <activation>
-                <activeByDefault>true</activeByDefault>
+                <activeByDefault>false</activeByDefault>
             </activation>
             <modules>
                 <module>org.jppf.common-node</module>
                 <module>org.jppf.common</module>
                 <module>org.jppf.server</module>
                 <module>org.jppf.client</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>release</id>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+            <modules>
+<!--		<module>driver</module>-->
                 <module>node</module>
                 <module>api</module>
                 <module>provisioning</module>
+<!--                <module>cli</module>-->
             </modules>
         </profile>
     </profiles>
