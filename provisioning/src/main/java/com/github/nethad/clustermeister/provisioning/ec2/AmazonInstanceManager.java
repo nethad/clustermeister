@@ -21,6 +21,7 @@ import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredenti
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.PasswordCredentials;
 import com.google.common.base.Optional;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -204,6 +205,7 @@ public class AmazonInstanceManager {
         ComputeServiceContext context = valueOrNotReady(contextFuture);
 
         int managementPort;
+        String uuid = null;
         switch (nodeConfig.getType()) {
             case NODE: {
                 managementPort = getNextNodeManagementPort(instanceMetadata);
@@ -211,7 +213,7 @@ public class AmazonInstanceManager {
                 AmazonEC2JPPFDeployer deployer =
                         new AmazonEC2JPPFNodeDeployer(context, instanceMetadata,
                         buildLoginCredentials(nodeConfig), nodeConfig);
-                deployer.deploy();
+                uuid = deployer.deploy();
                 break;
             }
             case DRIVER: {
@@ -220,7 +222,7 @@ public class AmazonInstanceManager {
                 AmazonEC2JPPFDeployer deployer =
                         new AmazonEC2JPPFDriverDeployer(context, instanceMetadata,
                         buildLoginCredentials(nodeConfig), nodeConfig);
-                deployer.deploy();
+                uuid = deployer.deploy();
 
                 break;
             }
@@ -229,13 +231,9 @@ public class AmazonInstanceManager {
             }
         }
 
-        AmazonNode node = new AmazonNode(getId(instanceMetadata, managementPort),
-                nodeConfig, instanceMetadata);
+        checkState(uuid != null && !uuid.isEmpty());
+        AmazonNode node = new AmazonNode(uuid, nodeConfig, instanceMetadata);
         return node;
-    }
-
-    private String getId(NodeMetadata instanceMetadata, int managementPort) {
-        return instanceMetadata.getId() + ":" + String.valueOf(managementPort);
     }
 
     private int getNextNodeManagementPort(NodeMetadata instanceMetadata) {

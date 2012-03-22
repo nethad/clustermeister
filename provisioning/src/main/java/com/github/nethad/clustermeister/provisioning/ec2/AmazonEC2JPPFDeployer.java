@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
  * @author daniel
  */
 public abstract class AmazonEC2JPPFDeployer {
+    protected static final String UUID_PREFIX = "UUID=";
 
     protected final static Logger logger =
             LoggerFactory.getLogger(AmazonEC2JPPFDeployer.class);
@@ -143,6 +144,7 @@ public abstract class AmazonEC2JPPFDeployer {
     protected abstract Monitor getMonitor();
     
     public String deploy() {
+        String uuid = null;
         SshClient ssh = getSSHClient();
         ssh.connect();
         try {
@@ -165,8 +167,8 @@ public abstract class AmazonEC2JPPFDeployer {
             uploadConfiguration(getSettings());
 
             logger.debug("Starting JPPF-{} on {}...", nodeTypeStr, metadata.getId());
-            String output = startJPPF();
-            System.out.println("lalalal " + output);
+            startJPPF();
+            uuid = getUUID();
             logger.debug("JPPF-{} deployed on {}.", nodeTypeStr, metadata.getId());
         } catch(Throwable ex){
             logger.debug("Deployment of JPPF-{} failed.", nodeConfiguration.getType().toString());
@@ -176,7 +178,7 @@ public abstract class AmazonEC2JPPFDeployer {
                 ssh.disconnect();
             }
         }
-        return null;
+        return uuid;
     }
     
     protected void prepareJPPF() {
@@ -339,5 +341,17 @@ public abstract class AmazonEC2JPPFDeployer {
         } catch (IOException ex) {
             logger.warn("Could not close Inputstream.", ex);
         }
+    }
+    
+    protected String getUUID() {
+        logger.debug("Fetching UUID from {}", INIT_LOG);
+        String output = getStringResult(execute("cat " + getDirectoryName() + 
+                jppfFolder + INIT_LOG + " | grep " + UUID_PREFIX));
+        checkNotNull(output);
+        checkState(output.startsWith(UUID_PREFIX));
+        String uuid = output.substring(UUID_PREFIX.length());
+        logger.debug("Got UUID {}.", uuid);
+        
+        return uuid;
     }
 }
