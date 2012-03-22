@@ -15,8 +15,6 @@
  */
 package com.github.nethad.clustermeister.provisioning.cli;
 
-import org.apache.commons.cli.Option;
-import org.apache.commons.cli.ParseException;
 import org.junit.*;
 import static org.junit.Assert.*;
 
