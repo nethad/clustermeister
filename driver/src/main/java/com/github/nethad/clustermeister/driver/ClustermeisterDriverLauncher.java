@@ -39,7 +39,7 @@ public class ClustermeisterDriverLauncher extends ClustermeisterLauncher {
      * 
      * @param args not used.
      */
-    public static void main(String... args) throws UnsupportedEncodingException {
+    public static void main(String... args) {
         
         new ClustermeisterDriverLauncher().doLaunch();
         
