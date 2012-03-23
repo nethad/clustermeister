@@ -40,12 +40,15 @@ public class ClustermeisterDriverStartUp implements JPPFDriverStartupSPI {
         System.out.println(Constants.UUID_PREFIX + JPPFDriver.getInstance().getUuid());
         System.out.flush();
         
-        //redirect stdout/stderr to files as the parent process' streams will die soon.
-        try {
-            System.setOut(new PrintStream(new FileOutputStream(Constants.STDOUT_LOG)));
-            System.setErr(new PrintStream(new FileOutputStream(Constants.STDERR_LOG)));
-        } catch (FileNotFoundException ex) {
-            logger.warn("Could not create log file.", ex);
+        boolean divertStreamsToFile = Boolean.parseBoolean(System.getProperty(
+                Constants.CLUSTERMEISTER_DIVERT_STREAMS_TO_FILE));
+        if(divertStreamsToFile) {
+            try {
+                System.setOut(new PrintStream(new FileOutputStream(Constants.STDOUT_LOG)));
+                System.setErr(new PrintStream(new FileOutputStream(Constants.STDERR_LOG)));
+            } catch (FileNotFoundException ex) {
+                logger.warn("Could not create log file.", ex);
+            }
         }
     }
 }
