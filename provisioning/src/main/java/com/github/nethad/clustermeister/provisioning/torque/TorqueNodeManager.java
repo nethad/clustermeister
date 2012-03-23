@@ -22,6 +22,7 @@ import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedCompon
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import com.github.nethad.clustermeister.provisioning.injection.SSHModule;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientImpl;
@@ -186,22 +187,29 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 	
 	public void removeAllNodes() {
         logger.info("Remove all nodes.");
-		TorqueNode firstDriver = drivers.iterator().next();
-		String driverHost = firstDriver.getPrivateAddresses().iterator().next();
-		int serverPort = firstDriver.getServerPort();
-		int managementPort = firstDriver.getManagementPort();
+        if (!drivers.isEmpty()) {
+            logger.warn("Drivers list not empty.");
+            TorqueNode firstDriver = drivers.iterator().next();
+            String driverHost = firstDriver.getPrivateAddresses().iterator().next();
+            int serverPort = firstDriver.getServerPort();
+            int managementPort = firstDriver.getManagementPort();
+        }
+        
+        String driverHost = "localhost";
+        int serverPort = JPPFLocalDriver.SERVER_PORT;
+        int managementPort = JPPFLocalDriver.MANAGEMENT_PORT;
 		
 		JPPFManagementByJobsClient client = JPPFConfiguratedComponentFactory.getInstance()
 				.createManagementByJobsClient(
-					firstDriver.getPrivateAddresses().iterator().next(), serverPort);
+					driverHost, serverPort);
         
         logger.info("Shutdown nodes.");
 		client.shutdownAllNodes(driverHost, managementPort);
 		nodes.clear();
         client.close();
         
-        logger.info("Shutdown driver.");
-		client.shutdownDriver(driverHost, managementPort);
+//        logger.info("Shutdown driver.");
+//		client.shutdownDriver(driverHost, managementPort);
 		drivers.clear();
 	}
 	

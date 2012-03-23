@@ -39,7 +39,7 @@ public class JPPFLocalDriver {
     private final org.slf4j.Logger logger = LoggerFactory.getLogger(JPPFLocalDriver.class);
 
     public static final int SERVER_PORT = 11111;
-    private static final int MANAGEMENT_PORT = 11198;
+    public static final int MANAGEMENT_PORT = 11198;
     private static final String DEPLOY_BASE_NAME = "jppf-driver";
     private static final String DEPLOY_ZIP = DEPLOY_BASE_NAME + ".zip";
     private static final String DEPLOY_PROPERTIES = DEPLOY_BASE_NAME + ".properties";

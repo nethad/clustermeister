@@ -18,16 +18,11 @@ package com.github.nethad.clustermeister.api.impl;
 import com.github.nethad.clustermeister.api.Clustermeister;
 import com.github.nethad.clustermeister.api.ExecutorNode;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import org.jppf.client.JPPFClient;
-import org.jppf.client.JPPFResultCollector;
 import org.jppf.client.concurrent.JPPFExecutorService;
-import org.jppf.server.protocol.JPPFTask;
-import org.jppf.utils.TypedProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
