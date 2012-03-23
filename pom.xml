@@ -341,15 +341,33 @@
             </plugin>
         </plugins>
     </reporting>
+    <repositories>
+        <repository>
+            <id>ifi-release-repo</id>
+            <name>ifi release repository</name>
+            <url>https://maven.ifi.uzh.ch/maven2/content/repositories/public/</url>
+            <layout>default</layout>
+            <releases>
+                <enabled>true</enabled>
+                <updatePolicy>daily</updatePolicy>
+                <checksumPolicy>warn</checksumPolicy>
+            </releases>
+            <snapshots>
+                <enabled>false</enabled>
+                <updatePolicy>never</updatePolicy>
+                <checksumPolicy>fail</checksumPolicy>
+            </snapshots>
+        </repository>
+    </repositories>
     <distributionManagement>
         <!-- where to deploy the artifacts -->
         <snapshotRepository>
             <id>ifi-snapshot-repo</id>
-            <url>https://maven.ifi.uzh.ch/maven2/content/repositories/private-snapshots</url>
+            <url>https://maven.ifi.uzh.ch/maven2/content/repositories/snapshots/</url>
         </snapshotRepository>
         <repository>
             <id>ifi-release-repo</id>
-            <url>https://maven.ifi.uzh.ch/maven2/content/repositories/private/</url>
+            <url>https://maven.ifi.uzh.ch/maven2/content/repositories/public/</url>
         </repository>
     </distributionManagement>
 </project>
