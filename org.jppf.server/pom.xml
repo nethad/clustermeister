@@ -10,7 +10,7 @@
 	<artifactId>org.jppf.server</artifactId>
 	<packaging>jar</packaging>
 	<name>Clustermeister EXT: JPPF Server</name>
-	<version>3.0</version>
+	<version>3.0-SNAPSHOT</version>
 	<description>
 		Mavenized jppf-server library.
 	</description>
