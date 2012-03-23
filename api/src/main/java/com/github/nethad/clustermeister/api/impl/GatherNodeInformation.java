@@ -19,6 +19,7 @@ import com.github.nethad.clustermeister.api.ExecutorNode;
 import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import com.github.nethad.clustermeister.sample.GatherNodeInformationTask;
+import com.github.nethad.clustermeister.sample.GatherNodeInformationTaskInBroadcastJob;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.net.InetAddresses;
 import com.google.common.util.concurrent.*;
@@ -39,6 +40,7 @@ import org.jppf.client.JPPFResultCollector;
 import org.jppf.management.JMXDriverConnectionWrapper;
 import org.jppf.management.JPPFManagementInfo;
 import org.jppf.node.policy.Equal;
+import org.jppf.server.JPPFStats;
 import org.jppf.server.protocol.JPPFTask;
 import org.jppf.utils.TypedProperties;
 import org.slf4j.Logger;
@@ -75,6 +77,8 @@ class GatherNodeInformation {
         wrapper = null;
         try {
             wrapper = NodeManagementConnector.openDriverConnection(DRIVER_HOST, DRIVER_MGMT_PORT);
+            JPPFManagementInfo firstNodeInfo = wrapper.nodesInformation().iterator().next();
+            JPPFStats statistics = wrapper.statistics();
             for (JPPFManagementInfo node : wrapper.nodesInformation()) {
                 JPPFJob job = createJobForNode(node);
                 JPPFResultCollector collector = new JPPFResultCollector(job);
@@ -86,6 +90,40 @@ class GatherNodeInformation {
             }
             logger.info("Submitted all jobs, wait for results...");
 
+            awaitTermination(lock, lastJobFinished);
+        } catch (Exception ex) {
+            logger.error("Error while getting node information", ex);
+        } finally {
+            if (wrapper != null) {
+                try {
+                    wrapper.close();
+                } catch (Exception ex) {
+                    // ignore
+                }
+            }
+        }
+        return nodes;
+    }
+    
+    public Collection<ExecutorNode> getNodesWithBroadcastJob() {
+                logger.info("Collect node information (broadcast job)");
+        List<JPPFResultCollector> collectorList = new ArrayList<JPPFResultCollector>();
+        wrapper = null;
+        try {
+            wrapper = NodeManagementConnector.openDriverConnection(DRIVER_HOST, DRIVER_MGMT_PORT);
+            int numberOfNodes = wrapper.nodesInformation().size();
+            
+            JPPFJob job = new JPPFJob();
+            job.addTask(new GatherNodeInformationTaskInBroadcastJob());
+            job.setBlocking(false);
+            job.getSLA().setBroadcastJob(true);
+            JPPFResultCollector collector = new JPPFResultCollector(job);
+            job.setResultListener(collector);
+            nodeCounter.set(numberOfNodes);
+            client.submit(job);
+            nonBlockingResultCollector(collector);
+            
+            logger.info("Submitted all jobs, wait for results...");
             awaitTermination(lock, lastJobFinished);
         } catch (Exception ex) {
             logger.error("Error while getting node information", ex);
@@ -135,7 +173,6 @@ class GatherNodeInformation {
     
     @VisibleForTesting
     void addExecutorNode(TypedProperties result) {
-        System.out.println("PROCESSING_THREADS is "+GatherNodeInformationTask.PROCESSING_THREADS);
         ExecutorNodeImpl executorNode = new ExecutorNodeImpl(client, threadsExecutorService);
         executorNode.setId(result.getProperty(GatherNodeInformationTask.UUID));
         NodeCapabilities nodeCapabilities = new NodeCapabilitiesImpl(

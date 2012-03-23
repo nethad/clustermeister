@@ -19,6 +19,7 @@ import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
@@ -38,6 +39,8 @@ public class TorqueJPPFTestSetup {
 //	private List<ListenableFuture<? extends Node>> nodes;
     private TorqueNodeManager torqueNodeManager;
 //	private Node driverNode;
+    private JPPFLocalDriver jppfLocalDriver;
+    private String driverIpAddress;
 
     private void execute() {
         final String configurationFilePath = System.getProperty("user.home") + "/.clustermeister/configuration.properties";
@@ -57,12 +60,12 @@ public class TorqueJPPFTestSetup {
         } catch (IOException ex) {
             ex.printStackTrace();
         }
-
+        torqueNodeManager.removeAllNodes();
         torqueNodeManager.shutdown();
 
-        torqueNodeManager.removeAllNodes();
-
         torqueNodeManager = null;
+        
+        jppfLocalDriver.shutdown();
 
         System.out.print("Press ENTER to kill the JVM: ");
         try {
@@ -84,21 +87,24 @@ public class TorqueJPPFTestSetup {
     private void startDriver() {
 //        TorqueLocalRunner runner = new TorqueLocalRunner();
 //        runner.start();
-        TorqueNodeConfiguration nodeConfiguration = TorqueNodeConfiguration.configurationForDriver(true);
-        ListenableFuture<? extends Node> driver = torqueNodeManager.addNode(nodeConfiguration);
-        try {
-            driver.get();
-        } catch (InterruptedException ex) {
-            ex.printStackTrace();
-        } catch (ExecutionException ex) {
-            ex.printStackTrace();
-        }
+        jppfLocalDriver = new JPPFLocalDriver();
+        jppfLocalDriver.execute();
+        driverIpAddress = jppfLocalDriver.getIpAddress();
+//        TorqueNodeConfiguration nodeConfiguration = TorqueNodeConfiguration.configurationForDriver(true);
+//        ListenableFuture<? extends Node> driver = torqueNodeManager.addNode(nodeConfiguration);
+//        try {
+//            driver.get();
+//        } catch (InterruptedException ex) {
+//            ex.printStackTrace();
+//        } catch (ExecutionException ex) {
+//            ex.printStackTrace();
+//        }
     }
 
     private void startNodes() {
 
         torqueNodeManager.deployResources();
-        TorqueNodeConfiguration nodeConfiguration = TorqueNodeConfiguration.configurationForNode(null, 1);
+        TorqueNodeConfiguration nodeConfiguration = TorqueNodeConfiguration.configurationForNode(driverIpAddress, 1);
         for (int i = 0; i < NUMBER_OF_NODES; i++) {
             ListenableFuture<? extends Node> node = torqueNodeManager.addNode(nodeConfiguration);
             try {
