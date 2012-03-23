@@ -75,6 +75,7 @@
                 <activeByDefault>true</activeByDefault>
             </activation>
             <modules>
+                <module>node-common</module>
 		<module>driver</module>
                 <module>node</module>
                 <module>api</module>
@@ -227,6 +228,16 @@
             <dependency>
                 <groupId>com.github.nethad.clustermeister</groupId>
                 <artifactId>provisioning</artifactId>
+                <version>0.1-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.nethad.clustermeister</groupId>
+                <artifactId>cli</artifactId>
+                <version>0.1-SNAPSHOT</version>
+            </dependency>
+            <dependency>
+                <groupId>com.github.nethad.clustermeister</groupId>
+                <artifactId>node-common</artifactId>
                 <version>0.1-SNAPSHOT</version>
             </dependency>
             <dependency>

@@ -13,9 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.driver;
-
-import com.github.nethad.clustermeister.node.ClustermeisterLauncher;
+package com.github.nethad.clustermeister.node.common;
 
 /**
  * Launches a JPPF-Driver in a new spawned process (JVM).

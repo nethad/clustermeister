@@ -17,27 +17,36 @@
     <dependencies>
         <dependency>
             <groupId>com.github.nethad.clustermeister</groupId>
-            <artifactId>node</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.github.nethad.clustermeister</groupId>
-            <artifactId>org.jppf.common</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.github.nethad.clustermeister</groupId>
-            <artifactId>org.jppf.common-node</artifactId>
+            <artifactId>node-common</artifactId>
         </dependency>
         <dependency>
             <groupId>com.github.nethad.clustermeister</groupId>
             <artifactId>org.jppf.server</artifactId>
         </dependency>
         <dependency>
+            <groupId>com.github.nethad.clustermeister</groupId>
+            <artifactId>org.jppf.common-node</artifactId>
+        </dependency>
+        <!-- runtime dependencies - needed to build the zip and nothing else -->
+        <dependency>
+            <groupId>com.github.nethad.clustermeister</groupId>
+            <artifactId>org.jppf.common</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
+            <groupId>log4j</groupId>
+            <artifactId>log4j</artifactId>
+            <scope>runtime</scope>
+        </dependency>
+        <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
+            <scope>runtime</scope>
         </dependency>
         <dependency>
             <groupId>org.jvnet.opendmk</groupId>
             <artifactId>jmxremote_optional</artifactId>
+            <scope>runtime</scope>
         </dependency>
     </dependencies>
     <build>

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.node;
+package com.github.nethad.clustermeister.node.common;
 
 /**
  * Launches a JPPF-Node in a new spawned process (JVM)

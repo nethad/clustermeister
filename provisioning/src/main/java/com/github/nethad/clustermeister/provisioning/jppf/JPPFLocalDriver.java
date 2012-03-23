@@ -16,7 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.jppf;
 
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
-import com.github.nethad.clustermeister.node.ClustermeisterLauncher;
+import com.github.nethad.clustermeister.node.common.ClustermeisterLauncher;
 import com.github.nethad.clustermeister.provisioning.utils.*;
 import java.util.concurrent.TimeoutException;
 import org.jppf.management.JMXDriverConnectionWrapper;

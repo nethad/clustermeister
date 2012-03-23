@@ -15,8 +15,8 @@
  */
 package com.github.nethad.clustermeister.driver;
 
-import com.github.nethad.clustermeister.node.Constants;
-import com.github.nethad.clustermeister.node.ShutdownHandler;
+import com.github.nethad.clustermeister.node.common.Constants;
+import com.github.nethad.clustermeister.node.common.ShutdownHandler;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
