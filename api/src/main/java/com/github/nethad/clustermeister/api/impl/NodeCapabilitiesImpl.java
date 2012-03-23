@@ -28,7 +28,6 @@ class NodeCapabilitiesImpl implements NodeCapabilities {
     private String jppfConfig;
 
     public NodeCapabilitiesImpl(int numberOfProcessors, int numberOfProcessingThreads, String jppfConfig) {
-        System.out.println("new NodeCapabilitiesImpl("+numberOfProcessors+","+numberOfProcessingThreads+"...)");
         this.numberOfProcessors = numberOfProcessors;
         this.numberOfProcessingThreads = numberOfProcessingThreads;
         this.jppfConfig = jppfConfig;
