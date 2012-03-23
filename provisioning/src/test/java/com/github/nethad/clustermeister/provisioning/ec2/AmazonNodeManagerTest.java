@@ -95,6 +95,10 @@ public class AmazonNodeManagerTest {
         Future<Void> ns = nodeManager.removeNode((AmazonNode) jppfNode, AmazonInstanceShutdownMethod.TERMINATE);
         Future<Void> ns2 = nodeManager.removeNode((AmazonNode) jppfNode2, AmazonInstanceShutdownMethod.TERMINATE);
 
+        ds.get();
+        ns.get();
+        ns2.get();
+        
         nodeManager.close();
     }
     

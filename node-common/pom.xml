@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+    <modelVersion>4.0.0</modelVersion>
+    <parent>
+        <groupId>com.github.nethad.clustermeister</groupId>
+        <artifactId>clustermeister</artifactId>
+        <version>0.1-SNAPSHOT</version>
+    </parent>
+    <groupId>com.github.nethad.clustermeister</groupId>
+    <artifactId>node-common</artifactId>
+    <version>0.1-SNAPSHOT</version>
+    <packaging>jar</packaging>
+    <name>Clustermeister Common Node</name>
+    <description>
+        A library for utilities to be deployed with drivers and nodes.
+    </description>
+    <dependencies>
+        <dependency>
+            <groupId>com.github.nethad.clustermeister</groupId>
+            <artifactId>org.jppf.common-node</artifactId>
+        </dependency>
+    </dependencies>
+</project>

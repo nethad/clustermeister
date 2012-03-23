@@ -22,7 +22,11 @@
         <dependency>
             <groupId>com.github.nethad.clustermeister</groupId>
             <artifactId>org.jppf.server</artifactId>
-        </dependency>	
+        </dependency>
+        <dependency>
+            <groupId>com.github.nethad.clustermeister</groupId>
+            <artifactId>node-common</artifactId>
+        </dependency>
         <dependency>
             <groupId>org.jclouds</groupId>
             <artifactId>jclouds-compute</artifactId>
@@ -91,10 +95,6 @@
         <dependency>
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.github.nethad.clustermeister</groupId>
-            <artifactId>driver</artifactId>
         </dependency>
     </dependencies>
  

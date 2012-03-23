@@ -14,3 +14,5 @@
 /node/target/
 /driver/target/
 /cli/target/
+/driver (copy)/target/
+/node-common/target/

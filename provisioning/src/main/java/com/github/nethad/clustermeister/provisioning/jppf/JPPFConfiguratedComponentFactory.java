@@ -15,8 +15,8 @@
  */
 package com.github.nethad.clustermeister.provisioning.jppf;
 
-import com.github.nethad.clustermeister.driver.ClustermeisterDriverLauncher;
-import com.github.nethad.clustermeister.node.ClustermeisterLauncher;
+import com.github.nethad.clustermeister.node.common.ClustermeisterDriverLauncher;
+import com.github.nethad.clustermeister.node.common.ClustermeisterLauncher;
 import com.google.common.util.concurrent.Monitor;
 import java.util.Map;
 import java.util.Observable;
