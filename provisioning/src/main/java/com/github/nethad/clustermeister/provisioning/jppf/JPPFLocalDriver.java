@@ -15,19 +15,11 @@
  */
 package com.github.nethad.clustermeister.provisioning.jppf;
 
-import com.github.nethad.clustermeister.provisioning.torque.*;
-import com.github.nethad.clustermeister.api.Configuration;
-import com.github.nethad.clustermeister.api.NodeType;
-import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFDriverConfigurationSource;
+import com.github.nethad.clustermeister.node.ClustermeisterLauncher;
 import com.github.nethad.clustermeister.provisioning.utils.*;
 import java.util.concurrent.TimeoutException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import org.jppf.management.JMXDriverConnectionWrapper;
-import org.jppf.process.ProcessLauncher;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -35,22 +27,12 @@ import org.slf4j.LoggerFactory;
  * @author thomas
  */
 public class JPPFLocalDriver {
+    private ClustermeisterLauncher launcher = null;
     
     private final org.slf4j.Logger logger = LoggerFactory.getLogger(JPPFLocalDriver.class);
 
     public static final int SERVER_PORT = 11111;
     public static final int MANAGEMENT_PORT = 11198;
-    private static final String DEPLOY_BASE_NAME = "jppf-driver";
-    private static final String DEPLOY_ZIP = DEPLOY_BASE_NAME + ".zip";
-    private static final String DEPLOY_PROPERTIES = DEPLOY_BASE_NAME + ".properties";
-    private String host;
-    private int port;
-    private ProcessLauncher processLauncher;
-    private SSHClient sshClient;
-    private String user;
-    private String privateKeyFilePath;
-//    private String passphrase;
-    private boolean runExternally = false;
     private String publicIp;
 
     public void execute() {
@@ -58,7 +40,8 @@ public class JPPFLocalDriver {
     }
 
     private void localSetupAndRun() {
-        JPPFConfiguratedComponentFactory.getInstance().createLocalDriver(SERVER_PORT, MANAGEMENT_PORT);
+        launcher = JPPFConfiguratedComponentFactory.getInstance().
+                createLocalDriver(SERVER_PORT, MANAGEMENT_PORT);
     }
 
     public String getIpAddress() {
@@ -70,6 +53,18 @@ public class JPPFLocalDriver {
     }
     
     public void shutdown() {
+        if(launcher != null) {
+            try {
+                logger.info("Shutting down local driver.");
+                launcher.shutdownProcess();
+                logger.info("Shutdown complete.");
+            } catch (Exception ex) {
+                logger.error("Error while shutting down local driver.", ex);
+            }
+        }
+    }
+
+    private void shutdownWithJMXConnection() {
         JMXDriverConnectionWrapper wrapper = null;
         try {
             logger.info("Shutting down local driver.");

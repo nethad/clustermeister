@@ -56,6 +56,7 @@
                                     <exclude>*:xml-apis</exclude>
                                     <exclude>org.apache.maven:lib:tests</exclude>
                                     <exclude>log4j:log4j:jar:</exclude>
+                                    <exclude>org.slf4j:slf4j-log4j12:jar:</exclude>
                                 </excludes>
                             </artifactSet>
                             <transformers>

@@ -15,13 +15,17 @@
  */
 package com.github.nethad.clustermeister.provisioning.jppf;
 
+import com.github.nethad.clustermeister.driver.ClustermeisterDriverLauncher;
+import com.github.nethad.clustermeister.node.ClustermeisterLauncher;
 import com.google.common.util.concurrent.Monitor;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Properties;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
-import org.jppf.server.JPPFDriver;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,6 +39,7 @@ import org.slf4j.LoggerFactory;
  * @author daniel
  */
 public class JPPFConfiguratedComponentFactory {
+    private static final String DRIVER_THREAD_NAME = "CMLocalDriverThread";
 
     
     /**
@@ -114,18 +119,62 @@ public class JPPFConfiguratedComponentFactory {
         }
     }
 	
-	public void createLocalDriver(int serverPort, int managementPort) {
-		configPropertyMonitor.enter();
-		try {
-			JPPFDriverConfigurationSource.serverPort = serverPort;
-			JPPFDriverConfigurationSource.managementPort = managementPort;
-			setConfigProperty(JPPFDriverConfigurationSource.class.getCanonicalName());
-			NonBlockingProcessLauncher processLauncher = new NonBlockingProcessLauncher(JPPFDriver.class.getCanonicalName());
-			processLauncher.runNonBlocking();
-		} finally {
-			configPropertyMonitor.leave();
-		}
-	}
+    public ClustermeisterLauncher createLocalDriver(int serverPort, int managementPort) {
+        configPropertyMonitor.enter();
+        try {
+            JPPFDriverConfigurationSource.serverPort = serverPort;
+            JPPFDriverConfigurationSource.managementPort = managementPort;
+            setConfigProperty(JPPFDriverConfigurationSource.class.getCanonicalName());
+            final ClustermeisterLauncher launcher = new ClustermeisterDriverLauncher();
+            final AtomicBoolean initialized = new AtomicBoolean(false);
+            final Monitor initializationMonitor = new Monitor(false);
+            final Monitor.Guard isInitialized = new Monitor.Guard(initializationMonitor) {
+                @Override
+                public boolean isSatisfied() {
+                    return initialized.get();
+                }
+            };
+            launcher.addObserver(new Observer() {
+                @Override
+                public void update(Observable o, Object arg) {
+                    initializationMonitor.enter();
+                    try {
+                        initialized.set(true);
+                    } finally {
+                        initializationMonitor.leave();
+                    }
+                }
+            });
+            Thread driverThread = new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    try {
+                        launcher.doLaunch(true);
+                    } catch(Throwable ex) {
+                        logger.warn("Execption from local driver thread.", ex);
+                    }
+                }
+            });
+            driverThread.setName(String.format("%s-%s", DRIVER_THREAD_NAME, driverThread.getId()));
+            driverThread.start();
+            
+            //wait for driver to initialize.
+            initializationMonitor.enter();
+            try {
+                try {
+                    initializationMonitor.waitFor(isInitialized);
+                } catch (InterruptedException ex) {
+                    logger.warn("Interrupted while waiting for local driver to initialize! "
+                            + "Initialization may not be complete.", ex);
+                }
+            } finally {
+                initializationMonitor.leave();
+            }
+            return launcher;
+        } finally {
+            configPropertyMonitor.leave();
+        }
+    }
 
     private void setConfigProperty(String className) {
         System.setProperty(JPPF_CONFIG_PLUGIN, className);

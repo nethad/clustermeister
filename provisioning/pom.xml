@@ -92,6 +92,10 @@
             <groupId>com.google.inject</groupId>
             <artifactId>guice</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.github.nethad.clustermeister</groupId>
+            <artifactId>driver</artifactId>
+        </dependency>
     </dependencies>
  
     <build>
