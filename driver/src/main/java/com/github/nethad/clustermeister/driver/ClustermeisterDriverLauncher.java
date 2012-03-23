@@ -16,11 +16,9 @@
 package com.github.nethad.clustermeister.driver;
 
 import com.github.nethad.clustermeister.node.ClustermeisterLauncher;
-import java.io.UnsupportedEncodingException;
 
 /**
- * Launches a JPPF-Driver in a new spawned process (independent JVM) and returns
- * when the driver is initialized.
+ * Launches a JPPF-Driver in a new spawned process (JVM).
  *
  * @author daniel
  */
@@ -34,17 +32,27 @@ public class ClustermeisterDriverLauncher extends ClustermeisterLauncher {
     /**
      * Start a JPPF-driver.
      * 
-     * The main method will spawn a new process for the JPPF-node and return as 
-     * soon as it obtained the UUID and initialization of JMX management is complete.
+     * The main method will spawn a new process for the JPPF-driver.
+     * If an independent process is launched it will kill this JVM as soon as it 
+     * obtained the UUID. Otherwise it will block until the child process dies.
      * 
-     * @param args not used.
+     * @param args 
+     *      the first argument "false" to launch an independent process or 
+     *      "true" to launch a dependent child process. If no argument is set, 
+     *      "true" is assumed.
      */
     public static void main(String... args) {
+        boolean launchAsChildProcess = true;
+        if(args != null && args.length >= 1) {
+            launchAsChildProcess = Boolean.parseBoolean(args[0]);
+        }
+        ClustermeisterLauncher launcher = new ClustermeisterDriverLauncher();
+        launcher.doLaunch(launchAsChildProcess);
         
-        new ClustermeisterDriverLauncher().doLaunch();
-        
-        //Exit from this JVM. The spawned process continues to run.
-        System.exit(0);
+        if(!launchAsChildProcess) {
+            //Exit from this JVM. The spawned process continues to run.
+            System.exit(0);
+        }
     }
     
     @Override

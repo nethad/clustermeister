@@ -40,4 +40,22 @@ public class Constants {
      * Standard err log file name.
      */
     public static final String STDERR_LOG = "stderr.log";
+    
+    /**
+     * System property configuration indicating that stdout/stderr shall be 
+     * diverted to loggers.
+     */
+    public static final String CLUSTERMEISTER_DIVERT_STREAMS_TO_LOG = 
+            "com.github.nethad.clustermeister.divertStreamsToLog";
+    /**
+     * System property configuration indicating that stdout/stderr shall be 
+     * diverted to files.
+     */
+    public static final String CLUSTERMEISTER_DIVERT_STREAMS_TO_FILE = 
+            "com.github.nethad.clustermeister.divertStreamsToFile";
+    
+    /**
+     * JPPF System property configuration for additional JVM options.
+     */
+    public static final String JPPF_JVM_OPTIONS = "jppf.jvm.options";
 }
