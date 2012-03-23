@@ -174,4 +174,13 @@ public class ClustermeisterProcessLauncher extends ProcessLauncher {
         return launchAsChildProcess;
     }
 
+    /**
+     * Returns the spawned sub-process handle.
+     * 
+     * @return the sub-process or null if it has not been started yet.
+     */
+    public Process getProcess() {
+        return process;
+    }
+
 }

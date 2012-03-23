@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.driver;
 
 import com.github.nethad.clustermeister.node.Constants;
+import com.github.nethad.clustermeister.node.ShutdownHandler;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
@@ -49,6 +50,10 @@ public class ClustermeisterDriverStartUp implements JPPFDriverStartupSPI {
             } catch (FileNotFoundException ex) {
                 logger.warn("Could not create log file.", ex);
             }
+        } else {
+            //register a shutdown handler to allow for graceful termination.
+            ShutdownHandler shutdownHandler = new ShutdownHandler(System.in);
+            shutdownHandler.start();
         }
     }
 }

@@ -20,6 +20,7 @@ import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
@@ -41,6 +42,9 @@ import org.slf4j.LoggerFactory;
  * @author daniel
  */
 public abstract class ClustermeisterLauncher extends Observable {
+    
+    private static final String JPPF_THREAD_NAME = "CMLauncherThread";
+    
     protected final static Logger logger =
             LoggerFactory.getLogger(ClustermeisterLauncher.class);
     
@@ -49,13 +53,15 @@ public abstract class ClustermeisterLauncher extends Observable {
      */
     protected ClustermeisterProcessLauncher processLauncher = null;
 
+    private Thread jppfThread = null;
+    
     /**
      * Performs the launching of a new JVM using the runner from {@link #getRunner()}.
      * 
      * @param launchAsChildProcess 
      *      Whether to launch a child process or independent process. 
      */
-    public void doLaunch(boolean launchAsChildProcess) {
+    synchronized public void doLaunch(boolean launchAsChildProcess) {
         PipedInputStream in = new PipedInputStream();
         PrintStream sout = System.out;
         PipedOutputStream out = null;
@@ -66,7 +72,9 @@ public abstract class ClustermeisterLauncher extends Observable {
             try {
                 //Spawn a new JVM
                 startUp(launchAsChildProcess);
-                waitForUUID(in, sout);
+                String uuidLine = waitForUUID(in, sout);
+                setChanged();
+                notifyObservers(uuidLine);
             } catch (Exception ex) {
                 logger.warn("Exception while launching.", ex);
             }
@@ -78,6 +86,24 @@ public abstract class ClustermeisterLauncher extends Observable {
             closeStream(in);
             closeStream(out);
             sout.flush();
+        }
+    }
+    
+    /**
+     * Stops the sub-process (JVM).
+     * 
+     * This method is as graceful as possible.
+     * 
+     * @throws Exception when any exception occurs.
+     */
+    synchronized public void shutdownProcess() throws Exception {
+        if(processLauncher != null) {
+            Process process = processLauncher.getProcess();
+            if(process != null) {
+                final OutputStream outputStream = process.getOutputStream();
+                outputStream.write(ShutdownHandler.SHUTDOWN_STRING.getBytes(Constants.UTF8));
+                outputStream.flush();
+            }
         }
     }
     
@@ -99,16 +125,17 @@ public abstract class ClustermeisterLauncher extends Observable {
         if(!launchAsChildProcess) {
             processLauncher.switchStreamsToFiles();
         }
-        Thread jppfThread = new Thread(new Runnable() {
+        jppfThread = new Thread(new Runnable() {
             @Override
             public void run() {
                 processLauncher.run();
             }
         });
+        jppfThread.setName(String.format("%s-%s", JPPF_THREAD_NAME, jppfThread.getId()));
         jppfThread.start();
     }
     
-    private void waitForUUID(InputStream in, PrintStream sout) 
+    private String waitForUUID(InputStream in, PrintStream sout) 
             throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(in, Constants.UTF8));
         System.out.println("Waiting for UUID.");
@@ -117,9 +144,11 @@ public abstract class ClustermeisterLauncher extends Observable {
             sout.println(line);
             if(line.startsWith(Constants.UUID_PREFIX)) {
                 sout.println("Got UUID.");
-                break;
+                return line;
             }
         }
+        
+        return null;
     }
     
     private void closeStream(Closeable in) {

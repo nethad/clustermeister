@@ -91,7 +91,7 @@ public class StreamGobbler extends Thread {
                 if (pw != null) {
                     pw.println(line);
                 }
-                System.out.println(type + ">" + line);
+                onOutput(line);
             }
             if (pw != null) {
                 pw.flush();
@@ -101,8 +101,30 @@ public class StreamGobbler extends Thread {
             if(pw != null) {
                 ex.printStackTrace(pw);
             } else {
-                ex.printStackTrace(System.out);
+                onException(ex);
             }
         }
+    }
+    
+    /**
+     * Handle output when no output stream is set to redirect to.
+     * 
+     * Default implementation is to print to stdout.
+     * 
+     * @param line the line to output.
+     */
+    protected void onOutput(String line) {
+        System.out.println(type + ">" + line);
+    }
+    
+    /**
+     * Handle IOException when no output stream is set to redirect to.
+     * 
+     * Default implementation is to print to stdout.
+     * 
+     * @param ex the exception.
+     */
+    protected void onException(IOException ex) {
+        ex.printStackTrace(System.out);
     }
 }
