@@ -20,6 +20,7 @@ import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.provisioning.cli.Provider;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.github.nethad.clustermeister.provisioning.utils.PublicIp;
@@ -43,6 +44,7 @@ public class Provisioning {
     private Configuration configuration;
     private TorqueNodeManager torqueNodeManager;
     private Logger logger = LoggerFactory.getLogger(Provisioning.class);
+    private JPPFLocalDriver jppfLocalDriver;
 
     public Provisioning(String configFilePath, Provider provider) {
         this.configFilePath = configFilePath;
@@ -107,20 +109,25 @@ public class Provisioning {
 
     private void startTorque() {
         torqueNodeManager = new TorqueNodeManager(configuration);
-        ListenableFuture<? extends Node> driver = torqueNodeManager.addNode(getTorqueDriverConfiguration());
-        driverHost = PublicIp.getPublicIp();
-        try {
-            driver.get();
-        } catch (InterruptedException ex) {
-            logger.error("Error while waiting for driver to start up.", ex);
-        } catch (ExecutionException ex) {
-            logger.error("Error while waiting for driver to start up.", ex);
-        }
+        
+        jppfLocalDriver = new JPPFLocalDriver();
+        jppfLocalDriver.execute();
+        driverHost = jppfLocalDriver.getIpAddress();
+        //        ListenableFuture<? extends Node> driver = torqueNodeManager.addNode(getTorqueDriverConfiguration());
+        //        driverHost = PublicIp.getPublicIp();
+        //        try {
+        //            driver.get();
+        //        } catch (InterruptedException ex) {
+        //            logger.error("Error while waiting for driver to start up.", ex);
+        //        } catch (ExecutionException ex) {
+        //            logger.error("Error while waiting for driver to start up.", ex);
+        //        }
     }
     
     private void shutdownTorque() {
         torqueNodeManager.removeAllNodes();
         torqueNodeManager.shutdown();
+        jppfLocalDriver.shutdown();
     }
     
     private TorqueNodeConfiguration getTorqueDriverConfiguration() {
