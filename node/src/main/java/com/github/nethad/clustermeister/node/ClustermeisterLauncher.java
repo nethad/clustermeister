@@ -23,16 +23,24 @@ import java.io.InputStreamReader;
 import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
+import java.util.Observable;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Launches a JPPF-Node in a new spawned process (independent JVM) and returns
- * when the node is initialized.
+ * Launches a JPPF-Node in a new spawned process (JVM) and is able 
+ * to react (by returning or notifying) when the process is initialized.
+ * 
+ * A dependent child process will keep this JVM running until the child process 
+ * or this JVM dies. Observers will be notified when the initialization is 
+ * complete.
+ * 
+ * An independent process will kill this JVM (and thus "return") upon successful 
+ * initialization of the sub process.
  *
  * @author daniel
  */
-public abstract class ClustermeisterLauncher {
+public abstract class ClustermeisterLauncher extends Observable {
     protected final static Logger logger =
             LoggerFactory.getLogger(ClustermeisterLauncher.class);
     
@@ -42,12 +50,55 @@ public abstract class ClustermeisterLauncher {
     protected ClustermeisterProcessLauncher processLauncher = null;
 
     /**
+     * Performs the launching of a new JVM using the runner from {@link #getRunner()}.
+     * 
+     * @param launchAsChildProcess 
+     *      Whether to launch a child process or independent process. 
+     */
+    public void doLaunch(boolean launchAsChildProcess) {
+        PipedInputStream in = new PipedInputStream();
+        PrintStream sout = System.out;
+        PipedOutputStream out = null;
+        try {
+            out = new PipedOutputStream(in);
+            //prepare to capture spawned processes output stream.
+            System.setOut(new PrintStream(out));
+            try {
+                //Spawn a new JVM
+                startUp(launchAsChildProcess);
+                waitForUUID(in, sout);
+            } catch (Exception ex) {
+                logger.warn("Exception while launching.", ex);
+            }
+        } catch (IOException ex) {
+            logger.warn("Can not read from pipe output stream of the JPPF sub-process.", ex);
+        } finally {
+            //restore output stream.
+            System.setOut(sout);
+            closeStream(in);
+            closeStream(out);
+            sout.flush();
+        }
+    }
+    
+     /**
+     * Get the fully qualified class name of the runner to use.
+     * 
+     * @return the runner.
+     */
+    abstract protected String getRunner();
+    
+    /**
      * Starts the JPPF process (a new JVM).
      * 
      * @throws Exception when any exception occurs process spawning preparation.
      */
-    protected void startUp(String runner) throws Exception {
-        processLauncher = new ClustermeisterProcessLauncher(runner);
+    protected void startUp(boolean launchAsChildProcess) throws Exception {
+        processLauncher = new ClustermeisterProcessLauncher(getRunner());
+        processLauncher.setLaunchAsChildProcess(launchAsChildProcess);
+        if(!launchAsChildProcess) {
+            processLauncher.switchStreamsToFiles();
+        }
         Thread jppfThread = new Thread(new Runnable() {
             @Override
             public void run() {
@@ -78,46 +129,6 @@ public abstract class ClustermeisterLauncher {
             } catch (IOException ex) {
                 logger.warn("Can not close stream.", ex);
             }
-        }
-    }
-    
-    /**
-     * Get the fully qualified class name of the runner to use.
-     * 
-     * @return the runner.
-     */
-    abstract protected String getRunner();
-    
-    /**
-     * Performs the launching of a new JVM using the runner from {@link #getRunner()}.
-     */
-    protected void doLaunch() {
-        PipedInputStream in = new PipedInputStream();
-        PrintStream sout = System.out;
-        PipedOutputStream out = null;
-        try {
-            out = new PipedOutputStream(in);
-            //prepare to capture spawned processes output stream.
-            System.setOut(new PrintStream(out));
-            try {
-                //Spawn a new JVM
-                startUp(getRunner());
-                waitForUUID(in, sout);
-            } catch (Exception ex) {
-                logger.warn("Exception while launching.", ex);
-            }
-        } catch (IOException ex) {
-            logger.warn("Can not read from pipe output stream of the JPPF sub-process.", ex);
-        } finally {
-            //restore output stream.
-            System.setOut(sout);
-            closeStream(in);
-            closeStream(out);
-            //divert the spawned processes error and output streams to a logger.
-            if(processLauncher != null) {
-                processLauncher.switchStreams();
-            }
-            sout.flush();
         }
     }
 }
