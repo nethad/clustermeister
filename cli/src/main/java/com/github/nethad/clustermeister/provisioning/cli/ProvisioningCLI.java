@@ -20,12 +20,16 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import org.apache.commons.cli.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author thomas
  */
 public class ProvisioningCLI {
+    
+    private final Logger logger = LoggerFactory.getLogger(ProvisioningCLI.class);
 
     private static final String OPTION_CONFIG_FILE = "config";
     private static final String DEFAULT_CONFIG_FILE = System.getProperty("user.home") + "/.clustermeister/configuration.properties";
@@ -42,20 +46,21 @@ public class ProvisioningCLI {
     private UserInputEvaluation userInputEvaluation;
 
     protected void startCLI(String[] args) {
-        if (args.length == 0) {
-            HelpFormatter formatter = new HelpFormatter();
-            formatter.printHelp( "clustermeister", getOptions());
-        } else {
+//        if (args.length == 0) {
+//            HelpFormatter formatter = new HelpFormatter();
+//            formatter.printHelp( "clustermeister", getOptions());
+//        } else {
             try {
                 parseArguments(args);
-                System.out.println("Config File Path: "+configFilePath);
+                logger.info("Using configuration in "+configFilePath);
+                logger.info("Using provider "+provider);
                 provisioning = new Provisioning(configFilePath, provider);
                 provisioning.execute();
                 startREPL();
             } catch (ParseException ex) {
-                System.err.println("Terminated: " + ex.getMessage());
+                logger.error("Terminated.", ex);
             }
-        }
+//        }
         // TODO this is necessary because JPPFClient still has running threads which 
         // won't shut down with close().
         System.exit(0);
@@ -75,8 +80,8 @@ public class ProvisioningCLI {
         while (true) {
             try {
                 return userInput.readLine();
-            } catch (IOException e) {
-                System.err.println("Could not read your input ("+e.getMessage()+")");
+            } catch (IOException ex) {
+                logger.error("Could not read user input.", ex);
             }
             return nextUserInput();
         }
