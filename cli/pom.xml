@@ -15,10 +15,10 @@
         lorem ipsum.
     </description>
     <dependencies>
-        <dependency>
+<!--        <dependency>
             <groupId>com.github.nethad.clustermeister</groupId>
             <artifactId>api</artifactId>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>com.github.nethad.clustermeister</groupId>
             <artifactId>provisioning</artifactId>
