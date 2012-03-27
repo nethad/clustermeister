@@ -53,7 +53,8 @@ public class GatherNodeInformationTask extends JPPFTask {
             propertiesMap = new HashMap<Object, Object>();
             
             if (sysInfo == null) {
-                setException(new Exception("Could not get system information."));
+                setException(new Exception("Could not get system information, "
+                        + "because the JMX wrapper returned null for systemInformation()."));
                 return;
             }
             
