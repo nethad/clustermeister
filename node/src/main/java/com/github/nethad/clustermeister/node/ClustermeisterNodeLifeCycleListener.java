@@ -19,7 +19,9 @@ import com.github.nethad.clustermeister.node.common.Constants;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
+import java.util.Arrays;
 import org.jppf.node.NodeRunner;
+import org.jppf.node.event.LifeCycleEventHandler;
 import org.jppf.node.event.NodeLifeCycleEvent;
 import org.jppf.node.event.NodeLifeCycleListener;
 import org.slf4j.Logger;
@@ -60,7 +62,16 @@ public class ClustermeisterNodeLifeCycleListener implements NodeLifeCycleListene
 
     @Override
     public void jobStarting(NodeLifeCycleEvent event) {
-        //nop
+        boolean jobNameIsShutdownMarker = event.getJob().getName().contains(Constants.JOB_MARKER_SHUTDOWN);
+        if (jobNameIsShutdownMarker) {
+            System.out.println("Node is shutting down.");
+            Object eventSource = event.getSource();
+            if (eventSource instanceof LifeCycleEventHandler) {
+                System.out.println("eventSource is LifeCycleEventHandler");
+                ((LifeCycleEventHandler)eventSource).fireNodeEnding();
+            }
+            NodeRunner.shutdown(NodeRunner.getNode(), false);
+        }
     }
 
     @Override
