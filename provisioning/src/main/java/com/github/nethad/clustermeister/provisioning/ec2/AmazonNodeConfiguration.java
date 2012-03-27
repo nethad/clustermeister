@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Credentials;
+import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.google.common.base.Optional;
@@ -37,6 +38,7 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
     private String driverAddress = "";
     private boolean driverDeployedLocally = false;
     private int managementPort = AmazonNodeManager.DEFAULT_MANAGEMENT_PORT;
+    private NodeCapabilities nodeCapabilities = null;
 
     public void setNodeType(NodeType nodeType) {
         this.nodeType = nodeType;
@@ -96,6 +98,14 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
 
     int getManagementPort() {
         return managementPort;
+    }
+
+    public void setNodeCapabilities(NodeCapabilities nodeCapabilities) {
+        this.nodeCapabilities = nodeCapabilities;
+    }
+
+    public NodeCapabilities getNodeCapabilities() {
+        return nodeCapabilities;
     }
     
     Template getTemplate(TemplateBuilder templateBuilder) {
