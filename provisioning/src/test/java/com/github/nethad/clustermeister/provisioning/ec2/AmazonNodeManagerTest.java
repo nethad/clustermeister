@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Node;
+import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
@@ -59,6 +60,7 @@ public class AmazonNodeManagerTest {
         dc.setRegion(EU_WEST_1C);
         dc.setNodeType(NodeType.DRIVER);
         dc.setCredentials(getCredentials());
+        dc.setNodeCapabilities(getCapabilities());
         final Future<? extends Node> d = nodeManager.addNode(dc, instanceId);
         
 //        Optional<String> driverInstanceId = Optional.of(((AmazonNode)d.get()).getInstanceId());
@@ -67,6 +69,7 @@ public class AmazonNodeManagerTest {
         nc.setNodeType(NodeType.NODE);
         nc.setDriverAddress(Iterables.getFirst(d.get().getPrivateAddresses(), null));
         nc.setCredentials(getCredentials());
+        nc.setNodeCapabilities(getCapabilities());
         final Future<? extends Node> n = nodeManager.addNode(nc, instanceId);
         
         AmazonNodeConfiguration nc2 = new AmazonNodeConfiguration();
@@ -74,6 +77,7 @@ public class AmazonNodeManagerTest {
         nc2.setNodeType(NodeType.NODE);
         nc2.setDriverAddress(Iterables.getFirst(d.get().getPrivateAddresses(), null));
         nc2.setCredentials(getCredentials());
+        nc2.setNodeCapabilities(getCapabilities());
         final Future<? extends Node> n2 = nodeManager.addNode(nc2, instanceId);
         
 
@@ -100,6 +104,26 @@ public class AmazonNodeManagerTest {
         ns2.get();
         
         nodeManager.close();
+    }
+    
+    private static NodeCapabilities getCapabilities() {
+        return new NodeCapabilities() {
+
+            @Override
+            public int getNumberOfProcessors() {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+
+            @Override
+            public int getNumberOfProcessingThreads() {
+                return 1;
+            }
+
+            @Override
+            public String getJppfConfig() {
+                throw new UnsupportedOperationException("Not supported yet.");
+            }
+        };
     }
     
     private static KeyPairCredentials getCredentials() {
