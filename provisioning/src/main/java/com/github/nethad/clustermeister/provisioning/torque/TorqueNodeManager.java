@@ -187,7 +187,7 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 	
 	public void removeAllNodes() {
         logger.info("Remove all nodes.");
-        if (!drivers.isEmpty()) {
+        if (!drivers.isEmpty()) { // not needed
             logger.warn("Drivers list not empty.");
             TorqueNode firstDriver = drivers.iterator().next();
             String driverHost = firstDriver.getPrivateAddresses().iterator().next();
@@ -197,14 +197,15 @@ public class TorqueNodeManager implements TorqueNodeManagement {
         
         String driverHost = "localhost";
         int serverPort = JPPFLocalDriver.SERVER_PORT;
-        int managementPort = JPPFLocalDriver.MANAGEMENT_PORT;
+//        int managementPort = JPPFLocalDriver.MANAGEMENT_PORT;
 		
 		JPPFManagementByJobsClient client = JPPFConfiguratedComponentFactory.getInstance()
 				.createManagementByJobsClient(
 					driverHost, serverPort);
         
         logger.info("Shutdown nodes.");
-		client.shutdownAllNodes(driverHost, managementPort);
+//		client.shutdownAllNodes(driverHost, managementPort);
+        client.shutdownAllNodes();
 		nodes.clear();
         client.close();
         

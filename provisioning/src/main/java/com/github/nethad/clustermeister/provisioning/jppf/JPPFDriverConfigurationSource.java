@@ -44,10 +44,13 @@ public class JPPFDriverConfigurationSource implements JPPFConfiguration.Configur
 		properties.setProperty("jppf.server.port", String.valueOf(serverPort));
 		properties.setProperty("jppf.management.port", String.valueOf(managementPort));
         
-        properties.setProperty("jppf.peer.server_1.server.host", "host_1");
-        properties.setProperty("jppf.peer.server_1.server.port", "11111");
-        properties.setProperty("jppf.peer.server_2.server.host", "host_2");
-        properties.setProperty("jppf.peer.server_2.server.port", "11111");
+        properties.setProperty("jppf.discovery.enabled", "false");
+        properties.setProperty("jppf.peer.discovery.enabled", "false");              
+        
+//        properties.setProperty("jppf.peer.server_1.server.host", "host_1");
+//        properties.setProperty("jppf.peer.server_1.server.port", "11111");
+//        properties.setProperty("jppf.peer.server_2.server.host", "host_2");
+//        properties.setProperty("jppf.peer.server_2.server.port", "11111");
         properties.setProperty("jppf.load.balancing.algorithm", "proportional");
         properties.setProperty("jppf.load.balancing.strategy", "test");
         properties.setProperty("strategy.manual.size", "1");
