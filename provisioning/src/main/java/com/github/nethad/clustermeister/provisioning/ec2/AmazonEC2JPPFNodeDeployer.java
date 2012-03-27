@@ -64,6 +64,7 @@ public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
         final InputStream in = this.getClass().getResourceAsStream(PROPERTY_FILE_NAME);
         try {
             Properties nodeProperties = getPropertiesFromStream(in);
+            nodeProperties.setProperty("jppf.discovery.enabled", "false");
             nodeProperties.setProperty(JPPF_SERVER_HOST, nodeConfiguration.getDriverAddress());
             nodeProperties.setProperty(JPPF_MANAGEMENT_HOST, getPrivateIp());
             nodeProperties.setProperty(JPPF_MANAGEMENT_PORT, 
