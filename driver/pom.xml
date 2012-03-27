@@ -27,26 +27,30 @@
             <groupId>com.github.nethad.clustermeister</groupId>
             <artifactId>org.jppf.common-node</artifactId>
         </dependency>
-        <!-- runtime dependencies - needed to build the zip and nothing else -->
+        <!-- non-transitive runtime dependencies - needed to build the zip and nothing else -->
         <dependency>
             <groupId>com.github.nethad.clustermeister</groupId>
             <artifactId>org.jppf.common</artifactId>
             <scope>runtime</scope>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>log4j</groupId>
             <artifactId>log4j</artifactId>
             <scope>runtime</scope>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-log4j12</artifactId>
             <scope>runtime</scope>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.jvnet.opendmk</groupId>
             <artifactId>jmxremote_optional</artifactId>
             <scope>runtime</scope>
+            <optional>true</optional>
         </dependency>
     </dependencies>
     <build>
