@@ -199,15 +199,22 @@ public class TorqueNodeManager implements TorqueNodeManagement {
         int serverPort = JPPFLocalDriver.SERVER_PORT;
 //        int managementPort = JPPFLocalDriver.MANAGEMENT_PORT;
 		
-		JPPFManagementByJobsClient client = JPPFConfiguratedComponentFactory.getInstance()
+        
+        JPPFManagementByJobsClient client = null;
+        try {
+    		client = JPPFConfiguratedComponentFactory.getInstance()
 				.createManagementByJobsClient(
 					driverHost, serverPort);
+            
+            logger.info("Shutdown nodes.");
+            client.shutdownAllNodes();
+            nodes.clear();
+        } finally {
+            if (client != null) {
+                client.close();
+            }
+        }
         
-        logger.info("Shutdown nodes.");
-//		client.shutdownAllNodes(driverHost, managementPort);
-        client.shutdownAllNodes();
-		nodes.clear();
-        client.close();
         
 //        logger.info("Shutdown driver.");
 //		client.shutdownDriver(driverHost, managementPort);
