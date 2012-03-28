@@ -15,19 +15,38 @@
  */
 package com.github.nethad.clustermeister.provisioning.rmi;
 
+import com.github.nethad.clustermeister.api.NodeInformation;
 import com.github.nethad.clustermeister.driver.rmi.IRmiServerForDriver;
 import java.rmi.RemoteException;
 import org.jppf.management.JPPFManagementInfo;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author thomas
  */
 public class RmiServerForDriver implements IRmiServerForDriver {
+    private final Logger logger = LoggerFactory.getLogger(RmiServerForDriver.class);
+    
+    private NodeManager nodeManager;
 
     @Override
     public void onNodeConnected(JPPFManagementInfo managementInfo) throws RemoteException {
-        System.out.println("Node connected "+managementInfo.getId());
+        logger.info("Node connected "+managementInfo.getId());
+        NodeInformation nodeInformation = new NodeInformationImpl(managementInfo.getId(), managementInfo);
+        nodeManager.addNode(nodeInformation);
     }
+    
+    @Override
+    public void onNodeDisconnected(JPPFManagementInfo managementInfo) throws RemoteException {
+        logger.info("Node disconnected "+managementInfo.getId());
+        nodeManager.removeNode(managementInfo.getId());
+    }
+    
+    public void setNodeManager(NodeManager nodeManager) {
+        this.nodeManager = nodeManager;
+    }
+
     
 }

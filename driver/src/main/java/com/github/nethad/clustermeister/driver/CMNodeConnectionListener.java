@@ -61,14 +61,21 @@ public class CMNodeConnectionListener implements NodeConnectionListener  {
             try {
                 server.onNodeConnected(event.getNodeInformation());
             } catch (RemoteException ex) {
-                logger.error("Could not send node connected message to server.", ex);
+                logger.error("Could not send node disconnected message to server.", ex);
             }
         }
     }
 
     @Override
     public void nodeDisconnected(NodeConnectionEvent event) {
-        // do nothing
+        if (successfulInit) {
+            try {
+                server.onNodeDisconnected(event.getNodeInformation());
+            } catch (RemoteException ex) {
+                logger.error("Could not send node disconnected message to server.", ex);
+            }
+        }
+        
     }
 
 }

@@ -29,4 +29,6 @@ public interface IRmiServerForDriver extends Remote {
     
     public void onNodeConnected(JPPFManagementInfo managementInfo) throws RemoteException;
     
+    public void onNodeDisconnected(JPPFManagementInfo managementInfo) throws RemoteException;
+    
 }
