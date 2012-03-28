@@ -13,22 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.driver.rmi;
+package com.github.nethad.clustermeister.api;
 
-import java.rmi.Remote;
-import java.rmi.RemoteException;
 import org.jppf.management.JPPFManagementInfo;
 
 /**
  *
  * @author thomas
  */
-public interface IRmiServerForDriver extends Remote {
+public interface NodeInformation {
     
-    public static final String NAME = "RmiServerForDriver";
-    
-    public void onNodeConnected(JPPFManagementInfo managementInfo) throws RemoteException;
-    
-    public void onNodeDisconnected(JPPFManagementInfo managementInfo) throws RemoteException;
+    public String getID();
+    public JPPFManagementInfo getJPPFManagementInfo();
     
 }

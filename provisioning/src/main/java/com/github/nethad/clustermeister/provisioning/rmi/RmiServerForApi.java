@@ -16,37 +16,28 @@
 package com.github.nethad.clustermeister.provisioning.rmi;
 
 import com.github.nethad.clustermeister.api.NodeInformation;
-import com.github.nethad.clustermeister.driver.rmi.IRmiServerForDriver;
-import java.rmi.RemoteException;
-import org.jppf.management.JPPFManagementInfo;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.github.nethad.clustermeister.api.rmi.IRmiServerForApi;
+import java.util.*;
 
 /**
  *
  * @author thomas
  */
-public class RmiServerForDriver implements IRmiServerForDriver {
-    private final Logger logger = LoggerFactory.getLogger(RmiServerForDriver.class);
+public class RmiServerForApi implements IRmiServerForApi {
     
     private NodeManager nodeManager;
 
     @Override
-    public void onNodeConnected(JPPFManagementInfo managementInfo) throws RemoteException {
-        logger.info("Node connected "+managementInfo.getId());
-        NodeInformation nodeInformation = new NodeInformationImpl(managementInfo.getId(), managementInfo);
-        nodeManager.addNode(nodeInformation);
-    }
-    
-    @Override
-    public void onNodeDisconnected(JPPFManagementInfo managementInfo) throws RemoteException {
-        logger.info("Node disconnected "+managementInfo.getId());
-        nodeManager.removeNode(managementInfo.getId());
+    public Collection<NodeInformation> getAllNodes() {
+        // this is apparently necessary, because values() has HashMap.Values in it, and those are not serializable
+        Collection<NodeInformation> allNodes = nodeManager.getAllNodes();
+        List<NodeInformation> dest = new ArrayList<NodeInformation>(allNodes.size());
+        dest.addAll(allNodes);
+        return dest;
     }
     
     public void setNodeManager(NodeManager nodeManager) {
         this.nodeManager = nodeManager;
     }
-
     
 }
