@@ -21,6 +21,7 @@ import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.provisioning.cli.Provider;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
+import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.github.nethad.clustermeister.provisioning.utils.PublicIp;
@@ -42,6 +43,7 @@ public class Provisioning {
     private String driverHost;
     private Provider provider;
     private Configuration configuration;
+    private RmiInfrastructure rmiInfrastructure;
     private TorqueNodeManager torqueNodeManager;
     private Logger logger = LoggerFactory.getLogger(Provisioning.class);
     private JPPFLocalDriver jppfLocalDriver;
@@ -49,6 +51,8 @@ public class Provisioning {
     public Provisioning(String configFilePath, Provider provider) {
         this.configFilePath = configFilePath;
         this.provider = provider;
+        rmiInfrastructure = new RmiInfrastructure();
+        rmiInfrastructure.initialize();
     }
     
     public void execute() {

@@ -23,6 +23,8 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Arrays;
+import org.jppf.management.JPPFManagementInfo;
+import org.jppf.management.JPPFSystemInformation;
 import org.jppf.server.event.NodeConnectionEvent;
 import org.jppf.server.event.NodeConnectionListener;
 import org.slf4j.Logger;
@@ -58,8 +60,11 @@ public class CMNodeConnectionListener implements NodeConnectionListener  {
     @Override
     public void nodeConnected(NodeConnectionEvent event) {
         if (successfulInit) {
+            JPPFManagementInfo nodeInformation = event.getNodeInformation();
+            JPPFSystemInformation systemInformation = nodeInformation.getSystemInfo();
             try {
-                server.onNodeConnected(event.getNodeInformation());
+                server.onNodeConnected(nodeInformation, systemInformation);
+                logger.info("systemInfo is {}", event.getNodeInformation().getSystemInfo());
             } catch (RemoteException ex) {
                 logger.error("Could not send node disconnected message to server.", ex);
             }

@@ -52,7 +52,8 @@ public class RmiIntegrationTest {
     public void driverAddsNodeAndApiGetsAllNodes() throws Exception {
         Collection<NodeInformation> allNodes = rmiServerForApi.getAllNodes();
         assertThat(allNodes.size(), is(0));
-        rmiServerForDriver.onNodeConnected(getManagementInfoForNodeId("node1"));
+        final JPPFManagementInfo managementInfo = getManagementInfoForNodeId("node1");
+        rmiServerForDriver.onNodeConnected(managementInfo, managementInfo.getSystemInfo());
 
         allNodes = rmiServerForApi.getAllNodes();
         assertThat(allNodes.size(), is(1));
@@ -61,7 +62,7 @@ public class RmiIntegrationTest {
     @Test
     public void driverRemovesNodeAndApiGetsAllNodes() throws Exception {
         final JPPFManagementInfo managementInfo = getManagementInfoForNodeId("node1");
-        rmiServerForDriver.onNodeConnected(managementInfo);
+        rmiServerForDriver.onNodeConnected(managementInfo, managementInfo.getSystemInfo());
         Collection<NodeInformation> allNodes = rmiServerForApi.getAllNodes();
         assertThat(allNodes.size(), is(1));
         

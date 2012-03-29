@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.rmi;
+package com.github.nethad.clustermeister.api.impl;
 
 import com.github.nethad.clustermeister.api.ExecutorNode;
 import com.github.nethad.clustermeister.api.NodeCapabilities;
@@ -24,6 +24,7 @@ import java.io.Serializable;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import org.jppf.management.JPPFManagementInfo;
+import org.jppf.management.JPPFSystemInformation;
 
 /**
  *
@@ -32,11 +33,11 @@ import org.jppf.management.JPPFManagementInfo;
 public class NodeInformationImpl implements NodeInformation, Serializable {
     
     private String id;
-    private JPPFManagementInfo managementInfo;
+    private JPPFSystemInformation systemInfo;
 
-    public NodeInformationImpl(String id, JPPFManagementInfo managementInfo) {
+    public NodeInformationImpl(String id, JPPFSystemInformation systemInfo) {
         this.id = id;
-        this.managementInfo = managementInfo;
+        this.systemInfo = systemInfo;
     }
     
     @Override
@@ -45,8 +46,8 @@ public class NodeInformationImpl implements NodeInformation, Serializable {
     }
 
     @Override
-    public JPPFManagementInfo getJPPFManagementInfo() {
-        return managementInfo;
+    public JPPFSystemInformation getJPPFSystemInformation() {
+        return systemInfo;
     }
 
     

@@ -15,10 +15,12 @@
  */
 package com.github.nethad.clustermeister.provisioning.rmi;
 
+import com.github.nethad.clustermeister.api.impl.NodeInformationImpl;
 import com.github.nethad.clustermeister.api.NodeInformation;
 import com.github.nethad.clustermeister.driver.rmi.IRmiServerForDriver;
 import java.rmi.RemoteException;
 import org.jppf.management.JPPFManagementInfo;
+import org.jppf.management.JPPFSystemInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,9 +34,12 @@ public class RmiServerForDriver implements IRmiServerForDriver {
     private NodeManager nodeManager;
 
     @Override
-    public void onNodeConnected(JPPFManagementInfo managementInfo) throws RemoteException {
+    public void onNodeConnected(JPPFManagementInfo managementInfo, JPPFSystemInformation systemInformation) {
+        logger.info("42, logging statement");
         logger.info("Node connected "+managementInfo.getId());
-        NodeInformation nodeInformation = new NodeInformationImpl(managementInfo.getId(), managementInfo);
+        NodeInformationImpl nodeInformation = new NodeInformationImpl(managementInfo.getId(), systemInformation);
+        
+        logger.info("Node management info, system info is {}", systemInformation);
         nodeManager.addNode(nodeInformation);
     }
     
