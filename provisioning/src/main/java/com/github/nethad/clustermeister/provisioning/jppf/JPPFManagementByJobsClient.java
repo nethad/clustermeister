@@ -182,12 +182,12 @@ public class JPPFManagementByJobsClient {
                 });
                 if(!Iterables.isEmpty(failedTasks)) {
                     logger.warn("{} tasks raised an exception.", Iterables.size(failedTasks));
-//                    if(logger.isDebugEnabled()) {
+                    if(logger.isDebugEnabled()) {
                         for(JPPFTask failedTask : failedTasks) {
-                            logger.warn("{} failed with: {}.", failedTask.getId(), 
+                            logger.debug("{} failed with: {}.", failedTask.getId(), 
                                     failedTask.getException().getMessage());
                         }
-//                    }
+                    }
                 }
             } else {
                 logger.warn("Task list for job {} is empty.", job.getName());
