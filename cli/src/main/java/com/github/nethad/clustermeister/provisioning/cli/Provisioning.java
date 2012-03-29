@@ -82,13 +82,13 @@ public class Provisioning {
             lastNode = torqueNodeManager.addNode(torqueNodeConfiguration);
         }
         try {
-            lastNode.get(10, TimeUnit.SECONDS);
+            lastNode.get();
         } catch (InterruptedException ex) {
             logger.warn("Waited for last node to start up", ex);
         } catch (ExecutionException ex) {
             logger.warn("Waited for last node to start up", ex);
-        } catch (TimeoutException ex) {
-            logger.warn("Waited for last node to start up", ex);
+//        } catch (TimeoutException ex) {
+//            logger.warn("Waited for last node to start up", ex);
         }
     }
     

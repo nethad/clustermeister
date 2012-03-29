@@ -41,7 +41,7 @@ import java.util.concurrent.ExecutionException;
  */
 public class TorqueJPPFTestSetup {
 
-    private static final int NUMBER_OF_NODES = 3;
+    private static final int NUMBER_OF_NODES = 1;
 
     public static void main(String... args) {
         new TorqueJPPFTestSetup().execute();
@@ -60,7 +60,7 @@ public class TorqueJPPFTestSetup {
         setupRmi();
 
         startDriver();
-//        startNodes();
+        startNodes();
         try {
             Thread.sleep(200);
         } catch (InterruptedException ex) {
