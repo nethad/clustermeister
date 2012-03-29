@@ -41,6 +41,7 @@ import org.slf4j.LoggerFactory;
  * @author thomas
  */
 public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
+    protected File akkaZipFile;
     
     Logger logger = LoggerFactory.getLogger(TorqueJPPFNodeDeployer.class);
 
@@ -70,6 +71,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
     private long akkaLibsZipCRC32;
     private final TorqueConfiguration configuration;
     private String email;
+    private String akkaZip;
     
 
     public TorqueJPPFNodeDeployer(TorqueConfiguration configuration, SSHClient sshClient) {
@@ -99,7 +101,14 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         sshClient.connect(user, host, port);
         try {
             deployZipCRC32 = FileUtils.getCRC32(getResourceStream(LOCAL_DEPLOY_ZIP_PATH));
-            akkaLibsZipCRC32 = FileUtils.getCRC32(getResourceStream(AKKA_ZIP));
+            akkaZipFile = new File(akkaZip);
+            if (akkaZipFile.exists()) {
+                logger.info("akka libs zip exists.");
+                akkaLibsZipCRC32 = FileUtils.getCRC32ForFile(akkaZipFile);
+            } else {
+                logger.info("akka libs zip does NOT exist. {}", akkaZip);
+                akkaLibsZipCRC32 = 0L;
+            }
         } catch (IOException ex) {
             logger.error("Can not read resource.", ex);
         }
@@ -109,7 +118,6 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
 
         if (!isResourceAlreadyDeployedAndUpToDate()) {
             logger.info("Resource is not up to date.");
-            System.out.println("Resource is not up to date.");
             // remove previously uploaded files (might be outdated/not necessary)
             sshClient.executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "*");
 
@@ -130,7 +138,12 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         // upload akka libraries
         // TODO deactivated akka upload for testing purposes
 //        sshClient.sftpUpload(getResourcePath(AKKA_ZIP), AKKA_REMOTE_ZIP_PATH);
-//        executeAndSysout("cd "+DEPLOY_BASE_NAME+"/lib/ && unzip " + AKKA_ZIP);
+        if (akkaZipFile.exists()) {
+            logger.info("upload akka zip.");
+            sshClient.sftpUpload(akkaZipFile.getAbsolutePath(), AKKA_REMOTE_ZIP_PATH);
+            sshClient.executeAndSysout("cd "+DEPLOY_BASE_NAME+"/lib/ && unzip " + AKKA_ZIP +" > unzip.log");
+            sshClient.executeAndSysout("cd "+DEPLOY_BASE_NAME+"/lib/ && cat unzip.log");
+        }
         
 //        sshClient.sftpUpload(getResourceStream(DEPLOY_QSUB), DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB);
         sshClient.sftpUpload(new ByteArrayInputStream(
@@ -161,6 +174,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
           user = configuration.getSshUser();
           privateKeyFilePath = configuration.getPrivateKeyPath();
           email = configuration.getEmailNotify();
+          akkaZip = System.getProperty("user.home")+"/.clustermeister/akka-libs.zip";
     }
 
     @Override
