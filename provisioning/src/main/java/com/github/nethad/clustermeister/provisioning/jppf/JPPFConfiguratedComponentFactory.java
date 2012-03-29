@@ -125,7 +125,7 @@ public class JPPFConfiguratedComponentFactory {
             JPPFDriverConfigurationSource.serverPort = serverPort;
             JPPFDriverConfigurationSource.managementPort = managementPort;
             setConfigProperty(JPPFDriverConfigurationSource.class.getCanonicalName());
-            final ClustermeisterLauncher launcher = new ClustermeisterDriverLauncher();
+            final ClustermeisterLauncher launcher = new ClustermeisterDriverLauncher(true);
             final AtomicBoolean initialized = new AtomicBoolean(false);
             final Monitor initializationMonitor = new Monitor(false);
             final Monitor.Guard isInitialized = new Monitor.Guard(initializationMonitor) {
