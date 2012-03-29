@@ -18,8 +18,6 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Predicate;
@@ -31,7 +29,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -68,8 +65,8 @@ public class AmazonNodeManager {
     final Configuration configuration;
     
     //TODO: make sure this will not cause a memory leak
-    Map<AmazonNode, JPPFManagementByJobsClient> managementClients =
-            Collections.synchronizedMap(new HashMap<AmazonNode, JPPFManagementByJobsClient>());
+//    Map<AmazonNode, JPPFManagementByJobsClient> managementClients =
+//            Collections.synchronizedMap(new HashMap<AmazonNode, JPPFManagementByJobsClient>());
     private Set<AmazonNode> drivers = new HashSet<AmazonNode>();
     private Set<AmazonNode> nodes = new HashSet<AmazonNode>();
     
@@ -139,8 +136,8 @@ public class AmazonNodeManager {
                 case DRIVER: {
                     drivers.add(node);
                     String publicIp = Iterables.getFirst(node.getPublicAddresses(), null);
-                    managementClients.put(node, JPPFConfiguratedComponentFactory.getInstance().
-                            createManagementByJobsClient(publicIp, AmazonNodeManager.DEFAULT_SERVER_PORT));
+//                    managementClients.put(node, JPPFConfiguratedComponentFactory.getInstance().
+//                            createManagementByJobsClient(publicIp, AmazonNodeManager.DEFAULT_SERVER_PORT));
                     break;
                 }
                 default: {
@@ -260,10 +257,10 @@ public class AmazonNodeManager {
             checkNotNull(publicIp, "Can not get public IP of node " + node + ".");
             switch (node.getType()) {
                 case DRIVER: {
-                    JPPFManagementByJobsClient client = managementClients.remove(node);
-                    if(client != null) {
-                        client.close();
-                    }
+//                    JPPFManagementByJobsClient client = managementClients.remove(node);
+//                    if(client != null) {
+//                        client.close();
+//                    }
                     driverShutdown(publicIp);
                     break;
                 }

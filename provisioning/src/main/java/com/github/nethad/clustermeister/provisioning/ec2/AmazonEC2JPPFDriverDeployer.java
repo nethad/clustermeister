@@ -28,6 +28,7 @@ import org.jclouds.domain.LoginCredentials;
  * @author daniel
  */
 public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
+    public static final String JPPF_PEERS_PREFIX = "jppf.peers";
     private static final String ZIP_FILE = "jppf-driver.zip";
     private static final String CRC32_FILE = CLUSTERMEISTER_BIN + "/jppf-driver-crc-32";
     private static final String JPPF_FOLDER = "/jppf-driver/";
@@ -59,6 +60,8 @@ public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
         final InputStream in = this.getClass().getResourceAsStream(PROPERTY_FILE_NAME);
         try {
             Properties nodeProperties = getPropertiesFromStream(in);
+            nodeProperties.setProperty("jppf.discovery.enabled", "false");
+            nodeProperties.setProperty("jppf.peer.discovery.enabled", "false");
             nodeProperties.setProperty(JPPF_MANAGEMENT_HOST, getPrivateIp());
             nodeProperties.setProperty(JPPF_MANAGEMENT_PORT, 
                     String.valueOf(nodeConfiguration.getManagementPort()));
