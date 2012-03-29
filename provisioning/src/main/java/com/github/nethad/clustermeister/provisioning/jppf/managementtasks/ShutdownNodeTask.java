@@ -15,10 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.jppf.managementtasks;
 
-import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import java.io.Serializable;
-import java.util.concurrent.TimeoutException;
-import org.jppf.management.JMXNodeConnectionWrapper;
 import org.jppf.server.protocol.JPPFRunnable;
 
 /**
@@ -26,15 +23,10 @@ import org.jppf.server.protocol.JPPFRunnable;
  *
  * @author daniel
  */
-public class ShutdownSingleNodeTask implements Serializable {
+public class ShutdownNodeTask implements Serializable {
     
     @JPPFRunnable
-    public void shutdownNode(String host, int port) throws TimeoutException, Exception {
-        JMXNodeConnectionWrapper wrapper = NodeManagementConnector.openNodeConnection(host, port);
-        try {
-            wrapper.shutdown();
-        } finally {
-            wrapper.close();
-        }
+    public void dummyTask() throws Exception {
+        // do nothing
     }
 }

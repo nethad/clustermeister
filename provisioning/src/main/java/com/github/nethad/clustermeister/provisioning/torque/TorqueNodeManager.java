@@ -204,8 +204,12 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 					driverHost, serverPort);
         
         logger.info("Shutdown nodes.");
-//		client.shutdownAllNodes(driverHost, managementPort);
-        client.shutdownAllNodes();
+        try {
+            //		client.shutdownAllNodes(driverHost, managementPort);
+                    client.shutdownAllNodes();
+        } catch (Exception ex) {
+            logger.error("Could not shut down all nodes! Please shut them down manually.", ex);
+        }
 		nodes.clear();
         client.close();
         

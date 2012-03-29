@@ -13,20 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.jppf.managementtasks;
-
-import java.io.Serializable;
-import org.jppf.server.protocol.JPPFRunnable;
+package com.github.nethad.clustermeister.provisioning.ec2;
 
 /**
- * Shuts down a single node (not driver).
  *
  * @author daniel
  */
-public class DummyTask implements Serializable {
+public class AmazonJPPFServiceProvider {
     
-    @JPPFRunnable
-    public void dummyTask() throws Exception {
-        // do nothing
-    }
 }
