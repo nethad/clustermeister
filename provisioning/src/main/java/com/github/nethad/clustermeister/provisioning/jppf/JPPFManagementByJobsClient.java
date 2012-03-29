@@ -80,10 +80,10 @@ public class JPPFManagementByJobsClient {
      *
      * @param nodeUuid the UUID of the node to shut down.
      */
-    public void shutdownNode(String nodeUuid) throws Exception {
+    synchronized public void shutdownNode(String nodeUuid) throws Exception {
         logger.info("Shutting down {}...", nodeUuid);
-        JPPFJob shutdownNodesJob = createShutdownJob(Arrays.asList(nodeUuid));
-        submitJob(shutdownNodesJob);
+        JPPFJob shutdownNodeJob = createShutdownJob(Arrays.asList(nodeUuid), false);
+        submitJob(shutdownNodeJob);
     }
 
     /**
@@ -97,40 +97,17 @@ public class JPPFManagementByJobsClient {
      * 
      * @throws Exception when the job can not be executed.
      */
-    public void shutdownNodes(Collection<String> nodeUuids) throws Exception {
+    synchronized public void shutdownNodes(Collection<String> nodeUuids) throws Exception {
         logger.info("Shutting down {} nodes...", nodeUuids.size());
-        JPPFJob shutdownNodesJob = createShutdownJob(nodeUuids);
+        JPPFJob shutdownNodesJob = createShutdownJob(nodeUuids, true);
         submitJob(shutdownNodesJob);
     }
 
-    public void shutdownAllNodes() throws Exception {
+    synchronized public void shutdownAllNodes() throws Exception {
         logger.info("Shutting down all nodes...");
         JPPFJob shutdownJobForAllNodes = createShutdownJobForAllNodes();        
         submitJob(shutdownJobForAllNodes);
     }
-
-//    public void shutdownDriver(String driverHost, int managementPort) {
-//        JMXDriverConnectionWrapper wrapper = null;
-//        try {
-//            wrapper =
-//                    NodeManagementConnector.openDriverConnection(driverHost, managementPort);
-//            // TODO remove 1s shutdown
-//            wrapper.restartShutdown(1 * 1000L, -1L);
-//
-//        } catch (TimeoutException ex) {
-//            logger.warn("Timed out waiting for driver management connection.", ex);
-//        } catch (Exception ex) {
-//            logger.warn("Could not shut down driver.", ex);
-//        } finally {
-//            if (wrapper != null) {
-//                try {
-//                    wrapper.close();
-//                } catch (Exception ex) {
-//                    logger.error("Could not close JMX wrapper", ex);
-//                }
-//            }
-//        }
-//    }
 
     public void close() {
         if (jPPFClient != null) {
@@ -148,10 +125,11 @@ public class JPPFManagementByJobsClient {
         return job;
     }
 
-    private JPPFJob createShutdownJob(Collection<String> nodeUuids) throws JPPFException {
-        JPPFJob job = getJobSkeleton(Constants.JOB_MARKER_SHUTDOWN, nodeUuids.size(), true, false);
+    private JPPFJob createShutdownJob(Collection<String> nodeUuids, boolean broadcast) throws JPPFException {
+        JPPFJob job = getJobSkeleton(Constants.JOB_MARKER_SHUTDOWN + 
+                Arrays.toString(nodeUuids.toArray()), nodeUuids.size(), true, false);
         job.getSLA().setExecutionPolicy(createExecutionPolicyFor(nodeUuids));
-        job.getSLA().setBroadcastJob(true);
+        job.getSLA().setBroadcastJob(broadcast);
         job.addTask(new ShutdownNodeTask());
         return job;
     }

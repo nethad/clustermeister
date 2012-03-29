@@ -19,11 +19,19 @@ import com.github.nethad.clustermeister.node.common.Constants;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
-import java.util.Arrays;
+import java.lang.management.ManagementFactory;
+import javax.management.InstanceNotFoundException;
+import javax.management.MBeanException;
+import javax.management.MBeanServer;
+import javax.management.MalformedObjectNameException;
+import javax.management.ObjectName;
+import javax.management.ReflectionException;
+import org.jppf.management.JPPFNodeAdminMBean;
+import org.jppf.node.NodeExecutionManager;
 import org.jppf.node.NodeRunner;
-import org.jppf.node.event.LifeCycleEventHandler;
 import org.jppf.node.event.NodeLifeCycleEvent;
 import org.jppf.node.event.NodeLifeCycleListener;
+import org.jppf.node.protocol.JPPFDistributedJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -62,20 +70,49 @@ public class ClustermeisterNodeLifeCycleListener implements NodeLifeCycleListene
 
     @Override
     public void jobStarting(NodeLifeCycleEvent event) {
-        boolean jobNameIsShutdownMarker = event.getJob().getName().contains(Constants.JOB_MARKER_SHUTDOWN);
-        if (jobNameIsShutdownMarker) {
-            System.out.println("Node is shutting down.");
-            Object eventSource = event.getSource();
-            if (eventSource instanceof LifeCycleEventHandler) {
-                System.out.println("eventSource is LifeCycleEventHandler");
-                ((LifeCycleEventHandler)eventSource).fireNodeEnding();
-            }
-            NodeRunner.shutdown(NodeRunner.getNode(), false);
-        }
+        //nop
     }
 
     @Override
     public void jobEnding(NodeLifeCycleEvent event) {
-        //nop
+        JPPFDistributedJob job = event.getJob();
+        if (job.getName().contains(Constants.JOB_MARKER_SHUTDOWN) && 
+                isCurrentJobShutdownJob(event.getSource(), job.getUuid())) {
+            shutdownNode(job);
+        }
+    }
+
+    /**
+     * Shuts down this node.
+     * 
+     * @param triggeringJob the job that triggered the shutdown.
+     */
+    protected void shutdownNode(final JPPFDistributedJob triggeringJob) {
+        logger.info("Node shutdown requested.");
+        final MBeanServer platformMBeanServer = ManagementFactory.getPlatformMBeanServer();
+        try {
+            ObjectName nodeAdminName = new ObjectName(JPPFNodeAdminMBean.MBEAN_NAME);
+            platformMBeanServer.invoke(nodeAdminName, "shutdown", 
+                    (Object[]) null, (String[]) null);
+           
+        } catch (MalformedObjectNameException ex) {
+            logger.warn("Invalid Object name.", ex);
+        } catch (InstanceNotFoundException ex) {
+            logger.warn("Can not find MBean.", ex);
+        } catch (MBeanException ex) {
+            logger.warn("Exception raised by the MBean.", ex);
+        } catch (ReflectionException ex) {
+            logger.warn("Invalid Method name.", ex);
+        }
+    }
+    
+    private boolean isCurrentJobShutdownJob(Object eventSource, String jobId) {
+        if (eventSource instanceof NodeExecutionManager) {
+            NodeExecutionManager manager = (NodeExecutionManager) eventSource;
+                if(manager.getCurrentJobId().equals(jobId)) {
+                    return true;
+                }
+        }
+        return false;
     }
 }

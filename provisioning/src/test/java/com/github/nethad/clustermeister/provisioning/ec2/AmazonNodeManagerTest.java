@@ -95,13 +95,14 @@ public class AmazonNodeManagerTest {
         System.out.println("waiting...");
         Thread.sleep(20000);
 
-        Future<Void> ds = nodeManager.removeNode((AmazonNode) jppfDriver, AmazonInstanceShutdownMethod.TERMINATE);
-        Future<Void> ns = nodeManager.removeNode((AmazonNode) jppfNode, AmazonInstanceShutdownMethod.TERMINATE);
-        Future<Void> ns2 = nodeManager.removeNode((AmazonNode) jppfNode2, AmazonInstanceShutdownMethod.TERMINATE);
+        Future<Void> ns = nodeManager.removeNode((AmazonNode) jppfNode, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
+        Future<Void> ns2 = nodeManager.removeNode((AmazonNode) jppfNode2, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
 
-        ds.get();
         ns.get();
         ns2.get();
+        
+        Future<Void> ds = nodeManager.removeNode((AmazonNode) jppfDriver, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
+        ds.get();
         
         nodeManager.close();
     }
