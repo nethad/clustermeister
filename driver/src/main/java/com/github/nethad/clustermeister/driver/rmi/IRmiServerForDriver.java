@@ -18,6 +18,7 @@ package com.github.nethad.clustermeister.driver.rmi;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
 import org.jppf.management.JPPFManagementInfo;
+import org.jppf.management.JPPFSystemInformation;
 
 /**
  *
@@ -27,8 +28,10 @@ public interface IRmiServerForDriver extends Remote {
     
     public static final String NAME = "RmiServerForDriver";
     
-    public void onNodeConnected(JPPFManagementInfo managementInfo) throws RemoteException;
+//    public void onNodeConnected(JPPFManagementInfo managementInfo) throws RemoteException;
     
     public void onNodeDisconnected(JPPFManagementInfo managementInfo) throws RemoteException;
+
+    public void onNodeConnected(JPPFManagementInfo nodeInformation, JPPFSystemInformation systemInformation) throws RemoteException;
     
 }

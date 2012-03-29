@@ -60,6 +60,12 @@ public class ClustermeisterImpl implements Clustermeister {
     }
 
     private void setupRmi() throws RuntimeException {
+        final String policyUrl = ClustermeisterImpl.class.getResource("/cm.policy").toString();
+        logger.info("Policy file URL: {}", policyUrl);
+        System.setProperty("java.security.policy", policyUrl);
+        if (System.getSecurityManager() == null) {
+            System.setSecurityManager(new SecurityManager());
+        }
         try {
             Registry registry = LocateRegistry.getRegistry(61111);
             rmiServerForApi = (IRmiServerForApi)registry.lookup(IRmiServerForApi.NAME);
@@ -76,13 +82,14 @@ public class ClustermeisterImpl implements Clustermeister {
         //        nodes = new GatherNodeInformation(jppfClient, threadsExecutorService).getNodes();
         try {
             nodeInformationCollection = rmiServerForApi.getAllNodes();
+            logger.info("Provisioning returned {} nodes.", nodeInformationCollection.size());
             nodes = new LinkedList<ExecutorNode>();
             for(NodeInformation nodeInfo : nodeInformationCollection) {
                 ExecutorNodeImpl executorNode = new ExecutorNodeImpl(jppfClient, threadsExecutorService);
                 executorNode.setId(nodeInfo.getID());
-                int availableProcessors = Integer.valueOf(nodeInfo.getJPPFManagementInfo().getSystemInfo().getRuntime().getProperty(GatherNodeInformationTask.AVAILABLE_PROCESSORS));
-                int numberOfProcessingThreads = Integer.valueOf(nodeInfo.getJPPFManagementInfo().getSystemInfo().getJppf().getProperty(GatherNodeInformationTask.PROCESSING_THREADS));
-                final String jppfInfo = nodeInfo.getJPPFManagementInfo().getSystemInfo().getJppf().asString();
+                int availableProcessors = Integer.valueOf(nodeInfo.getJPPFSystemInformation().getRuntime().getProperty(GatherNodeInformationTask.AVAILABLE_PROCESSORS));
+                int numberOfProcessingThreads = Integer.valueOf(nodeInfo.getJPPFSystemInformation().getJppf().getProperty(GatherNodeInformationTask.PROCESSING_THREADS));
+                final String jppfInfo = nodeInfo.getJPPFSystemInformation().getJppf().asString();
                 NodeCapabilities nodeCapabilities = new NodeCapabilitiesImpl(availableProcessors, numberOfProcessingThreads, jppfInfo);
                 executorNode.setNodeCapabilities(nodeCapabilities);
                 nodes.add(executorNode);

@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.api;
 
 import org.jppf.management.JPPFManagementInfo;
+import org.jppf.management.JPPFSystemInformation;
 
 /**
  *
@@ -24,6 +25,6 @@ import org.jppf.management.JPPFManagementInfo;
 public interface NodeInformation {
     
     public String getID();
-    public JPPFManagementInfo getJPPFManagementInfo();
+    public JPPFSystemInformation getJPPFSystemInformation();
     
 }

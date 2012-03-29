@@ -26,6 +26,7 @@ import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 import java.security.AccessController;
+import java.security.Policy;
 import java.security.PrivilegedAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +50,9 @@ public class RmiInfrastructure {
     private IRmiServerForDriver serverForDriverStub;
 
     public void initialize() {
-        System.setProperty("java.security.policy", "/home/thomas/cm.policy");
+        final String policyUrl = RmiInfrastructure.class.getResource("/cm.policy").toString();
+        logger.info("Policy file URL: {}", policyUrl);
+        System.setProperty("java.security.policy", policyUrl);
         if (System.getSecurityManager() == null) {
             System.setSecurityManager(new SecurityManager());
         }
