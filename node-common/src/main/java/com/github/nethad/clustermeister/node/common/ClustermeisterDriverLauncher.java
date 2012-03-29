@@ -27,6 +27,8 @@ public class ClustermeisterDriverLauncher extends ClustermeisterLauncher {
      */
     protected static final String DRIVER_RUNNER = "org.jppf.server.JPPFDriver";
     
+    private final boolean useRmi;
+    
     /**
      * Start a JPPF-driver.
      * 
@@ -38,23 +40,47 @@ public class ClustermeisterDriverLauncher extends ClustermeisterLauncher {
      *      the first argument "false" to launch an independent process or 
      *      "true" to launch a dependent child process. If no argument is set, 
      *      "true" is assumed.
+     *      the second argument is "true" if RMI should be used (for local drivers) or
+     *      "false" if not (default).
      */
     public static void main(String... args) {
         boolean launchAsChildProcess = true;
-        if(args != null && args.length >= 1) {
-            launchAsChildProcess = Boolean.parseBoolean(args[0]);
+        boolean useRmi = false;
+        if(args != null) {
+            if (args.length >= 1) {
+                launchAsChildProcess = Boolean.parseBoolean(args[0]);
+            }
+            if (args.length >= 2) {
+                useRmi = Boolean.parseBoolean(args[1]);
+            }
         }
-        ClustermeisterLauncher launcher = new ClustermeisterDriverLauncher();
+        ClustermeisterLauncher launcher = new ClustermeisterDriverLauncher(useRmi);
         launcher.doLaunch(launchAsChildProcess);
-        
         if(!launchAsChildProcess) {
             //Exit from this JVM. The spawned process continues to run.
             System.exit(0);
         }
+    }
+
+    public ClustermeisterDriverLauncher(boolean useRmi) {
+        this.useRmi = useRmi;
+    }
+    
+    public ClustermeisterDriverLauncher() {
+        this.useRmi = false;
     }
     
     @Override
     protected String getRunner() {
         return DRIVER_RUNNER;
     }
+
+    @Override
+    protected ClustermeisterProcessLauncher createProcessLauncher() {
+        ClustermeisterProcessLauncher launcher = super.createProcessLauncher();
+        launcher.setUseRmi(useRmi);
+        return launcher;
+    }
+    
+    
 }

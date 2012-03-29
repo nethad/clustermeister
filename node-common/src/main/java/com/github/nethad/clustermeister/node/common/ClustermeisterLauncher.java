@@ -25,6 +25,7 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
 import java.util.Observable;
+import org.jppf.process.ProcessLauncher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,6 +107,10 @@ public abstract class ClustermeisterLauncher extends Observable {
             }
         }
     }
+
+    protected ClustermeisterProcessLauncher createProcessLauncher() {
+       return new ClustermeisterProcessLauncher(getRunner());
+    }
     
      /**
      * Get the fully qualified class name of the runner to use.
@@ -120,7 +125,7 @@ public abstract class ClustermeisterLauncher extends Observable {
      * @throws Exception when any exception occurs process spawning preparation.
      */
     protected void startUp(boolean launchAsChildProcess) throws Exception {
-        processLauncher = new ClustermeisterProcessLauncher(getRunner());
+        processLauncher = createProcessLauncher();
         processLauncher.setLaunchAsChildProcess(launchAsChildProcess);
         if(!launchAsChildProcess) {
             processLauncher.switchStreamsToFiles();

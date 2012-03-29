@@ -20,8 +20,19 @@ import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
+import com.github.nethad.clustermeister.driver.rmi.IRmiServerForDriver;
+import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
+import com.github.nethad.clustermeister.provisioning.rmi.RmiServerForDriver;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.io.IOException;
+import java.rmi.AccessException;
+import java.rmi.AlreadyBoundException;
+import java.rmi.RemoteException;
+import java.rmi.registry.LocateRegistry;
+import java.rmi.registry.Registry;
+import java.rmi.server.UnicastRemoteObject;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -45,9 +56,11 @@ public class TorqueJPPFTestSetup {
     private void execute() {
         final String configurationFilePath = System.getProperty("user.home") + "/.clustermeister/configuration.properties";
         torqueNodeManager = new TorqueNodeManager(new FileConfiguration(configurationFilePath));
+        
+        setupRmi();
 
         startDriver();
-        startNodes();
+//        startNodes();
         try {
             Thread.sleep(200);
         } catch (InterruptedException ex) {
@@ -133,4 +146,9 @@ public class TorqueJPPFTestSetup {
 //            deployer.stopLocalDriver();
 //        }
 //    }
+
+    private void setupRmi() {
+        RmiInfrastructure rmiInfrastructure = new RmiInfrastructure();
+        rmiInfrastructure.initialize();
+    }
 }

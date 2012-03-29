@@ -122,8 +122,9 @@ public class ClustermeisterSample implements Serializable {
             }
             
         } finally {
-            clustermeister.shutdown();
-
+            if (clustermeister != null) {
+                clustermeister.shutdown();
+            }
         }
     }
 

@@ -43,6 +43,7 @@ public class ClustermeisterProcessLauncher extends ProcessLauncher {
      * Handle on the spawned subprocess.
      */
     protected Process process = null;
+    private boolean useRmi;
     
     /**
      * Constructor.
@@ -66,6 +67,13 @@ public class ClustermeisterProcessLauncher extends ProcessLauncher {
         } else {
             jvmOptions += " -D" + Constants.CLUSTERMEISTER_DIVERT_STREAMS_TO_FILE + "=false";
         }
+        
+        if (isUseRmi()) {
+            jvmOptions += " -D" + Constants.CLUSTERMEISTER_USE_RMI + "=true";
+        } else {
+            jvmOptions += " -D" + Constants.CLUSTERMEISTER_USE_RMI + "=false";
+        }
+        
         config.setProperty(Constants.JPPF_JVM_OPTIONS, jvmOptions.trim());
         this.process = super.buildProcess();
         
@@ -181,6 +189,14 @@ public class ClustermeisterProcessLauncher extends ProcessLauncher {
      */
     public Process getProcess() {
         return process;
+    }
+    
+    public void setUseRmi(boolean useRmi) {
+        this.useRmi = useRmi;
+    }
+
+    public boolean isUseRmi() {
+        return useRmi;
     }
 
 }
