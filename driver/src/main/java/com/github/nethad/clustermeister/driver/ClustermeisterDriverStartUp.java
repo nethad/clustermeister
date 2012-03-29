@@ -55,8 +55,5 @@ public class ClustermeisterDriverStartUp implements JPPFDriverStartupSPI {
             ShutdownHandler shutdownHandler = new ShutdownHandler(System.in);
             shutdownHandler.start();
         }
-        boolean useRmi = Boolean.parseBoolean(System.getProperty(
-                Constants.CLUSTERMEISTER_USE_RMI));
-        // TODO implement RMI handling
     }
 }
