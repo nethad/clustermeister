@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.driver;
 
 import com.github.nethad.clustermeister.driver.rmi.IRmiServerForDriver;
+import com.github.nethad.clustermeister.node.common.Constants;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.Remote;
@@ -42,6 +43,14 @@ public class CMNodeConnectionListener implements NodeConnectionListener  {
     private boolean successfulInit = false;
 
     public CMNodeConnectionListener() {
+        if (Boolean.parseBoolean(System.getProperty(
+                Constants.CLUSTERMEISTER_USE_RMI))) {
+            initializeRmi();
+        }
+
+    }
+    
+    private void initializeRmi() {
         try {
             registry = LocateRegistry.getRegistry("localhost", 61111);
             server = (IRmiServerForDriver) registry.lookup(IRmiServerForDriver.NAME);
@@ -57,7 +66,7 @@ public class CMNodeConnectionListener implements NodeConnectionListener  {
 
     @Override
     public void nodeConnected(NodeConnectionEvent event) {
-        if (successfulInit) {
+        if (successfulInit && server != null) {
             JPPFManagementInfo nodeInformation = event.getNodeInformation();
             JPPFSystemInformation systemInformation = nodeInformation.getSystemInfo();
             try {
@@ -70,7 +79,7 @@ public class CMNodeConnectionListener implements NodeConnectionListener  {
 
     @Override
     public void nodeDisconnected(NodeConnectionEvent event) {
-        if (successfulInit) {
+        if (successfulInit && server != null) {
             try {
                 server.onNodeDisconnected(event.getNodeInformation());
             } catch (RemoteException ex) {
