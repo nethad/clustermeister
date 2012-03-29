@@ -54,6 +54,13 @@ public class Constants {
     public static final String CLUSTERMEISTER_DIVERT_STREAMS_TO_FILE = 
             "com.github.nethad.clustermeister.divertStreamsToFile";
     
+        /**
+     * System property configuration indicating that the driver should use RMI to update provisioning components 
+     * about joining and departing nodes.
+     */
+    public static final String CLUSTERMEISTER_USE_RMI = 
+            "com.github.nethad.clustermeister.useRmi";
+    
     /**
      * JPPF System property configuration for additional JVM options.
      */

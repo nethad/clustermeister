@@ -30,7 +30,7 @@
         <dependency>
             <groupId>com.github.nethad.clustermeister</groupId>
             <artifactId>driver</artifactId>
-            <scope>runtime</scope>
+<!--            <scope>runtime</scope>-->
         </dependency>
         <dependency>
             <groupId>com.github.nethad.clustermeister</groupId>
