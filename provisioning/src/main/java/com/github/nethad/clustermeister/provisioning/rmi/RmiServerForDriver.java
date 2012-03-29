@@ -35,11 +35,8 @@ public class RmiServerForDriver implements IRmiServerForDriver {
 
     @Override
     public void onNodeConnected(JPPFManagementInfo managementInfo, JPPFSystemInformation systemInformation) {
-        logger.info("42, logging statement");
         logger.info("Node connected "+managementInfo.getId());
         NodeInformationImpl nodeInformation = new NodeInformationImpl(managementInfo.getId(), systemInformation);
-        
-        logger.info("Node management info, system info is {}", systemInformation);
         nodeManager.addNode(nodeInformation);
     }
     
@@ -52,6 +49,5 @@ public class RmiServerForDriver implements IRmiServerForDriver {
     public void setNodeManager(NodeManager nodeManager) {
         this.nodeManager = nodeManager;
     }
-
     
 }

@@ -42,10 +42,8 @@ public class CMNodeConnectionListener implements NodeConnectionListener  {
     private boolean successfulInit = false;
 
     public CMNodeConnectionListener() {
-        logger.info("Initialize CMNodeConnectionListener");
         try {
             registry = LocateRegistry.getRegistry("localhost", 61111);
-            logger.info("registry = "+Arrays.toString(registry.list()));
             server = (IRmiServerForDriver) registry.lookup(IRmiServerForDriver.NAME);
             successfulInit = true;
         } catch (NotBoundException ex) {
@@ -64,7 +62,6 @@ public class CMNodeConnectionListener implements NodeConnectionListener  {
             JPPFSystemInformation systemInformation = nodeInformation.getSystemInfo();
             try {
                 server.onNodeConnected(nodeInformation, systemInformation);
-                logger.info("systemInfo is {}", event.getNodeInformation().getSystemInfo());
             } catch (RemoteException ex) {
                 logger.error("Could not send node disconnected message to server.", ex);
             }
