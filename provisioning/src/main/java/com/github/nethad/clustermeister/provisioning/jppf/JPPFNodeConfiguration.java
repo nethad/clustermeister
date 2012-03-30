@@ -32,7 +32,7 @@ public class JPPFNodeConfiguration {
     public JPPFNodeConfiguration() {       
         properties.setProperty("jppf.management.enabled", "true");
         properties.setProperty("jppf.discovery.enabled", "false");
-        properties.setProperty("reconnect.max.time", "60");
+        properties.setProperty("reconnect.max.time", "5");
         
         properties.setProperty("jppf.jvm.options", "-Xms64m -Xmx512m -Djava.util.logging.config.file=config/logging-driver.properties");
         properties.setProperty("jppf.classloader.delegation", "parent");
