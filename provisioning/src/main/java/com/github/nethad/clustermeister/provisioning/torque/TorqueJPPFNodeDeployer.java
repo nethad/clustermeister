@@ -15,23 +15,10 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
-import com.github.nethad.clustermeister.api.Configuration;
-import com.github.nethad.clustermeister.api.NodeConfiguration;
-import com.github.nethad.clustermeister.api.impl.FileConfiguration;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.utils.*;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import java.io.*;
-import java.math.BigInteger;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,7 +36,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
 //	private static final String DEPLOY_BASE_NAME = "jppf-node";
     private static final String DEPLOY_ZIP_NAME = DEPLOY_BASE_NAME + ".zip";
     private static final String LOCAL_DEPLOY_ZIP_PATH = "/" + DEPLOY_ZIP_NAME;
-    private static final String AKKA_ZIP = "akka-libs.zip";
+    private static final String AKKA_ZIP = "akka-libs.tar.bz2";
     private static final String AKKA_REMOTE_ZIP_PATH = DEPLOY_BASE_NAME + "/lib/" + AKKA_ZIP;
     private static final String CRC32_FILE = DEPLOY_BASE_NAME + "/CRC32";
     private static final String AKKA_CRC32_FILE = DEPLOY_BASE_NAME + "/AKKA_CRC32";
@@ -141,8 +128,8 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         if (akkaZipFile.exists()) {
             logger.info("upload akka zip.");
             sshClient.sftpUpload(akkaZipFile.getAbsolutePath(), AKKA_REMOTE_ZIP_PATH);
-            sshClient.executeAndSysout("cd "+DEPLOY_BASE_NAME+"/lib/ && unzip " + AKKA_ZIP +" > unzip.log");
-            sshClient.executeAndSysout("cd "+DEPLOY_BASE_NAME+"/lib/ && cat unzip.log");
+            sshClient.executeAndSysout("cd "+DEPLOY_BASE_NAME+"/lib/ && tar xvf " + AKKA_ZIP);
+//            sshClient.executeAndSysout("cd "+DEPLOY_BASE_NAME+"/lib/ && cat unzip.log");
         }
         
 //        sshClient.sftpUpload(getResourceStream(DEPLOY_QSUB), DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB);
@@ -174,7 +161,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
           user = configuration.getSshUser();
           privateKeyFilePath = configuration.getPrivateKeyPath();
           email = configuration.getEmailNotify();
-          akkaZip = System.getProperty("user.home")+"/.clustermeister/akka-libs.zip";
+          akkaZip = System.getProperty("user.home")+"/.clustermeister/"+AKKA_ZIP;
     }
 
     @Override

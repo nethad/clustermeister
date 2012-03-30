@@ -93,6 +93,7 @@ public class JPPFDriverConfigurationSource implements JPPFConfiguration.Configur
                 "-Xmx256m "
                 + "-Dlog4j.configuration=log4j-driver.properties"
                 + "-Djava.util.logging.config.file=config/logging-driver.properties "
+                + "-Dsun.io.serialization.extendedDebugInfo=true "
                 + "-Djppf.config.plugin="+JPPFDriverConfigurationSource.class.getCanonicalName());
         
 //        properties.setProperty("jppf.debug.enabled", "true");
