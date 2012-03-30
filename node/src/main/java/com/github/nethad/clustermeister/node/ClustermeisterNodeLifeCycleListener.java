@@ -16,16 +16,13 @@
 package com.github.nethad.clustermeister.node;
 
 import com.github.nethad.clustermeister.node.common.Constants;
+import com.github.nethad.clustermeister.node.common.MBeanUtils;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.PrintStream;
 import java.lang.management.ManagementFactory;
-import javax.management.InstanceNotFoundException;
-import javax.management.MBeanException;
 import javax.management.MBeanServer;
-import javax.management.MalformedObjectNameException;
 import javax.management.ObjectName;
-import javax.management.ReflectionException;
 import org.jppf.management.JPPFNodeAdminMBean;
 import org.jppf.node.NodeExecutionManager;
 import org.jppf.node.NodeRunner;
@@ -89,21 +86,11 @@ public class ClustermeisterNodeLifeCycleListener implements NodeLifeCycleListene
      */
     protected void shutdownNode(final JPPFDistributedJob triggeringJob) {
         logger.info("Node shutdown requested.");
-        final MBeanServer platformMBeanServer = ManagementFactory.getPlatformMBeanServer();
-        try {
-            ObjectName nodeAdminName = new ObjectName(JPPFNodeAdminMBean.MBEAN_NAME);
-            platformMBeanServer.invoke(nodeAdminName, "shutdown", 
-                    (Object[]) null, (String[]) null);
-           
-        } catch (MalformedObjectNameException ex) {
-            logger.warn("Invalid Object name.", ex);
-        } catch (InstanceNotFoundException ex) {
-            logger.warn("Can not find MBean.", ex);
-        } catch (MBeanException ex) {
-            logger.warn("Exception raised by the MBean.", ex);
-        } catch (ReflectionException ex) {
-            logger.warn("Invalid Method name.", ex);
-        }
+        final MBeanServer platformMBeanServer = 
+                ManagementFactory.getPlatformMBeanServer();
+            ObjectName nodeAdminName = MBeanUtils.objectNameFor(
+                    logger, JPPFNodeAdminMBean.MBEAN_NAME);
+            MBeanUtils.invoke(logger, platformMBeanServer, nodeAdminName, "shutdown");
     }
     
     private boolean isCurrentJobShutdownJob(Object eventSource, String jobId) {
