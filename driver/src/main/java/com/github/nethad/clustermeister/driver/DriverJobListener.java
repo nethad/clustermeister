@@ -75,9 +75,14 @@ public class DriverJobListener implements JobListener {
 
     @Override
     public void jobReturned(JobNotification event) {
-        if (event.getJobInformation().getJobName().contains(Constants.JOB_MARKER_SHUTDOWN)) {
+        if (containsMarker(event, Constants.JOB_MARKER_SHUTDOWN) || 
+                containsMarker(event, Constants.JOB_MARKER_RESTART)) {
             MBeanUtils.invoke(logger, mBeanServer, jobManagementName, "cancelJob", 
                     event.getJobInformation().getJobUuid());
         }
+    }
+
+    private boolean containsMarker(JobNotification event, String marker) {
+        return event.getJobInformation().getJobName().contains(marker);
     }
 }

@@ -23,7 +23,7 @@ import org.jppf.server.protocol.JPPFRunnable;
  *
  * @author daniel
  */
-public class ShutdownNodeTask implements Serializable {
+public class NopTask implements Serializable {
     
     @JPPFRunnable
     public void dummyTask() throws Exception {
