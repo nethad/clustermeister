@@ -73,27 +73,27 @@ public class ClustermeisterNodeLifeCycleListener implements NodeLifeCycleListene
     @Override
     public void jobEnding(NodeLifeCycleEvent event) {
         JPPFDistributedJob job = event.getJob();
-        if (job.getName().contains(Constants.JOB_MARKER_SHUTDOWN) && 
-                isCurrentJobShutdownJob(event.getSource(), job.getUuid())) {
-            shutdownNode(job);
+        if (hasMarkerAndExecuting(job, event, Constants.JOB_MARKER_SHUTDOWN)) {
+            shutdownOrRestartNode(false);
+        } else if(hasMarkerAndExecuting(job, event, Constants.JOB_MARKER_RESTART)) {
+            shutdownOrRestartNode(true);
         }
     }
 
     /**
-     * Shuts down this node.
-     * 
-     * @param triggeringJob the job that triggered the shutdown.
+     * Shuts down or restarts this node.
      */
-    protected void shutdownNode(final JPPFDistributedJob triggeringJob) {
-        logger.info("Node shutdown requested.");
+    protected void shutdownOrRestartNode(boolean restart) {
+        String method = restart ? "restart" : "shutdown";
+        logger.info("Node {} requested.", method);
         final MBeanServer platformMBeanServer = 
                 ManagementFactory.getPlatformMBeanServer();
             ObjectName nodeAdminName = MBeanUtils.objectNameFor(
                     logger, JPPFNodeAdminMBean.MBEAN_NAME);
-            MBeanUtils.invoke(logger, platformMBeanServer, nodeAdminName, "shutdown");
+            MBeanUtils.invoke(logger, platformMBeanServer, nodeAdminName, method);
     }
     
-    private boolean isCurrentJobShutdownJob(Object eventSource, String jobId) {
+    private boolean isTriggeringJobCurrentJob(Object eventSource, String jobId) {
         if (eventSource instanceof NodeExecutionManager) {
             NodeExecutionManager manager = (NodeExecutionManager) eventSource;
                 if(manager.getCurrentJobId().equals(jobId)) {
@@ -101,5 +101,10 @@ public class ClustermeisterNodeLifeCycleListener implements NodeLifeCycleListene
                 }
         }
         return false;
+    }
+    
+    private boolean hasMarkerAndExecuting(JPPFDistributedJob job, NodeLifeCycleEvent event, String marker) {
+        return job.getName().contains(marker) && 
+                   isTriggeringJobCurrentJob(event.getSource(), job.getUuid());
     }
 }

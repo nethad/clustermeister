@@ -70,4 +70,9 @@ public class Constants {
      * If a job's name contains this string, the node will be shut down.
      */
     public static final String JOB_MARKER_SHUTDOWN = "#SHUTDOWN_MARKER#";
+    
+    /**
+     * If a job's name contains this string, the node will be restarted.
+     */
+    public static final String JOB_MARKER_RESTART = "#RESTART_MARKER#";
 }

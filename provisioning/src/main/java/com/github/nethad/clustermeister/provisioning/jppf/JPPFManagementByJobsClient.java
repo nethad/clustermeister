@@ -17,7 +17,7 @@ package com.github.nethad.clustermeister.provisioning.jppf;
 
 import com.github.nethad.clustermeister.node.common.Constants;
 import com.github.nethad.clustermeister.provisioning.jppf.managementtasks.JPPFConfigReaderTask;
-import com.github.nethad.clustermeister.provisioning.jppf.managementtasks.ShutdownNodeTask;
+import com.github.nethad.clustermeister.provisioning.jppf.managementtasks.NopTask;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import java.util.Arrays;
@@ -85,6 +85,19 @@ public class JPPFManagementByJobsClient {
         JPPFJob shutdownNodeJob = createShutdownJob(Arrays.asList(nodeUuid), false);
         submitJob(shutdownNodeJob);
     }
+    
+    /**
+     * Restarts a single node (not driver) down.
+     *
+     * This method is synchronous. It waits for the job to complete before it returns.
+     *
+     * @param nodeUuid the UUID of the node to restart.
+     */
+    synchronized public void restartNode(String nodeUuid) throws Exception {
+        logger.info("Restarting {}...", nodeUuid);
+        JPPFJob restartNodeJob = createRestartJob(Arrays.asList(nodeUuid), false);
+        submitJob(restartNodeJob);
+    }
 
     /**
      * Shuts down nodes specified by their UUIDs.
@@ -102,11 +115,34 @@ public class JPPFManagementByJobsClient {
         JPPFJob shutdownNodesJob = createShutdownJob(nodeUuids, true);
         submitJob(shutdownNodesJob);
     }
+    
+    /**
+     * Restarts nodes specified by their UUIDs.
+     *
+     * Sends restart tasks to the specified nodes.
+     *
+     * This method is synchronous. It waits for the job to complete before it returns.
+     *
+     * @param nodeUuids the node UUIDs to restart.
+     * 
+     * @throws Exception when the job can not be executed.
+     */
+    synchronized public void restartNodes(Collection<String> nodeUuids) throws Exception {
+        logger.info("Restarting {} nodes...", nodeUuids.size());
+        JPPFJob restartNodesJob = createRestartJob(nodeUuids, true);
+        submitJob(restartNodesJob);
+    }
 
     synchronized public void shutdownAllNodes() throws Exception {
         logger.info("Shutting down all nodes...");
         JPPFJob shutdownJobForAllNodes = createShutdownJobForAllNodes();        
         submitJob(shutdownJobForAllNodes);
+    }
+    
+    synchronized public void restartAllNodes() throws Exception {
+        logger.info("Restarting all nodes...");
+        JPPFJob restartJobForAllNodes = createRestartJobForAllNodes();        
+        submitJob(restartJobForAllNodes);
     }
 
     public void close() {
@@ -130,14 +166,30 @@ public class JPPFManagementByJobsClient {
                 Arrays.toString(nodeUuids.toArray()), nodeUuids.size(), true, false);
         job.getSLA().setExecutionPolicy(createExecutionPolicyFor(nodeUuids));
         job.getSLA().setBroadcastJob(broadcast);
-        job.addTask(new ShutdownNodeTask());
+        job.addTask(new NopTask());
+        return job;
+    }
+    
+    private JPPFJob createRestartJob(Collection<String> nodeUuids, boolean broadcast) throws JPPFException {
+        JPPFJob job = getJobSkeleton(Constants.JOB_MARKER_RESTART + 
+                Arrays.toString(nodeUuids.toArray()), nodeUuids.size(), true, false);
+        job.getSLA().setExecutionPolicy(createExecutionPolicyFor(nodeUuids));
+        job.getSLA().setBroadcastJob(broadcast);
+        job.addTask(new NopTask());
         return job;
     }
     
     private JPPFJob createShutdownJobForAllNodes() throws JPPFException {
         JPPFJob job = getJobSkeleton(Constants.JOB_MARKER_SHUTDOWN, 0, true, false);
         job.getSLA().setBroadcastJob(true);
-        job.addTask(new ShutdownNodeTask());
+        job.addTask(new NopTask());
+        return job;
+    }
+    
+    private JPPFJob createRestartJobForAllNodes() throws JPPFException {
+        JPPFJob job = getJobSkeleton(Constants.JOB_MARKER_RESTART, 0, true, false);
+        job.getSLA().setBroadcastJob(true);
+        job.addTask(new NopTask());
         return job;
     }
     
