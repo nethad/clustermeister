@@ -182,4 +182,10 @@ public class GanymedSSHClient implements SSHClient {
     public void setPrivateKey(String privateKeyPath) throws SSHClientException {
         this.privateKeyFilePath = privateKeyPath;
     }
+
+    @Override
+    public boolean isConnected() {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
+    
 }
