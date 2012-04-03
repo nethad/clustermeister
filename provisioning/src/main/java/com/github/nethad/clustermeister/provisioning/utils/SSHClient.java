@@ -39,4 +39,6 @@ public interface SSHClient {
 
     public void setPrivateKey(String privateKeyPath) throws SSHClientException;
     
+    public boolean isConnected();
+    
 }

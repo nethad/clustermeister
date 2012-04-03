@@ -20,6 +20,7 @@ import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFDriverConfigurationSource;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
 import com.github.nethad.clustermeister.provisioning.utils.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -28,8 +29,10 @@ import org.jppf.process.ProcessLauncher;
 
 /**
  *
+ * @deprecated This class should not be used, use {@link JPPFLocalDriver} instead.
  * @author thomas
  */
+@Deprecated
 public class TorqueJPPFDriverDeployer {
 	
 	public static final int SERVER_PORT = 11111;
@@ -48,6 +51,12 @@ public class TorqueJPPFDriverDeployer {
     private boolean runExternally = false;
 	private TorqueNodeManagement torqueNodeManagement;
 
+    /**
+     * @deprecated This class should not be used, use {@link JPPFLocalDriver} instead.
+     * @param torqueNodeManagement
+     * @return
+     */
+    @Deprecated
     public TorqueNode execute(TorqueNodeManagement torqueNodeManagement) {
 		this.torqueNodeManagement = torqueNodeManagement;
         if (runExternally) {
@@ -126,7 +135,7 @@ public class TorqueJPPFDriverDeployer {
 //        processLauncher = new ProcessLauncher("org.jppf.server.JPPFDriver");
 //        processLauncher.run();
 		JPPFConfiguratedComponentFactory.getInstance().createLocalDriver(SERVER_PORT, MANAGEMENT_PORT);
-		String publicIp = PublicIp.getPublicIp();
+		String publicIp = PublicIp.getInstance().getPublicIp();
 		TorqueNode torqueNode = new TorqueNode(NodeType.DRIVER, null, publicIp, "localhost", SERVER_PORT, MANAGEMENT_PORT);
 		torqueNodeManagement.addManagedNode(torqueNode);
 		return torqueNode;

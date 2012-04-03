@@ -253,6 +253,11 @@ public class SSHClientImpl implements SSHClient {
             closeChannel(channel);
         }
     }
+    
+    @Override
+    public boolean isConnected() {
+        return notNull(session) && session.isConnected();
+    }
 
     private void closeStream(InputStream stream) {
         if (notNull(stream)) {

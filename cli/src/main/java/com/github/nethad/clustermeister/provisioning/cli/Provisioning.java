@@ -24,12 +24,9 @@ import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
-import com.github.nethad.clustermeister.provisioning.utils.PublicIp;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.io.File;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -115,6 +112,7 @@ public class Provisioning {
         torqueNodeManager = new TorqueNodeManager(configuration);
         
         jppfLocalDriver = new JPPFLocalDriver();
+        torqueNodeManager.addPublicIpListener(jppfLocalDriver);
         jppfLocalDriver.execute();
         driverHost = jppfLocalDriver.getIpAddress();
         //        ListenableFuture<? extends Node> driver = torqueNodeManager.addNode(getTorqueDriverConfiguration());

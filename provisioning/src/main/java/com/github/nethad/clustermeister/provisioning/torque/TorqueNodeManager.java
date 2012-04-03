@@ -56,6 +56,8 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 	
 	private final Monitor managedNodesMonitor = new Monitor(false);
 
+
+
 	private class AddNormalNodeTask implements Callable<TorqueNode> {
 
 		private final TorqueNodeConfiguration nodeConfiguration;
@@ -302,5 +304,9 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 		List<Runnable> stillRunningThreads = executorService.shutdownNow();
 		System.out.println("stillRunningThreads.size() = " + stillRunningThreads.size());
 	}
+    
+    public void addPublicIpListener(Observer publicIpListener) {
+        this.nodeDeployer.addListener(publicIpListener);
+    }
 	
 }
