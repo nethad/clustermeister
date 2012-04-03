@@ -53,6 +53,8 @@ public class SSHClientImpl implements SSHClient {
      */
     protected int port = 22;
 
+    private SocksTunnel reverseTunnel = null;
+    
     /**
      * Creates a new SSHClient.
      */
@@ -461,5 +463,17 @@ public class SSHClientImpl implements SSHClient {
     @Override
     public void setPrivateKey(String privateKeyPath) throws SSHClientException {
         this.addIdentity(privateKeyPath);
+    }
+    
+    /**
+     * Gets a SOCKS reverse tunnel for this SSH Client.
+     * 
+     * @return an unopened SocksTunnel.
+     */
+    public SocksTunnel getSocksReverseTunnel() {
+        if(isNull(reverseTunnel)) {
+          reverseTunnel = new SocksTunnel(this);  
+        } 
+        return reverseTunnel;
     }
 }
