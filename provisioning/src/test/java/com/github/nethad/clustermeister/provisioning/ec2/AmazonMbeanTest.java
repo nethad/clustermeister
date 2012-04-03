@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author daniel
  */
-@Ignore("Depends on local configuration.")
+//@Ignore("Depends on local configuration.")
 public class AmazonMbeanTest {
 	
 	private final static Logger logger = 
@@ -37,8 +37,10 @@ public class AmazonMbeanTest {
             
             JPPFManagementByJobsClient client = JPPFConfiguratedComponentFactory.getInstance().
                     createManagementByJobsClient("localhost", 11111);
-            client.shutdownNode("057E551CF16A6AEF5DFBCC52F8E415D8");
-            client.shutdownNode("057E551CF16A6AEF5DFBCC52F8E415D8");
+            
+            client.shutdownAllNodes();
+//            client.shutdownNode("057E551CF16A6AEF5DFBCC52F8E415D8");
+//            client.shutdownNode("057E551CF16A6AEF5DFBCC52F8E415D8");
             
 	}
 }
