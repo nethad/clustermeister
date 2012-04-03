@@ -62,7 +62,8 @@ public class TorqueJPPFDriverDeployer {
         sshClient = null;
         try {
 
-            sshClient = new SSHClientImpl(privateKeyFilePath);
+            sshClient = new SSHClientImpl();
+            sshClient.setPrivateKey(privateKeyFilePath);
             sshClient.connect(user, host, port);
             sshClient.executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "*");
 
