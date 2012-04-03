@@ -47,6 +47,11 @@ public class RmiIntegrationTest {
         rmiServerForApi = rmiInfrastructure.getRmiServerForApi();
         rmiServerForDriver = rmiInfrastructure.getRmiServerForDriver();
     }
+    
+    @AfterClass
+    public static void teardownClass() throws Exception {
+        rmiInfrastructure.unregister();
+    }
 
     @Test
     public void driverAddsNodeAndApiGetsAllNodes() throws Exception {
