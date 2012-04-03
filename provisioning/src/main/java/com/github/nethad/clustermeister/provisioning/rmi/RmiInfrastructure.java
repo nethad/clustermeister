@@ -21,6 +21,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
+import java.rmi.NoSuchObjectException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -142,6 +143,12 @@ public class RmiInfrastructure {
             }
         }
         return false;
+    }
+
+    void unregister() throws NoSuchObjectException {
+        UnicastRemoteObject.unexportObject(rmiServerForApi, true);
+        UnicastRemoteObject.unexportObject(rmiServerForDriver, true);
+        UnicastRemoteObject.unexportObject(registry, true);
     }
 
 }
