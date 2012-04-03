@@ -15,10 +15,14 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
+import com.github.nethad.clustermeister.provisioning.jppf.PublicIpNotifier;
 import com.github.nethad.clustermeister.provisioning.utils.*;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
+import com.google.common.net.InetAddresses;
 import java.io.*;
+import java.util.ArrayList;
+import java.util.Observer;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -27,7 +31,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author thomas
  */
-public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
+public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNotifier {
     protected File akkaZipFile;
     
     Logger logger = LoggerFactory.getLogger(TorqueJPPFNodeDeployer.class);
@@ -45,7 +49,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
 //	private static final String DEPLOY_QSUB = "qsub-node.sh";
 //	private static final String PATH_TO_QSUB_SCRIPT = "./" + DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB;
     private String host;
-    private String localIp;
+//    private String localIp;
     private int port;
     private SSHClient sshClient;
     private String user;
@@ -59,6 +63,8 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
     private final TorqueConfiguration configuration;
     private String email;
     private String akkaZip;
+    private ArrayList<Observer> publicIpListener;
+    private String publicIp;
     
 
     public TorqueJPPFNodeDeployer(TorqueConfiguration configuration, SSHClient sshClient) {
@@ -68,6 +74,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         sessionId = System.currentTimeMillis();
         loadConfiguration();
         this.sshClient = sshClient;
+        publicIpListener = new ArrayList<Observer>();
     }
     
     @VisibleForTesting
@@ -75,9 +82,30 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         this.sshClient = sshClient;
     }
     
-        @VisibleForTesting
+    @VisibleForTesting
     boolean isInfrastructureDeployed() {
         return isInfrastructureDeployed;
+    }
+    
+    private void connectToSSH() throws SSHClientException {
+        sshClient.connect(user, host, port);
+    }
+
+    private void doPublicIpRequest() throws SSHClientException {
+        if (!sshClient.isConnected()) {
+            connectToSSH();
+        }
+
+        String publicIpString = sshClient.executeWithResult("echo $SSH_CLIENT");
+        String publicIpPart = publicIpString.split(" ")[0];
+        if (InetAddresses.isInetAddress(publicIpPart)) {
+            this.publicIp = publicIpPart;
+            logger.info("Public IP request successful. ({})", publicIp);
+        } else {
+            this.publicIp = PublicIp.getInstance().getPublicIp();
+            logger.warn("Error parsing public IP from \"{}\", used fallback {} instead ({})", new String[]{publicIpString, PublicIp.class.getName(), publicIp});
+        }
+        notifyPublicIp(publicIp);
     }
 
     public synchronized void deployInfrastructure() throws SSHClientException {
@@ -85,7 +113,10 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
             return;
         }
         
-        sshClient.connect(user, host, port);
+        if (!sshClient.isConnected()) {
+            connectToSSH();
+        }
+        
         try {
             deployZipCRC32 = FileUtils.getCRC32(getResourceStream(LOCAL_DEPLOY_ZIP_PATH));
             akkaZipFile = new File(akkaZip);
@@ -113,7 +144,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
             logger.info("Resource is up to date.");
         }
         
-        prepareLocalIP();
+//        prepareLocalIP();
         isInfrastructureDeployed = true;
     }
 
@@ -149,11 +180,11 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
         return torqueNode;
     }
 
-    private void prepareLocalIP() {
-        //		localHost = InetAddress.getLocalHost().getHostAddress();
-        localIp = PublicIp.getPublicIp();
-        logger.info("localIp = " + localIp);
-    }
+//    private void prepareLocalIP() {
+//        //		localHost = InetAddress.getLocalHost().getHostAddress();
+//        localIp = PublicIp.getInstance().getPublicIp();
+//        logger.info("localIp = " + localIp);
+//    }
     
     private void loadConfiguration() {     
           host = configuration.getSshHost();
@@ -166,7 +197,14 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
 
     @Override
     public String getDriverAddress() {
-        return localIp;
+        if (publicIp == null) {
+            try {
+                doPublicIpRequest();
+            } catch (SSHClientException ex) {
+                logger.warn("Request for public IP failed.", ex);
+            }
+        }
+        return publicIp;
     }
 
     @Override
@@ -214,5 +252,23 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment {
 
     InputStream getResourceStream(String resource) {
         return TorqueJPPFDriverDeployer.class.getResourceAsStream(resource);
+    }
+
+    @Override
+    public void notifyPublicIp(String publicIp) {
+        for (Observer observer : publicIpListener) {
+            observer.update(null, publicIp);
+        }
+    }
+
+    @Override
+    public void addListener(Observer listener) {
+        publicIpListener.add(listener);
+        getDriverAddress();
+    }
+
+    @Override
+    public void remoteListener(Observer listener) {
+        publicIpListener.remove(listener);
     }
 }

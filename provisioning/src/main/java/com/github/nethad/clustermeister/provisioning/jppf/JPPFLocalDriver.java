@@ -18,6 +18,10 @@ package com.github.nethad.clustermeister.provisioning.jppf;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import com.github.nethad.clustermeister.node.common.ClustermeisterLauncher;
 import com.github.nethad.clustermeister.provisioning.utils.*;
+import com.google.common.util.concurrent.SettableFuture;
+import java.util.Observable;
+import java.util.Observer;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
 import org.jppf.management.JMXDriverConnectionWrapper;
 import org.slf4j.LoggerFactory;
@@ -26,14 +30,15 @@ import org.slf4j.LoggerFactory;
  *
  * @author thomas
  */
-public class JPPFLocalDriver {
+public class JPPFLocalDriver implements Observer {
     private ClustermeisterLauncher launcher = null;
     
     private final org.slf4j.Logger logger = LoggerFactory.getLogger(JPPFLocalDriver.class);
 
     public static final int SERVER_PORT = 11111;
     public static final int MANAGEMENT_PORT = 11198;
-    private String publicIp;
+//    private String publicIp;
+    private SettableFuture<String> publicIpFuture = SettableFuture.create();
 
     public void execute() {
         localSetupAndRun();
@@ -45,11 +50,19 @@ public class JPPFLocalDriver {
     }
 
     public String getIpAddress() {
-        if (publicIp == null) {
-            publicIp = PublicIp.getPublicIp();
-            logger.info("public IP = "+publicIp);
+        try {
+            return publicIpFuture.get();
+        } catch (InterruptedException ex) {
+            logger.warn("Interrupted.", ex);
+        } catch (ExecutionException ex) {
+            logger.warn("Exception raised while requesting public IP.", ex);
         }
-        return publicIp;
+        return null;
+//        if (publicIp == null) {
+//            publicIp = PublicIp.getInstance().getPublicIp();
+//            logger.info("public IP = "+publicIp);
+//        }
+//        return publicIp;
     }
     
     public void shutdown() {
@@ -84,6 +97,15 @@ public class JPPFLocalDriver {
                     logger.warn("Could not close JMX connection to driver.");
                 }
             }
+        }
+    }
+
+    @Override
+    public void update(Observable o, Object arg) {
+        if (arg instanceof String) {
+            this.publicIpFuture.set((String)arg);
+        } else {
+            this.publicIpFuture.setException(new IllegalArgumentException(String.format("String expected, but was (%s)", arg)));
         }
     }
 
