@@ -148,6 +148,6 @@ public class SocksTunnel extends Thread {
      */
     protected boolean isSessionsConnected() {
         checkNotNull(sshClient.session);
-        return !sshClient.session.isConnected();
+        return sshClient.session.isConnected();
     }
 }
