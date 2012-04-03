@@ -15,7 +15,6 @@
  */
 package com.github.nethad.clustermeister.provisioning.utils;
 
-import com.github.nethad.clustermeister.provisioning.torque.TorqueJPPFNodeDeployer;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -27,13 +26,27 @@ import org.slf4j.LoggerFactory;
  *
  * @author thomas
  */
-public class PublicIp {
+public class PublicIp implements PublicIpRequestable {
 	public static final String WHATISMYIP_WEBSERVICE_URL = "http://automation.whatismyip.com/n09230945.asp";
-	private static String publicIp;
+	private String publicIp;
     
-    private static org.slf4j.Logger logger = LoggerFactory.getLogger(PublicIp.class);
+    private org.slf4j.Logger logger = LoggerFactory.getLogger(PublicIp.class);
+    
+    private static PublicIp instance;
+    
+    private PublicIp() {
+        // private constructor for singleton
+    }
+    
+    public static PublicIp getInstance() {
+        if (instance == null) {
+            instance = new PublicIp();
+        }
+        return instance;
+    }
 
-	public static String getPublicIp() {
+    @Override
+	public String getPublicIp() {
 		if (publicIp != null) {
 			return publicIp;
 		}

@@ -56,6 +56,8 @@ public class TorqueJPPFTestSetup {
     private void execute() {
         final String configurationFilePath = System.getProperty("user.home") + "/.clustermeister/configuration.properties";
         torqueNodeManager = new TorqueNodeManager(new FileConfiguration(configurationFilePath));
+        jppfLocalDriver = new JPPFLocalDriver();
+        torqueNodeManager.addPublicIpListener(jppfLocalDriver);
         
         setupRmi();
 
@@ -100,7 +102,7 @@ public class TorqueJPPFTestSetup {
     private void startDriver() {
 //        TorqueLocalRunner runner = new TorqueLocalRunner();
 //        runner.start();
-        jppfLocalDriver = new JPPFLocalDriver();
+        
         jppfLocalDriver.execute();
         driverIpAddress = jppfLocalDriver.getIpAddress();
 //        TorqueNodeConfiguration nodeConfiguration = TorqueNodeConfiguration.configurationForDriver(true);
