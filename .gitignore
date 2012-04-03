@@ -16,3 +16,5 @@
 /cli/target/
 /driver (copy)/target/
 /node-common/target/
+/integration-tests/target/
+
