@@ -19,6 +19,8 @@ import com.github.nethad.clustermeister.api.impl.NodeInformationImpl;
 import com.github.nethad.clustermeister.api.NodeInformation;
 import com.github.nethad.clustermeister.driver.rmi.IRmiServerForDriver;
 import java.rmi.RemoteException;
+import java.util.ArrayList;
+import java.util.List;
 import org.jppf.management.JPPFManagementInfo;
 import org.jppf.management.JPPFSystemInformation;
 import org.slf4j.Logger;
@@ -32,22 +34,45 @@ public class RmiServerForDriver implements IRmiServerForDriver {
     private final Logger logger = LoggerFactory.getLogger(RmiServerForDriver.class);
     
     private NodeManager nodeManager;
+    
+    private List<NodeConnectionListener> listeners = new ArrayList<NodeConnectionListener>();
 
     @Override
     public void onNodeConnected(JPPFManagementInfo managementInfo, JPPFSystemInformation systemInformation) {
         logger.info("Node connected "+managementInfo.getId());
         NodeInformationImpl nodeInformation = new NodeInformationImpl(managementInfo.getId(), systemInformation);
         nodeManager.addNode(nodeInformation);
+        notifyListenersConnected(managementInfo, systemInformation);
     }
     
     @Override
     public void onNodeDisconnected(JPPFManagementInfo managementInfo) throws RemoteException {
         logger.info("Node disconnected "+managementInfo.getId());
         nodeManager.removeNode(managementInfo.getId());
+        notifyListenersDisconnected(managementInfo);
     }
     
     public void setNodeManager(NodeManager nodeManager) {
         this.nodeManager = nodeManager;
     }
     
+    public void addNodeConnectionListener(NodeConnectionListener listener) {
+        listeners.add(listener);
+    }
+    
+    public void removeNodeConnectionListener(NodeConnectionListener listener) {
+        listeners.remove(listener);
+    }
+
+    private void notifyListenersConnected(JPPFManagementInfo managementInfo, JPPFSystemInformation systemInformation) {
+        for (NodeConnectionListener nodeConnectionListener : listeners) {
+            nodeConnectionListener.onNodeConnected(managementInfo, systemInformation);
+        }
+    }
+    
+    private void notifyListenersDisconnected(JPPFManagementInfo managementInfo) {
+        for (NodeConnectionListener nodeConnectionListener : listeners) {
+            nodeConnectionListener.onNodeDisconnected(managementInfo);
+        }
+    }
 }

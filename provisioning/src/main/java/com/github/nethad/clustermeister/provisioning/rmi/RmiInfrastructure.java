@@ -85,6 +85,11 @@ public class RmiInfrastructure {
     IRmiServerForDriver getRmiServerForDriver() {
         return serverForDriverStub;
     }
+    
+    @VisibleForTesting
+    public RmiServerForDriver getRmiServerForDriverObject() {
+        return rmiServerForDriver;
+    }
 
     private void createRmiServerForDriver() throws RemoteException {
         final String name = IRmiServerForDriver.NAME;
