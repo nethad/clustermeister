@@ -16,7 +16,6 @@
 package com.github.nethad.clustermeister.provisioning.utils;
 
 import com.jcraft.jsch.*;
-import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
@@ -25,19 +24,19 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.util.logging.Level;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  * SSH Client functionality for SSH and SFTP.
  *
- * @author daniel
+ * @author daniel, thomas
  */
 public class SSHClientImpl implements SSHClient {
 
     private final static Logger logger =
             LoggerFactory.getLogger(SSHClientImpl.class);
+    
     /**
      * JSch Instance.
      */
@@ -46,6 +45,7 @@ public class SSHClientImpl implements SSHClient {
      * JSch Session.
      */
     protected Session session = null;
+    
     /**
      * TCP Port.
      *
@@ -54,36 +54,45 @@ public class SSHClientImpl implements SSHClient {
     protected int port = 22;
 
     /**
-     * SSH Client.
+     * Creates a new SSHClient.
+     */
+    public SSHClientImpl() {
+        jsch = new JSch();
+    }
+
+    /**
+     * Add Credentials.
      *
      * Private key provided as byte array, without passphrase.
      *
      * @param keyName A human-readable name for the key-pair.
      * @param privateKey The private key data.
-     * @throws SSHClientExcpetion If there is a problem processing the credentials.
+     * @throws SSHClientExcpetion If there is a problem processing the
+     * credentials.
      */
-    public SSHClientImpl(String keyName, byte[] privateKey)
+    public void addIdentity(String keyName, byte[] privateKey)
             throws SSHClientException {
-        this(keyName, privateKey, null, null);
+        addIdentity(keyName, privateKey, null, null);
     }
 
     /**
-     * SSH Client.
+     * Add Credentials.
      *
      * Private key provided as byte array, with passphrase.
      *
      * @param keyName A human-readable name for the key-pair.
      * @param privateKey The private key data.
      * @param passphrase The passphrase data. Can be null.
-     * @throws SSHClientExcpetion If there is a problem processing the credentials.
+     * @throws SSHClientExcpetion If there is a problem processing the
+     * credentials.
      */
-    public SSHClientImpl(String keyName, byte[] privateKey, byte[] passphrase)
+    public void addIdentity(String keyName, byte[] privateKey, byte[] passphrase)
             throws SSHClientException {
-        this(keyName, privateKey, null, passphrase);
+        addIdentity(keyName, privateKey, null, passphrase);
     }
 
     /**
-     * SSH Client.
+     * Add Credentials.
      *
      * Private and public keys provided as byte arrays, with passphrase.
      *
@@ -91,53 +100,48 @@ public class SSHClientImpl implements SSHClient {
      * @param privateKey The private key data.
      * @param publicKey The public key data. Can be null.
      * @param passphrase The passphrase data. Can be null.
-     * @throws SSHClientExcpetion If there is a problem processing the credentials.
+     * @throws SSHClientExcpetion If there is a problem processing the
+     * credentials.
      */
-    public SSHClientImpl(String keyName, byte[] privateKey, byte[] publicKey,
+    public void addIdentity(String keyName, byte[] privateKey, byte[] publicKey,
             byte[] passphrase) throws SSHClientException {
-
-        jsch = new JSch();
         try {
-            jsch.addIdentity(keyName, privateKey, null, passphrase);
+            jsch.addIdentity(keyName, privateKey, publicKey, passphrase);
         } catch (JSchException ex) {
             throw new SSHClientException(ex);
         }
     }
 
     /**
-     * SSH Client.
+     * Add Credentials.
      *
      * Private key provided as file path.
      *
      * @param privateKeyFilePath Path to the private key file.
-     * @throws SSHClientExcpetion If there is a problem processing the credentials.
+     * @throws SSHClientExcpetion If there is a problem processing the
+     * credentials.
      */
-    public SSHClientImpl(String privateKeyFilePath) throws SSHClientException {
-        this(privateKeyFilePath, (String) null);
+    public void addIdentity(String privateKeyFilePath) throws SSHClientException {
+        addIdentity(privateKeyFilePath, (String) null);
     }
 
     /**
-     * SSH Client.
+     * Add Credentials.
      *
      * Private key provided as file path, with passphrase.
      *
      * @param privateKeyFilePath Path to the private key file.
      * @param passphrase The passphrase.
-     * @throws SSHClientExcpetion If there is a problem processing the credentials.
+     * @throws SSHClientExcpetion If there is a problem processing the
+     * credentials.
      */
-    public SSHClientImpl(String privateKeyFilePath, String passphrase)
+    public void addIdentity(String privateKeyFilePath, String passphrase)
             throws SSHClientException {
-
-        jsch = new JSch();
         try {
             jsch.addIdentity(privateKeyFilePath, passphrase);
         } catch (JSchException ex) {
             throw new SSHClientException(ex);
         }
-    }
-    
-    public SSHClientImpl() {
-        // default constructor
     }
 
     /**
@@ -195,8 +199,7 @@ public class SSHClientImpl implements SSHClient {
     public void disconnect() {
         if (notNull(session)) {
             session.disconnect();
-            logger.debug("Disconnected from {}:{}.",
-                    session.getHost(), session.getPort());
+            logger.debug("Disconnected from {}:{}.", session.getHost(), session.getPort());
         }
     }
 
@@ -206,12 +209,14 @@ public class SSHClientImpl implements SSHClient {
      * Existing files or directories are overwritten.
      *
      * @param srcPath The path to the file or directory to upload.
-     * @param destPath The path to the file or directory on the server (relative to the user's home directory).
-     * @throws SSHClientExcpetion When the file or directory can not be uploaded.
+     * @param destPath The path to the file or directory on the server (relative
+     * to the user's home directory).
+     * @throws SSHClientExcpetion When the file or directory can not be
+     * uploaded.
      */
     @Override
     public void sftpUpload(String srcPath, String destPath) throws SSHClientException {
-        checkIfSessionConnected();
+        ensureSessionConnected();
 
         ChannelSftp channel = null;
         try {
@@ -237,7 +242,7 @@ public class SSHClientImpl implements SSHClient {
 
     @Override
     public void sftpUpload(InputStream stream, String dest) throws SSHClientException {
-        checkIfSessionConnected();
+        ensureSessionConnected();
 
         ChannelSftp channel = null;
         try {
@@ -285,36 +290,36 @@ public class SSHClientImpl implements SSHClient {
      * @throws SSHClientExcpetion
      */
     private String sshExec(String command, OutputStream errorOutputStream) throws SSHClientException {
-        checkIfSessionConnected();
-            ChannelExec channel = null;
-            try {
-                channel = (ChannelExec) session.openChannel("exec");
-                channel.setCommand(command.getBytes("UTF-8"));
+        ensureSessionConnected();
+        ChannelExec channel = null;
+        try {
+            channel = (ChannelExec) session.openChannel("exec");
+            channel.setCommand(command.getBytes("UTF-8"));
 
-                // TODO evaluate solution
+            // TODO evaluate solution
 //				channel.setErrStream(errorOutputStream);
 
-                BufferedReader in = new BufferedReader(
-                        new InputStreamReader(channel.getInputStream()));
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(channel.getInputStream()));
 
-                channel.connect();
-                logger.debug("Opened SSH Exec channel.");
+            channel.connect();
+            logger.debug("Opened SSH Exec channel.");
 
-                StringBuilder sb = new StringBuilder();
-                String line;
-                while ((line = in.readLine()) != null) {
-                    sb.append(line);
-                    sb.append("\n");
-                }
-
-                //TODO: somehow does not properly disconnect
-                return sb.toString().trim();
-
-            } catch (Exception ex) {
-                throw new SSHClientException(ex);
-            } finally {
-                closeChannel(channel);
+            StringBuilder sb = new StringBuilder();
+            String line;
+            while ((line = in.readLine()) != null) {
+                sb.append(line);
+                sb.append("\n");
             }
+
+            //TODO: somehow does not properly disconnect
+            return sb.toString().trim();
+
+        } catch (Exception ex) {
+            throw new SSHClientException(ex);
+        } finally {
+            closeChannel(channel);
+        }
     }
 
     @Override
@@ -336,11 +341,14 @@ public class SSHClientImpl implements SSHClient {
      * If the directory is a file, it will call uploadFile.
      *
      * @param dir The directory to upload.
-     * @param destDir The destination directory name. Relative to the current remote directory.
+     * @param destDir The destination directory name. Relative to the current
+     * remote directory.
      *
-     * @throws SSHClientExcpetion When it is not possible to read from the provided file.
-     * @throws SftpException Possible reasons: Can not read current working directory, can not create destination
-     * directory, can not change to destination directory.
+     * @throws SSHClientExcpetion When it is not possible to read from the
+     * provided file.
+     * @throws SftpException Possible reasons: Can not read current working
+     * directory, can not create destination directory, can not change to
+     * destination directory.
      */
     private void copyDirectory(File dir, String destDir, ChannelSftp channel)
             throws SSHClientException, SftpException {
@@ -398,10 +406,13 @@ public class SSHClientImpl implements SSHClient {
      * Upload a file.
      *
      * @param src The file to upload.
-     * @param dest The destination file name. Relative to the current remote directory.
+     * @param dest The destination file name. Relative to the current remote
+     * directory.
      *
-     * @throws SSHClientExcpetion When it is not possible to read from the provided file or the file is not found.
-     * @throws SftpException When the provided file could not be uploaded for some reason.
+     * @throws SSHClientExcpetion When it is not possible to read from the
+     * provided file or the file is not found.
+     * @throws SftpException When the provided file could not be uploaded for
+     * some reason.
      */
     private void copyFile(File src, String dest, ChannelSftp channel)
             throws SSHClientException, SftpException {
@@ -409,7 +420,7 @@ public class SSHClientImpl implements SSHClient {
         if (isNull(src) || !src.canRead()) {
             throw new SSHClientException("Can not read from " + src);
         }
-        
+
         InputStream fin = null;
         try {
             fin = new FileInputStream(src);
@@ -441,21 +452,14 @@ public class SSHClientImpl implements SSHClient {
         return o == null;
     }
 
-    private void checkIfSessionConnected() throws SSHClientException {
-        if (notNull(session) && session.isConnected()) {
-            return;
-        } else {
+    private void ensureSessionConnected() throws SSHClientException {
+        if (isNull(session) || !session.isConnected()) {
             throw new SSHClientException("No connection to server.");
         }
     }
 
     @Override
     public void setPrivateKey(String privateKeyPath) throws SSHClientException {
-        jsch = new JSch();
-        try {
-            jsch.addIdentity(privateKeyPath, (String) null);
-        } catch (JSchException ex) {
-            throw new SSHClientException(ex);
-        }
+        this.addIdentity(privateKeyPath);
     }
 }
