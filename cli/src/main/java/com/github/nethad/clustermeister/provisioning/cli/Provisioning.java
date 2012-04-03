@@ -24,6 +24,7 @@ import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.io.File;
 import java.util.concurrent.ExecutionException;
@@ -70,7 +71,7 @@ public class Provisioning {
         shutdownTorque();
     }
     
-    void addNodes(int numberOfNodes, int numberOfCpusPerNode) {
+    public void addNodes(int numberOfNodes, int numberOfCpusPerNode) {
         final TorqueNodeConfiguration torqueNodeConfiguration = 
                 TorqueNodeConfiguration.configurationForNode(driverHost, numberOfCpusPerNode);
         
@@ -136,7 +137,10 @@ public class Provisioning {
         return new TorqueNodeConfiguration(NodeType.DRIVER, "", true, 1);
     }
 
-
+    @VisibleForTesting
+    public RmiInfrastructure getRmiInfrastructure() {
+        return rmiInfrastructure;
+    }
 
     
 }
