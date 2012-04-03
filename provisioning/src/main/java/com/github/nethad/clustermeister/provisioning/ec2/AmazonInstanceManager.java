@@ -20,6 +20,9 @@ import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.PasswordCredentials;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClientImpl;
+import com.github.nethad.clustermeister.provisioning.utils.SocksTunnel;
+import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Iterables;
@@ -78,6 +81,11 @@ public class AmazonInstanceManager {
     private final Monitor portCounterMonitor = new Monitor(false);
     private final Map<String, Integer> instanceToPortCounter =
             new HashMap<String, Integer>();
+    
+    //TODO: make sure this does not cause memory leak
+    private final Monitor reverseTunnelMonitor = new Monitor(false);
+    private final Map<String, SocksTunnel> instanceToReverseTunnel =
+            new HashMap<String, SocksTunnel>();
 
     /**
      * Creates a new AmazonInstanceManager.
@@ -210,6 +218,7 @@ public class AmazonInstanceManager {
             case NODE: {
                 managementPort = getNextNodeManagementPort(instanceMetadata);
                 nodeConfig.setManagementPort(managementPort);
+                openReverseChannel(instanceMetadata, nodeConfig);
                 AmazonEC2JPPFDeployer deployer =
                         new AmazonEC2JPPFNodeDeployer(context, instanceMetadata,
                         buildLoginCredentials(nodeConfig), nodeConfig);
@@ -219,6 +228,7 @@ public class AmazonInstanceManager {
             case DRIVER: {
                 managementPort = AmazonNodeManager.DEFAULT_MANAGEMENT_PORT;
                 nodeConfig.setManagementPort(managementPort);
+                openReverseChannel(instanceMetadata, nodeConfig);
                 AmazonEC2JPPFDeployer deployer =
                         new AmazonEC2JPPFDriverDeployer(context, instanceMetadata,
                         buildLoginCredentials(nodeConfig), nodeConfig);
@@ -234,6 +244,38 @@ public class AmazonInstanceManager {
         checkState(uuid != null && !uuid.isEmpty());
         AmazonNode node = new AmazonNode(uuid, nodeConfig, instanceMetadata);
         return node;
+    }
+
+    private void openReverseChannel(NodeMetadata instanceMetadata, AmazonNodeConfiguration nodeConfig) {
+        reverseTunnelMonitor.enter();
+        try {
+            if(!instanceToReverseTunnel.containsKey(instanceMetadata.getId())) {
+                SSHClientImpl sshClientForReversePort = new SSHClientImpl();
+                Credentials credentials = nodeConfig.getCredentials().get();
+                try {
+                    if(credentials instanceof KeyPairCredentials) {
+                        sshClientForReversePort.addIdentity(instanceMetadata.getId(), 
+                                credentials.as(KeyPairCredentials.class).getPrivateKey().
+                                getBytes(Charsets.UTF_8));
+                        String publicIp = Iterables.getFirst(instanceMetadata.getPublicAddresses(), null);
+                        sshClientForReversePort.connect(credentials.getUser(), publicIp, 
+                                instanceMetadata.getLoginPort());
+                        SocksTunnel socksReverseTunnel = sshClientForReversePort.getSocksReverseTunnel();
+                        instanceToReverseTunnel.put(instanceMetadata.getId(), socksReverseTunnel);
+                        socksReverseTunnel.openTunnel(
+                                AmazonNodeManager.DEFAULT_SERVER_PORT, "localhost", 
+                                AmazonNodeManager.DEFAULT_SERVER_PORT);
+                    } else {
+                        //TODO: add support for password credentials
+                        throw new IllegalStateException("Unsupported Credentials.");
+                    }
+                } catch (Exception ex) {
+                    logger.warn("Could not open reverse channel.", ex);
+                }
+            }
+        } finally {
+            reverseTunnelMonitor.leave();
+        }
     }
 
     private int getNextNodeManagementPort(NodeMetadata instanceMetadata) {
@@ -266,6 +308,19 @@ public class AmazonInstanceManager {
             portCounterMonitor.leave();
         }
     }
+    
+    private void removeSocksTunnel(String instanceId) {
+        reverseTunnelMonitor.enter();
+        try {
+            SocksTunnel tunnel = instanceToReverseTunnel.remove(instanceId);
+            if(tunnel != null) {
+                tunnel.closeTunnel();
+                tunnel.getSshClient().disconnect();
+            }
+        } finally {
+            reverseTunnelMonitor.leave();
+        }
+    }
 
     /**
      * Suspend (stop) an instance.
@@ -278,6 +333,7 @@ public class AmazonInstanceManager {
         logger.info("Suspending instance {}.", instanceId);
         valueOrNotReady(contextFuture).getComputeService().suspendNode(instanceId);
         decrementAndManagePortCounter(instanceId);
+        removeSocksTunnel(instanceId);
         AmazonEC2JPPFDeployer.removeDriverMonitor(instanceId);
         AmazonEC2JPPFDeployer.removeNodeMonitor(instanceId);
         logger.info("Instance {} suspended.", instanceId);
@@ -294,6 +350,7 @@ public class AmazonInstanceManager {
         logger.info("Terminating instance {}.", instanceId);
         valueOrNotReady(contextFuture).getComputeService().destroyNode(instanceId);
         decrementAndManagePortCounter(instanceId);
+        removeSocksTunnel(instanceId);
         AmazonEC2JPPFDeployer.removeDriverMonitor(instanceId);
         AmazonEC2JPPFDeployer.removeNodeMonitor(instanceId);
         logger.info("Instance {} terminated.", instanceId);
