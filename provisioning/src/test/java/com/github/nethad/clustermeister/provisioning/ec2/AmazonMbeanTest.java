@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author daniel
  */
-//@Ignore("Depends on local configuration.")
+@Ignore("Depends on local configuration.")
 public class AmazonMbeanTest {
 	
 	private final static Logger logger = 
