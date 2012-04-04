@@ -20,7 +20,7 @@ package com.github.nethad.clustermeister.provisioning.cli;
  * @author thomas
  */
 public enum Provider {
-    TORQUE("torque"), AMAZON("amazon");
+    TORQUE("torque"), AMAZON("amazon"), TEST("test");
     private String provider;
 
     Provider(String providerName) {

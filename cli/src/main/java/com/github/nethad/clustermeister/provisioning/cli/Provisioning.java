@@ -62,6 +62,9 @@ public class Provisioning {
             case TORQUE:
                 startTorque();
                 break;
+            case TEST:
+                startTestSetup();
+                break;
             default:
                 throw new RuntimeException("Unknown provider");
         }
@@ -99,10 +102,11 @@ public class Provisioning {
     }
     
     private void readConfigFile() {
-        if (!(new File(configFilePath).exists())) {
-            logger.error("Configuration file \""+configFilePath+"\" does not exist.");
+        if (configFilePath == null || !(new File(configFilePath).exists())) {
+            logger.warn("Configuration file \""+configFilePath+"\" does not exist.");
+        } else {
+            configuration = new FileConfiguration(configFilePath);
         }
-        configuration = new FileConfiguration(configFilePath);
     }
 
     private void startAmazon() {
@@ -127,9 +131,18 @@ public class Provisioning {
         //        }
     }
     
+    private void startTestSetup() {
+        jppfLocalDriver = new JPPFLocalDriver();
+        jppfLocalDriver.execute();
+        jppfLocalDriver.update(null, "127.0.0.1");
+        driverHost = "127.0.0.1";
+    }
+    
     private void shutdownTorque() {
-        torqueNodeManager.removeAllNodes();
-        torqueNodeManager.shutdown();
+        if (torqueNodeManager != null) {
+            torqueNodeManager.removeAllNodes();
+            torqueNodeManager.shutdown();
+        }
         jppfLocalDriver.shutdown();
     }
     
@@ -141,6 +154,8 @@ public class Provisioning {
     public RmiInfrastructure getRmiInfrastructure() {
         return rmiInfrastructure;
     }
+
+
 
     
 }
