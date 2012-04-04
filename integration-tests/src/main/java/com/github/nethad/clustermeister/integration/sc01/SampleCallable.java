@@ -13,33 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.cli;
+package com.github.nethad.clustermeister.integration.sc01;
+
+import java.io.Serializable;
+import java.util.concurrent.Callable;
 
 /**
  *
  * @author thomas
  */
-public enum Provider {
-    TORQUE("torque"), AMAZON("amazon"), TEST("test");
-    private String provider;
+public class SampleCallable implements Callable<String>, Serializable {
 
-    Provider(String providerName) {
-        this.provider = providerName;
+    @Override
+    public String call() throws Exception {
+        System.out.println("Started SampleCallable!");
+        return "It works!";
     }
-
-    public String getProvider() {
-        return this.provider;
-    }
-
-    public static Provider fromString(String provider) {
-        if (provider != null) {
-            for (Provider p : Provider.values()) {
-                if (provider.equalsIgnoreCase(p.provider)) {
-                    return p;
-                }
-            }
-        }
-        return null;
-    }
-    
 }
