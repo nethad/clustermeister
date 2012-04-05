@@ -16,11 +16,17 @@
 package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.provisioning.jppf.PublicIpNotifier;
-import com.github.nethad.clustermeister.provisioning.utils.*;
+import com.github.nethad.clustermeister.provisioning.utils.FileUtils;
+import com.github.nethad.clustermeister.provisioning.utils.PublicIp;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.net.InetAddresses;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Observer;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -251,7 +257,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
     }
 
     InputStream getResourceStream(String resource) {
-        return TorqueJPPFDriverDeployer.class.getResourceAsStream(resource);
+        return getClass().getResourceAsStream(resource);
     }
 
     @Override

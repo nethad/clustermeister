@@ -145,10 +145,6 @@ public class Provisioning {
         }
         jppfLocalDriver.shutdown();
     }
-    
-    private TorqueNodeConfiguration getTorqueDriverConfiguration() {
-        return new TorqueNodeConfiguration(NodeType.DRIVER, "", true, 1);
-    }
 
     @VisibleForTesting
     public RmiInfrastructure getRmiInfrastructure() {

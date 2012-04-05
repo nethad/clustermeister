@@ -29,28 +29,6 @@ import static org.hamcrest.CoreMatchers.*;
  */
 public class TorqueNodeConfigurationTest {
 
-    @Before
-    public void setup() {
-    }
-
-    @Test
-    public void factoryMethodDriver_local() {
-        TorqueNodeConfiguration configurationForDriver = TorqueNodeConfiguration.configurationForDriver(true);
-        assertThat(configurationForDriver.isDriverDeployedLocally(), is(true));
-        assertThat(configurationForDriver.getDriverAddress(), is(""));
-        assertThat(configurationForDriver.getNumberOfCpus(), is(1));
-        assertThat(configurationForDriver.getType(), is(NodeType.DRIVER));
-    }
-
-    @Test
-    public void factoryMethodDriver_notLocal() {
-        TorqueNodeConfiguration configurationForDriver = TorqueNodeConfiguration.configurationForDriver(false);
-        assertThat(configurationForDriver.isDriverDeployedLocally(), is(false));
-        assertThat(configurationForDriver.getDriverAddress(), is(""));
-        assertThat(configurationForDriver.getNumberOfCpus(), is(1));
-        assertThat(configurationForDriver.getType(), is(NodeType.DRIVER));
-    }
-
     @Test
     public void factoryMethodNode() {
         TorqueNodeConfiguration configurationForDriver = TorqueNodeConfiguration.configurationForNode("driverIp", 3);

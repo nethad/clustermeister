@@ -45,7 +45,7 @@ public class NodeDeployTaskTest {
         torqueNodeDeployment = mock(TorqueNodeDeployment.class);
         sshClient = mock(SSHClient.class);
         when(torqueNodeDeployment.sshClient()).thenReturn(sshClient);
-        torqueNodeConfiguration = new TorqueNodeConfiguration(NodeType.NODE, "driverIp", true, NUMBER_OF_CPUS);
+        torqueNodeConfiguration = new TorqueNodeConfiguration("driverIp", NUMBER_OF_CPUS);
         nodeDeployTask = new NodeDeployTask(torqueNodeDeployment, 10, torqueNodeConfiguration, "test@example.com");
     }
 

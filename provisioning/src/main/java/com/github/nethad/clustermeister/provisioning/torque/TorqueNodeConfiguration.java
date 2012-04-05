@@ -25,35 +25,25 @@ import com.github.nethad.clustermeister.api.NodeType;
  */
 public class TorqueNodeConfiguration implements NodeConfiguration {
 	
-	private NodeType nodeType;
-	private boolean isDriverDeployedLocally;
 	private String driverAddress;
     private int numberOfCpus;
 
-	public TorqueNodeConfiguration(NodeType nodeType) {
-		this.nodeType = nodeType;
-		this.isDriverDeployedLocally = true;
+	public TorqueNodeConfiguration() {
         this.numberOfCpus = 1;
 	}
 	
-	public TorqueNodeConfiguration(NodeType nodeType, String driverAddress, boolean isDriverDeployedLocally, int numberOfCpus) {
-		this.nodeType = nodeType;
+	public TorqueNodeConfiguration(String driverAddress, int numberOfCpus) {
 		this.driverAddress = driverAddress;
-		this.isDriverDeployedLocally = isDriverDeployedLocally;
         this.numberOfCpus = numberOfCpus;
 	}
     
-    public static TorqueNodeConfiguration configurationForDriver(boolean isDriverDeployedLocally) {
-        return new TorqueNodeConfiguration(NodeType.DRIVER, "", isDriverDeployedLocally, 1);
-    }
-    
     public static TorqueNodeConfiguration configurationForNode(String driverAddress, int numberOfCpus) {
-        return new TorqueNodeConfiguration(NodeType.NODE, driverAddress, true, numberOfCpus);
+        return new TorqueNodeConfiguration(driverAddress, numberOfCpus);
     }
 	
 	@Override
 	public NodeType getType() {
-		return nodeType;
+		return NodeType.NODE;
 	}
 
 	@Override
@@ -63,7 +53,7 @@ public class TorqueNodeConfiguration implements NodeConfiguration {
 
 	@Override
 	public boolean isDriverDeployedLocally() {
-		return isDriverDeployedLocally;
+		return true;
 	}
 
     public int getNumberOfCpus() {
