@@ -176,8 +176,7 @@ public class AmazonInstanceManager {
                 AmazonNodeManager.DEFAULT_SERVER_PORT, 
                 AmazonNodeManager.DEFAULT_SERVER_CLIENT_PORT, 
                 AmazonNodeManager.DEFAULT_SERVER_NODE_PORT, //TODO: may not be needed
-                AmazonNodeManager.DEFAULT_MANAGEMENT_PORT, 
-                11199, 11200, 11201, 11202, 11203, //TODO: excess management ports, remove need for these
+                AmazonNodeManager.DEFAULT_MANAGEMENT_PORT,
                 AmazonNodeManager.DEFAULT_MANAGEMENT_RMI_PORT);
         
         setLoginCredentials(template, nodeConfiguration);
