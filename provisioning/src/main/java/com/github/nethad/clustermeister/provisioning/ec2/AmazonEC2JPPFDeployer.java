@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
  * @author daniel
  */
 public abstract class AmazonEC2JPPFDeployer extends Observable {
-    public static enum Event{SSH_CONNECTED};
+    public static enum Event{JPPF_PREPARED};
     
     protected static final String UUID_PREFIX = "UUID=";
 
@@ -150,8 +150,6 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
         String uuid = null;
         SshClient ssh = getSSHClient();
         ssh.connect();
-        setChanged();
-        notifyObservers(Event.SSH_CONNECTED);
         try {
             checkPrecondition();
             final String nodeTypeStr = nodeConfiguration.getType().toString();
@@ -159,6 +157,8 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
                     new Object[]{nodeTypeStr, metadata.getId(), getPublicIp()});
 
             prepareJPPF();
+            setChanged();
+            notifyObservers(Event.JPPF_PREPARED);
             Monitor monitor = getMonitor();
             monitor.enter();
             try {
