@@ -41,12 +41,6 @@ import org.slf4j.LoggerFactory;
 public class JPPFConfiguratedComponentFactory {
     private static final String DRIVER_THREAD_NAME = "CMLocalDriverThread";
 
-    
-    /**
-     * The "jppf.config.plugin" property.
-     */
-    protected static final String JPPF_CONFIG_PLUGIN = "jppf.config.plugin";
-    
     private final static Logger logger = 
 			LoggerFactory.getLogger(JPPFConfiguratedComponentFactory.class);
 
@@ -177,7 +171,7 @@ public class JPPFConfiguratedComponentFactory {
     }
 
     private void setConfigProperty(String className) {
-        System.setProperty(JPPF_CONFIG_PLUGIN, className);
+        System.setProperty(JPPFConstants.CONFIG_PLUGIN, className);
     }
 
     private static class NewSingletonHolder {
