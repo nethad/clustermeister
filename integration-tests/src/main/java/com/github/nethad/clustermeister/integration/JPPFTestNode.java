@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.integration.sc01;
+package com.github.nethad.clustermeister.integration;
 
-import com.github.nethad.clustermeister.provisioning.jppf.*;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
 import java.io.*;
-import java.util.Enumeration;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipFile;
+import java.util.zip.ZipInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -32,27 +33,24 @@ public class JPPFTestNode {
     private final Logger logger = LoggerFactory.getLogger(JPPFTestNode.class);
     private Process nodeProcess;
     private NodeProcessOutputter nodeProcessOutputter;
-    private File tempDir;
+//    private File tempDir;
+    private File targetDir;
     
     public void prepare() {
-                String currentDirPath = System.getProperty("user.dir");
-        File nodeDir = getNodeDir(new File(currentDirPath));
-        File jppfNodeZip = new File(nodeDir, "target/jppf-node.zip");
-        if (!jppfNodeZip.exists()) {
+        String currentDirPath = System.getProperty("user.dir");
+        targetDir = getTargetDir(currentDirPath);
+        InputStream jppfNodeZipStream = JPPFTestNode.class.getResourceAsStream("/jppf-node.zip");
+        if (jppfNodeZipStream == null) {
             throw new RuntimeException("Could not find jppf-node.zip.");
         }
-        tempDir = new File(System.getProperty("java.io.tmpdir"));
-        if (!tempDir.exists()) {
-            throw new RuntimeException("Temp directory does not exist");
-        }
-        unzipNode(jppfNodeZip, tempDir);
+        unzipNode(jppfNodeZipStream, targetDir);
         JPPFNodeConfiguration nodeConfiguration = new JPPFNodeConfiguration();
         nodeConfiguration.setProperty("jppf.server.host", "localhost")
                 .setProperty("jppf.management.port", String.valueOf(12001))
                 .setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-" + System.currentTimeMillis())
                 .setProperty("processing.threads", String.valueOf(4));
         
-            final File propertiesFile = new File(tempDir, "/jppf-node/config/jppf-node.properties");
+        final File propertiesFile = new File(targetDir, "/jppf-node/config/jppf-node.properties");
         try {
             InputStream propertyStream = nodeConfiguration.getPropertyStream();
             copyInputStream(propertyStream, new FileOutputStream(propertiesFile));
@@ -62,7 +60,7 @@ public class JPPFTestNode {
     }
 
     public void startNode() throws RuntimeException {
-        File startNodeScript = new File(tempDir, "jppf-node/startNode.sh");
+        File startNodeScript = new File(targetDir, "jppf-node/startNode.sh");
         startNodeScript.setExecutable(true);
         try {
 //            String jppfNodePath = startNodeScript.getParentFile().getAbsolutePath();
@@ -91,17 +89,18 @@ public class JPPFTestNode {
             ex.printStackTrace();
         } finally {
             client.close();
+            new File(targetDir, "jppf-node").deleteOnExit();
         }
     }
     
-    private void unzipNode(File fileToUnzip, File targetDir) {
-        Enumeration entries;
-        ZipFile zipFile;
+    private void unzipNode(InputStream fileToUnzip, File targetDir) {
+//        Enumeration entries;
+        ZipInputStream zipFile;
         try {
-            zipFile = new ZipFile(fileToUnzip);
-            entries = zipFile.entries();
-            while (entries.hasMoreElements()) {
-                ZipEntry entry = (ZipEntry) entries.nextElement();
+            zipFile = new ZipInputStream(fileToUnzip);
+            ZipEntry entry;
+            while ((entry = zipFile.getNextEntry()) != null) {
+//                ZipEntry entry = (ZipEntry) entries.nextElement();
                 if (entry.isDirectory()) {
                     // Assume directories are stored parents first then children.
                     System.err.println("Extracting directory: " + entry.getName());
@@ -111,14 +110,24 @@ public class JPPFTestNode {
                 }
                 System.err.println("Extracting file: " + entry.getName());
                 File targetFile = new File(targetDir, entry.getName());
-                copyInputStream(zipFile.getInputStream(entry),
+                copyInputStream_notClosing(zipFile,
                         new BufferedOutputStream(new FileOutputStream(targetFile)));
+//                zipFile.closeEntry();
             }
             zipFile.close();
         } catch (IOException ioe) {
             System.err.println("Unhandled exception:");
             ioe.printStackTrace();
         }
+    }
+    
+    private void copyInputStream_notClosing(InputStream in, OutputStream out) throws IOException {
+        byte[] buffer = new byte[1024];
+        int len;
+        while ((len = in.read(buffer)) >= 0) {
+            out.write(buffer, 0, len);
+        }
+        out.close();
     }
         
     public void copyInputStream(InputStream in, OutputStream out)
@@ -144,6 +153,30 @@ public class JPPFTestNode {
             throw new RuntimeException("startDir is not a directory.");
         }
     }
+
+    private File getTargetDir(String currentDirPath) {
+        File currentDir = new File(currentDirPath);
+        if (!currentDir.isDirectory()) {
+            throw new RuntimeException("user.dir is not a directory.");
+        }
+        File[] listFiles = currentDir.listFiles(new FilenameFilter() {
+            @Override
+            public boolean accept(File dir, String name) {
+                return name.equals("target");
+            }
+        });
+        for (File file : listFiles) {
+            if (file.getName().equals("target") && file.isDirectory()) {
+                return file;
+            }
+        }
+        File targetDir = new File(currentDir, "target");
+        if (targetDir.mkdir()) {
+            return targetDir;
+        } else {
+            throw new RuntimeException("Could not create target directory.");
+        }
+    }
     
     public class NodeProcessOutputter extends Thread {
         
@@ -155,15 +188,14 @@ public class JPPFTestNode {
 
         @Override
         public void run() {
-            System.out.println("### THREAD STARTED ###");
+            logger.info("{} started.", getClass().getName());
             try {
                 String nextLine;
                 while ((nextLine = reader.readLine()) != null) {
-                    System.out.println("process line ==> " + nextLine);
+                    logger.info("STDOUT: {}", nextLine);
                 }
             } catch (IOException ex) {
-                System.err.println("Exception while printing node output.");
-                ex.printStackTrace();
+                logger.warn("IOException while printing STDOUT.", ex);
             }
         }
 
