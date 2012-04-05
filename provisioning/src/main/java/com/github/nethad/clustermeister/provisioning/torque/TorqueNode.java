@@ -34,15 +34,13 @@ import org.apache.commons.lang3.builder.ToStringStyle;
  * @author daniel
  */
 public class TorqueNode implements Node {
-	private final NodeType nodeType;
 	private String torqueJobId;
 	private Set<String> publicAddresses = new HashSet<String>();
 	private Set<String> privateAddresses = new HashSet<String>();
 	private final int serverPort;
 	private final int managementPort;
 
-	public TorqueNode(NodeType nodeType, String torqueJobId, String publicAddress, String privateAddress, int serverPort, int managementPort) {
-		this.nodeType = nodeType;
+	public TorqueNode(String torqueJobId, String publicAddress, String privateAddress, int serverPort, int managementPort) {
 		this.torqueJobId = torqueJobId;
 		this.publicAddresses.add(publicAddress);
 		this.privateAddresses.add(privateAddress);
@@ -57,7 +55,7 @@ public class TorqueNode implements Node {
 
 	@Override
 	public NodeType getType() {
-		return nodeType;
+		return NodeType.NODE;
 	}
 
 	@Override

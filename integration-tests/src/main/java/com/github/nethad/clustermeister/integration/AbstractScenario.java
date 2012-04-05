@@ -29,7 +29,7 @@ public abstract class AbstractScenario implements NodeConnectionListener {
     
     private JPPFTestDriver driver;
     private JPPFTestNode node;
-    private StringBuilder report = new StringBuilder();
+    private StringBuilder report = new StringBuilder("EXECUTION REPORT:\n");
     private boolean scenarioStarted = false;
     private boolean shuttingDown = false;
     
@@ -40,7 +40,6 @@ public abstract class AbstractScenario implements NodeConnectionListener {
     }
 
     protected void execute() throws InterruptedException {
-        report.append("EXECUTION REPORT:\n");
         startDriver();
         startNode();
     }
