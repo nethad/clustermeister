@@ -15,23 +15,16 @@
  */
 package com.github.nethad.clustermeister.integration.sc01;
 
+import com.github.nethad.clustermeister.integration.SampleCallable;
+import com.github.nethad.clustermeister.integration.AbstractScenario;
 import com.github.nethad.clustermeister.api.Clustermeister;
 import com.github.nethad.clustermeister.api.ExecutorNode;
 import com.github.nethad.clustermeister.api.impl.ClustermeisterFactory;
 import com.github.nethad.clustermeister.integration.Assertions;
-import com.github.nethad.clustermeister.provisioning.cli.Provider;
-import com.github.nethad.clustermeister.provisioning.cli.Provisioning;
-import com.github.nethad.clustermeister.provisioning.rmi.NodeConnectionListener;
-import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
-import com.github.nethad.clustermeister.provisioning.rmi.RmiServerForDriver;
+import com.github.nethad.clustermeister.integration.ReturnStringCallable;
 import com.google.common.util.concurrent.ListenableFuture;
-import java.util.*;
+import java.util.Collection;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicInteger;
-import org.jppf.management.JPPFManagementInfo;
-import org.jppf.management.JPPFSystemInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,85 +32,40 @@ import org.slf4j.LoggerFactory;
  *
  * @author thomas
  */
-public class Scenario01 implements NodeConnectionListener {
-    protected Provisioning provisioning;
+public class Scenario01 extends AbstractScenario {
+    
     private final Logger logger = LoggerFactory.getLogger(Scenario01.class);
     
-    private Map<String, JPPFManagementInfo> nodes = new HashMap<String, JPPFManagementInfo>();
-    private int numberOfNodes;
-    private final AtomicInteger actualNumberOfNodes = new AtomicInteger(0);
-    
-    public static void main(String... args) {
+    public static void main(String... args) throws InterruptedException {
         new Scenario01().execute();
     }
-    
-    public void execute() {
-        String configFilePath = System.getProperty("user.home") + "/.clustermeister/configuration.properties";
-        provisioning = new Provisioning(configFilePath, Provider.TORQUE);
-        RmiInfrastructure rmiInfrastructure = provisioning.getRmiInfrastructure();
-        RmiServerForDriver rmiServerForDriver = rmiInfrastructure.getRmiServerForDriverObject();
-        rmiServerForDriver.addNodeConnectionListener(this);
-        //        IRmiServerForDriver rmiServerForDriver = rmiInfrastructure.getRmiServerForDriver();
-        
-//        rmiInfrastructure.
-        provisioning.execute();
-        numberOfNodes = 3;
-        provisioning.addNodes(numberOfNodes, 1);
-    }
 
     @Override
-    public void onNodeConnected(JPPFManagementInfo jppfmi, JPPFSystemInformation jppfsi) {
-        synchronized (this)  {
-            if (!nodes.containsKey(jppfmi.getId())) {
-                nodes.put(jppfmi.getHost(), jppfmi);
-            }
-            checkNumberOfNodes(actualNumberOfNodes.incrementAndGet());
-        }
-    }
+    public void runScenario() throws Exception {
+        logger.info("Run scenario.");
 
-    @Override
-    public void onNodeDisconnected(JPPFManagementInfo jppfmi) {
-        synchronized (this) {
-            nodes.remove(jppfmi.getId());
-        }
-    }
-
-    private void checkNumberOfNodes(final int currentNumber) {
-        logger.info("Check number of nodes. currentNumber: {}; number of nodes: {}.", currentNumber, numberOfNodes);
-        if (currentNumber >= numberOfNodes) {
-            runScenario();
-        }
-    }
-
-    private void runScenario() {
-        logger.info("Running scenario {}", getClass().getName());
+        Clustermeister clustermeister = ClustermeisterFactory.create();
         try {
-            Clustermeister clustermeister = ClustermeisterFactory.create();
+            logger.info("Start Clustermeister.");
             Collection<ExecutorNode> allNodes = clustermeister.getAllNodes();
-//            Assertions.assertEquals(numberOfNodes, allNodes.size(), numberOfNodes+" nodes should have been added to torque.");
-            final String returnString = "it worked!";
-            List<ListenableFuture<String>> results = new ArrayList<ListenableFuture<String>>();
-            for (ExecutorNode node : allNodes) {
-                results.add(node.execute(new ReturnStringCallable(returnString)));
-            }
-            
-            for (ListenableFuture<String> result : results) {
+            addToReport("node size", allNodes.size());
+//            logger.info("nodes size = {}", allNodes.size());
+            Assertions.assertEquals(1, allNodes.size(), "Number of nodes not as expected");
+            String expectedString = "it works!";
+            if (allNodes.size() > 0) {
+                ListenableFuture<String> result = allNodes.iterator().next().execute(new ReturnStringCallable(expectedString));
                 try {
-                    String resultString = result.get(10, TimeUnit.SECONDS);
-                    Assertions.assertEquals(returnString, resultString, "Returned string was not as expected.");
-                } catch (TimeoutException ex) {
-                    throw new RuntimeException(ex);
-                } catch (InterruptedException ex) {
-                    throw new RuntimeException(ex);
+                    String resultString = result.get();
+                    addToReport("result string", resultString);
+//                    Assertions.assertEquals(expectedString, resultString, "Result string is not as expected.");
                 } catch (ExecutionException ex) {
-                    throw new RuntimeException(ex);
+                    logger.warn("Exception on result", ex);
+                    addToReport("exception on result", ex);
                 }
             }
         } finally {
-            provisioning.shutdown();
+            clustermeister.shutdown();
         }
-        logger.info("System.exit");
-        System.exit(0);
     }
     
 }
