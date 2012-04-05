@@ -61,4 +61,39 @@
             <optional>true</optional>
         </dependency>
     </dependencies>
+    
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-dependency-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <id>copy-jppf-zips</id>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <phase>generate-resources</phase>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>com.github.nethad.clustermeister</groupId>
+                                    <artifactId>node</artifactId>
+                                    <version>${jppf.node.version}</version>
+                                    <type>zip</type>
+                                    <classifier>node</classifier>
+                                    <overWrite>true</overWrite>
+                                    <outputDirectory>${project.build.directory}/classes</outputDirectory>
+                                    <destFileName>jppf-node.zip</destFileName>
+                                </artifactItem>
+                            </artifactItems>
+                            <overWriteSnapshots>true</overWriteSnapshots>
+                            <overWriteIfNewer>true</overWriteIfNewer>
+                            <overWriteReleases>true</overWriteReleases>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 </project>
