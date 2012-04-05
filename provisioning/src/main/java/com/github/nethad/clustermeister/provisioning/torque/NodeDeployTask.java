@@ -109,14 +109,14 @@ class NodeDeployTask {
 			logger.warn("Could not find driver IP address, using localhost");
 			return "localhost";
 		}
-		
 	}
 
     public String base64Encode(String toEncode) {
         return DatatypeConverter.printBase64Binary(toEncode.getBytes());
     }
 
-    private String qsubScript(String nodeName, String nodeConfigFileName, int numberOfCpus) {
+    @VisibleForTesting
+    String qsubScript(String nodeName, String nodeConfigFileName, int numberOfCpus) {
         StringBuilder sb = new StringBuilder();
         sb.append("#PBS -N ").append(nodeName).append("\n")
             .append("#PBS -l nodes=1:ppn=").append(numberOfCpus).append("\n")
