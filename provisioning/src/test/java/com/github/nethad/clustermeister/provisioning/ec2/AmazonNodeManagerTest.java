@@ -21,6 +21,7 @@ import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.google.common.base.Optional;
 import java.io.File;
 import java.util.Collection;
@@ -38,9 +39,9 @@ import org.slf4j.LoggerFactory;
 public class AmazonNodeManagerTest {
     public static final String EU_WEST_1C = "eu-west-1c";
     public static final String KEYPAIR = "EC2_keypair";
-    public static final String PRIVATE_KEY = "/home/daniel/Desktop/EC2/EC2_keypair.pem";
-    public static final String OTHER_PRIVATE_KEY = "/home/daniel/Desktop/EC2/otherkey_rsa";
-    public static final String OTHER_PUBLIC_KEY = "/home/daniel/Desktop/EC2/otherkey_rsa.pub";
+    public static final String PRIVATE_KEY = "/home/daniel/EC2/EC2_keypair.pem";
+    public static final String OTHER_PRIVATE_KEY = "/home/daniel/EC2/otherkey_rsa";
+    public static final String OTHER_PUBLIC_KEY = "/home/daniel/EC2/otherkey_rsa.pub";
 
     private final static Logger logger =
             LoggerFactory.getLogger(AmazonNodeManagerTest.class);
@@ -96,11 +97,11 @@ public class AmazonNodeManagerTest {
         System.out.println("waiting...");
         Thread.sleep(20000);
 
-        Future<Void> ns = nodeManager.removeNode((AmazonNode) jppfNode, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
-        Future<Void> ns2 = nodeManager.removeNode((AmazonNode) jppfNode2, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
-
-        ns.get();
-        ns2.get();
+//        Future<Void> ns = nodeManager.removeNode((AmazonNode) jppfNode, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
+//        Future<Void> ns2 = nodeManager.removeNode((AmazonNode) jppfNode2, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
+//
+//        ns.get();
+//        ns2.get();
         
 //        Future<Void> ds = nodeManager.removeNode((AmazonNode) jppfDriver, AmazonInstanceShutdownMethod.NO_SHUTDOWN);
 //        ds.get();

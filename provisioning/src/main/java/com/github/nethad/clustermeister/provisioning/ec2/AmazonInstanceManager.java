@@ -20,6 +20,7 @@ import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.PasswordCredentials;
+import com.github.nethad.clustermeister.provisioning.ec2.AmazonEC2JPPFDeployer.Event;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientImpl;
 import com.github.nethad.clustermeister.provisioning.utils.SocksTunnel;
 import com.google.common.base.Charsets;
@@ -33,10 +34,7 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.Monitor;
 import com.google.common.util.concurrent.SettableFuture;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 import org.jclouds.compute.ComputeServiceContext;
@@ -207,7 +205,7 @@ public class AmazonInstanceManager {
      *
      * @throws TimeoutException When
      */
-    AmazonNode deploy(NodeMetadata instanceMetadata, AmazonNodeConfiguration nodeConfig)
+    AmazonNode deploy(final NodeMetadata instanceMetadata, final AmazonNodeConfiguration nodeConfig)
             throws TimeoutException {
 
         ComputeServiceContext context = valueOrNotReady(contextFuture);
@@ -218,17 +216,25 @@ public class AmazonInstanceManager {
             case NODE: {
                 managementPort = getNextNodeManagementPort(instanceMetadata);
                 nodeConfig.setManagementPort(managementPort);
-                openReverseChannel(instanceMetadata, nodeConfig);
                 AmazonEC2JPPFDeployer deployer =
                         new AmazonEC2JPPFNodeDeployer(context, instanceMetadata,
                         buildLoginCredentials(nodeConfig), nodeConfig);
+                Observer sshConnectionCallback = new Observer() {
+                    @Override
+                    public void update(Observable arg0, Object event) {
+                        if(event == Event.JPPF_PREPARED) {
+                            openReverseChannel(instanceMetadata, nodeConfig);
+                        }
+                    }
+                };
+                deployer.addObserver(sshConnectionCallback);
                 uuid = deployer.deploy();
+                deployer.deleteObserver(sshConnectionCallback);
                 break;
             }
             case DRIVER: {
                 managementPort = AmazonNodeManager.DEFAULT_MANAGEMENT_PORT;
                 nodeConfig.setManagementPort(managementPort);
-                openReverseChannel(instanceMetadata, nodeConfig);
                 AmazonEC2JPPFDeployer deployer =
                         new AmazonEC2JPPFDriverDeployer(context, instanceMetadata,
                         buildLoginCredentials(nodeConfig), nodeConfig);
@@ -431,8 +437,12 @@ public class AmazonInstanceManager {
 
     private void loadConfiguration(Configuration configuration) {
         logger.debug("Loading Configuration...");
-        accessKeyId = configuration.getString("accessKeyId", "").trim();
-        secretKey = configuration.getString("secretKey", "").trim();
+        accessKeyId = checkNotNull(
+                configuration.getString("amazon.accessKeyId", null), 
+                "No Amazon access key ID configured.").trim();
+        secretKey = checkNotNull(
+                configuration.getString("amazon.secretKey", null), 
+                "No Amazon secret key configured.").trim();
     }
 
     /**
