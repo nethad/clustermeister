@@ -18,7 +18,6 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
@@ -31,7 +30,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -66,9 +64,11 @@ public class AmazonNodeManager {
     
     final Configuration configuration;
     
+    JPPFManagementByJobsClient managementClient = null;
+    
     //TODO: make sure this will not cause a memory leak
-    Map<AmazonNode, JPPFManagementByJobsClient> managementClients =
-            Collections.synchronizedMap(new HashMap<AmazonNode, JPPFManagementByJobsClient>());
+//    Map<AmazonNode, JPPFManagementByJobsClient> managementClients =
+//            Collections.synchronizedMap(new HashMap<AmazonNode, JPPFManagementByJobsClient>());
     private Set<AmazonNode> drivers = new HashSet<AmazonNode>();
     private Set<AmazonNode> nodes = new HashSet<AmazonNode>();
     
@@ -101,7 +101,7 @@ public class AmazonNodeManager {
             Optional<String> instanceId) {
         return executorService.submit(new AmazonNodeManager.AddNodeTask(nodeConfiguration, instanceId));
     }
-
+    
     /**
      *
      * @param node
@@ -113,7 +113,37 @@ public class AmazonNodeManager {
         return executorService.submit(
                 new AmazonNodeManager.RemoveNodeTask(node, shutdownMethod, amazonInstanceManager));
     }
-
+    
+    public void registerManagementClient(JPPFManagementByJobsClient client) {
+        this.managementClient = client;
+    }
+    
+    public void removeAllNodes(AmazonInstanceShutdownMethod shutdownMethod) {
+        try {
+            managementClient.shutdownAllNodes();
+            managedNodesMonitor.enter();
+            try {
+                for(AmazonNode node : nodes) {
+                    switch(shutdownMethod) {
+                        case SHUTDOWN: {
+                            amazonInstanceManager.suspendInstance(node.getInstanceId());
+                            break;
+                        }
+                        case TERMINATE: {
+                            amazonInstanceManager.terminateInstance(node.getInstanceId());
+                            break;
+                        }
+                    }
+                }
+                nodes.clear();
+            } finally {
+                managedNodesMonitor.leave();
+            }
+        } catch (Exception ex) {
+            logger.warn("Failed to shut down all nodes.", ex);
+        }
+    }
+    
     public void close() {
         if (amazonInstanceManager != null) {
             managedNodesMonitor.enter();
@@ -137,9 +167,9 @@ public class AmazonNodeManager {
                 }
                 case DRIVER: {
                     drivers.add(node);
-                    String publicIp = Iterables.getFirst(node.getPublicAddresses(), null);
-                    managementClients.put(node, JPPFConfiguratedComponentFactory.getInstance().
-                            createManagementByJobsClient(publicIp, AmazonNodeManager.DEFAULT_SERVER_PORT));
+//                    String publicIp = Iterables.getFirst(node.getPublicAddresses(), null);
+//                    managementClients.put(node, JPPFConfiguratedComponentFactory.getInstance().
+//                            createManagementByJobsClient(publicIp, AmazonNodeManager.DEFAULT_SERVER_PORT));
                     break;
                 }
                 default: {
@@ -178,9 +208,9 @@ public class AmazonNodeManager {
             return Iterables.find(drivers, new Predicate<AmazonNode>() {
                 @Override
                 public boolean apply(AmazonNode driver) {
-                    String driverPublicAddress = Iterables.getFirst(driver.getPrivateAddresses(), null);
-                    checkNotNull(driverPublicAddress);
-                    return node.getDriverAddress().equals(driverPublicAddress);
+                    String driverAddress = Iterables.getFirst(driver.getPrivateAddresses(), null);
+                    checkNotNull(driverAddress);
+                    return node.getDriverAddress().equals(driverAddress);
                 }
             }, null);
         } finally {
@@ -259,10 +289,10 @@ public class AmazonNodeManager {
             checkNotNull(publicIp, "Can not get public IP of node " + node + ".");
             switch (node.getType()) {
                 case DRIVER: {
-                    JPPFManagementByJobsClient client = managementClients.remove(node);
-                    if(client != null) {
-                        client.close();
-                    }
+//                    JPPFManagementByJobsClient client = managementClients.remove(node);
+//                    if(client != null) {
+//                        client.close();
+//                    }
                     driverShutdown(publicIp);
                     break;
                 }
@@ -316,17 +346,15 @@ public class AmazonNodeManager {
         }
 
         private void nodeShutdown(AmazonNode node) {
-            AmazonNode driver = node.getDriver().get();
-            JPPFManagementByJobsClient client = managementClients.get(driver);
-            if(client != null) {
+            if(managementClient != null) {
                 logger.info("Shutting down node {}.", node);
                 try {
-                    client.shutdownNode(node.getID());
+                    managementClient.shutdownNode(node.getID());
                 } catch(Exception ex) {
                     logger.warn("Failed to shut down {}.\n{}", node, ex.getMessage());
                 }
             } else {
-                logger.warn("Can not shut down {}.", node);
+                logger.warn("Can not shut down {}. No management client registered.", node);
             }
         }
     }
