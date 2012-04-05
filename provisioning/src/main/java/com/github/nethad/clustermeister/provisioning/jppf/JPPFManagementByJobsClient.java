@@ -38,8 +38,6 @@ import org.slf4j.LoggerFactory;
  * @author daniel
  */
 public class JPPFManagementByJobsClient {
-    protected static final String JPPF_UUID_PROPERTY = "jppf.uuid";
-
     private final static org.slf4j.Logger logger =
             LoggerFactory.getLogger(JPPFManagementByJobsClient.class);
     
@@ -194,7 +192,7 @@ public class JPPFManagementByJobsClient {
     }
     
     private ExecutionPolicy createExecutionPolicyFor(Collection<String> nodeUuids) {
-        return new OneOf(JPPF_UUID_PROPERTY, true, nodeUuids.toArray(new String[]{}));
+        return new OneOf(JPPFConstants.UUID, true, nodeUuids.toArray(new String[]{}));
     }
     
     /**

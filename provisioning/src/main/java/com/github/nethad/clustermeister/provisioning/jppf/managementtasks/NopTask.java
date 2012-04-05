@@ -19,7 +19,7 @@ import java.io.Serializable;
 import org.jppf.server.protocol.JPPFRunnable;
 
 /**
- * Shuts down a single node (not driver).
+ * This task performs no operation.
  *
  * @author daniel
  */

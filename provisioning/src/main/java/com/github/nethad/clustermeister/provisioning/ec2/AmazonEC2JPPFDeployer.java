@@ -58,8 +58,6 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
     //TODO: make sure this does not cause a memory leak.
     protected static final Map<String, Monitor> instanceDriverMonitors = new HashMap<String, Monitor>();
     protected static final Map<String, Monitor> instanceNodeMonitors = new HashMap<String, Monitor>();
-    protected static final String JPPF_MANAGEMENT_HOST = "jppf.management.host";
-    protected static final String JPPF_MANAGEMENT_PORT = "jppf.management.port";
     
     protected final String zipFile;
     protected final String crc32File;
