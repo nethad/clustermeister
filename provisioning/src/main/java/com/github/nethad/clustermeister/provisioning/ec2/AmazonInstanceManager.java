@@ -431,8 +431,12 @@ public class AmazonInstanceManager {
 
     private void loadConfiguration(Configuration configuration) {
         logger.debug("Loading Configuration...");
-        accessKeyId = configuration.getString("accessKeyId", "").trim();
-        secretKey = configuration.getString("secretKey", "").trim();
+        accessKeyId = checkNotNull(
+                configuration.getString("amazon.accessKeyId", null), 
+                "No Amazon access key ID configured.").trim();
+        secretKey = checkNotNull(
+                configuration.getString("amazon.secretKey", null), 
+                "No Amazon secret key configured.").trim();
     }
 
     /**
