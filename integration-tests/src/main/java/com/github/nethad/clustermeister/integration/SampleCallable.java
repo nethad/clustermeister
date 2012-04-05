@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.integration.sc01;
+package com.github.nethad.clustermeister.integration;
 
 import java.io.Serializable;
 import java.util.concurrent.Callable;
@@ -22,16 +22,11 @@ import java.util.concurrent.Callable;
  *
  * @author thomas
  */
-public class ReturnStringCallable implements Callable<String>, Serializable {
-    private final String returnString;
-
-    public ReturnStringCallable(String returnString) {
-        this.returnString = returnString;
-    }
+public class SampleCallable implements Callable<String>, Serializable {
 
     @Override
     public String call() throws Exception {
-        return returnString;
+        System.out.println("Started SampleCallable!");
+        return "It works!";
     }
-    
 }
