@@ -17,6 +17,7 @@ package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
@@ -59,7 +60,7 @@ class NodeDeployTask {
         final String base64EncodedQsubScript = base64Encode(qsubScript);
         String submitJobToQsub = "echo \""+base64EncodedQsubScript+"\"| base64 -d | qsub";
 		String jobId = sshClient().executeWithResult(submitJobToQsub);
-		TorqueNode torqueNode = new TorqueNode(NodeType.NODE, jobId, null, null, serverPort, managementPort);
+		TorqueNode torqueNode = new TorqueNode(jobId, null, null, serverPort, managementPort);
 		return torqueNode;
 	}
 	
@@ -69,7 +70,7 @@ class NodeDeployTask {
 			JPPFNodeConfiguration configuration = createNodeConfiguration(driverIpAddress);
 			final String configServerPort = configuration.getProperty("jppf.server.port");
 			if (configServerPort == null) {
-				serverPort = TorqueJPPFDriverDeployer.SERVER_PORT;
+				serverPort = JPPFLocalDriver.SERVER_PORT;
 			} else {
 				serverPort = Integer.valueOf(configServerPort);
 			}
@@ -108,14 +109,14 @@ class NodeDeployTask {
 			logger.warn("Could not find driver IP address, using localhost");
 			return "localhost";
 		}
-		
 	}
 
     public String base64Encode(String toEncode) {
         return DatatypeConverter.printBase64Binary(toEncode.getBytes());
     }
 
-    private String qsubScript(String nodeName, String nodeConfigFileName, int numberOfCpus) {
+    @VisibleForTesting
+    String qsubScript(String nodeName, String nodeConfigFileName, int numberOfCpus) {
         StringBuilder sb = new StringBuilder();
         sb.append("#PBS -N ").append(nodeName).append("\n")
             .append("#PBS -l nodes=1:ppn=").append(numberOfCpus).append("\n")

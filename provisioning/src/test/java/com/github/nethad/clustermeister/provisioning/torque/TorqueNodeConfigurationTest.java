@@ -16,40 +16,15 @@
 package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.api.NodeType;
-import org.junit.AfterClass;
+import static org.hamcrest.CoreMatchers.is;
+import static org.junit.Assert.assertThat;
 import org.junit.Test;
-import static org.junit.Assert.*;
-import org.junit.Before;
-import org.junit.BeforeClass;
-import static org.hamcrest.CoreMatchers.*;
 
 /**
  *
  * @author thomas
  */
 public class TorqueNodeConfigurationTest {
-
-    @Before
-    public void setup() {
-    }
-
-    @Test
-    public void factoryMethodDriver_local() {
-        TorqueNodeConfiguration configurationForDriver = TorqueNodeConfiguration.configurationForDriver(true);
-        assertThat(configurationForDriver.isDriverDeployedLocally(), is(true));
-        assertThat(configurationForDriver.getDriverAddress(), is(""));
-        assertThat(configurationForDriver.getNumberOfCpus(), is(1));
-        assertThat(configurationForDriver.getType(), is(NodeType.DRIVER));
-    }
-
-    @Test
-    public void factoryMethodDriver_notLocal() {
-        TorqueNodeConfiguration configurationForDriver = TorqueNodeConfiguration.configurationForDriver(false);
-        assertThat(configurationForDriver.isDriverDeployedLocally(), is(false));
-        assertThat(configurationForDriver.getDriverAddress(), is(""));
-        assertThat(configurationForDriver.getNumberOfCpus(), is(1));
-        assertThat(configurationForDriver.getType(), is(NodeType.DRIVER));
-    }
 
     @Test
     public void factoryMethodNode() {
