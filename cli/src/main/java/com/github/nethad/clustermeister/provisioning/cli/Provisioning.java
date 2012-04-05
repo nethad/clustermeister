@@ -91,10 +91,12 @@ public class Provisioning {
                 shutdownTorque();
                 break;
             case TEST:
+                shutdownTest();
                 break;
             default:
                 throw new RuntimeException("Unknown provider");
         }
+        shutdownDriver();
     }
     
     public void addNodes(int numberOfNodes, int numberOfCpusPerNode) {
@@ -196,6 +198,10 @@ public class Provisioning {
         }
     }
 
+    private void shutdownDriver() {
+        jppfLocalDriver.shutdown();
+    }
+
     private void startAmazon() {
         amazonNodeManager = new AmazonNodeManager(configuration);
         amazonManagementClient = JPPFConfiguratedComponentFactory.getInstance().
@@ -212,15 +218,6 @@ public class Provisioning {
         torqueNodeManager.addPublicIpListener(jppfLocalDriver);
         jppfLocalDriver.execute();
         driverHost = jppfLocalDriver.getIpAddress();
-        //        ListenableFuture<? extends Node> driver = torqueNodeManager.addNode(getTorqueDriverConfiguration());
-        //        driverHost = PublicIp.getPublicIp();
-        //        try {
-        //            driver.get();
-        //        } catch (InterruptedException ex) {
-        //            logger.error("Error while waiting for driver to start up.", ex);
-        //        } catch (ExecutionException ex) {
-        //            logger.error("Error while waiting for driver to start up.", ex);
-        //        }
     }
     
     private void startTestSetup() {
@@ -235,7 +232,6 @@ public class Provisioning {
             torqueNodeManager.removeAllNodes();
             torqueNodeManager.shutdown();
         }
-        jppfLocalDriver.shutdown();
     }
     
     private void shutdownAmazon() {
@@ -243,11 +239,10 @@ public class Provisioning {
             amazonNodeManager.removeAllNodes(AmazonInstanceShutdownMethod.TERMINATE);
             amazonNodeManager.close();
         }
-        jppfLocalDriver.shutdown();
     }
     
-    private TorqueNodeConfiguration getTorqueDriverConfiguration() {
-        return new TorqueNodeConfiguration(NodeType.DRIVER, "", true, 1);
+    private void shutdownTest() {
+        // do nothing
     }
 
     @VisibleForTesting

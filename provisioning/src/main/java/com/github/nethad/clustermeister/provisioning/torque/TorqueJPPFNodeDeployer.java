@@ -16,11 +16,17 @@
 package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.provisioning.jppf.PublicIpNotifier;
-import com.github.nethad.clustermeister.provisioning.utils.*;
+import com.github.nethad.clustermeister.provisioning.utils.FileUtils;
+import com.github.nethad.clustermeister.provisioning.utils.PublicIp;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.net.InetAddresses;
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Observer;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -32,29 +38,19 @@ import org.slf4j.LoggerFactory;
  * @author thomas
  */
 public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNotifier {
-    protected File akkaZipFile;
     
     Logger logger = LoggerFactory.getLogger(TorqueJPPFNodeDeployer.class);
 
-//	private static final int DEFAULT_MANAGEMENT_PORT = 11198;
-//	private static final String DEPLOY_BASE_NAME = "jppf-node";
     private static final String DEPLOY_ZIP_NAME = DEPLOY_BASE_NAME + ".zip";
     private static final String LOCAL_DEPLOY_ZIP_PATH = "/" + DEPLOY_ZIP_NAME;
     private static final String AKKA_ZIP = "akka-libs.tar.bz2";
     private static final String AKKA_REMOTE_ZIP_PATH = DEPLOY_BASE_NAME + "/lib/" + AKKA_ZIP;
     private static final String CRC32_FILE = DEPLOY_BASE_NAME + "/CRC32";
     private static final String AKKA_CRC32_FILE = DEPLOY_BASE_NAME + "/AKKA_CRC32";
-//	private static final String DEPLOY_CONFIG_SUFFIX = ".properties";
-//    private static final String DEPLOY_PROPERTIES = DEPLOY_BASE_NAME + DEPLOY_CONFIG_SUFFIX;
-//	private static final String DEPLOY_QSUB = "qsub-node.sh";
-//	private static final String PATH_TO_QSUB_SCRIPT = "./" + DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB;
     private String host;
-//    private String localIp;
     private int port;
     private SSHClient sshClient;
     private String user;
-    private String privateKeyFilePath;
-//    private String passphrase;
     private boolean isInfrastructureDeployed;
     private AtomicInteger currentNodeNumber;
     private final long sessionId;
@@ -65,6 +61,8 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
     private String akkaZip;
     private ArrayList<Observer> publicIpListener;
     private String publicIp;
+    
+    protected File akkaZipFile;
     
 
     public TorqueJPPFNodeDeployer(TorqueConfiguration configuration, SSHClient sshClient) {
@@ -86,12 +84,29 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
     boolean isInfrastructureDeployed() {
         return isInfrastructureDeployed;
     }
+
+    private void computeCRC() {
+        try {
+            deployZipCRC32 = FileUtils.getCRC32(getResourceStream(LOCAL_DEPLOY_ZIP_PATH));
+            akkaZipFile = new File(akkaZip);
+            if (akkaZipFile.exists()) {
+                logger.info("akka libs zip exists.");
+                akkaLibsZipCRC32 = FileUtils.getCRC32ForFile(akkaZipFile);
+            } else {
+                logger.info("akka libs zip does NOT exist. {}", akkaZip);
+                akkaLibsZipCRC32 = 0L;
+            }
+        } catch (IOException ex) {
+            logger.error("Can not read resource.", ex);
+        }
+    }
     
     private void connectToSSH() throws SSHClientException {
         sshClient.connect(user, host, port);
     }
 
-    private void doPublicIpRequest() throws SSHClientException {
+    @VisibleForTesting
+    void doPublicIpRequest() throws SSHClientException {
         if (!sshClient.isConnected()) {
             connectToSSH();
         }
@@ -112,24 +127,11 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
         if (isInfrastructureDeployed) {
             return;
         }
-        
         if (!sshClient.isConnected()) {
             connectToSSH();
         }
         
-        try {
-            deployZipCRC32 = FileUtils.getCRC32(getResourceStream(LOCAL_DEPLOY_ZIP_PATH));
-            akkaZipFile = new File(akkaZip);
-            if (akkaZipFile.exists()) {
-                logger.info("akka libs zip exists.");
-                akkaLibsZipCRC32 = FileUtils.getCRC32ForFile(akkaZipFile);
-            } else {
-                logger.info("akka libs zip does NOT exist. {}", akkaZip);
-                akkaLibsZipCRC32 = 0L;
-            }
-        } catch (IOException ex) {
-            logger.error("Can not read resource.", ex);
-        }
+        computeCRC();
         
         // delete config files (separate config files for each node are generated)
         sshClient.executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "/config/*.properties");
@@ -143,8 +145,6 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
         } else {
             logger.info("Resource is up to date.");
         }
-        
-//        prepareLocalIP();
         isInfrastructureDeployed = true;
     }
 
@@ -179,18 +179,12 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
         torqueNodeManagement.addManagedNode(torqueNode);
         return torqueNode;
     }
-
-//    private void prepareLocalIP() {
-//        //		localHost = InetAddress.getLocalHost().getHostAddress();
-//        localIp = PublicIp.getInstance().getPublicIp();
-//        logger.info("localIp = " + localIp);
-//    }
     
     private void loadConfiguration() {     
           host = configuration.getSshHost();
           port = configuration.getSshPort();
           user = configuration.getSshUser();
-          privateKeyFilePath = configuration.getPrivateKeyPath();
+//          privateKeyFilePath = configuration.getPrivateKeyPath();
           email = configuration.getEmailNotify();
           akkaZip = System.getProperty("user.home")+"/.clustermeister/"+AKKA_ZIP;
     }
@@ -251,7 +245,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
     }
 
     InputStream getResourceStream(String resource) {
-        return TorqueJPPFDriverDeployer.class.getResourceAsStream(resource);
+        return getClass().getResourceAsStream(resource);
     }
 
     @Override

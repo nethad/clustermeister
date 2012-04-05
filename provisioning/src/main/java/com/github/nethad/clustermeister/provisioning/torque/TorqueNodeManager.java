@@ -56,8 +56,6 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 	
 	private final Monitor managedNodesMonitor = new Monitor(false);
 
-
-
 	private class AddNormalNodeTask implements Callable<TorqueNode> {
 
 		private final TorqueNodeConfiguration nodeConfiguration;
@@ -71,39 +69,6 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 		@Override
 		public TorqueNode call() throws Exception {
 			return nodeDeployer.submitJob(nodeConfiguration, torqueNodeManagement);
-		}
-	}
-
-	private class AddDriverNodeTask implements Callable<TorqueNode> {
-
-		private final TorqueNodeManagement torqueNodeManagement;
-
-		public AddDriverNodeTask(TorqueNodeManagement torqueNodeManagement) {
-			this.torqueNodeManagement = torqueNodeManagement;
-		}
-
-		@Override
-		public TorqueNode call() throws Exception {
-			return driverDeployer.execute(torqueNodeManagement);
-		}
-	}
-	
-	private class RemoveDriverNodeTask implements Callable<Void> {
-		private String host;
-		private int managementPort;
-
-		public RemoveDriverNodeTask(String host, int managementPort) {
-			this.host = host;
-			this.managementPort = managementPort;
-		}
-
-		@Override
-		public Void call() throws Exception {
-			JMXDriverConnectionWrapper wrapper = 
-					NodeManagementConnector.openDriverConnection(host, managementPort);
-			wrapper.restartShutdown(0L, -1L);
-			wrapper.close();
-			return null;
 		}
 	}
 	
@@ -127,11 +92,9 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 	}
 	
 	private final Configuration configuration;
-	private Set<TorqueNode> drivers = new HashSet<TorqueNode>();
 	private ListeningExecutorService executorService;
 	private Set<TorqueNode> nodes = new HashSet<TorqueNode>();
 	private TorqueJPPFNodeDeployer nodeDeployer = null;
-	private TorqueJPPFDriverDeployer driverDeployer;
 
     public TorqueNodeManager(Configuration configuration) {
         this.configuration = configuration;
@@ -143,7 +106,6 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 //            SSHClient sshClient = new SSHClientImpl(privateKeyPath);
             sshClient.setPrivateKey(privateKeyPath);
             nodeDeployer = new TorqueJPPFNodeDeployer(buildTorqueConfiguration(), sshClient);
-            driverDeployer = new TorqueJPPFDriverDeployer();
             executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(THREAD_POOL_SIZE));
         } catch (ConfigurationValueMissingException ex) {
             logger.error("Configuration value is missing.", ex);
@@ -157,58 +119,31 @@ public class TorqueNodeManager implements TorqueNodeManagement {
     }
 
 	public Collection<? extends Node> getNodes() {
-		List<TorqueNode> allNodes =
-				new ArrayList<TorqueNode>(drivers.size() + nodes.size());
-		allNodes.addAll(nodes);
-		allNodes.addAll(drivers);
-		return Collections.unmodifiableCollection(allNodes);
+		return Collections.unmodifiableCollection(nodes);
 	}
 
 	public ListenableFuture<? extends Node> addNode(TorqueNodeConfiguration nodeConfiguration) {
-		switch (nodeConfiguration.getType()) {
-			case DRIVER:
-				return addDriverNode(nodeConfiguration);
-			case NODE:
-				return addNormalNode(nodeConfiguration);
-			default:
-				throw new IllegalArgumentException("Invalid Node Type.");
-		}
+        return executorService.submit(new AddNormalNodeTask(nodeConfiguration, this));
 	}
 	
 	public ListenableFuture<Void> removeNode(TorqueNode torqueNode) {
 		Preconditions.checkNotNull(torqueNode, "torqueNode must not be null.");
-		switch (torqueNode.getType()) {
-			case DRIVER:
-				return removeDriverNode(torqueNode);
-			case NODE:
-				return removeNormalNode(torqueNode);
-			default:
-				throw new IllegalArgumentException("Invalid Node Type.");
-		}
+        return executorService.submit(
+                new RemoveNormalNodeTask(
+                    Iterables.getFirst(torqueNode.getPublicAddresses(), null), torqueNode.getManagementPort()));
 	}
 	
 	public void removeAllNodes() {
         logger.info("Remove all nodes.");
-        if (!drivers.isEmpty()) { // not needed
-            logger.warn("Drivers list not empty.");
-            TorqueNode firstDriver = drivers.iterator().next();
-            String driverHost = firstDriver.getPrivateAddresses().iterator().next();
-            int serverPort = firstDriver.getServerPort();
-            int managementPort = firstDriver.getManagementPort();
-        }
         
         String driverHost = "localhost";
         int serverPort = JPPFLocalDriver.SERVER_PORT;
-//        int managementPort = JPPFLocalDriver.MANAGEMENT_PORT;
-		
         
         JPPFManagementByJobsClient client = null;
         try {
     		client = JPPFConfiguratedComponentFactory.getInstance()
 				.createManagementByJobsClient(
 					driverHost, serverPort);
-            
-            logger.info("Shutdown nodes.");
             try {
                 client.shutdownAllNodes();
             } catch (Exception ex) {
@@ -220,32 +155,6 @@ public class TorqueNodeManager implements TorqueNodeManagement {
                 client.close();
             }
         }
-        
-        
-//        logger.info("Shutdown driver.");
-//		client.shutdownDriver(driverHost, managementPort);
-		drivers.clear();
-	}
-	
-	private ListenableFuture<Void> removeDriverNode(TorqueNode torqueNode) {
-		return executorService.submit(new RemoveDriverNodeTask(
-				Iterables.getFirst(torqueNode.getPublicAddresses(), null), torqueNode.getManagementPort()));
-	}
-	
-	private ListenableFuture<Void> removeNormalNode(TorqueNode torqueNode) {
-		return executorService.submit(new RemoveNormalNodeTask(
-				Iterables.getFirst(torqueNode.getPublicAddresses(), null), torqueNode.getManagementPort()));
-	}
-
-	private ListenableFuture<? extends Node> addDriverNode(TorqueNodeConfiguration nodeConfiguration) {
-		if (!nodeConfiguration.isDriverDeployedLocally()) {
-			driverDeployer.runExternally();
-		}
-		return executorService.submit(new AddDriverNodeTask(this));
-	}
-
-	private ListenableFuture<? extends Node> addNormalNode(TorqueNodeConfiguration nodeConfiguration) {
-		return executorService.submit(new AddNormalNodeTask(nodeConfiguration, this));
 	}
 
 	public void deployResources() {
@@ -258,44 +167,22 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 
 	@Override
 	public void addManagedNode(TorqueNode torqueNode) {
-		managedNodesMonitor.enter();
-		try {
-			switch (torqueNode.getType()) {
-				case DRIVER:
-					drivers.add(torqueNode);
-					break;
-				case NODE:
-					nodes.add(torqueNode);
-					break;
-				default:
-					throw new IllegalArgumentException("Invalid Node Type.");
-			}
-		} finally {
-			managedNodesMonitor.leave();
-		}
+        managedNodesMonitor.enter();
+        try {
+            nodes.add(torqueNode);
+        } finally {
+            managedNodesMonitor.leave();
+        }
 	}
 
 	@Override
 	public void removeManagedNode(TorqueNode torqueNode) {
-		managedNodesMonitor.enter();
-		try {
-			switch(torqueNode.getType()) {
-				case NODE: {
-					nodes.remove(torqueNode);
-					break;
-				}
-				case DRIVER:  {
-					drivers.remove(torqueNode);
-//					managementClients.remove(node);
-					break;
-				}
-				default: {
-					throw new IllegalArgumentException("Invalid Node Type.");
-				}
-			}
-		} finally {
-			managedNodesMonitor.leave();
-		}
+        managedNodesMonitor.enter();
+        try {
+            nodes.remove(torqueNode);
+        } finally {
+            managedNodesMonitor.leave();
+        }
 	}
 	
 	public void shutdown() {

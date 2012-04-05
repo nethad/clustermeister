@@ -19,14 +19,19 @@ import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
-import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import java.io.InputStream;
-import static org.hamcrest.CoreMatchers.is;
+import static org.hamcrest.Matchers.*;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import org.junit.Before;
 import org.junit.Test;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.anyString;
+import static org.mockito.Mockito.contains;
 
 /**
  *
@@ -45,7 +50,7 @@ public class NodeDeployTaskTest {
         torqueNodeDeployment = mock(TorqueNodeDeployment.class);
         sshClient = mock(SSHClient.class);
         when(torqueNodeDeployment.sshClient()).thenReturn(sshClient);
-        torqueNodeConfiguration = new TorqueNodeConfiguration(NodeType.NODE, "driverIp", true, NUMBER_OF_CPUS);
+        torqueNodeConfiguration = new TorqueNodeConfiguration("driverIp", NUMBER_OF_CPUS);
         nodeDeployTask = new NodeDeployTask(torqueNodeDeployment, 10, torqueNodeConfiguration, "test@example.com");
     }
 
@@ -90,5 +95,14 @@ public class NodeDeployTaskTest {
         assertThat(torqueNode.getTorqueJobId(), is("42"));
         assertThat(torqueNode.getManagementPort(), is(TorqueNodeDeployment.DEFAULT_MANAGEMENT_PORT+10));
         assertThat(torqueNode.getType(), is(NodeType.NODE));
+    }
+    
+    @Test
+    public void qsubScript() throws Exception {
+        String qsubScript = nodeDeployTask.qsubScript("NodeName", "node-config.properties", NUMBER_OF_CPUS);
+        assertThat(qsubScript, containsString("#PBS -l nodes=1:ppn=42"));
+        assertThat(qsubScript, containsString("#PBS -o out/NodeName.out"));
+        assertThat(qsubScript, containsString("#PBS -M test@example.com"));
+        assertThat(qsubScript, containsString("./startNode.sh node-config.properties"));
     }
 }
