@@ -20,6 +20,8 @@ import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Observable;
+import java.util.Observer;
 import org.junit.AfterClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -37,9 +39,11 @@ public class TorqueJPPFNodeDeployerTest {
     private TorqueJPPFNodeDeployer torqueJPPFNodeDeployer;
     
     static final String PACKAGE_PREFIX = "/com/github/nethad/clustermeister/provisioning/torque";
+    private String notifiedIp;
 
     @Before
     public void setup() throws ConfigurationValueMissingException {
+        notifiedIp = null;
         Map<String, Object> configValues = new HashMap<String, Object>();
         configValues.put(TorqueConfiguration.TORQUE_EMAIL_NOTIFY, "test@example.com");
         configValues.put(TorqueConfiguration.TORQUE_SSH_HOST, "ssh.example.com");
@@ -62,10 +66,7 @@ public class TorqueJPPFNodeDeployerTest {
                     return super.getResourceStream(resource);
                 }
             }
-            
-            
         };
-        
     }
     
     @Test
@@ -77,5 +78,23 @@ public class TorqueJPPFNodeDeployerTest {
         verify(sshClient).connect(eq("user"), eq("ssh.example.com"), eq(30));
         verify(sshClient).executeAndSysout(eq("rm -rf jppf-node/config/*.properties"));
         assertThat(torqueJPPFNodeDeployer.isInfrastructureDeployed(), is(true));
+    }
+    
+    @Test
+    public void doPublicIpRequest() throws Exception {
+        when(sshClient.executeWithResult(eq("echo $SSH_CLIENT"))).thenReturn("1.2.3.5 123 456");
+        torqueJPPFNodeDeployer.addListener(new Observer() {
+
+            @Override
+            public void update(Observable o, Object arg) {
+                notifiedIp = (String)arg;
+            }
+        });
+        verify(sshClient).executeWithResult(eq("echo $SSH_CLIENT"));
+        assertThat(notifiedIp, is("1.2.3.5"));
+    }
+    
+    private void setNotifiedIp(String ip) {
+        this.notifiedIp = ip;
     }
 }

@@ -105,7 +105,8 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
         sshClient.connect(user, host, port);
     }
 
-    private void doPublicIpRequest() throws SSHClientException {
+    @VisibleForTesting
+    void doPublicIpRequest() throws SSHClientException {
         if (!sshClient.isConnected()) {
             connectToSSH();
         }
