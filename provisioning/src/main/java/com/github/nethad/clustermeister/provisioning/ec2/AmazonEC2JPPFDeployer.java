@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Observable;
 import java.util.Properties;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.ExecResponse;
@@ -41,7 +42,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author daniel
  */
-public abstract class AmazonEC2JPPFDeployer {
+public abstract class AmazonEC2JPPFDeployer extends Observable {
+    public static enum Event{SSH_CONNECTED};
+    
     protected static final String UUID_PREFIX = "UUID=";
 
     protected final static Logger logger =
@@ -147,6 +150,8 @@ public abstract class AmazonEC2JPPFDeployer {
         String uuid = null;
         SshClient ssh = getSSHClient();
         ssh.connect();
+        setChanged();
+        notifyObservers(Event.SSH_CONNECTED);
         try {
             checkPrecondition();
             final String nodeTypeStr = nodeConfiguration.getType().toString();
