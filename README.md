@@ -1,5 +1,7 @@
 # Clustermeister
 
+**DISCLAIMER: Clustermeister is still under heavy development. It is in a working state, but might not yet be ready to be used by externs.**
+
 ## Introduction / What is Clustermeister?
 
 Testing code on a dynamically provisioned cluster or in the cloud is in most cases a hassle for Java/Scala developers. The code needs to be packaged, cluster nodes have to be allocated, the allocated nodes have to be found, the packaged code needs to be deployed to all the nodes and usually the JVM on the node has to be restarted. This process is often managed using a variety of tools, ranging from SSH scripts to custom cloud APIs and clustering frameworks. The whole process is time-consuming to set up, manage and run. Another issue is that usually the connection from the developer machine to the cluster is slow, so transferring files from the developer machine to all the nodes is potentially slow. 
