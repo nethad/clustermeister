@@ -51,11 +51,6 @@ import org.slf4j.LoggerFactory;
 public class AmazonNodeManager {
 
     public static final int DEFAULT_SSH_PORT = 22;
-    public static final int DEFAULT_SERVER_PORT = 11111;
-    public static final int DEFAULT_SERVER_CLIENT_PORT = 11112;
-    public static final int DEFAULT_SERVER_NODE_PORT = 11113;
-    public static final int DEFAULT_MANAGEMENT_PORT = 11198;
-    public static final int DEFAULT_MANAGEMENT_RMI_PORT = 12198;
     
     private final static Logger logger =
             LoggerFactory.getLogger(AmazonNodeManager.class);

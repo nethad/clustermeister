@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.NodeCapabilities;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFConstants;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.util.concurrent.Monitor;
 import java.io.InputStream;
@@ -30,10 +31,6 @@ import org.jclouds.domain.LoginCredentials;
  * @author daniel
  */
 public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
-    protected static final String JPPF_RECONNECT_MAX_TIME = "reconnect.max.time";
-    protected static final String JPPF_DISCOVERY_ENABLED = "jppf.discovery.enabled";
-    protected static final String JPPF_PROCESSING_THREADS = "processing.threads";
-    protected static final String JPPF_SERVER_HOST = "jppf.server.host";
     private static final String ZIP_FILE = "jppf-node.zip";
     private static final String CRC32_FILE = CLUSTERMEISTER_BIN + "/jppf-node-crc-32";
     private static final String JPPF_FOLDER = "/jppf-node/";
@@ -66,16 +63,16 @@ public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
         final InputStream in = this.getClass().getResourceAsStream(PROPERTY_FILE_NAME);
         try {
             Properties nodeProperties = getPropertiesFromStream(in);
-            nodeProperties.setProperty(JPPF_RECONNECT_MAX_TIME, "5");
-            nodeProperties.setProperty(JPPF_DISCOVERY_ENABLED, "false");
-            nodeProperties.setProperty(JPPF_SERVER_HOST, nodeConfiguration.getDriverAddress());
-            nodeProperties.setProperty(JPPF_MANAGEMENT_HOST, getPrivateIp());
-            nodeProperties.setProperty(JPPF_MANAGEMENT_PORT, 
+            nodeProperties.setProperty(JPPFConstants.RECONNECT_MAX_TIME, "5");
+            nodeProperties.setProperty(JPPFConstants.DISCOVERY_ENABLED, "false");
+            nodeProperties.setProperty(JPPFConstants.SERVER_HOST, nodeConfiguration.getDriverAddress());
+            nodeProperties.setProperty(JPPFConstants.MANAGEMENT_HOST, getPrivateIp());
+            nodeProperties.setProperty(JPPFConstants.MANAGEMENT_PORT, 
                     String.valueOf(nodeConfiguration.getManagementPort()));
             NodeCapabilities nodeCapabilities = nodeConfiguration.getNodeCapabilities();
             checkState(nodeCapabilities != null && !(nodeCapabilities.getNumberOfProcessingThreads() < 1),
                     "Invalid processing threads capability setting.");
-            nodeProperties.setProperty(JPPF_PROCESSING_THREADS, 
+            nodeProperties.setProperty(JPPFConstants.PROCESSING_THREADS, 
                     String.valueOf(nodeCapabilities.getNumberOfProcessingThreads()));
             return nodeProperties;
         } finally {
