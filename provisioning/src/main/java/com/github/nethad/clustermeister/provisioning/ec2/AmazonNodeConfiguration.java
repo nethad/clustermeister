@@ -19,6 +19,7 @@ import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFConstants;
 import com.google.common.base.Optional;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;
@@ -37,7 +38,7 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
     private Optional<String> imageId = Optional.absent();
     private String driverAddress = "";
     private boolean driverDeployedLocally = false;
-    private int managementPort = AmazonNodeManager.DEFAULT_MANAGEMENT_PORT;
+    private int managementPort = JPPFConstants.DEFAULT_MANAGEMENT_PORT;
     private NodeCapabilities nodeCapabilities = null;
 
     public void setNodeType(NodeType nodeType) {

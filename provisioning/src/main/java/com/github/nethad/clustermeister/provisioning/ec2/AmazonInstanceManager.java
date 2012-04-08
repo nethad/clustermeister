@@ -21,6 +21,7 @@ import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredenti
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.PasswordCredentials;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonEC2JPPFDeployer.Event;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFConstants;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientImpl;
 import com.github.nethad.clustermeister.provisioning.utils.SocksTunnel;
 import com.google.common.base.Charsets;
@@ -173,12 +174,10 @@ public class AmazonInstanceManager {
         template.getOptions().
                 inboundPorts(
                 AmazonNodeManager.DEFAULT_SSH_PORT, 
-                AmazonNodeManager.DEFAULT_SERVER_PORT, 
-                AmazonNodeManager.DEFAULT_SERVER_CLIENT_PORT, 
-                AmazonNodeManager.DEFAULT_SERVER_NODE_PORT, //TODO: may not be needed
-                AmazonNodeManager.DEFAULT_MANAGEMENT_PORT, 
-                11199, 11200, 11201, 11202, 11203, //TODO: excess management ports, remove need for these
-                AmazonNodeManager.DEFAULT_MANAGEMENT_RMI_PORT);
+                JPPFConstants.DEFAULT_SERVER_PORT, 
+                JPPFConstants.DEFAULT_MANAGEMENT_PORT,
+                JPPFConstants.DEFAULT_MANAGEMENT_PORT + 1,
+                JPPFConstants.DEFAULT_MANAGEMENT_RMI_PORT);
         
         setLoginCredentials(template, nodeConfiguration);
         
@@ -233,7 +232,7 @@ public class AmazonInstanceManager {
                 break;
             }
             case DRIVER: {
-                managementPort = AmazonNodeManager.DEFAULT_MANAGEMENT_PORT;
+                managementPort = JPPFConstants.DEFAULT_MANAGEMENT_PORT;
                 nodeConfig.setManagementPort(managementPort);
                 AmazonEC2JPPFDeployer deployer =
                         new AmazonEC2JPPFDriverDeployer(context, instanceMetadata,
@@ -269,8 +268,8 @@ public class AmazonInstanceManager {
                         SocksTunnel socksReverseTunnel = sshClientForReversePort.getSocksReverseTunnel();
                         instanceToReverseTunnel.put(instanceMetadata.getId(), socksReverseTunnel);
                         socksReverseTunnel.openTunnel(
-                                AmazonNodeManager.DEFAULT_SERVER_PORT, "localhost", 
-                                AmazonNodeManager.DEFAULT_SERVER_PORT);
+                                JPPFConstants.DEFAULT_SERVER_PORT, "localhost", 
+                                JPPFConstants.DEFAULT_SERVER_PORT);
                     } else {
                         //TODO: add support for password credentials
                         throw new IllegalStateException("Unsupported Credentials.");
@@ -289,7 +288,7 @@ public class AmazonInstanceManager {
         try {
             Integer portCounter = instanceToPortCounter.get(instanceMetadata.getId());
             if (portCounter == null) {
-                portCounter = new Integer(AmazonNodeManager.DEFAULT_MANAGEMENT_PORT + 1);
+                portCounter = new Integer(JPPFConstants.DEFAULT_MANAGEMENT_PORT + 1);
                 instanceToPortCounter.put(instanceMetadata.getId(), portCounter);
             } else {
                 portCounter += 1;
@@ -306,7 +305,7 @@ public class AmazonInstanceManager {
             Integer portCounter = instanceToPortCounter.get(instanceId);
             if (portCounter != null) {
                 portCounter -= 1;
-                if (portCounter <= AmazonNodeManager.DEFAULT_MANAGEMENT_PORT) {
+                if (portCounter <= JPPFConstants.DEFAULT_MANAGEMENT_PORT) {
                     instanceToPortCounter.remove(instanceId);
                 }
             }
