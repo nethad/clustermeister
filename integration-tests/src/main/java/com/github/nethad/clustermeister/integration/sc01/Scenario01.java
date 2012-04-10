@@ -15,11 +15,10 @@
  */
 package com.github.nethad.clustermeister.integration.sc01;
 
-import com.github.nethad.clustermeister.integration.SampleCallable;
-import com.github.nethad.clustermeister.integration.AbstractScenario;
 import com.github.nethad.clustermeister.api.Clustermeister;
 import com.github.nethad.clustermeister.api.ExecutorNode;
 import com.github.nethad.clustermeister.api.impl.ClustermeisterFactory;
+import com.github.nethad.clustermeister.integration.AbstractScenario;
 import com.github.nethad.clustermeister.integration.Assertions;
 import com.github.nethad.clustermeister.integration.ReturnStringCallable;
 import com.google.common.util.concurrent.ListenableFuture;
