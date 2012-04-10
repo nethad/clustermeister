@@ -19,7 +19,7 @@ import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFConstants;
+import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.google.common.base.Optional;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;

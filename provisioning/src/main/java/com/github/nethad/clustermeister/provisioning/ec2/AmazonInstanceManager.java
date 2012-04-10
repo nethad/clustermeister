@@ -21,7 +21,7 @@ import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredenti
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.PasswordCredentials;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonEC2JPPFDeployer.Event;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFConstants;
+import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientImpl;
 import com.github.nethad.clustermeister.provisioning.utils.SocksTunnel;
 import com.google.common.base.Charsets;

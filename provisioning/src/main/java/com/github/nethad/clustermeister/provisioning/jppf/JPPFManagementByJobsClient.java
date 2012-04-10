@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.jppf;
 
+import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.node.common.Constants;
 import com.github.nethad.clustermeister.provisioning.jppf.managementtasks.JPPFConfigReaderTask;
 import com.github.nethad.clustermeister.provisioning.jppf.managementtasks.NopTask;
