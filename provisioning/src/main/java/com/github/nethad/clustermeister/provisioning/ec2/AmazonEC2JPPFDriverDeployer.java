@@ -15,7 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFConstants;
+import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.google.common.util.concurrent.Monitor;
 import java.io.InputStream;
 import java.util.Properties;
