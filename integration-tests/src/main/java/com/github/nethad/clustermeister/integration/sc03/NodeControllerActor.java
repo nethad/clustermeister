@@ -15,8 +15,12 @@ public class NodeControllerActor extends UntypedActor {
 
 	public void preStart() {
 		super.preStart();
+		System.out.println("Retrieving registrar actor reference ...");
 		ActorRef nodeProvisioner = context().actorFor(nodeProvisionerAddress);
+		System.out.println("Done: " + nodeProvisioner.toString());
+		System.out.println("Sending message to registrar ...");
 		nodeProvisioner.tell("REGISTER");
+		System.out.println("Done.");
 	}
 
 	public LoggingAdapter log = Logging.getLogger(getContext().system(), this);
