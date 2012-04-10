@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.api.impl;
 
+import com.github.nethad.clustermeister.api.JPPFConstants;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
@@ -29,11 +30,12 @@ public class JPPFClientConfiguration extends AbstractJPPFConfiguration {
     private Properties properties = new Properties();
 
     public JPPFClientConfiguration() {
-        properties.setProperty("jppf.drivers", "driver");
-        properties.setProperty("driver.jppf.server.host", "localhost");
-        properties.setProperty("driver.jppf.server.port", "11111");
+        String driverName = "driver";
+        properties.setProperty(JPPFConstants.DRIVERS, driverName);
+        properties.setProperty(String.format(JPPFConstants.DRIVER_SERVER_HOST_PATTERN, driverName), "localhost");
+        properties.setProperty(String.format(JPPFConstants.DRIVER_SERVER_PORT_PATTERN, driverName), "11111");
 //        properties.setProperty("reconnect.max.time", "-1");
-        properties.setProperty("jppf.discovery.enabled", "false");
+        properties.setProperty(JPPFConstants.DISCOVERY_ENABLED, "false");
     }
 
     @Override

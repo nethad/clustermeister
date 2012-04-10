@@ -15,8 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
-import com.github.nethad.clustermeister.api.NodeConfiguration;
-import com.github.nethad.clustermeister.api.NodeType;
+import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
@@ -68,7 +67,7 @@ class NodeDeployTask {
 	void uploadNodeConfiguration(String nodeConfigFileName, String driverIpAddress) throws SSHClientException {
 		try {
 			JPPFNodeConfiguration configuration = createNodeConfiguration(driverIpAddress);
-			final String configServerPort = configuration.getProperty("jppf.server.port");
+			final String configServerPort = configuration.getProperty(JPPFConstants.SERVER_PORT);
 			if (configServerPort == null) {
 				serverPort = JPPFLocalDriver.SERVER_PORT;
 			} else {
@@ -83,10 +82,10 @@ class NodeDeployTask {
 
     JPPFNodeConfiguration createNodeConfiguration(String driverIpAddress) {
         JPPFNodeConfiguration configuration = new JPPFNodeConfiguration()
-                .setProperty("jppf.server.host", driverIpAddress)
-                .setProperty("jppf.management.port", String.valueOf(managementPort))
-                .setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-" + torqueNodeDeployment.getSessionId() + "_" + nodeNumber)
-                .setProperty("processing.threads", String.valueOf(nodeConfiguration.getNumberOfCpus()));
+                .setProperty(JPPFConstants.SERVER_HOST, driverIpAddress)
+                .setProperty(JPPFConstants.MANAGEMENT_PORT, String.valueOf(managementPort))
+                .setProperty(JPPFConstants.RESOURCE_CACHE_DIR, "/tmp/.jppf/node-" + torqueNodeDeployment.getSessionId() + "_" + nodeNumber)
+                .setProperty(JPPFConstants.PROCESSING_THREADS, String.valueOf(nodeConfiguration.getNumberOfCpus()));
         return configuration;
     }
 		

@@ -15,23 +15,19 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
-import com.github.nethad.clustermeister.api.NodeConfiguration;
+import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import java.io.InputStream;
-import static org.hamcrest.Matchers.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 import org.junit.Before;
 import org.junit.Test;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.eq;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.anyString;
-import static org.mockito.Mockito.contains;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 /**
  *
@@ -76,9 +72,9 @@ public class NodeDeployTaskTest {
     @Test
     public void createNodeConfiguration() {
         JPPFNodeConfiguration nodeConfiguration = nodeDeployTask.createNodeConfiguration("driverIp");
-        assertThat(nodeConfiguration.getProperty("jppf.server.host"), is("driverIp"));
-        assertThat(nodeConfiguration.getProperty("jppf.management.port"), is(String.valueOf(TorqueNodeDeployment.DEFAULT_MANAGEMENT_PORT+10)));
-        assertThat(nodeConfiguration.getProperty("processing.threads"), is(String.valueOf(NUMBER_OF_CPUS)));
+        assertThat(nodeConfiguration.getProperty(JPPFConstants.SERVER_HOST), is("driverIp"));
+        assertThat(nodeConfiguration.getProperty(JPPFConstants.MANAGEMENT_PORT), is(String.valueOf(TorqueNodeDeployment.DEFAULT_MANAGEMENT_PORT+10)));
+        assertThat(nodeConfiguration.getProperty(JPPFConstants.PROCESSING_THREADS), is(String.valueOf(NUMBER_OF_CPUS)));
     }
 
     @Test
