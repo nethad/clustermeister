@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.integration;
 
+import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
@@ -45,10 +46,10 @@ public class JPPFTestNode {
         }
         unzipNode(jppfNodeZipStream, targetDir);
         JPPFNodeConfiguration nodeConfiguration = new JPPFNodeConfiguration();
-        nodeConfiguration.setProperty("jppf.server.host", "localhost")
-                .setProperty("jppf.management.port", String.valueOf(12001))
-                .setProperty("jppf.resource.cache.dir", "/tmp/.jppf/node-" + System.currentTimeMillis())
-                .setProperty("processing.threads", String.valueOf(4));
+        nodeConfiguration.setProperty(JPPFConstants.SERVER_HOST, "localhost")
+                .setProperty(JPPFConstants.MANAGEMENT_PORT, String.valueOf(12001))
+                .setProperty(JPPFConstants.RESOURCE_CACHE_DIR, "/tmp/.jppf/node-" + System.currentTimeMillis())
+                .setProperty(JPPFConstants.PROCESSING_THREADS, String.valueOf(4));
         
         final File propertiesFile = new File(targetDir, "/jppf-node/config/jppf-node.properties");
         try {

@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.jppf;
 
+import com.github.nethad.clustermeister.api.JPPFConstants;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -34,25 +35,17 @@ public class JPPFDriverConfigurationSource implements JPPFConfiguration.Configur
     public static String host = "localhost";
     Properties properties = new Properties();
 
-    public JPPFDriverConfigurationSource() {
-//        properties.setProperty("jppf.discovery.enabled", "false");
-//        properties.setProperty("jppf.discovery.group", "230.0.0.1");
-//        properties.setProperty("jppf.discovery.port", "11111");
-        
-        properties.setProperty("jppf.server.host", "localhost");
+    public JPPFDriverConfigurationSource() {       
+        properties.setProperty(JPPFConstants.SERVER_HOST, "localhost");
 		
-		properties.setProperty("jppf.server.port", String.valueOf(serverPort));
-		properties.setProperty("jppf.management.port", String.valueOf(managementPort));
+		properties.setProperty(JPPFConstants.SERVER_PORT, String.valueOf(serverPort));
+		properties.setProperty(JPPFConstants.MANAGEMENT_PORT, String.valueOf(managementPort));
         
-        properties.setProperty("jppf.discovery.enabled", "false");
-        properties.setProperty("jppf.peer.discovery.enabled", "false");              
-        
-//        properties.setProperty("jppf.peer.server_1.server.host", "host_1");
-//        properties.setProperty("jppf.peer.server_1.server.port", "11111");
-//        properties.setProperty("jppf.peer.server_2.server.host", "host_2");
-//        properties.setProperty("jppf.peer.server_2.server.port", "11111");
-        properties.setProperty("jppf.load.balancing.algorithm", "proportional");
-        properties.setProperty("jppf.load.balancing.strategy", "test");
+        properties.setProperty(JPPFConstants.DISCOVERY_ENABLED, "false");
+        properties.setProperty(JPPFConstants.PEER_DISCOVERY_ENABLED, "false");              
+
+        properties.setProperty(JPPFConstants.LOAD_BALANCING_ALGORITHM, "proportional");
+        properties.setProperty(JPPFConstants.LOAD_BALANCING_STRATEGY, "test");
         properties.setProperty("strategy.manual.size", "1");
         properties.setProperty("strategy.autotuned.size", "5");
         properties.setProperty("strategy.autotuned.minSamplesToAnalyse", "100");
@@ -84,27 +77,19 @@ public class JPPFDriverConfigurationSource implements JPPFConfiguration.Configur
         properties.setProperty("strategy.test.maxActionRange", "10");
         properties.setProperty("strategy.test.multiplicator", "1");
 
+        StringBuilder jvmOptions = new StringBuilder("-Xmx256m ");
+        jvmOptions.append("-Dlog4j.configuration=log4j-driver.properties ")
+                .append("-Djava.util.logging.config.file=config/logging-driver.properties ")
+                .append("-Dsun.io.serialization.extendedDebugInfo=true ")
+                .append("-D").append(JPPFConstants.CONFIG_PLUGIN).append("=")
+                .append(JPPFDriverConfigurationSource.class.getCanonicalName());
         
-//        properties.setProperty("jppf.server.port", "11198");
-        
-//        properties.setProperty("jppf.management.port", "11111");
-        
-        properties.setProperty("jppf.jvm.options", 
-                "-Xmx256m "
-                + "-Dlog4j.configuration=log4j-driver.properties"
-                + "-Djava.util.logging.config.file=config/logging-driver.properties "
-                + "-Dsun.io.serialization.extendedDebugInfo=true "
-                + "-Djppf.config.plugin="+JPPFDriverConfigurationSource.class.getCanonicalName());
-        
-//        properties.setProperty("jppf.debug.enabled", "true");
+        properties.setProperty(JPPFConstants.JVM_OPTIONS, jvmOptions.toString());
 
-//        properties.setProperty("jppf.server.host", "localhost");
-//        properties.setProperty("jppf.debug.enabled", "true");
     }
 
     @Override
     public InputStream getPropertyStream() throws IOException {
-//        System.out.println("READING CUSTOM CONFIGURATION, inputstream");
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         properties.store(baos, "");
         return new ByteArrayInputStream(baos.toByteArray());

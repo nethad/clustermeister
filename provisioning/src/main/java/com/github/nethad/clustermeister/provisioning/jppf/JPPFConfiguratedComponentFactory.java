@@ -100,10 +100,11 @@ public class JPPFConfiguratedComponentFactory {
      */
     public JPPFManagementByJobsClient createManagementByJobsClient(String host, int port) {
         Properties properties = new Properties();
-        properties.setProperty("jppf.discovery.enabled", "false");
-        properties.setProperty("jppf.drivers", "driver-1");
-        properties.setProperty("driver-1.jppf.server.host", host);
-        properties.setProperty("driver-1.jppf.server.port", String.valueOf(port));
+        String driverName = "driver-1";
+        properties.setProperty(JPPFConstants.DISCOVERY_ENABLED, "false");
+        properties.setProperty(JPPFConstants.DRIVERS, driverName);
+        properties.setProperty(String.format(JPPFConstants.DRIVER_SERVER_HOST_PATTERN, driverName), host);
+        properties.setProperty(String.format(JPPFConstants.DRIVER_SERVER_PORT_PATTERN, driverName), String.valueOf(port));
 
         configPropertyMonitor.enter();
         try {
