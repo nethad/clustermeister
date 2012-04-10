@@ -38,13 +38,14 @@ public class ClustermeisterNodeLauncher extends ClustermeisterLauncher {
      *      the first argument "false" to launch an independent process or 
      *      "true" to launch a dependent child process. If no argument is set, 
      *      "true" is assumed.
+     *      The second argument is "true" if the UUID should be printed to stdout 
+     *      or "false" otherwise. If it is not set, "false" is assumed.
      */
     public static void main(String... args) {
-        boolean launchAsChildProcess = true;
-        if(args != null && args.length >= 1) {
-            launchAsChildProcess = Boolean.parseBoolean(args[0]);
-        }
+        boolean launchAsChildProcess = getBooleanArgument(args, 0, true);
+        boolean printUUID = getBooleanArgument(args, 1, false);
         ClustermeisterLauncher launcher = new ClustermeisterNodeLauncher();
+        launcher.setPrintUUIDtoStdOut(printUUID);
         launcher.doLaunch(launchAsChildProcess);
         
         if(!launchAsChildProcess) {

@@ -35,7 +35,7 @@ public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
     private static final String PROPERTY_FILE_NAME = "jppf-driver.properties";
     private static final String PROPERTY_FILE_SUBPATH = JPPF_FOLDER + "config/" + PROPERTY_FILE_NAME;
     private static final String START_SCRIPT = "startDriver.sh";
-    private static final String START_SCRIPT_ARGUMENTS = "false";
+    private static final String START_SCRIPT_ARGUMENTS = "false false true";
 
     public AmazonEC2JPPFDriverDeployer(ComputeServiceContext context,
             NodeMetadata metadata, LoginCredentials credentials,

@@ -25,7 +25,6 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.io.PrintStream;
 import java.util.Observable;
-import org.jppf.process.ProcessLauncher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -53,6 +52,11 @@ public abstract class ClustermeisterLauncher extends Observable {
      * Custom Process Launcher.
      */
     protected ClustermeisterProcessLauncher processLauncher = null;
+    
+    /**
+     * Whether to print the UUID to stdout or not.
+     */
+    protected boolean printUUIDtoStdOut = false;
 
     private Thread jppfThread = null;
     
@@ -66,6 +70,7 @@ public abstract class ClustermeisterLauncher extends Observable {
         PipedInputStream in = new PipedInputStream();
         PrintStream sout = System.out;
         PipedOutputStream out = null;
+        String uuidLine = null;
         try {
             out = new PipedOutputStream(in);
             //prepare to capture spawned processes output stream.
@@ -73,9 +78,7 @@ public abstract class ClustermeisterLauncher extends Observable {
             try {
                 //Spawn a new JVM
                 startUp(launchAsChildProcess);
-                String uuidLine = waitForUUID(in, sout);
-                setChanged();
-                notifyObservers(uuidLine);
+                uuidLine = waitForUUID(in, sout);
             } catch (Exception ex) {
                 logger.warn("Exception while launching.", ex);
             }
@@ -88,6 +91,11 @@ public abstract class ClustermeisterLauncher extends Observable {
             closeStream(out);
             sout.flush();
         }
+        if(printUUIDtoStdOut) {
+            System.out.println(uuidLine);
+        }
+        setChanged();
+        notifyObservers(uuidLine);
     }
     
     /**
@@ -106,6 +114,27 @@ public abstract class ClustermeisterLauncher extends Observable {
                 outputStream.flush();
             }
         }
+    }
+
+    /**
+     * Whether the UUID is printed to stdout.
+     * 
+     * @return True if the UUID is printed to stdout. False otherwise.
+     */
+    public boolean isPrintUUIDtoStdOut() {
+        return printUUIDtoStdOut;
+    }
+
+    /**
+     * Set whether the UUID should be printed to stdout.
+     * 
+     * By default this is set to false.
+     * 
+     * @param printUUIDtoStdOut true to print the UUID to stdout, false to not 
+     * print the UUID to stdout.
+     */
+    public void setPrintUUIDtoStdOut(boolean printUUIDtoStdOut) {
+        this.printUUIDtoStdOut = printUUIDtoStdOut;
     }
 
     protected ClustermeisterProcessLauncher createProcessLauncher() {
@@ -140,16 +169,35 @@ public abstract class ClustermeisterLauncher extends Observable {
         jppfThread.start();
     }
     
+    /**
+     * Parse a boolean from given arguments and index. 
+     * If the argument array does not contain the index return the specified 
+     * default value.
+     * 
+     * @param args  the arguments.
+     * @param index the argument index to parse.
+     * @param defaultValue  the default value.
+     * @return the parsed boolean or the default value.
+     */
+    protected static boolean getBooleanArgument(String[] args, int index, boolean defaultValue) {
+        boolean value = defaultValue;
+        if(args != null && args.length > index) {
+            value = Boolean.parseBoolean(args[index]);
+        }
+        return value;
+    }
+    
     private String waitForUUID(InputStream in, PrintStream sout) 
             throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(in, Constants.UTF8));
-        System.out.println("Waiting for UUID.");
+        logger.info("Waiting for UUID.");
         String line;
         while((line = reader.readLine()) != null) {
-            sout.println(line);
             if(line.startsWith(Constants.UUID_PREFIX)) {
-                sout.println("Got UUID.");
+                logger.info("Got {}.", line);
                 return line;
+            } else {
+                sout.println(line);
             }
         }
         

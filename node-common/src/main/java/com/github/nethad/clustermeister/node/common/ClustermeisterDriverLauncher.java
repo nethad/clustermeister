@@ -37,24 +37,20 @@ public class ClustermeisterDriverLauncher extends ClustermeisterLauncher {
      * obtained the UUID. Otherwise it will block until the child process dies.
      * 
      * @param args 
-     *      the first argument "false" to launch an independent process or 
+     *      The first argument "false" to launch an independent process or 
      *      "true" to launch a dependent child process. If no argument is set, 
      *      "true" is assumed.
-     *      the second argument is "true" if RMI should be used (for local drivers) or
+     *      The second argument is "true" if RMI should be used (for local drivers) or
      *      "false" if not (default).
+     *      The third argument is "true" if the UUID should be printed to stdout 
+     *      or "false" otherwise. If it is not set, "false" is assumed.
      */
     public static void main(String... args) {
-        boolean launchAsChildProcess = true;
-        boolean useRmi = false;
-        if(args != null) {
-            if (args.length >= 1) {
-                launchAsChildProcess = Boolean.parseBoolean(args[0]);
-            }
-            if (args.length >= 2) {
-                useRmi = Boolean.parseBoolean(args[1]);
-            }
-        }
+        boolean launchAsChildProcess = getBooleanArgument(args, 0, true);
+        boolean useRmi = getBooleanArgument(args, 1, false);
+        boolean printUUID = getBooleanArgument(args, 2, false);
         ClustermeisterLauncher launcher = new ClustermeisterDriverLauncher(useRmi);
+        launcher.setPrintUUIDtoStdOut(printUUID);
         launcher.doLaunch(launchAsChildProcess);
         if(!launchAsChildProcess) {
             //Exit from this JVM. The spawned process continues to run.
