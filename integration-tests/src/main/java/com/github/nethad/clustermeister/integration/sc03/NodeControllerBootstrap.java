@@ -25,10 +25,10 @@ public class NodeControllerBootstrap implements Callable<String>, Serializable {
 	@SuppressWarnings("unused")
 	@Override
 	public String call() throws Exception {
-		ActorSystem system = ActorSystem.create("NodeControllerSystem", akkaConfig);
+		ActorSystem system = ActorSystem.create("NodeSystem", akkaConfig);
 		ActorRef nodeController = system.actorOf(
 				new Props().withCreator(new NodeControllerCreator(
-						nodeProvisionerAddress)), "Registrar");
+						nodeProvisionerAddress)), "NodeActor");
 		return "NodeController actor has been started.";
 	}
 }

@@ -60,7 +60,7 @@ public class Scenario03 extends AbstractScenario {
 			logger.info(allNodes.size() + " nodes found.");
 
 			logger.info("Starting actor system...");
-			ActorSystem system = ActorSystem.create("NodeProvisionerSystem",
+			ActorSystem system = ActorSystem.create("RegistrarSystem",
 					AkkaConfig.get());
 			logger.info("Actor system started.");
 			// ActorRef registrar = system.actorOf(
@@ -74,12 +74,14 @@ public class Scenario03 extends AbstractScenario {
 			Future<Object> nodesFuture = ask(registrar, "GET_NODES", 100000);
 			String remoteAddress = getRemoteAddress(registrar, system);
 
+			logger.info("Remote address: " + remoteAddress);
+			
 			allNodes.iterator()
 					.next()
 					.execute(
 							new NodeControllerBootstrap(remoteAddress,
 									AkkaConfig.get()));
-
+			
 			String result = (String) Await.result(nodesFuture,
 					new FiniteDuration(20, "Seconds"));
 			addToReport("Result: ", result);
@@ -90,7 +92,7 @@ public class Scenario03 extends AbstractScenario {
 					"Result is not as expected.");
 		} catch (Exception ex) {
 			logger.warn("Exception on result", ex);
-			addToReport("exception on result", ex);
+			addToReport("Exception on result", ex);
 		} finally {
 			clustermeister.shutdown();
 		}
