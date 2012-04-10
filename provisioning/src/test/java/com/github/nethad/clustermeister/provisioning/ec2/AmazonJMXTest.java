@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
+import com.github.nethad.clustermeister.api.JPPFConstants;
 import org.jppf.management.JMXDriverConnectionWrapper;
 import org.jppf.management.JMXNodeConnectionWrapper;
 import org.jppf.management.JPPFManagementInfo;
@@ -52,7 +53,7 @@ public class AmazonJMXTest {
 		}
 
 		System.out.println("Connected!");
-		System.out.println(wrapper2.systemInformation().getUuid().getProperty("jppf.uuid"));
+		System.out.println(wrapper2.systemInformation().getUuid().getProperty(JPPFConstants.UUID));
 		for (JPPFManagementInfo nodeInfo : wrapper2.nodesInformation()) {
 			System.out.println("Node Management: " + nodeInfo.toString());
 			System.out.println("ID-: " + nodeInfo.getId());

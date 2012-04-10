@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.jppf;
 
+import com.github.nethad.clustermeister.api.JPPFConstants;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -30,14 +31,12 @@ public class JPPFNodeConfiguration {
     Properties properties = new Properties();
 
     public JPPFNodeConfiguration() {       
-        properties.setProperty("jppf.management.enabled", "true");
-        properties.setProperty("jppf.discovery.enabled", "false");
-        properties.setProperty("reconnect.max.time", "5");
+        properties.setProperty(JPPFConstants.MANAGEMENT_ENABLED, "true");
+        properties.setProperty(JPPFConstants.DISCOVERY_ENABLED, "false");
+        properties.setProperty(JPPFConstants.RECONNECT_MAX_TIME, "5");
         
-        properties.setProperty("jppf.jvm.options", "-Xms64m -Xmx512m -Djava.util.logging.config.file=config/logging-driver.properties");
-        properties.setProperty("jppf.classloader.delegation", "parent");
-        
-//        properties.setProperty("jppf.classloader.cache.size", "1000");
+        properties.setProperty(JPPFConstants.JVM_OPTIONS, "-Xms64m -Xmx512m -Djava.util.logging.config.file=config/logging-driver.properties");
+        properties.setProperty(JPPFConstants.CLASSLOADER_DELEGATION, "parent");
     }
     
     public JPPFNodeConfiguration setProperty(String key, String value) {
