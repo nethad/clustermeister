@@ -81,6 +81,14 @@
                 <module>api</module>
                 <module>provisioning</module>
                 <module>cli</module>
+            </modules>
+        </profile>
+        <profile>
+            <id>clustermeister-it</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
+            <modules>
                 <module>integration-tests</module>
             </modules>
         </profile>
