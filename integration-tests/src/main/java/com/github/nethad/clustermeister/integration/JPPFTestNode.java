@@ -33,7 +33,8 @@ public class JPPFTestNode {
     
     private final Logger logger = LoggerFactory.getLogger(JPPFTestNode.class);
     private Process nodeProcess;
-    private NodeProcessOutputter nodeProcessOutputter;
+    private NodeProcessOutputter nodeProcessOutputterStdOut;
+    private NodeProcessOutputter nodeProcessOutputterStdErr;
 //    private File tempDir;
     private File targetDir;
     
@@ -72,11 +73,15 @@ public class JPPFTestNode {
             logger.info("Start node with {}", command);
             nodeProcess = Runtime.getRuntime().exec(command, new String[]{}, startNodeScript.getParentFile());
 //            Process exec = Runtime.getRuntime().exec(command);
-            InputStream inputStream = nodeProcess.getInputStream();
+            InputStream stdOutInputStream = nodeProcess.getInputStream();
+            InputStream stdErrInputStream = nodeProcess.getErrorStream();
             //            CharStreams.class;
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
-            nodeProcessOutputter = new NodeProcessOutputter(reader);
-            nodeProcessOutputter.start();
+            BufferedReader stdOutReader = new BufferedReader(new InputStreamReader(stdOutInputStream));
+            BufferedReader stdErrReader = new BufferedReader(new InputStreamReader(stdErrInputStream));
+            nodeProcessOutputterStdOut = new NodeProcessOutputter(stdOutReader, "STDOUT");
+            nodeProcessOutputterStdOut.start();
+            nodeProcessOutputterStdErr = new NodeProcessOutputter(stdErrReader, "STDERR");
+            nodeProcessOutputterStdErr.start();
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
@@ -141,19 +146,6 @@ public class JPPFTestNode {
         in.close();
         out.close();
     }
-    
-    private File getNodeDir(File startDir) {
-        if (startDir.isDirectory()) {
-            File subDir = new File(startDir, "node");
-            if (subDir.exists() && subDir.isDirectory()) {
-                return subDir;
-            } else {
-                return getNodeDir(subDir.getParentFile().getParentFile());
-            }
-        } else {
-            throw new RuntimeException("startDir is not a directory.");
-        }
-    }
 
     private File getTargetDir(String currentDirPath) {
         File currentDir = new File(currentDirPath);
@@ -179,28 +171,38 @@ public class JPPFTestNode {
         }
     }
     
+    private synchronized void log(String message, String... args) {
+        logger.info(message, args);
+    }
+    
+    private synchronized void log(String message, String arg, Exception ex) {
+        logger.info(message, arg, ex);
+    }
+    
     public class NodeProcessOutputter extends Thread {
         
         private BufferedReader reader;
+        private final String logMarker;
 
-        private NodeProcessOutputter(BufferedReader reader) {
+        private NodeProcessOutputter(BufferedReader reader, String logMarker) {
             this.reader = reader;
+            this.logMarker = logMarker;
         }
 
         @Override
         public void run() {
-            logger.info("{} started.", getClass().getName());
+            log("{} started.", getClass().getName());
             try {
                 String nextLine;
                 while ((nextLine = reader.readLine()) != null) {
-                    logger.info("STDOUT: {}", nextLine);
+                    log("{}: {}", logMarker, nextLine);
                 }
             } catch (IOException ex) {
-                logger.warn("IOException while printing STDOUT.", ex);
+                log("IOException while printing {}.", logMarker, ex);
             }
         }
 
-        private void close() {
+        public void close() {
             try {
                 this.reader.close();
             } catch (IOException ex) {
