@@ -384,6 +384,11 @@ public class JPPFConstants {
     public static final String CLASSLOADER_CACHE_SIZE = "jppf.classloader.cache.size"; //50
     
     /**
+     * The classloader delegation strategy.
+     */
+    public static final String CLASSLOADER_DELEGATION = "jppf.classloader.delegation"; //parent
+    
+    /**
      * Space-separated list of driver names.
      */
     public static final String DRIVERS = "jppf.drivers"; //default-driver
