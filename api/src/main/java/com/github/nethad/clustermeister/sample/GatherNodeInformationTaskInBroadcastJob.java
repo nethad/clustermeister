@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.sample;
 
+import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +36,7 @@ public class GatherNodeInformationTaskInBroadcastJob extends JPPFTask {
     public static final String OS_NAME = "os.name";
     public static final String PROCESSING_THREADS = "processing.threads";
     public static final String TOTAL_MEMORY = "totalMemory";
-    public static final String UUID = "jppf.uuid";
+    public static final String UUID = JPPFConstants.UUID;
 
     private Map<Object, Object> propertiesMap;
 
