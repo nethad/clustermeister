@@ -521,4 +521,9 @@ public class JPPFConstants {
      * Time unit to use.
      */
     public static final String LOCAL_EXECUTION_ACCUMULATION_UNIT = "jppf.local.execution.accumulation.unit"; //m = milliseconds 	
+    
+    /**
+     * The path to the resource cache directory.
+     */
+    public static final String RESOURCE_CACHE_DIR = "jppf.resource.cache.dir";
 }
