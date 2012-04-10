@@ -10,9 +10,9 @@
         <dependencySet>
             <outputDirectory>jppf-driver/lib</outputDirectory>
             <includes>
-                <include>com.github.nethad.clustermeister:org.jppf.common</include>
-                <include>com.github.nethad.clustermeister:org.jppf.common-node</include>
-                <include>com.github.nethad.clustermeister:org.jppf.server</include>
+                <include>org.jppf:common</include>
+                <include>org.jppf:common-node</include>
+                <include>org.jppf:server</include>
                 <include>com.github.nethad.clustermeister:node-common</include>
                 <include>log4j:log4j</include>
                 <include>org.slf4j:slf4j-api</include>

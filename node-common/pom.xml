@@ -16,8 +16,8 @@
     </description>
     <dependencies>
         <dependency>
-            <groupId>com.github.nethad.clustermeister</groupId>
-            <artifactId>org.jppf.common-node</artifactId>
+            <groupId>org.jppf</groupId>
+            <artifactId>common-node</artifactId>
         </dependency>
     </dependencies>
 </project>

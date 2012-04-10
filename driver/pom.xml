@@ -20,16 +20,16 @@
             <artifactId>node-common</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.github.nethad.clustermeister</groupId>
-            <artifactId>org.jppf.server</artifactId>
+            <groupId>org.jppf</groupId>
+            <artifactId>server</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.github.nethad.clustermeister</groupId>
-            <artifactId>org.jppf.common-node</artifactId>
+            <groupId>org.jppf</groupId>
+            <artifactId>common-node</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.github.nethad.clustermeister</groupId>
-            <artifactId>org.jppf.common</artifactId>
+            <groupId>org.jppf</groupId>
+            <artifactId>common</artifactId>
         </dependency>
         <!-- non-transitive runtime dependencies - needed to build the zip and nothing else -->
         <dependency>
