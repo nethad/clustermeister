@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.api.impl;
 
 import com.github.nethad.clustermeister.api.Clustermeister;
+import com.github.nethad.clustermeister.api.JPPFConstants;
 
 /**
  *
@@ -24,7 +25,8 @@ import com.github.nethad.clustermeister.api.Clustermeister;
 public class ClustermeisterFactory {
     
     public static Clustermeister create() {
-        System.setProperty("jppf.config.plugin", JPPFClientConfiguration.class.getCanonicalName());
+        
+        System.setProperty(JPPFConstants.CONFIG_PLUGIN, JPPFClientConfiguration.class.getCanonicalName());
         ClustermeisterImpl clustermeister = new ClustermeisterImpl();
         clustermeister.gatherNodeInformation();
         return clustermeister;
