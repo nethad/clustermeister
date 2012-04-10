@@ -58,18 +58,6 @@
 
     <profiles>
         <profile>
-            <id>clustermeister-ext</id>
-            <activation>
-                <activeByDefault>false</activeByDefault>
-            </activation>
-            <modules>
-                <module>org.jppf.common-node</module>
-                <module>org.jppf.common</module>
-                <module>org.jppf.server</module>
-                <module>org.jppf.client</module>
-            </modules>
-        </profile>
-        <profile>
             <id>release</id>
             <activation>
                 <activeByDefault>true</activeByDefault>
@@ -274,24 +262,24 @@
                 <version>${jppf.driver.version}</version>
             </dependency>
             <dependency>
-                <groupId>com.github.nethad.clustermeister</groupId>
-                <artifactId>org.jppf.common</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <groupId>org.jppf</groupId>
+                <artifactId>common</artifactId>
+                <version>3.0-patch1</version>
             </dependency>
             <dependency>
-                <groupId>com.github.nethad.clustermeister</groupId>
-                <artifactId>org.jppf.common-node</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <groupId>org.jppf</groupId>
+                <artifactId>common-node</artifactId>
+                <version>3.0-patch1</version>
             </dependency>
             <dependency>
-                <groupId>com.github.nethad.clustermeister</groupId>
-                <artifactId>org.jppf.client</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <groupId>org.jppf</groupId>
+                <artifactId>client</artifactId>
+                <version>3.0-patch1</version>
             </dependency>
             <dependency>
-                <groupId>com.github.nethad.clustermeister</groupId>
-                <artifactId>org.jppf.server</artifactId>
-                <version>3.0-SNAPSHOT</version>
+                <groupId>org.jppf</groupId>
+                <artifactId>server</artifactId>
+                <version>3.0-patch1</version>
             </dependency>
             <dependency>
                 <groupId>com.github.nethad.clustermeister</groupId>
@@ -385,9 +373,9 @@
     </reporting>
     <repositories>
         <repository>
-            <id>ifi-release-repo</id>
-            <name>ifi release repository</name>
-            <url>https://maven.ifi.uzh.ch/maven2/content/repositories/public/</url>
+            <id>ifi-public-repos</id>
+            <name>IFI public repositories</name>
+            <url>https://maven.ifi.uzh.ch/maven2/content/groups/public/</url>
             <layout>default</layout>
             <releases>
                 <enabled>true</enabled>

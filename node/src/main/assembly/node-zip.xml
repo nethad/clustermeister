@@ -11,7 +11,7 @@
             <outputDirectory>jppf-node/lib</outputDirectory>
             <includes>
                 <include>com.github.nethad.clustermeister:node-common</include>
-                <include>com.github.nethad.clustermeister:org.jppf.common-node</include>
+                <include>org.jppf:common-node</include>
                 <include>log4j:log4j</include>
                 <include>org.slf4j:slf4j-api</include>
                 <include>org.slf4j:slf4j-log4j12</include>

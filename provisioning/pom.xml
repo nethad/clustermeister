@@ -20,8 +20,8 @@
             <artifactId>api</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.github.nethad.clustermeister</groupId>
-            <artifactId>org.jppf.server</artifactId>
+            <groupId>org.jppf</groupId>
+            <artifactId>server</artifactId>
         </dependency>
         <dependency>
             <groupId>com.github.nethad.clustermeister</groupId>
