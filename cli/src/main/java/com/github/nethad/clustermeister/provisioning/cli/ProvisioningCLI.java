@@ -19,6 +19,7 @@ import com.google.common.annotations.VisibleForTesting;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.logging.LogManager;
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -28,7 +29,7 @@ import org.slf4j.LoggerFactory;
  * @author thomas
  */
 public class ProvisioningCLI {
-    
+
     private final Logger logger = LoggerFactory.getLogger(ProvisioningCLI.class);
 
     private static final String OPTION_CONFIG_FILE = "config";
@@ -37,6 +38,7 @@ public class ProvisioningCLI {
     private static final String DEFAULT_PROVIDER = "torque";
 
     public static void main(String... args) {
+        loadJDKLoggingConfiguration();
         new ProvisioningCLI().startCLI(args);
     }
     private String configFilePath;
@@ -45,6 +47,17 @@ public class ProvisioningCLI {
     private Provisioning provisioning;
     private UserInputEvaluation userInputEvaluation;
 
+    private static void loadJDKLoggingConfiguration() {
+        try {
+            LogManager.getLogManager().readConfiguration(
+                    ProvisioningCLI.class.getResourceAsStream("/jdk-logging.properties"));
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        } catch (SecurityException ex) {
+            ex.printStackTrace();
+        }
+    }
+    
     protected void startCLI(String[] args) {
 //        if (args.length == 0) {
 //            HelpFormatter formatter = new HelpFormatter();
