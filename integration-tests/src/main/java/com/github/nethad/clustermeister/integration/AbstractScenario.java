@@ -32,6 +32,7 @@ public abstract class AbstractScenario implements NodeConnectionListener {
     private StringBuilder report = new StringBuilder("EXECUTION REPORT:\n");
     private boolean scenarioStarted = false;
     private boolean shuttingDown = false;
+    private boolean startNode = true;
     
     public abstract void runScenario() throws Exception;
     
@@ -41,7 +42,14 @@ public abstract class AbstractScenario implements NodeConnectionListener {
 
     protected void execute() throws InterruptedException {
         startDriver();
-        startNode();
+        if (startNode) {
+            startNode();
+        }
+    }
+    
+    protected void execute(boolean startNode) throws InterruptedException {
+        this.startNode = startNode;
+        execute();
     }
 
     private void startDriver() {
@@ -65,7 +73,9 @@ public abstract class AbstractScenario implements NodeConnectionListener {
     
     private void shutdown() {
         shuttingDown = true;
-        node.shutdown();
+        if (node != null) {
+            node.shutdown();
+        }
         driver.shutdown();
         System.out.println(report.toString());
         System.exit(0);
