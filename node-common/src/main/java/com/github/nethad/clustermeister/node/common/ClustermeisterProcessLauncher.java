@@ -29,13 +29,24 @@ import org.slf4j.LoggerFactory;
  * @author daniel
  */
 public class ClustermeisterProcessLauncher extends ProcessLauncher {
+    
+    /**
+     * Determines where to divert the sub-processes stdout and stderr streams to.
+     * <ul>
+     *  <li>STD - to the parent process's stdout/stderr streams.</li>
+     *  <li>LOG - to the parent process's logging framework. Stdout as INFO and stderr as ERROR</li>
+     *  <li>FILE - written to a file (stdout.log and stderr.log) in the sub-process's working directory.</li>
+     * </ul>
+     * 
+     * Note that once the sub process is started with FILE as sink, 
+     * it may not be possible to change the sink anymore.
+     */
+    public static enum StreamSink {STD, LOG, FILE};
+    
     protected final static Logger logger =
             LoggerFactory.getLogger(ClustermeisterProcessLauncher.class);
     
-    
-    private boolean divertStreamsToLog = false;
-    
-    private boolean divertStreamsToFiles = false;
+    private StreamSink sink = StreamSink.STD;
     
     private boolean launchAsChildProcess = false;
     
@@ -62,19 +73,30 @@ public class ClustermeisterProcessLauncher extends ProcessLauncher {
         if(jvmOptions == null) {
             jvmOptions = "";
         }
-        if(isDivertStreamsToFiles()) {
-            jvmOptions += " -D" + Constants.CLUSTERMEISTER_DIVERT_STREAMS_TO_FILE + "=true";
+        StringBuilder options = new StringBuilder(jvmOptions.length() + 
+                Constants.CLUSTERMEISTER_DIVERT_STREAMS_TO_FILE.length() + 
+                Constants.CLUSTERMEISTER_USE_RMI.length() + 16);
+        if(getStreamSink() == StreamSink.FILE) {
+            options.append(" -D").
+                    append(Constants.CLUSTERMEISTER_DIVERT_STREAMS_TO_FILE).
+                    append("=true");
         } else {
-            jvmOptions += " -D" + Constants.CLUSTERMEISTER_DIVERT_STREAMS_TO_FILE + "=false";
+            options.append(" -D").
+                    append(Constants.CLUSTERMEISTER_DIVERT_STREAMS_TO_FILE).
+                    append("=false");
         }
         
         if (isUseRmi()) {
-            jvmOptions += " -D" + Constants.CLUSTERMEISTER_USE_RMI + "=true";
+            options.append(" -D").
+                    append(Constants.CLUSTERMEISTER_USE_RMI).
+                    append("=true");
         } else {
-            jvmOptions += " -D" + Constants.CLUSTERMEISTER_USE_RMI + "=false";
+            options.append(" -D").
+                    append(Constants.CLUSTERMEISTER_USE_RMI).
+                    append("=false");
         }
         
-        config.setProperty(Constants.JPPF_JVM_OPTIONS, jvmOptions.trim());
+        config.setProperty(Constants.JPPF_JVM_OPTIONS, options.toString().trim());
         this.process = super.buildProcess();
         
         return process;
@@ -92,7 +114,7 @@ public class ClustermeisterProcessLauncher extends ProcessLauncher {
     @Override
     public void errorStreamAltered(ProcessWrapperEvent event) {
         String content = event.getContent();
-        if(isDivertStreamsToLog()) {
+        if(getStreamSink() == StreamSink.LOG) {
             logger.error(content);
         } else {
             //don't deal with file logging here, 
@@ -104,7 +126,7 @@ public class ClustermeisterProcessLauncher extends ProcessLauncher {
     @Override
     public void outputStreamAltered(ProcessWrapperEvent event) {
         String content = event.getContent();
-        if(isDivertStreamsToLog()) {
+        if(getStreamSink() == StreamSink.LOG) {
             logger.info(event.getContent());
         } else {
             //don't deal with file logging here, 
@@ -114,49 +136,21 @@ public class ClustermeisterProcessLauncher extends ProcessLauncher {
     }
     
     /**
-     * Switch output and error streams of the spawned process between standard 
-     * out/err and logger.
+     * Set the target of the sub-processes stdout and stderr streams.
      * 
-     * Default setting: After initialization the output and error streams are written to 
-     * System.out/System.err.
+     * @param sink the sink of the sub-processes streams.
      */
-    public void switchStreamsToLog() {
-        if(divertStreamsToFiles) {
-            divertStreamsToFiles = !divertStreamsToFiles;
-        }
-        divertStreamsToLog = !divertStreamsToLog;
-    }
-
-    /**
-     * Checks if the sub-process' stdin/stderr streams are diverted to loggers.
-     * 
-     * @return Whether the streams are diverted to loggers.
-     */
-    public boolean isDivertStreamsToLog() {
-        return divertStreamsToLog;
+    public void setStreamSink(StreamSink sink) {
+        this.sink = sink;
     }
     
     /**
-     * Switch stdout and stderr streams of the spawned process between standard 
-     * out/err and files.
+     * Returns the current target of the sub-processes stdout and stderr streams.
      * 
-     * Default setting: After initialization the output and error streams are written to 
-     * System.out/System.err.
+     * @return the sink of the sub-processes streams.
      */
-    public void switchStreamsToFiles() {
-        if(divertStreamsToLog) {
-            divertStreamsToLog = !divertStreamsToLog;
-        }
-        divertStreamsToFiles = !divertStreamsToFiles;
-    }
-    
-    /**
-     * Checks if the sub-process' stdin/stderr streams are diverted to files.
-     * 
-     * @return Whether the streams are diverted to files.
-     */
-    public boolean isDivertStreamsToFiles() {
-        return divertStreamsToFiles;
+    public StreamSink getStreamSink() {
+        return sink;
     }
 
     /**

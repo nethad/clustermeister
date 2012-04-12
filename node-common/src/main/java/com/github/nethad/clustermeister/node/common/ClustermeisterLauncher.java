@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.node.common;
 
+import com.github.nethad.clustermeister.node.common.ClustermeisterProcessLauncher.StreamSink;
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
@@ -133,6 +134,21 @@ public abstract class ClustermeisterLauncher extends Observable {
     public void setPrintUUIDtoStdOut(boolean printUUIDtoStdOut) {
         this.printUUIDtoStdOut = printUUIDtoStdOut;
     }
+    
+    /**
+     * Divert the sub-processes stdout and stderr streams to the logging framework.
+     * 
+     * @param divert 
+     *      true to divert to logging, false to divert to parent 
+     *      process's stdout/stderr.
+     */
+    public void divertStreamsToLog(boolean divert) {
+        if(divert) {
+            processLauncher.setStreamSink(StreamSink.LOG);
+        } else {
+            processLauncher.setStreamSink(StreamSink.STD);
+        }
+    }
 
     protected ClustermeisterProcessLauncher createProcessLauncher() {
        return new ClustermeisterProcessLauncher(getRunner());
@@ -154,7 +170,7 @@ public abstract class ClustermeisterLauncher extends Observable {
         processLauncher = createProcessLauncher();
         processLauncher.setLaunchAsChildProcess(launchAsChildProcess);
         if(!launchAsChildProcess) {
-            processLauncher.switchStreamsToFiles();
+            processLauncher.setStreamSink(StreamSink.FILE);
         }
         jppfThread = new Thread(new Runnable() {
             @Override
