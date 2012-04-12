@@ -34,6 +34,10 @@ public class UserInputEvaluation {
     public UserInputEvaluation(Provisioning provisioning) {
         this.provisioning = provisioning;
     }
+    
+    public static String[] commands() {
+        return new String[]{COMMAND_HELP, COMMAND_HELP_QUESTIONMARK, COMMAND_STATE, COMMAND_SHUTDOWN, COMMAND_ADDNODES, COMMAND_EXIT};
+    }
 
     public void evaluate(String userInput) {
         final StringTokenizer tokenizer = new StringTokenizer(userInput);

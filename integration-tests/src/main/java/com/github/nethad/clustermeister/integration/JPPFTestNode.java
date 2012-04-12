@@ -38,21 +38,28 @@ public class JPPFTestNode {
 //    private File tempDir;
     private File targetDir;
     
+    private int managementPort = 12001;
+    private int currentNodeNumber = 0;
+    private String currentNodeConfig;
+    
     public void prepare() {
-        String currentDirPath = System.getProperty("user.dir");
-        targetDir = getTargetDir(currentDirPath);
-        InputStream jppfNodeZipStream = JPPFTestNode.class.getResourceAsStream("/jppf-node.zip");
-        if (jppfNodeZipStream == null) {
-            throw new RuntimeException("Could not find jppf-node.zip.");
-        }
-        unzipNode(jppfNodeZipStream, targetDir);
+        unpackNodeZip();
+    }
+    
+    public void startNewNode() {
+        prepareNodeConfiguration();
+        startNode();
+    }
+
+    public void prepareNodeConfiguration() throws RuntimeException {
         JPPFNodeConfiguration nodeConfiguration = new JPPFNodeConfiguration();
         nodeConfiguration.setProperty(JPPFConstants.SERVER_HOST, "localhost")
-                .setProperty(JPPFConstants.MANAGEMENT_PORT, String.valueOf(12001))
+                .setProperty(JPPFConstants.MANAGEMENT_PORT, String.valueOf(managementPort++))
                 .setProperty(JPPFConstants.RESOURCE_CACHE_DIR, "/tmp/.jppf/node-" + System.currentTimeMillis())
                 .setProperty(JPPFConstants.PROCESSING_THREADS, String.valueOf(4));
         
-        final File propertiesFile = new File(targetDir, "/jppf-node/config/jppf-node.properties");
+        currentNodeConfig = "config/jppf-node-"+(currentNodeNumber++)+".properties";
+        final File propertiesFile = new File(targetDir, "/jppf-node/"+currentNodeConfig);
         try {
             InputStream propertyStream = nodeConfiguration.getPropertyStream();
             copyInputStream(propertyStream, new FileOutputStream(propertiesFile));
@@ -61,14 +68,24 @@ public class JPPFTestNode {
         }
     }
 
-    public void startNode() throws RuntimeException {
+    private void unpackNodeZip() throws RuntimeException {
+        String currentDirPath = System.getProperty("user.dir");
+        targetDir = getTargetDir(currentDirPath);
+        InputStream jppfNodeZipStream = JPPFTestNode.class.getResourceAsStream("/jppf-node.zip");
+        if (jppfNodeZipStream == null) {
+            throw new RuntimeException("Could not find jppf-node.zip.");
+        }
+        unzipNode(jppfNodeZipStream, targetDir);
+    }
+
+    private void startNode() throws RuntimeException {
         File startNodeScript = new File(targetDir, "jppf-node/startNode.sh");
         startNodeScript.setExecutable(true);
         try {
 //            String jppfNodePath = startNodeScript.getParentFile().getAbsolutePath();
             final String command = String.format("%s %s %s",
                     "./" + startNodeScript.getName(), 
-                    "config/jppf-node.properties",
+                    currentNodeConfig,
                     "true");
             logger.info("Start node with {}", command);
             nodeProcess = Runtime.getRuntime().exec(command, new String[]{}, startNodeScript.getParentFile());

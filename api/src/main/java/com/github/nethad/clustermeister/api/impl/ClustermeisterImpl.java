@@ -20,10 +20,9 @@ import com.github.nethad.clustermeister.api.ExecutorNode;
 import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeInformation;
 import com.github.nethad.clustermeister.api.rmi.IRmiServerForApi;
-import com.github.nethad.clustermeister.sample.GatherNodeInformationTask;
+import com.github.nethad.clustermeister.api.utils.JPPFProperties;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
-import java.rmi.Remote;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -87,8 +86,8 @@ public class ClustermeisterImpl implements Clustermeister {
             for(NodeInformation nodeInfo : nodeInformationCollection) {
                 ExecutorNodeImpl executorNode = new ExecutorNodeImpl(jppfClient, threadsExecutorService);
                 executorNode.setId(nodeInfo.getID());
-                int availableProcessors = Integer.valueOf(nodeInfo.getJPPFSystemInformation().getRuntime().getProperty(GatherNodeInformationTask.AVAILABLE_PROCESSORS));
-                int numberOfProcessingThreads = Integer.valueOf(nodeInfo.getJPPFSystemInformation().getJppf().getProperty(GatherNodeInformationTask.PROCESSING_THREADS));
+                int availableProcessors = Integer.valueOf(nodeInfo.getJPPFSystemInformation().getRuntime().getProperty(JPPFProperties.AVAILABLE_PROCESSORS));
+                int numberOfProcessingThreads = Integer.valueOf(nodeInfo.getJPPFSystemInformation().getJppf().getProperty(JPPFProperties.PROCESSING_THREADS));
                 final String jppfInfo = nodeInfo.getJPPFSystemInformation().getJppf().asString();
                 NodeCapabilities nodeCapabilities = new NodeCapabilitiesImpl(availableProcessors, numberOfProcessingThreads, jppfInfo);
                 executorNode.setNodeCapabilities(nodeCapabilities);
