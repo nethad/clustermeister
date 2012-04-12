@@ -17,9 +17,9 @@ package com.github.nethad.clustermeister.api.impl;
 
 import com.github.nethad.clustermeister.api.ExecutorNode;
 import com.github.nethad.clustermeister.api.NodeCapabilities;
+import com.github.nethad.clustermeister.api.utils.JPPFProperties;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
-import com.github.nethad.clustermeister.sample.GatherNodeInformationTask;
-import com.github.nethad.clustermeister.sample.GatherNodeInformationTaskInBroadcastJob;
+import com.github.nethad.clustermeister.api.utils.GatherNodeInformationTask;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.net.InetAddresses;
 import com.google.common.util.concurrent.*;
@@ -104,40 +104,6 @@ class GatherNodeInformation {
         }
         return nodes;
     }
-    
-    public Collection<ExecutorNode> getNodesWithBroadcastJob() {
-                logger.info("Collect node information (broadcast job)");
-        List<JPPFResultCollector> collectorList = new ArrayList<JPPFResultCollector>();
-        wrapper = null;
-        try {
-            wrapper = NodeManagementConnector.openDriverConnection(DRIVER_HOST, DRIVER_MGMT_PORT);
-            int numberOfNodes = wrapper.nodesInformation().size();
-            
-            JPPFJob job = new JPPFJob();
-            job.addTask(new GatherNodeInformationTaskInBroadcastJob());
-            job.setBlocking(false);
-            job.getSLA().setBroadcastJob(true);
-            JPPFResultCollector collector = new JPPFResultCollector(job);
-            job.setResultListener(collector);
-            nodeCounter.set(numberOfNodes);
-            client.submit(job);
-            nonBlockingResultCollector(collector);
-            
-            logger.info("Submitted all jobs, wait for results...");
-            awaitTermination(lock, lastJobFinished);
-        } catch (Exception ex) {
-            logger.error("Error while getting node information", ex);
-        } finally {
-            if (wrapper != null) {
-                try {
-                    wrapper.close();
-                } catch (Exception ex) {
-                    // ignore
-                }
-            }
-        }
-        return nodes;
-    }
 
     private JPPFJob createJobForNode(JPPFManagementInfo node) {
         try {
@@ -147,7 +113,7 @@ class GatherNodeInformation {
             job.setBlocking(false);
 //            job.getSLA().setCancelUponClientDisconnect(true);
             job.getSLA().setMaxNodes(1);
-            job.getSLA().setExecutionPolicy(new Equal(GatherNodeInformationTask.UUID, true, node.getId()));
+            job.getSLA().setExecutionPolicy(new Equal(JPPFProperties.UUID, true, node.getId()));
             return job;
         } catch (JPPFException ex) {
             throw new RuntimeException(ex);
@@ -174,14 +140,14 @@ class GatherNodeInformation {
     @VisibleForTesting
     void addExecutorNode(TypedProperties result) {
         ExecutorNodeImpl executorNode = new ExecutorNodeImpl(client, threadsExecutorService);
-        executorNode.setId(result.getProperty(GatherNodeInformationTask.UUID));
+        executorNode.setId(result.getProperty(JPPFProperties.UUID));
         NodeCapabilities nodeCapabilities = new NodeCapabilitiesImpl(
-                result.getInt(GatherNodeInformationTask.AVAILABLE_PROCESSORS),
-                result.getInt(GatherNodeInformationTask.PROCESSING_THREADS),
+                result.getInt(JPPFProperties.AVAILABLE_PROCESSORS),
+                result.getInt(JPPFProperties.PROCESSING_THREADS),
                 result.getString("jppfconfig"));
         executorNode.setNodeCapabilities(nodeCapabilities);
 //        System.out.println(result.getProperty(GatherNodeInformationTask.IPV4_ADDRESSES));
-        List<String> allIpAddresses = extractAddressesFromString(result.getProperty(GatherNodeInformationTask.IPV4_ADDRESSES));
+        List<String> allIpAddresses = extractAddressesFromString(result.getProperty(JPPFProperties.IPV4_ADDRESSES));
         executorNode.addPrivateAddresses(getAllPrivateAddresses(allIpAddresses));
         executorNode.addPublicAddresses(getAllPublicAddresses(allIpAddresses));
         nodes.add(executorNode);

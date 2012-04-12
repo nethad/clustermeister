@@ -34,6 +34,8 @@ public abstract class AbstractScenario implements NodeConnectionListener {
     private boolean shuttingDown = false;
     private boolean startNode = true;
     
+    private int numberOfNodes = 1;
+    
     public abstract void runScenario() throws Exception;
     
     protected void addToReport(String key, Object value) {
@@ -45,6 +47,11 @@ public abstract class AbstractScenario implements NodeConnectionListener {
         if (startNode) {
             startNode();
         }
+    }
+    
+    protected void execute(int numberOfNodes) throws InterruptedException {
+        this.numberOfNodes = numberOfNodes;
+        execute();
     }
     
     protected void execute(boolean startNode) throws InterruptedException {
@@ -60,7 +67,9 @@ public abstract class AbstractScenario implements NodeConnectionListener {
     private void startNode() throws RuntimeException {
         node = new JPPFTestNode();
         node.prepare();
-        node.startNode();
+        for (int i=0; i<numberOfNodes; i++) {
+            node.startNewNode();
+        }
     }
 
     public void runScenario_wrapper() throws Exception {

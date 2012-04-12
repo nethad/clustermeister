@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.sample;
+package com.github.nethad.clustermeister.api.utils;
 
 import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
@@ -30,13 +30,13 @@ import org.jppf.utils.TypedProperties;
  * @author thomas
  */
 public class GatherNodeInformationTask extends JPPFTask {
-    public static final String AVAILABLE_PROCESSORS = "availableProcessors";
-    public static final String IPV4_ADDRESSES = "ipv4.addresses";
+    private static final String AVAILABLE_PROCESSORS = "availableProcessors";
+    private static final String IPV4_ADDRESSES = "ipv4.addresses";
     private static final String LOCALHOST = "localhost";
-    public static final String OS_NAME = "os.name";
-    public static final String PROCESSING_THREADS = "processing.threads";
-    public static final String TOTAL_MEMORY = "totalMemory";
-    public static final String UUID = JPPFConstants.UUID;
+    private static final String OS_NAME = "os.name";
+    private static final String PROCESSING_THREADS = "processing.threads";
+    private static final String TOTAL_MEMORY = "totalMemory";
+    private static final String UUID = JPPFConstants.UUID;
 
     private final int myPort;
     private Map<Object, Object> propertiesMap;
