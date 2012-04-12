@@ -36,7 +36,7 @@ public class Scenario01 extends AbstractScenario {
     private final Logger logger = LoggerFactory.getLogger(Scenario01.class);
     
     public static void main(String... args) throws InterruptedException {
-        new Scenario01().execute();
+        new Scenario01().execute(1);
     }
 
     @Override
@@ -49,19 +49,16 @@ public class Scenario01 extends AbstractScenario {
             Collection<ExecutorNode> allNodes = clustermeister.getAllNodes();
             addToReport("node size", allNodes.size());
 //            logger.info("nodes size = {}", allNodes.size());
-            Assertions.assertEquals(1, allNodes.size(), "Number of nodes not as expected");
+//            Assertions.assertEquals(1, allNodes.size(), "Number of nodes not as expected");
             String expectedString = "it works!";
-            if (allNodes.size() > 0) {
-                ListenableFuture<String> result = allNodes.iterator().next().execute(new ReturnStringCallable(expectedString));
-                try {
-                    String resultString = result.get();
-                    addToReport("result string", resultString);
-//                    Assertions.assertEquals(expectedString, resultString, "Result string is not as expected.");
-                } catch (ExecutionException ex) {
-                    logger.warn("Exception on result", ex);
-                    addToReport("exception on result", ex);
-                }
+            
+            for (ExecutorNode executorNode : allNodes) {
+                ListenableFuture<String> resultFuture = executorNode.execute(new ReturnStringCallable(expectedString));
+                String result = resultFuture.get();
+                addToReport("result "+executorNode.getID(), result);
             }
+        } catch (ExecutionException ex) {
+            addToReport("ExecutionException", ex.getMessage());
         } finally {
             clustermeister.shutdown();
         }
