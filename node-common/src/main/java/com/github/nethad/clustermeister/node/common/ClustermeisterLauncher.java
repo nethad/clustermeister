@@ -79,7 +79,7 @@ public abstract class ClustermeisterLauncher extends Observable {
             try {
                 //Spawn a new JVM
                 startUp(launchAsChildProcess);
-                uuidLine = waitForUUID(in, sout);
+                uuidLine = waitForUUID(in, sout, sink);
                 if(launchAsChildProcess) {
                     if (sink == null) {
                         processLauncher.setStreamSink(StreamSink.STD);
@@ -200,7 +200,7 @@ public abstract class ClustermeisterLauncher extends Observable {
         return value;
     }
     
-    private String waitForUUID(InputStream in, PrintStream sout) 
+    private String waitForUUID(InputStream in, PrintStream sout, StreamSink sink) 
             throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(in, Constants.UTF8));
         logger.info("Waiting for UUID.");
@@ -210,7 +210,11 @@ public abstract class ClustermeisterLauncher extends Observable {
                 logger.info("Got {}.", line);
                 return line;
             } else {
-                sout.println(line);
+                if(sink != null && sink == StreamSink.LOG) {
+                    logger.info(line);
+                } else {
+                    sout.println(line);
+                }
             }
         }
         
