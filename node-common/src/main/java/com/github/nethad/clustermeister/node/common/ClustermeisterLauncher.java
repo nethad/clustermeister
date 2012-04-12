@@ -53,12 +53,9 @@ public abstract class ClustermeisterLauncher extends Observable {
      */
     protected ClustermeisterProcessLauncher processLauncher = null;
     
-    /**
-     * Whether to print the UUID to stdout or not.
-     */
-    protected boolean printUUIDtoStdOut = false;
-
     private Thread jppfThread = null;
+    
+    private boolean printUUIDtoStdOut = false;
     
     /**
      * Performs the launching of a new JVM using the runner from {@link #getRunner()}.
