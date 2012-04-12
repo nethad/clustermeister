@@ -18,6 +18,7 @@ package com.github.nethad.clustermeister.provisioning.jppf;
 import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.node.common.ClustermeisterDriverLauncher;
 import com.github.nethad.clustermeister.node.common.ClustermeisterLauncher;
+import com.github.nethad.clustermeister.node.common.ClustermeisterProcessLauncher.StreamSink;
 import com.google.common.util.concurrent.Monitor;
 import java.util.Map;
 import java.util.Observable;
@@ -122,7 +123,6 @@ public class JPPFConfiguratedComponentFactory {
             JPPFDriverConfigurationSource.managementPort = managementPort;
             setConfigProperty(JPPFDriverConfigurationSource.class.getCanonicalName());
             final ClustermeisterLauncher launcher = new ClustermeisterDriverLauncher(true);
-            launcher.divertStreamsToLog(true);
             final AtomicBoolean initialized = new AtomicBoolean(false);
             final Monitor initializationMonitor = new Monitor(false);
             final Monitor.Guard isInitialized = new Monitor.Guard(initializationMonitor) {
@@ -146,7 +146,7 @@ public class JPPFConfiguratedComponentFactory {
                 @Override
                 public void run() {
                     try {
-                        launcher.doLaunch(true);
+                        launcher.doLaunch(true, StreamSink.LOG);
                     } catch(Throwable ex) {
                         logger.warn("Execption from local driver thread.", ex);
                     }

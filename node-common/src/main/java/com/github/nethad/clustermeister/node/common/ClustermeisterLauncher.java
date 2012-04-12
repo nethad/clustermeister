@@ -63,8 +63,11 @@ public abstract class ClustermeisterLauncher extends Observable {
      * 
      * @param launchAsChildProcess 
      *      Whether to launch a child process or independent process. 
+     * @param sink 
+     *      Where to divert the sub-process's streams to. If launched as 
+     *      independent process the streams are always diverted to file. 
      */
-    synchronized public void doLaunch(boolean launchAsChildProcess) {
+    synchronized public void doLaunch(boolean launchAsChildProcess, StreamSink sink) {
         PipedInputStream in = new PipedInputStream();
         PrintStream sout = System.out;
         PipedOutputStream out = null;
@@ -77,6 +80,13 @@ public abstract class ClustermeisterLauncher extends Observable {
                 //Spawn a new JVM
                 startUp(launchAsChildProcess);
                 uuidLine = waitForUUID(in, sout);
+                if(launchAsChildProcess) {
+                    if (sink == null) {
+                        processLauncher.setStreamSink(StreamSink.STD);
+                    } else {
+                        processLauncher.setStreamSink(sink);
+                    }
+                }
             } catch (Exception ex) {
                 logger.warn("Exception while launching.", ex);
             }
@@ -135,21 +145,6 @@ public abstract class ClustermeisterLauncher extends Observable {
         this.printUUIDtoStdOut = printUUIDtoStdOut;
     }
     
-    /**
-     * Divert the sub-processes stdout and stderr streams to the logging framework.
-     * 
-     * @param divert 
-     *      true to divert to logging, false to divert to parent 
-     *      process's stdout/stderr.
-     */
-    public void divertStreamsToLog(boolean divert) {
-        if(divert) {
-            processLauncher.setStreamSink(StreamSink.LOG);
-        } else {
-            processLauncher.setStreamSink(StreamSink.STD);
-        }
-    }
-
     protected ClustermeisterProcessLauncher createProcessLauncher() {
        return new ClustermeisterProcessLauncher(getRunner());
     }
@@ -163,6 +158,11 @@ public abstract class ClustermeisterLauncher extends Observable {
     
     /**
      * Starts the JPPF process (a new JVM).
+     * 
+     * If launched as independent process the streams are always diverted to files.
+     * 
+     * @param launchAsChildProcess 
+     *      whether to launch as child process or independent process.
      * 
      * @throws Exception when any exception occurs process spawning preparation.
      */

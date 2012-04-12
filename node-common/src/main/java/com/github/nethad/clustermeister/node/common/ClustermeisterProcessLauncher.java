@@ -76,6 +76,7 @@ public class ClustermeisterProcessLauncher extends ProcessLauncher {
         StringBuilder options = new StringBuilder(jvmOptions.length() + 
                 Constants.CLUSTERMEISTER_DIVERT_STREAMS_TO_FILE.length() + 
                 Constants.CLUSTERMEISTER_USE_RMI.length() + 16);
+        options.append(jvmOptions);
         if(getStreamSink() == StreamSink.FILE) {
             options.append(" -D").
                     append(Constants.CLUSTERMEISTER_DIVERT_STREAMS_TO_FILE).
@@ -115,7 +116,7 @@ public class ClustermeisterProcessLauncher extends ProcessLauncher {
     public void errorStreamAltered(ProcessWrapperEvent event) {
         String content = event.getContent();
         if(getStreamSink() == StreamSink.LOG) {
-            logger.error(content);
+            logger.error(content.substring(0, content.length() - 1));
         } else {
             //don't deal with file logging here, 
             //the sub-process takes care of this.
@@ -127,7 +128,7 @@ public class ClustermeisterProcessLauncher extends ProcessLauncher {
     public void outputStreamAltered(ProcessWrapperEvent event) {
         String content = event.getContent();
         if(getStreamSink() == StreamSink.LOG) {
-            logger.info(event.getContent());
+            logger.info(content.substring(0, content.length() - 1));
         } else {
             //don't deal with file logging here, 
             //the sub-process takes care of this.
