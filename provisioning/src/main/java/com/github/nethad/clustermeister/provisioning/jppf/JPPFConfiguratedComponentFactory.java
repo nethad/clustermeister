@@ -108,7 +108,8 @@ public class JPPFConfiguratedComponentFactory {
                 JPPFConstants.DRIVER_SERVER_HOST_PATTERN, driverName), host);
         properties.setProperty(String.format(
                 JPPFConstants.DRIVER_SERVER_PORT_PATTERN, driverName), String.valueOf(port));
-        properties.setProperty(JPPFConstants.JVM_OPTIONS, "-Dlog4j.configuration=log4j-mclient.properties");
+        properties.setProperty(JPPFConstants.JVM_OPTIONS, 
+                "-Dlog4j.configuration=log4j-mclient.properties");
 
         configPropertyMonitor.enter();
         try {
