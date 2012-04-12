@@ -19,7 +19,10 @@ import com.google.common.annotations.VisibleForTesting;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.logging.LogManager;
+import jline.ConsoleReader;
+import jline.SimpleCompletor;
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -80,10 +83,23 @@ public class ProvisioningCLI {
     }
     
     private void startREPL() {
-        userInputEvaluation = new UserInputEvaluation(provisioning);
-        String userInput;
-        while(!(userInput = nextUserInput()).equals("exit")) {
-            userInputEvaluation.evaluate(userInput.trim());
+        try {
+            ConsoleReader reader = new ConsoleReader();
+            reader.setBellEnabled(false);
+            reader.addCompletor(new SimpleCompletor(UserInputEvaluation.commands()));
+
+            PrintWriter out = new PrintWriter(System.out);
+            String line;
+            userInputEvaluation = new UserInputEvaluation(provisioning);
+            while ((line = reader.readLine("cm$ ")) != null) {
+                userInputEvaluation.evaluate(line);
+                if (line.equalsIgnoreCase("quit") || line.equalsIgnoreCase("exit")) {
+                    break;
+                }
+                out.flush();
+            }
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
     }
 
