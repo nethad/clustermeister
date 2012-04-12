@@ -18,9 +18,8 @@ package com.github.nethad.clustermeister.api.impl;
 import com.github.nethad.clustermeister.api.ExecutorNode;
 import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeType;
-import com.github.nethad.clustermeister.sample.GatherNodeInformationTask;
+import com.github.nethad.clustermeister.api.utils.JPPFProperties;
 import com.google.common.util.concurrent.ListenableFuture;
-import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.*;
@@ -28,9 +27,7 @@ import org.jppf.JPPFException;
 import org.jppf.client.JPPFClient;
 import org.jppf.client.JPPFJob;
 import org.jppf.client.JPPFResultCollector;
-import org.jppf.client.concurrent.JPPFTaskFuture;
 import org.jppf.node.policy.Equal;
-import org.jppf.server.protocol.JPPFTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -74,7 +71,7 @@ public class ExecutorNodeImpl implements ExecutorNode {
             job.setBlocking(false);
 //            job.getSLA().setCancelUponClientDisconnect(true);
             job.getSLA().setMaxNodes(1);
-            job.getSLA().setExecutionPolicy(new Equal(GatherNodeInformationTask.UUID, true, getID()));
+            job.getSLA().setExecutionPolicy(new Equal(JPPFProperties.UUID, true, getID()));
 
             JPPFResultCollector collector = new JPPFResultCollector(job);
             job.setResultListener(collector);
