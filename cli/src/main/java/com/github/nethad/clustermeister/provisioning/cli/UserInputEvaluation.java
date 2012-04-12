@@ -15,6 +15,10 @@
  */
 package com.github.nethad.clustermeister.provisioning.cli;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.StringTokenizer;
 
 /**
@@ -28,15 +32,20 @@ public class UserInputEvaluation {
     private static final String COMMAND_SHUTDOWN = "shutdown";
     private static final String COMMAND_ADDNODES = "addnodes";
     private static final String COMMAND_EXIT = "exit";
+    private static final String COMMAND_QUIT = "quit";
+    
+    private Map<String, String> commandHelpMap = new HashMap<String, String>();
+    private CommandLineTextBuilder commandLineHelpText;
     
     private final Provisioning provisioning;
 
     public UserInputEvaluation(Provisioning provisioning) {
         this.provisioning = provisioning;
+        buildCommandHelpMap();
     }
     
-    public static String[] commands() {
-        return new String[]{COMMAND_HELP, COMMAND_HELP_QUESTIONMARK, COMMAND_STATE, COMMAND_SHUTDOWN, COMMAND_ADDNODES, COMMAND_EXIT};
+    public String[] commands() {
+        return commandHelpMap.keySet().toArray(new String[]{});
     }
 
     public void evaluate(String userInput) {
@@ -44,54 +53,82 @@ public class UserInputEvaluation {
         if (!tokenizer.hasMoreTokens()) {
             return;
         }
-        final String command = tokenizer.nextToken();
-        if (command.equalsIgnoreCase(COMMAND_HELP) || command.equalsIgnoreCase(COMMAND_HELP_QUESTIONMARK)) {
-            help();
-        } else if (command.equalsIgnoreCase(COMMAND_STATE)) {
-            state();
-        } else if (command.equalsIgnoreCase(COMMAND_SHUTDOWN)) {
-            shutdown();
-        } else if (command.equalsIgnoreCase(COMMAND_ADDNODES)) {
-           addNodes(tokenizer);
-        } else {
+//        final String command = tokenizer.nextToken();
+        try {
+            handleCommandDynamically(tokenizer);
+        } catch (Exception ex) {
             unknownCommand();
         }
+    //        if (command.equalsIgnoreCase(COMMAND_HELP) || command.equalsIgnoreCase(COMMAND_HELP_QUESTIONMARK)) {
+    //            help(tokenizer);
+    //        } else if (command.equalsIgnoreCase(COMMAND_STATE)) {
+    //            state(tokenizer);
+    //        } else if (command.equalsIgnoreCase(COMMAND_SHUTDOWN)) {
+    //            shutdown(tokenizer);
+    //        } else if (command.equalsIgnoreCase(COMMAND_ADDNODES)) {
+    //            addNodes(tokenizer);
+    //        } else {
+    //        }
+    //        }
+    }
+    
+    private void handleCommandDynamically(StringTokenizer tokenizer) throws Exception {
+        final String command = tokenizer.nextToken();
+        if (!commandHelpMap.containsKey(command)) {
+            unknownCommand();
+        }
+        Method commandMethod = getClass().getDeclaredMethod("command_"+command, StringTokenizer.class);
+        commandMethod.invoke(this, tokenizer);
     }
 
-    private void help() {
-        CommandLineTextBuilder cltb = new CommandLineTextBuilder("Clustermeister Command Line Help");
-        cltb.addLine(COMMAND_HELP, "Print out this help.");
-        cltb.addLine(COMMAND_HELP_QUESTIONMARK, "Print out this help.");
-        cltb.addLine(COMMAND_STATE, "Show the current state.");
-        cltb.addLine(COMMAND_SHUTDOWN, "Shuts down all running drivers and nodes.");
-        cltb.addLine(COMMAND_ADDNODES, "[numberOfNodes] [CPUsperNode]", "Adds a node to the current setup.");
-        cltb.addLine(COMMAND_EXIT, "Exits this command line.");
-        cltb.print();
+    private void buildCommandHelpMap() {
+        commandHelpMap.put(COMMAND_HELP, "Print out this help.");
+        commandHelpMap.put(COMMAND_HELP_QUESTIONMARK, "Print out this help.");
+        commandHelpMap.put(COMMAND_STATE, "Show the current state.");
+        commandHelpMap.put(COMMAND_SHUTDOWN, "Shuts down all running drivers and nodes.");
+        commandHelpMap.put(COMMAND_ADDNODES, "[numberOfNodes] [CPUsperNode]\n\tAdds a node to the current setup.");
+        commandHelpMap.put(COMMAND_EXIT, "Exits this command line.");
+        commandHelpMap.put(COMMAND_QUIT, "Exits this command line.");
+    }
+    
+    private void command_help(StringTokenizer tokenizer) {
+        if (commandLineHelpText == null) {
+            commandLineHelpText = new CommandLineTextBuilder("Clustermeister Command Line Help");
+            for (Map.Entry<String, String> entry : commandHelpMap.entrySet()) {
+                commandLineHelpText.addLine(entry.getKey(), entry.getValue());
+            }
+        }
+        commandLineHelpText.print();
     }
 
     private void unknownCommand() {
         System.out.println("Unknown command.");
     }
 
-    private void state() {
+    private void command_state(StringTokenizer tokenizer) {
         CommandLineTextBuilder cltb = new CommandLineTextBuilder("state:");
         cltb.addLine("provider:", provisioning.getProvider());
         cltb.addLine("running nodes", provisioning.getNumberOfRunningNodes());
         cltb.print();
     }
 
-    private void shutdown() {
+    private void command_shutdown(StringTokenizer tokenizer) {
         provisioning.shutdown();
     }
 
-    private void addNodes(StringTokenizer tokenizer) {
+    private void command_addnodes(StringTokenizer tokenizer) {
         int countTokens = tokenizer.countTokens();
         if (countTokens == 2) {
             int numberOfNodes = Integer.valueOf(tokenizer.nextToken());
             int numberOfCpus = Integer.valueOf(tokenizer.nextToken());
             provisioning.addNodes(numberOfNodes, numberOfCpus);
         } else {
-            help();
+            command_help(tokenizer);
         }
     }
+
+    private void command_exit(StringTokenizer tokenizer) {}
+    private void command_quit(StringTokenizer tokenizer) {}
+
+
 }

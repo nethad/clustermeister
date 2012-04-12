@@ -84,13 +84,13 @@ public class ProvisioningCLI {
     
     private void startREPL() {
         try {
+            userInputEvaluation = new UserInputEvaluation(provisioning);
             ConsoleReader reader = new ConsoleReader();
             reader.setBellEnabled(false);
-            reader.addCompletor(new SimpleCompletor(UserInputEvaluation.commands()));
+            reader.addCompletor(new SimpleCompletor(userInputEvaluation.commands()));
 
             PrintWriter out = new PrintWriter(System.out);
             String line;
-            userInputEvaluation = new UserInputEvaluation(provisioning);
             while ((line = reader.readLine("cm$ ")) != null) {
                 userInputEvaluation.evaluate(line);
                 if (line.equalsIgnoreCase("quit") || line.equalsIgnoreCase("exit")) {
