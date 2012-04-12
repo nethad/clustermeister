@@ -18,3 +18,5 @@
 /node-common/target/
 /integration-tests/target/
 
+#ignore logs
+*.log
