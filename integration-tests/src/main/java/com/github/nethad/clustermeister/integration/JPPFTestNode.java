@@ -22,6 +22,9 @@ import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
 import java.io.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
+import org.apache.commons.compress.archivers.ArchiveEntry;
+import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -30,8 +33,10 @@ import org.slf4j.LoggerFactory;
  * @author thomas
  */
 public class JPPFTestNode {
-    
     private final Logger logger = LoggerFactory.getLogger(JPPFTestNode.class);
+    
+    private static final String AKKA_ZIP = "akka-libs.tar.bz2";
+    
     private Process nodeProcess;
     private NodeProcessOutputter nodeProcessOutputterStdOut;
     private NodeProcessOutputter nodeProcessOutputterStdErr;
@@ -41,9 +46,12 @@ public class JPPFTestNode {
     private int managementPort = 12001;
     private int currentNodeNumber = 0;
     private String currentNodeConfig;
+    private File libDir;
     
     public void prepare() {
         unpackNodeZip();
+        libDir = new File(targetDir, "jppf-node/lib/");
+        preloadLibraries();
     }
     
     public void startNewNode() {
@@ -144,6 +152,79 @@ public class JPPFTestNode {
         }
     }
     
+    private void preloadLibraries() {
+        String akkaZip = System.getProperty("user.home")+"/.clustermeister/"+AKKA_ZIP;
+        File akkaZipFile = new File(akkaZip);
+        File tarFile = new File(libDir, "archive.tar");
+        boolean akkaZipFileExists = akkaZipFile.exists();
+        boolean tarFileNotAlreadyExists = !tarFile.exists();
+        if (akkaZipFileExists && tarFileNotAlreadyExists) {
+            try {
+                extractBzip2(akkaZipFile, tarFile);
+                untar(tarFile);
+            } catch (IOException ex) {
+                logger.warn("Could not untar libraries (preloading)", ex);
+            }
+        }
+    }
+    
+    private void untar(File tarFile) throws IOException {
+        logger.info("Untar {}.", tarFile.getAbsolutePath());
+        TarArchiveInputStream tarArchiveInputStream = new TarArchiveInputStream(new FileInputStream(tarFile));
+        try {
+            ArchiveEntry tarEntry = tarArchiveInputStream.getNextEntry();
+            while (tarEntry != null) {
+                File destPath = new File(libDir, tarEntry.getName());
+                logger.info("Unpacking {}.", destPath.getAbsoluteFile());
+                if (!tarEntry.isDirectory()) {
+                    FileOutputStream fout = new FileOutputStream(destPath);
+                    final byte[] buffer = new byte[8192];
+                    int n = 0;
+                    while (-1 != (n = tarArchiveInputStream.read(buffer))) {
+                        fout.write(buffer, 0, n);
+                    }
+                    fout.close();
+
+                } else {
+                    destPath.mkdir();
+                }
+                tarEntry = tarArchiveInputStream.getNextEntry();
+            }
+        } finally {
+            tarArchiveInputStream.close();
+        }        
+    }
+    
+    private File extractBzip2(File bzip2File, File tarFile) throws FileNotFoundException, IOException {
+        FileInputStream fin = null;
+        BZip2CompressorInputStream bzIn = null;
+        try {
+            fin = new FileInputStream(bzip2File);
+            BufferedInputStream in = new BufferedInputStream(fin);
+            FileOutputStream out = new FileOutputStream(tarFile);
+            bzIn = new BZip2CompressorInputStream(in);
+            final byte[] buffer = new byte[8192];
+            int n = 0;
+            while (-1 != (n = bzIn.read(buffer))) {
+                out.write(buffer, 0, n);
+            }
+            out.close();
+            bzIn.close();
+        }  finally {
+            try {
+                fin.close();
+            } catch (IOException ex) {
+//                throw new RuntimeException(ex);
+            }
+            try {
+                bzIn.close();
+            } catch (IOException ex) {
+//                throw new RuntimeException(ex);
+            }
+        }
+        return tarFile;
+    }
+    
     private void copyInputStream_notClosing(InputStream in, OutputStream out) throws IOException {
         byte[] buffer = new byte[1024];
         int len;
@@ -195,6 +276,8 @@ public class JPPFTestNode {
     private synchronized void log(String message, String arg, Exception ex) {
         logger.info(message, arg, ex);
     }
+
+
     
     public class NodeProcessOutputter extends Thread {
         
