@@ -16,28 +16,18 @@
 package com.github.nethad.clustermeister.provisioning.cli;
 
 import com.github.nethad.clustermeister.api.Configuration;
-import com.github.nethad.clustermeister.api.Node;
-import com.github.nethad.clustermeister.api.NodeCapabilities;
-import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceShutdownMethod;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeConfiguration;
+import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
+import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
-import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Optional;
-import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.concurrent.ExecutionException;
+import java.util.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -46,23 +36,23 @@ import org.slf4j.LoggerFactory;
  * @author thomas
  */
 public class Provisioning {
+    private CommandLineEvaluation commandLineEvaluation;
     
     private String configFilePath;
     private String driverHost;
     private Provider provider;
     private Configuration configuration;
     private RmiInfrastructure rmiInfrastructure;
-    private TorqueNodeManager torqueNodeManager;
-    private AmazonNodeManager amazonNodeManager;
-    private JPPFManagementByJobsClient amazonManagementClient = null;
     private Logger logger = LoggerFactory.getLogger(Provisioning.class);
     private JPPFLocalDriver jppfLocalDriver;
+    private CommandLineHandle commandLineHandle;
 
     public Provisioning(String configFilePath, Provider provider) {
         this.configFilePath = configFilePath;
         this.provider = provider;
         rmiInfrastructure = new RmiInfrastructure();
         rmiInfrastructure.initialize();
+        commandLineHandle = new CommandLineHandle();
     }
     
     public void execute() {
@@ -82,112 +72,33 @@ public class Provisioning {
         }
     }
     
-    public void shutdown() {
-        switch(provider) {
-            case AMAZON:
-                shutdownAmazon();
-                break;
-            case TORQUE:
-                shutdownTorque();
-                break;
-            case TEST:
-                shutdownTest();
-                break;
-            default:
-                throw new RuntimeException("Unknown provider");
-        }
+    public void commandShutdown(StringTokenizer tokenizer) {
+        commandLineEvaluation.shutdown(tokenizer);
         shutdownDriver();
+    }   
+    
+    public String helpText(String command) {
+        return commandLineEvaluation.helpText(command);
     }
     
-    public void addNodes(int numberOfNodes, int numberOfCpusPerNode) {
-        switch(provider) {
-            case AMAZON:
-                addAmazonNodes(numberOfCpusPerNode, numberOfNodes);
-                break;
-            case TORQUE:
-                addTorqueNodes(numberOfCpusPerNode, numberOfNodes);
-                break;
-            case TEST:
-                break;
-            default:
-                throw new RuntimeException("Unknown provider");
-        }
-    }
-
-    private void addTorqueNodes(int numberOfCpusPerNode, int numberOfNodes) {
-        final TorqueNodeConfiguration torqueNodeConfiguration = 
-                TorqueNodeConfiguration.configurationForNode(driverHost, numberOfCpusPerNode);
-        
-        ListenableFuture<? extends Node> lastNode = null;
-        for (int i = 0; i < numberOfNodes; i++) {
-            lastNode = torqueNodeManager.addNode(torqueNodeConfiguration);
-        }
-        try {
-            lastNode.get();
-        } catch (InterruptedException ex) {
-            logger.warn("Waited for last node to start up", ex);
-        } catch (ExecutionException ex) {
-            logger.warn("Waited for last node to start up", ex);
-//        } catch (TimeoutException ex) {
-//            logger.warn("Waited for last node to start up", ex);
-        }
+    public void commandAddnodes(StringTokenizer tokenizer) {
+        commandLineEvaluation.addNodes(tokenizer, driverHost);
     }
     
-    private void addAmazonNodes(final int numberOfCpusPerNode, int numberOfNodes) {
-        final AmazonNodeConfiguration amazonNodeConfiguration = new AmazonNodeConfiguration();
-        amazonNodeConfiguration.setDriverAddress("localhost");
-        amazonNodeConfiguration.setNodeCapabilities(new NodeCapabilities() {
-            @Override
-            public int getNumberOfProcessors() {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-
-            @Override
-            public int getNumberOfProcessingThreads() {
-                return numberOfCpusPerNode;
-            }
-
-            @Override
-            public String getJppfConfig() {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-        });
-        amazonNodeConfiguration.setNodeType(NodeType.NODE);
-        amazonNodeConfiguration.setRegion("eu-west-1c");
-        
-        logger.info("Starting {} nodes.", numberOfNodes);
-        List<ListenableFuture<? extends Node>> futures = 
-                new ArrayList<ListenableFuture<? extends Node>>(numberOfNodes);
-        for (int i = 0; i < numberOfNodes; i++) {
-            futures.add(amazonNodeManager.addNode(amazonNodeConfiguration, 
-                    Optional.<String>absent()));
-        }
-        try {
-            List<? extends Node> startedNodes = Futures.successfulAsList(futures).get();
-            int failedNodes = Iterables.frequency(startedNodes, null);
-            if(failedNodes > 0) {
-                logger.warn("{} nodes failed to start.", failedNodes);
-            }
-        } catch (InterruptedException ex) {
-            logger.warn("Interrupted while waiting for nodes to start. Nodes may not be started properly.", ex);
-        } catch (ExecutionException ex) {
-            logger.warn("Failed to wait for nodes to start.", ex);
-        }
+    public void commandHelp(StringTokenizer tokenizer) {
+        commandLineEvaluation.help(tokenizer);
+    }
+    
+    public void commandUnknownFallback(String command, StringTokenizer tokenizer) {
+        commandLineEvaluation.handleCommand(command, tokenizer);
+    }
+    
+    public void commandState(StringTokenizer tokenizer) {
+        commandLineEvaluation.state(tokenizer);
     }
     
     protected Provider getProvider() {
         return provider;
-    }
-    
-    protected int getNumberOfRunningNodes() {
-        switch(provider) {
-            case AMAZON:
-                return amazonNodeManager.getNodes().size();
-            case TORQUE:
-                return torqueNodeManager.getNodes().size();
-            default:
-                throw new RuntimeException("Unknown provider");
-        }
     }
     
     private void readConfigFile() {
@@ -203,47 +114,37 @@ public class Provisioning {
     }
 
     private void startAmazon() {
-        amazonNodeManager = new AmazonNodeManager(configuration);
-        amazonManagementClient = JPPFConfiguratedComponentFactory.getInstance().
-                createManagementByJobsClient("localhost", 11111);
-        amazonNodeManager.registerManagementClient(amazonManagementClient);
+        commandLineEvaluation = AmazonNodeManager.commandLineEvaluation(configuration, commandLineHandle);
         jppfLocalDriver = new JPPFLocalDriver();
         jppfLocalDriver.execute();
     }
 
     private void startTorque() {
-        torqueNodeManager = new TorqueNodeManager(configuration);
-        
         jppfLocalDriver = new JPPFLocalDriver();
-        torqueNodeManager.addPublicIpListener(jppfLocalDriver);
+        commandLineEvaluation = TorqueNodeManager.commandLineEvaluation(configuration, commandLineHandle, jppfLocalDriver);
         jppfLocalDriver.execute();
         driverHost = jppfLocalDriver.getIpAddress();
     }
     
     private void startTestSetup() {
+        commandLineEvaluation = new CommandLineEvaluation() {
+            @Override
+            public void addNodes(StringTokenizer tokenizer, String driverHost) {} // do nothing
+            @Override
+            public void state(StringTokenizer tokenizer) {} // do nothing
+            @Override
+            public void shutdown(StringTokenizer tokenizer) {} // do nothing
+            @Override
+            public void help(StringTokenizer tokenizer) {} // do nothing
+            @Override
+            public void handleCommand(String command, StringTokenizer tokenizer) {} // do nothing
+            @Override
+            public String helpText(String command) { return ""; }
+        };
         jppfLocalDriver = new JPPFLocalDriver();
         jppfLocalDriver.execute();
         jppfLocalDriver.update(null, "127.0.0.1");
         driverHost = "127.0.0.1";
-    }
-    
-    private void shutdownTorque() {
-        if (torqueNodeManager != null) {
-            torqueNodeManager.removeAllNodes();
-            torqueNodeManager.shutdown();
-        }
-    }
-    
-    private void shutdownAmazon() {
-        if (amazonNodeManager != null) {
-            amazonNodeManager.removeAllNodes(AmazonInstanceShutdownMethod.TERMINATE);
-            amazonManagementClient.close();
-            amazonNodeManager.close();
-        }
-    }
-    
-    private void shutdownTest() {
-        // do nothing
     }
 
     @VisibleForTesting
@@ -251,7 +152,10 @@ public class Provisioning {
         return rmiInfrastructure;
     }
 
-
+    @VisibleForTesting
+    void setCommandLineEvaluation(CommandLineEvaluation evaluation) {
+        this.commandLineEvaluation = evaluation;
+    }
 
     
 }

@@ -15,61 +15,121 @@
  */
 package com.github.nethad.clustermeister.provisioning.cli;
 
-import org.junit.AfterClass;
+import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
+import java.util.StringTokenizer;
 import org.junit.Test;
 import static org.junit.Assert.*;
 import static org.hamcrest.CoreMatchers.*;
 import org.junit.Before;
-import org.junit.BeforeClass;
-import static org.mockito.Mockito.*;
 
 /**
  *
  * @author thomas
  */
 public class UserInputEvaluationTest {
+    private TestCommandLineEvaluation commandLineEvaluation;
     private Provisioning provisioning;
     private UserInputEvaluation userInputEvaluation;
+    
+//    private StringTokenizer setTokenizer;
 
     @Before
     public void setup() {
-        provisioning = mock(Provisioning.class);
+//        provisioning = mock(Provisioning.class);
+//        setTokenizer = null;
+        provisioning = new Provisioning(null, Provider.TEST);
+        commandLineEvaluation = new TestCommandLineEvaluation();
+        provisioning.setCommandLineEvaluation(commandLineEvaluation);
         userInputEvaluation = new UserInputEvaluation(provisioning);
     }
     
     @Test
     public void addnodesCommand() {
         userInputEvaluation.evaluate("addnodes 10 23");
-        verify(provisioning).addNodes(10, 23);
-    }
-    
-    @Test
-    public void addnodesCommand_fail() {
-        userInputEvaluation.evaluate("addnodes 10");
-        verify(provisioning, never()).addNodes(anyInt(), anyInt());
-        
-        userInputEvaluation.evaluate("addnodes");
-        verify(provisioning, never()).addNodes(anyInt(), anyInt());
+        assertThat(commandLineEvaluation.getLastCommand(), is("addnodes"));
+        assertThat(commandLineEvaluation.getLastTokenizer().countTokens(), is(2));
+        assertThat(commandLineEvaluation.getLastTokenizer().nextToken(), is("10"));
+        assertThat(commandLineEvaluation.getLastTokenizer().nextToken(), is("23"));
     }
 
     @Test
     public void stateCommand() {
-        when(provisioning.getNumberOfRunningNodes()).thenReturn(0);
-        when(provisioning.getProvider()).thenReturn(Provider.TORQUE);
         userInputEvaluation.evaluate("state");
-        verify(provisioning).getNumberOfRunningNodes();
-        verify(provisioning).getProvider();
+        assertThat(commandLineEvaluation.getLastCommand(), is("state"));
+        assertThat(commandLineEvaluation.getLastTokenizer().countTokens(), is(0));
     }
     
     @Test
     public void shutdownCommand() {
         userInputEvaluation.evaluate("shutdown");
-        verify(provisioning).shutdown();
+        assertThat(commandLineEvaluation.getLastCommand(), is("shutdown"));
+        assertThat(commandLineEvaluation.getLastTokenizer().countTokens(), is(0));
     }
     
-        @Test
-    public void unknownCommand() {
-        userInputEvaluation.evaluate("");
-        verifyZeroInteractions(provisioning);
+    @Test
+    public void helpCommand() {
+        userInputEvaluation.evaluate("help");
+        assertThat(commandLineEvaluation.getLastCommand(), is("help"));
+        assertThat(commandLineEvaluation.getLastTokenizer().countTokens(), is(0));
     }
+    
+    @Test
+    public void handleCommand() {
+        userInputEvaluation.evaluate("newcommand arg1 arg2");
+        assertThat(commandLineEvaluation.getLastCommand(), is("newcommand"));
+        assertThat(commandLineEvaluation.getLastTokenizer().countTokens(), is(2));
+        assertThat(commandLineEvaluation.getLastTokenizer().nextToken(), is("arg1"));
+        assertThat(commandLineEvaluation.getLastTokenizer().nextToken(), is("arg2"));
+    }
+    
+    class TestCommandLineEvaluation implements CommandLineEvaluation {
+        
+        private StringTokenizer lastTokenizer;
+        private String lastCommand;
+        
+        public StringTokenizer getLastTokenizer() {
+            return lastTokenizer;
+        }
+        
+        public String getLastCommand() {
+            return lastCommand;
+        }
+
+        @Override
+        public void addNodes(StringTokenizer tokenizer, String driverHost) {
+            lastCommand = "addnodes";
+            lastTokenizer = tokenizer;
+        }
+
+        @Override
+        public void state(StringTokenizer tokenizer) {
+            lastCommand = "state";
+            lastTokenizer = tokenizer;
+        }
+
+        @Override
+        public void shutdown(StringTokenizer tokenizer) {
+            lastCommand = "shutdown";
+            lastTokenizer = tokenizer;
+        }
+
+        @Override
+        public void help(StringTokenizer tokenizer) {
+            lastCommand = "help";
+            lastTokenizer = tokenizer;
+        }
+
+        @Override
+        public void handleCommand(String command, StringTokenizer tokenizer) {
+            lastTokenizer = tokenizer;
+            this.lastCommand = command;
+        }
+
+        @Override
+        public String helpText(String command) {
+            this.lastCommand = command;
+            return "";
+        }
+    }
+
 }
