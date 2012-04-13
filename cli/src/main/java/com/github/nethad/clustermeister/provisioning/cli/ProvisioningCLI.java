@@ -35,6 +35,7 @@ public class ProvisioningCLI {
 
     private final Logger logger = LoggerFactory.getLogger(ProvisioningCLI.class);
 
+    private static final String OPTION_HELP = "help";
     private static final String OPTION_CONFIG_FILE = "config";
     private static final String DEFAULT_CONFIG_FILE = System.getProperty("user.home") + "/.clustermeister/configuration.properties";
     private static final String OPTION_PROVIDER = "provider";
@@ -60,14 +61,15 @@ public class ProvisioningCLI {
             ex.printStackTrace();
         }
     }
+    private boolean showHelp;
     
     protected void startCLI(String[] args) {
-//        if (args.length == 0) {
-//            HelpFormatter formatter = new HelpFormatter();
-//            formatter.printHelp( "clustermeister", getOptions());
-//        } else {
             try {
                 parseArguments(args);
+                if (showHelp) {
+                    usage();
+                    return;
+                }
                 logger.info("Using configuration in "+configFilePath);
                 logger.info("Using provider "+provider);
                 provisioning = new Provisioning(configFilePath, provider);
@@ -80,6 +82,11 @@ public class ProvisioningCLI {
         // TODO this is necessary because JPPFClient still has running threads which 
         // won't shut down with close().
         System.exit(0);
+    }
+
+    private void usage() {
+        HelpFormatter formatter = new HelpFormatter();
+        formatter.printHelp("cli.jar", options);
     }
     
     private void startREPL() {
@@ -119,6 +126,7 @@ public class ProvisioningCLI {
     protected void parseArguments(String[] args) throws ParseException {
         CommandLineParser parser = new PosixParser();
         CommandLine cmd = parser.parse(getOptions(), args);
+        showHelp = cmd.hasOption(OPTION_HELP);
         configFilePath = cmd.getOptionValue(OPTION_CONFIG_FILE, DEFAULT_CONFIG_FILE);
         provider = Provider.fromString(cmd.getOptionValue(OPTION_PROVIDER, DEFAULT_PROVIDER));
     }
@@ -126,6 +134,7 @@ public class ProvisioningCLI {
     private Options getOptions() {
         if (options == null) {
             options = new Options();
+            options.addOption("h", OPTION_HELP, false, "show this help text.");
             options.addOption("c", OPTION_CONFIG_FILE, true, "define the path to your configuration.properties, default: "+DEFAULT_CONFIG_FILE);
             options.addOption("p", OPTION_PROVIDER, true, "specify the provider to use, either 'amazon' or 'torque', default: "+DEFAULT_PROVIDER);
         }
