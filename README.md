@@ -85,7 +85,7 @@ There we will see (among others):
 
 So, to start 2 nodes with 4 processing threads each, we type:
 
-`addnodes 2 4`
+`cm$ addnodes 2 4`
 
 This uploads the clustermeister resources to the job submission server and starts the nodes. Once these nodes are started up, they will connect to a driver on the local machine. We see this in the log output:
 
