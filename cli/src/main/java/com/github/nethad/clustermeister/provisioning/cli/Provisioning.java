@@ -237,6 +237,7 @@ public class Provisioning {
     private void shutdownAmazon() {
         if (amazonNodeManager != null) {
             amazonNodeManager.removeAllNodes(AmazonInstanceShutdownMethod.TERMINATE);
+            amazonManagementClient.close();
             amazonNodeManager.close();
         }
     }
