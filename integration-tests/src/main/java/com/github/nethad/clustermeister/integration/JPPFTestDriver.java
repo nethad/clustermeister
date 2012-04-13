@@ -55,7 +55,7 @@ public class JPPFTestDriver {
         }
         
         private void shutdown() {
-            provisioning.shutdown(null);
+            provisioning.commandShutdown(null);
         }
         
     }
