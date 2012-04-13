@@ -22,9 +22,24 @@ import java.io.IOException;
 import java.io.InputStream;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
+import org.apache.maven.model.building.DefaultModelBuilderFactory;
+import org.apache.maven.model.building.DefaultModelBuildingRequest;
+import org.apache.maven.model.building.ModelBuilder;
+import org.apache.maven.model.building.ModelBuildingException;
+import org.apache.maven.model.building.ModelBuildingRequest;
 import org.apache.maven.model.io.xpp3.MavenXpp3Reader;
+import org.apache.maven.repository.internal.MavenRepositorySystemSession;
+import org.apache.maven.repository.internal.MavenServiceLocator;
 import org.codehaus.plexus.util.xml.pull.XmlPullParserException;
+import org.sonatype.aether.RepositorySystem;
+import org.sonatype.aether.RepositorySystemSession;
 import org.sonatype.aether.collection.DependencyCollectionException;
+import org.sonatype.aether.connector.file.FileRepositoryConnectorFactory;
+import org.sonatype.aether.connector.wagon.WagonProvider;
+import org.sonatype.aether.connector.wagon.WagonRepositoryConnectorFactory;
+import org.sonatype.aether.repository.LocalRepository;
+import org.sonatype.aether.repository.RemoteRepository;
+import org.sonatype.aether.spi.connector.RepositoryConnectorFactory;
 
 /**
  *
@@ -33,6 +48,8 @@ import org.sonatype.aether.collection.DependencyCollectionException;
 public class MavenUtils {
     
     private static MavenXpp3Reader reader = null;
+    private static RepositorySystem repositorySystem = null;
+    private static RepositorySystemSession repositorySystemSession = null;
 
     public static void getDependencies(InputStream pom) {
         for(Dependency dependency : getSimpleModel(pom).getDependencies()) {
@@ -64,14 +81,23 @@ public class MavenUtils {
         }
     }
     
-    protected static Model getEffectiveModel(InputStream pom) {
+    protected static Model getEffectiveModel(File pom, RemoteRepository... remoteRepositories) {
+        ModelBuildingRequest req = new DefaultModelBuildingRequest();
+        req.setProcessPlugins(false);
+        req.setPomFile(pom);
+        req.setModelResolver(new SimpleModelResolver(getRepositorySystem(), 
+                getRepositorySystemSession(), remoteRepositories));
+        req.setValidationLevel(ModelBuildingRequest.VALIDATION_LEVEL_MINIMAL);
+        
+        Model model = null;
+        ModelBuilder builder = new DefaultModelBuilderFactory().newInstance();
         try {
-            return getReader().read(pom);
-        } catch (IOException ex) {
-            throw new RuntimeException("Can not create model from POM.", ex);
-        } catch (XmlPullParserException ex) {
-            throw new RuntimeException("Can not create model from POM.", ex);
+            model = builder.build(req).getEffectiveModel();
+        } catch(ModelBuildingException ex) {
+            ex.printStackTrace();
         }
+        
+        return model;
     }
     
     /**
@@ -87,5 +113,64 @@ public class MavenUtils {
 
         return reader;
     }
+
+    /**
+     * Returns the RepositorySystem and initializes it if it has not been 
+     * done before (lazy initialization).
+     * 
+     * @return an RepositorySystem.
+     */
+    public static RepositorySystem getRepositorySystem() {
+        if (repositorySystem == null) {
+            repositorySystem = newRepositorySystem();
+        }
+
+        return repositorySystem;
+    }
     
+    /**
+     * Returns the RepositorySystemSession and initializes it if it has not been 
+     * done before (lazy initialization).
+     * 
+     * @return an RepositorySystemSession.
+     */
+    protected static RepositorySystemSession getRepositorySystemSession() {
+        if (repositorySystemSession == null) {
+            repositorySystemSession = newRepositorySystemSession(getRepositorySystem());
+        }
+
+        return repositorySystemSession;
+    }
+    
+    public static RepositorySystem newRepositorySystem() {
+        MavenServiceLocator locator = new MavenServiceLocator();
+        locator.addService(RepositoryConnectorFactory.class, FileRepositoryConnectorFactory.class);
+        locator.addService(RepositoryConnectorFactory.class, WagonRepositoryConnectorFactory.class);
+        locator.setServices(WagonProvider.class, new DependencyResolver.ManualWagonProvider());
+
+        return locator.getService(RepositorySystem.class);
+    }
+    
+    public static RepositorySystemSession newRepositorySystemSession(RepositorySystem system) {
+        MavenRepositorySystemSession session = new MavenRepositorySystemSession();
+
+        LocalRepository localRepo = new LocalRepository("target/local-repo");
+        session.setLocalRepositoryManager(system.newLocalRepositoryManager(localRepo));
+
+        session.setTransferListener(new DependencyResolver.ConsoleTransferListener());
+        session.setRepositoryListener(new DependencyResolver.ConsoleRepositoryListener());
+
+        // uncomment to generate dirty trees
+        // session.setDependencyGraphTransformer( null );
+
+        return session;
+    }
+    
+    public static RemoteRepository newCentralRepository() {
+        return newRemoteRepository("central", "default", "http://repo1.maven.org/maven2/");
+    }
+    
+    public static RemoteRepository newRemoteRepository(String id, String type, String url) {
+        return new RemoteRepository(id, type, url);
+    }
 }

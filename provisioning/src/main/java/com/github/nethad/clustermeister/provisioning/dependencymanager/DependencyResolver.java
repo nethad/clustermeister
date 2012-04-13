@@ -21,8 +21,6 @@ import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-import org.apache.maven.repository.internal.MavenRepositorySystemSession;
-import org.apache.maven.repository.internal.MavenServiceLocator;
 import org.apache.maven.wagon.Wagon;
 import org.apache.maven.wagon.providers.http.LightweightHttpWagon;
 import org.apache.maven.wagon.providers.http.LightweightHttpsWagon;
@@ -34,15 +32,10 @@ import org.sonatype.aether.artifact.Artifact;
 import org.sonatype.aether.collection.CollectRequest;
 import org.sonatype.aether.collection.CollectResult;
 import org.sonatype.aether.collection.DependencyCollectionException;
-import org.sonatype.aether.connector.file.FileRepositoryConnectorFactory;
 import org.sonatype.aether.connector.wagon.WagonProvider;
-import org.sonatype.aether.connector.wagon.WagonRepositoryConnectorFactory;
 import org.sonatype.aether.graph.Dependency;
 import org.sonatype.aether.graph.DependencyNode;
 import org.sonatype.aether.graph.DependencyVisitor;
-import org.sonatype.aether.repository.LocalRepository;
-import org.sonatype.aether.repository.RemoteRepository;
-import org.sonatype.aether.spi.connector.RepositoryConnectorFactory;
 import org.sonatype.aether.transfer.AbstractTransferListener;
 import org.sonatype.aether.transfer.TransferEvent;
 import org.sonatype.aether.transfer.TransferResource;
@@ -58,60 +51,26 @@ public class DependencyResolver {
 //        File projectDirectory = new File("/home/daniel/workspace/clustermeister/integration-tests");
 //        File settings = new File("/home/daniel/.m2/settings.xml");
         
-        RepositorySystem system = newRepositorySystem();
-        RepositorySystemSession session = newRepositorySystemSession(system);
+        RepositorySystem system = MavenUtils.newRepositorySystem();
+        RepositorySystemSession session = MavenUtils.newRepositorySystemSession(system);
 //        Artifact artifact = new DefaultArtifact( "com.typesafe.akka:akka-actor:2.0.1" );
 //        Artifact artifact = new DefaultArtifact( "org.jppf:server:3.0.1" );
 //        Artifact artifact = new DefaultArtifact( "org.apache.maven:maven-aether-provider:3.0.2" );
         Artifact artifact = new DefaultArtifact(args[0]);
-        RemoteRepository repo = newCentralRepository();
         
         CollectRequest collectRequest = new CollectRequest();
         collectRequest.setRoot(new Dependency(artifact, ""));
-        collectRequest.addRepository(repo);
-        collectRequest.addRepository(
-                new RemoteRepository("typesafe", "default", "http://repo.typesafe.com/typesafe/releases/"));
-        collectRequest.addRepository(
-                new RemoteRepository("ifi", "default", "https://maven.ifi.uzh.ch/maven2/content/groups/public/"));
+        collectRequest.addRepository(MavenUtils.newCentralRepository());
+        collectRequest.addRepository(MavenUtils.newRemoteRepository(
+                "typesafe", "default", "http://repo.typesafe.com/typesafe/releases/"));
+        collectRequest.addRepository(MavenUtils.newRemoteRepository(
+                "ifi", "default", "https://maven.ifi.uzh.ch/maven2/content/groups/public/"));
 
         CollectResult collectResult = system.collectDependencies(session, collectRequest);
 
-        collectResult.getRoot().accept( new ConsoleDependencyGraphDumper() );
+        collectResult.getRoot().accept(new ConsoleDependencyGraphDumper());
     }
     
-    public static RepositorySystem newRepositorySystem() {
-        /*
-         * Aether's components implement org.sonatype.aether.spi.locator.Service to ease manual wiring and using the
-         * prepopulated DefaultServiceLocator, we only need to register the repository connector factories.
-         */
-        MavenServiceLocator locator = new MavenServiceLocator();
-        locator.addService( RepositoryConnectorFactory.class, FileRepositoryConnectorFactory.class );
-        locator.addService( RepositoryConnectorFactory.class, WagonRepositoryConnectorFactory.class );
-        locator.setServices( WagonProvider.class, new ManualWagonProvider() );
-
-        return locator.getService( RepositorySystem.class );
-    }
-    
-    public static RepositorySystemSession newRepositorySystemSession( RepositorySystem system )
-    {
-        MavenRepositorySystemSession session = new MavenRepositorySystemSession();
-
-        LocalRepository localRepo = new LocalRepository( "target/local-repo" );
-        session.setLocalRepositoryManager( system.newLocalRepositoryManager( localRepo ) );
-
-        session.setTransferListener( new ConsoleTransferListener() );
-        session.setRepositoryListener( new ConsoleRepositoryListener() );
-
-        // uncomment to generate dirty trees
-        // session.setDependencyGraphTransformer( null );
-
-        return session;
-    }
-
-    public static RemoteRepository newCentralRepository() {
-        return new RemoteRepository("central", "default", "http://repo1.maven.org/maven2/");
-    }
-
     /**
      * A simplistic provider for wagon instances when no Plexus-compatible IoC
      * container is used.
@@ -122,9 +81,6 @@ public class DependencyResolver {
         @Override
         public Wagon lookup(String roleHint)
                 throws Exception {
-            System.out.println("*---------------------------------------------------------------------------------------");
-            System.out.println("hint: " + roleHint);
-            System.out.println("*---------------------------------------------------------------------------------------");
             if ("http".equals(roleHint)) {
                 return new LightweightHttpWagon();
             } else if("https".equals(roleHint)) {

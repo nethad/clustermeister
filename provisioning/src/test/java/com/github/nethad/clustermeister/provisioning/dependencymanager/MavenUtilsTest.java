@@ -15,16 +15,15 @@
  */
 package com.github.nethad.clustermeister.provisioning.dependencymanager;
 
-import com.github.nethad.clustermeister.provisioning.dependencymanager.MavenUtils;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.net.URISyntaxException;
+import org.apache.maven.model.Model;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
-import org.junit.Test;
-import static org.junit.Assert.*;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
 /**
  *
@@ -57,5 +56,18 @@ public class MavenUtilsTest {
     @Test
     public void testGetDependencies() throws FileNotFoundException {
         MavenUtils.getDependencies(getClass().getResourceAsStream("test-pom.xml"));
+    }
+    
+    @Test
+    public void testEffectiveModel() throws URISyntaxException {
+        Model model = MavenUtils.getEffectiveModel(new File(getClass().getResource("test-pom.xml").toURI()), 
+                MavenUtils.newCentralRepository(), 
+                MavenUtils.newRemoteRepository("typesafe", "default", "http://repo.typesafe.com/typesafe/releases/"), 
+                MavenUtils.newRemoteRepository("ifi", "default", "https://maven.ifi.uzh.ch/maven2/content/groups/public/"));
+        
+        System.out.println(model.getName());
+        System.out.println(model.getGroupId());
+        System.out.println(model.getArtifactId());
+        System.out.println(model.getDependencies());
     }
 }
