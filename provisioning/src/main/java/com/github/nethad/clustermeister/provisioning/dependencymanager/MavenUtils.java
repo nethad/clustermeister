@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.utils;
+package com.github.nethad.clustermeister.provisioning.dependencymanager;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -55,6 +55,16 @@ public class MavenUtils {
      * @return  the POM Model.
      */
     protected static Model getSimpleModel(InputStream pom) {
+        try {
+            return getReader().read(pom);
+        } catch (IOException ex) {
+            throw new RuntimeException("Can not create model from POM.", ex);
+        } catch (XmlPullParserException ex) {
+            throw new RuntimeException("Can not create model from POM.", ex);
+        }
+    }
+    
+    protected static Model getEffectiveModel(InputStream pom) {
         try {
             return getReader().read(pom);
         } catch (IOException ex) {

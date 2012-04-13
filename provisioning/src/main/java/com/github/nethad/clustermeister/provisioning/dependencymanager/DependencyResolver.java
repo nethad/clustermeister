@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.utils;
+package com.github.nethad.clustermeister.provisioning.dependencymanager;
 
 import java.io.PrintStream;
 import java.text.DecimalFormat;
