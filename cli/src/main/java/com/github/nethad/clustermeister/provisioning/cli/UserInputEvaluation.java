@@ -75,10 +75,11 @@ public class UserInputEvaluation {
     private void handleCommandDynamically(StringTokenizer tokenizer) throws Exception {
         final String command = tokenizer.nextToken();
         if (!commandHelpMap.containsKey(command)) {
-            unknownCommand();
+            provisioning.command_extra(command, tokenizer);
+        } else {
+            Method commandMethod = getClass().getDeclaredMethod("command_"+command, StringTokenizer.class);
+            commandMethod.invoke(this, tokenizer);
         }
-        Method commandMethod = getClass().getDeclaredMethod("command_"+command, StringTokenizer.class);
-        commandMethod.invoke(this, tokenizer);
     }
 
     private void buildCommandHelpMap() {
@@ -86,7 +87,7 @@ public class UserInputEvaluation {
         commandHelpMap.put(COMMAND_HELP_QUESTIONMARK, "Print out this help.");
         commandHelpMap.put(COMMAND_STATE, "Show the current state.");
         commandHelpMap.put(COMMAND_SHUTDOWN, "Shuts down all running drivers and nodes.");
-        commandHelpMap.put(COMMAND_ADDNODES, "[numberOfNodes] [CPUsperNode]\n\tAdds a node to the current setup.");
+        commandHelpMap.put(COMMAND_ADDNODES, provisioning.helpText(COMMAND_ADDNODES));
         commandHelpMap.put(COMMAND_EXIT, "Exits this command line.");
         commandHelpMap.put(COMMAND_QUIT, "Exits this command line.");
     }
@@ -99,6 +100,7 @@ public class UserInputEvaluation {
             }
         }
         commandLineHelpText.print();
+        provisioning.command_help(tokenizer);
     }
 
     private void unknownCommand() {
@@ -106,29 +108,30 @@ public class UserInputEvaluation {
     }
 
     private void command_state(StringTokenizer tokenizer) {
-        CommandLineTextBuilder cltb = new CommandLineTextBuilder("state:");
-        cltb.addLine("provider:", provisioning.getProvider());
-        cltb.addLine("running nodes", provisioning.getNumberOfRunningNodes());
-        cltb.print();
+        provisioning.state(tokenizer);
+//        CommandLineTextBuilder cltb = new CommandLineTextBuilder("state:");
+//        cltb.addLine("provider:", provisioning.getProvider());
+//        cltb.addLine("running nodes", provisioning.getNumberOfRunningNodes());
+//        cltb.print();
     }
 
     private void command_shutdown(StringTokenizer tokenizer) {
-        provisioning.shutdown();
+        provisioning.shutdown(tokenizer);
     }
 
     private void command_addnodes(StringTokenizer tokenizer) {
-        int countTokens = tokenizer.countTokens();
-        if (countTokens == 2) {
-            int numberOfNodes = Integer.valueOf(tokenizer.nextToken());
-            int numberOfCpus = Integer.valueOf(tokenizer.nextToken());
-            provisioning.addNodes(numberOfNodes, numberOfCpus);
-        } else {
-            command_help(tokenizer);
-        }
+        provisioning.command_addnodes(tokenizer);
+//        int countTokens = tokenizer.countTokens();
+//        if (countTokens == 2) {
+//            int numberOfNodes = Integer.valueOf(tokenizer.nextToken());
+//            int numberOfCpus = Integer.valueOf(tokenizer.nextToken());
+//            provisioning.addNodes(numberOfNodes, numberOfCpus);
+//        } else {
+//            command_help(tokenizer);
+//        }
     }
 
     private void command_exit(StringTokenizer tokenizer) {}
     private void command_quit(StringTokenizer tokenizer) {}
-
 
 }

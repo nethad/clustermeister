@@ -21,6 +21,8 @@ import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
+import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
+import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.injection.SSHModule;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
@@ -55,6 +57,7 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 	private Logger logger = LoggerFactory.getLogger(TorqueNodeManager.class);
 	
 	private final Monitor managedNodesMonitor = new Monitor(false);
+    private TorqueCommandLineEvaluation commandLineEvaluation;
 
 	private class AddNormalNodeTask implements Callable<TorqueNode> {
 
@@ -121,6 +124,13 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 	public Collection<? extends Node> getNodes() {
 		return Collections.unmodifiableCollection(nodes);
 	}
+    
+    public CommandLineEvaluation getCommandLineEvaluation(CommandLineHandle handle) {
+        if (commandLineEvaluation == null) {
+            commandLineEvaluation = new TorqueCommandLineEvaluation(this, handle);
+        }
+        return commandLineEvaluation;
+    }
 
 	public ListenableFuture<? extends Node> addNode(TorqueNodeConfiguration nodeConfiguration) {
         return executorService.submit(new AddNormalNodeTask(nodeConfiguration, this));
