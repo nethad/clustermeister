@@ -125,6 +125,12 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 		return Collections.unmodifiableCollection(nodes);
 	}
     
+    public static CommandLineEvaluation commandLineEvaluation(Configuration configuration, CommandLineHandle handle, Observer observer) {
+        TorqueNodeManager nodeManager = new TorqueNodeManager(configuration);
+        nodeManager.addPublicIpListener(observer);
+        return nodeManager.getCommandLineEvaluation(handle);
+    }
+    
     public CommandLineEvaluation getCommandLineEvaluation(CommandLineHandle handle) {
         if (commandLineEvaluation == null) {
             commandLineEvaluation = new TorqueCommandLineEvaluation(this, handle);
