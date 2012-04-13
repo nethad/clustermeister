@@ -20,6 +20,7 @@ import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
@@ -79,6 +80,18 @@ public class AmazonNodeManager {
                 Executors.newCachedThreadPool());
         this.amazonInstanceManager =
                 new AmazonInstanceManager(configuration, executorService);
+    }
+    
+    public static CommandLineEvaluation commandLineEvaluation(Configuration configuration, CommandLineHandle handle) {
+        AmazonNodeManager nodeManager = new AmazonNodeManager(configuration);
+        JPPFManagementByJobsClient amazonManagementClient = JPPFConfiguratedComponentFactory.getInstance().
+                                   createManagementByJobsClient("localhost", 11111);
+        nodeManager.registerManagementClient(amazonManagementClient);
+        return nodeManager.getCommandLineEvaluation(handle);
+    }
+    
+    public CommandLineEvaluation getCommandLineEvaluation(CommandLineHandle commandLineHandle) {
+        return new AmazonCommandLineEvaluation(this, commandLineHandle);
     }
 
     public Collection<? extends Node> getNodes() {
@@ -215,9 +228,7 @@ public class AmazonNodeManager {
         }
     }
 
-    public CommandLineEvaluation getCommandLineEvaluation(CommandLineHandle commandLineHandle) {
-        return new AmazonCommandLineEvaluation(this, commandLineHandle);
-    }
+
 
     private class AddNodeTask implements Callable<AmazonNode> {
 

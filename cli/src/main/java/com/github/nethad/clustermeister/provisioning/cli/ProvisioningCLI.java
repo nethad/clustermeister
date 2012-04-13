@@ -98,23 +98,23 @@ public class ProvisioningCLI {
                 }
                 out.flush();
             }
-        } catch (IOException ex) {
-            throw new RuntimeException(ex);
+        } catch (Exception ex) {
+            logger.warn("Exception", ex);
         }
     }
 
-    private String nextUserInput() {
-        System.out.print("cm$ ");
-        BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
-        while (true) {
-            try {
-                return userInput.readLine();
-            } catch (IOException ex) {
-                logger.error("Could not read user input.", ex);
-            }
-            return nextUserInput();
-        }
-    }
+//    private String nextUserInput() {
+//        System.out.print("cm$ ");
+//        BufferedReader userInput = new BufferedReader(new InputStreamReader(System.in));
+//        while (true) {
+//            try {
+//                return userInput.readLine();
+//            } catch (IOException ex) {
+//                logger.error("Could not read user input.", ex);
+//            }
+//            return nextUserInput();
+//        }
+//    }
 
     protected void parseArguments(String[] args) throws ParseException {
         CommandLineParser parser = new PosixParser();

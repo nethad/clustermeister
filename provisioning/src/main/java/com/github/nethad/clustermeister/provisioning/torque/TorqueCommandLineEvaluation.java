@@ -31,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * @author thomas
  */
 public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
-    private static final String COMMAND_ADDNODES = "addnodes";
+//    private static final String COMMAND_ADDNODES = "addnodes";
     
     private final Logger logger = LoggerFactory.getLogger(TorqueCommandLineEvaluation.class);
     
@@ -46,11 +46,11 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
     }
     
     private void buildCommandHelp() {
-        commandHelp.put(COMMAND_ADDNODES, "[number of nodes]  [processing threads per node]");
+        commandHelp.put(CommandLineEvaluation.COMMAND_ADDNODES, "[number of nodes]  [processing threads per node]");
     }
     
     public String[] commands() {
-        return new String[]{COMMAND_ADDNODES};
+        return commandHelp.keySet().toArray(new String[]{});
     }
     
     @Override
@@ -93,9 +93,9 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
 
     @Override
     public void help(StringTokenizer tokenizer) {
-        for (Map.Entry<String, String> entry : commandHelp.entrySet()) {
-            handle.print("%s %s", entry.getKey(), entry.getValue());
-        }
+//        for (Map.Entry<String, String> entry : commandHelp.entrySet()) {
+//            handle.print("%s %s", entry.getKey(), entry.getValue());
+//        }
     }
 
     @Override

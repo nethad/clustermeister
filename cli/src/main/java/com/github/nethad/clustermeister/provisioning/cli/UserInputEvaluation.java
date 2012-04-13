@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.cli;
 
+import com.google.common.annotations.VisibleForTesting;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -53,32 +54,32 @@ public class UserInputEvaluation {
         if (!tokenizer.hasMoreTokens()) {
             return;
         }
-//        final String command = tokenizer.nextToken();
         try {
-            handleCommandDynamically(tokenizer);
+            handleCommand(tokenizer);
         } catch (Exception ex) {
-            unknownCommand();
+            handleException(ex);
         }
-    //        if (command.equalsIgnoreCase(COMMAND_HELP) || command.equalsIgnoreCase(COMMAND_HELP_QUESTIONMARK)) {
-    //            help(tokenizer);
-    //        } else if (command.equalsIgnoreCase(COMMAND_STATE)) {
-    //            state(tokenizer);
-    //        } else if (command.equalsIgnoreCase(COMMAND_SHUTDOWN)) {
-    //            shutdown(tokenizer);
-    //        } else if (command.equalsIgnoreCase(COMMAND_ADDNODES)) {
-    //            addNodes(tokenizer);
-    //        } else {
-    //        }
-    //        }
     }
     
-    private void handleCommandDynamically(StringTokenizer tokenizer) throws Exception {
+    @VisibleForTesting
+    protected void handleCommand(StringTokenizer tokenizer) throws Exception {
         final String command = tokenizer.nextToken();
-        if (!commandHelpMap.containsKey(command)) {
-            provisioning.command_extra(command, tokenizer);
+        if (commandHelpMap.containsKey(command)) {
+            commandMarshalling(command, tokenizer);
         } else {
-            Method commandMethod = getClass().getDeclaredMethod("command_"+command, StringTokenizer.class);
-            commandMethod.invoke(this, tokenizer);
+            provisioning.commandUnknownFallback(command, tokenizer);
+        }
+    }
+
+    private void commandMarshalling(final String command, StringTokenizer tokenizer) {
+        if (command.equals(COMMAND_HELP) || command.equals(COMMAND_HELP_QUESTIONMARK)) {
+            command_help(tokenizer);
+        } else if (command.equals(COMMAND_STATE)) {
+            provisioning.commandState(tokenizer);
+        } else if (command.equals(COMMAND_SHUTDOWN)) {
+            provisioning.commandShutdown(tokenizer);
+        } else if (command.equals(COMMAND_ADDNODES)) {
+            provisioning.commandAddnodes(tokenizer);
         }
     }
 
@@ -100,38 +101,16 @@ public class UserInputEvaluation {
             }
         }
         commandLineHelpText.print();
-        provisioning.command_help(tokenizer);
+        provisioning.commandHelp(tokenizer);
     }
 
     private void unknownCommand() {
         System.out.println("Unknown command.");
     }
 
-    private void command_state(StringTokenizer tokenizer) {
-        provisioning.state(tokenizer);
-//        CommandLineTextBuilder cltb = new CommandLineTextBuilder("state:");
-//        cltb.addLine("provider:", provisioning.getProvider());
-//        cltb.addLine("running nodes", provisioning.getNumberOfRunningNodes());
-//        cltb.print();
+    private void handleException(Exception ex) {
+        System.out.println("Exception: "+ex.getMessage());
+        ex.printStackTrace();
     }
-
-    private void command_shutdown(StringTokenizer tokenizer) {
-        provisioning.shutdown(tokenizer);
-    }
-
-    private void command_addnodes(StringTokenizer tokenizer) {
-        provisioning.command_addnodes(tokenizer);
-//        int countTokens = tokenizer.countTokens();
-//        if (countTokens == 2) {
-//            int numberOfNodes = Integer.valueOf(tokenizer.nextToken());
-//            int numberOfCpus = Integer.valueOf(tokenizer.nextToken());
-//            provisioning.addNodes(numberOfNodes, numberOfCpus);
-//        } else {
-//            command_help(tokenizer);
-//        }
-    }
-
-    private void command_exit(StringTokenizer tokenizer) {}
-    private void command_quit(StringTokenizer tokenizer) {}
 
 }
