@@ -82,6 +82,8 @@ public class ClustermeisterNodeLifeCycleListener implements NodeLifeCycleListene
 
     /**
      * Shuts down or restarts this node.
+     * 
+     * @param restart true to restart the node, false to just shut down.
      */
     protected void shutdownOrRestartNode(boolean restart) {
         String method = restart ? "restart" : "shutdown";
