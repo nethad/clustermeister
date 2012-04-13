@@ -18,6 +18,7 @@ package com.github.nethad.clustermeister.provisioning.jppf;
 import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.node.common.ClustermeisterDriverLauncher;
 import com.github.nethad.clustermeister.node.common.ClustermeisterLauncher;
+import com.github.nethad.clustermeister.node.common.ClustermeisterProcessLauncher.StreamSink;
 import com.google.common.util.concurrent.Monitor;
 import java.util.Map;
 import java.util.Observable;
@@ -103,8 +104,12 @@ public class JPPFConfiguratedComponentFactory {
         String driverName = "driver-1";
         properties.setProperty(JPPFConstants.DISCOVERY_ENABLED, "false");
         properties.setProperty(JPPFConstants.DRIVERS, driverName);
-        properties.setProperty(String.format(JPPFConstants.DRIVER_SERVER_HOST_PATTERN, driverName), host);
-        properties.setProperty(String.format(JPPFConstants.DRIVER_SERVER_PORT_PATTERN, driverName), String.valueOf(port));
+        properties.setProperty(String.format(
+                JPPFConstants.DRIVER_SERVER_HOST_PATTERN, driverName), host);
+        properties.setProperty(String.format(
+                JPPFConstants.DRIVER_SERVER_PORT_PATTERN, driverName), String.valueOf(port));
+        properties.setProperty(JPPFConstants.JVM_OPTIONS, 
+                "-Dlog4j.configuration=log4j-mclient.properties");
 
         configPropertyMonitor.enter();
         try {
@@ -145,7 +150,7 @@ public class JPPFConfiguratedComponentFactory {
                 @Override
                 public void run() {
                     try {
-                        launcher.doLaunch(true);
+                        launcher.doLaunch(true, StreamSink.LOG);
                     } catch(Throwable ex) {
                         logger.warn("Execption from local driver thread.", ex);
                     }
