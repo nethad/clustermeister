@@ -20,6 +20,8 @@ import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.google.common.base.Optional;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Futures;
@@ -39,10 +41,14 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
     private final AmazonNodeManager nodeManager;
     private final CommandLineHandle handle;
     private Map<String, String> commandHelp = new HashMap<String, String>();
+    private final JPPFManagementByJobsClient amazonManagementClient;
 
     public AmazonCommandLineEvaluation(AmazonNodeManager nodeManager, CommandLineHandle handle) {
         this.nodeManager = nodeManager;
         this.handle = handle;
+        amazonManagementClient = JPPFConfiguratedComponentFactory.getInstance().
+        createManagementByJobsClient("localhost", 11111);
+        nodeManager.registerManagementClient(amazonManagementClient);
         buildCommandHelp();
     }
     
@@ -111,6 +117,7 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
     @Override
     public void shutdown(StringTokenizer tokenizer) {
         nodeManager.removeAllNodes(AmazonInstanceShutdownMethod.TERMINATE);
+        amazonManagementClient.close();
         nodeManager.close();
     }
 

@@ -83,11 +83,7 @@ public class AmazonNodeManager {
     }
     
     public static CommandLineEvaluation commandLineEvaluation(Configuration configuration, CommandLineHandle handle) {
-        AmazonNodeManager nodeManager = new AmazonNodeManager(configuration);
-        JPPFManagementByJobsClient amazonManagementClient = JPPFConfiguratedComponentFactory.getInstance().
-                                   createManagementByJobsClient("localhost", 11111);
-        nodeManager.registerManagementClient(amazonManagementClient);
-        return nodeManager.getCommandLineEvaluation(handle);
+        return new AmazonNodeManager(configuration).getCommandLineEvaluation(handle);
     }
     
     public CommandLineEvaluation getCommandLineEvaluation(CommandLineHandle commandLineHandle) {
