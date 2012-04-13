@@ -46,7 +46,7 @@ public class ClustermeisterNodeLauncher extends ClustermeisterLauncher {
         boolean printUUID = getBooleanArgument(args, 1, false);
         ClustermeisterLauncher launcher = new ClustermeisterNodeLauncher();
         launcher.setPrintUUIDtoStdOut(printUUID);
-        launcher.doLaunch(launchAsChildProcess);
+        launcher.doLaunch(launchAsChildProcess, null);
         
         if(!launchAsChildProcess) {
             //Exit from this JVM. The spawned process continues to run.

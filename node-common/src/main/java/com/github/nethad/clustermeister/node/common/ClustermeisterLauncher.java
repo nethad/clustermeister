@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.node.common;
 
+import com.github.nethad.clustermeister.node.common.ClustermeisterProcessLauncher.StreamSink;
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.IOException;
@@ -53,20 +54,20 @@ public abstract class ClustermeisterLauncher extends Observable {
      */
     protected ClustermeisterProcessLauncher processLauncher = null;
     
-    /**
-     * Whether to print the UUID to stdout or not.
-     */
-    protected boolean printUUIDtoStdOut = false;
-
     private Thread jppfThread = null;
+    
+    private boolean printUUIDtoStdOut = false;
     
     /**
      * Performs the launching of a new JVM using the runner from {@link #getRunner()}.
      * 
      * @param launchAsChildProcess 
      *      Whether to launch a child process or independent process. 
+     * @param sink 
+     *      Where to divert the sub-process's streams to. If launched as 
+     *      independent process the streams are always diverted to file. 
      */
-    synchronized public void doLaunch(boolean launchAsChildProcess) {
+    synchronized public void doLaunch(boolean launchAsChildProcess, StreamSink sink) {
         PipedInputStream in = new PipedInputStream();
         PrintStream sout = System.out;
         PipedOutputStream out = null;
@@ -78,7 +79,14 @@ public abstract class ClustermeisterLauncher extends Observable {
             try {
                 //Spawn a new JVM
                 startUp(launchAsChildProcess);
-                uuidLine = waitForUUID(in, sout);
+                uuidLine = waitForUUID(in, sout, sink);
+                if(launchAsChildProcess) {
+                    if (sink == null) {
+                        processLauncher.setStreamSink(StreamSink.STD);
+                    } else {
+                        processLauncher.setStreamSink(sink);
+                    }
+                }
             } catch (Exception ex) {
                 logger.warn("Exception while launching.", ex);
             }
@@ -136,7 +144,7 @@ public abstract class ClustermeisterLauncher extends Observable {
     public void setPrintUUIDtoStdOut(boolean printUUIDtoStdOut) {
         this.printUUIDtoStdOut = printUUIDtoStdOut;
     }
-
+    
     protected ClustermeisterProcessLauncher createProcessLauncher() {
        return new ClustermeisterProcessLauncher(getRunner());
     }
@@ -151,13 +159,18 @@ public abstract class ClustermeisterLauncher extends Observable {
     /**
      * Starts the JPPF process (a new JVM).
      * 
+     * If launched as independent process the streams are always diverted to files.
+     * 
+     * @param launchAsChildProcess 
+     *      whether to launch as child process or independent process.
+     * 
      * @throws Exception when any exception occurs process spawning preparation.
      */
     protected void startUp(boolean launchAsChildProcess) throws Exception {
         processLauncher = createProcessLauncher();
         processLauncher.setLaunchAsChildProcess(launchAsChildProcess);
         if(!launchAsChildProcess) {
-            processLauncher.switchStreamsToFiles();
+            processLauncher.setStreamSink(StreamSink.FILE);
         }
         jppfThread = new Thread(new Runnable() {
             @Override
@@ -187,7 +200,7 @@ public abstract class ClustermeisterLauncher extends Observable {
         return value;
     }
     
-    private String waitForUUID(InputStream in, PrintStream sout) 
+    private String waitForUUID(InputStream in, PrintStream sout, StreamSink sink) 
             throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(in, Constants.UTF8));
         logger.info("Waiting for UUID.");
@@ -197,7 +210,11 @@ public abstract class ClustermeisterLauncher extends Observable {
                 logger.info("Got {}.", line);
                 return line;
             } else {
-                sout.println(line);
+                if(sink != null && sink == StreamSink.LOG) {
+                    logger.info(line);
+                } else {
+                    sout.println(line);
+                }
             }
         }
         
