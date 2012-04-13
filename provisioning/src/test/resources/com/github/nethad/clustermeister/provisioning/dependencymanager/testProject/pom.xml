@@ -2,24 +2,18 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.example</groupId>
-    <artifactId>test</artifactId>
+    <artifactId>test.parent</artifactId>
     <version>0.1-SNAPSHOT</version>
     <packaging>pom</packaging>
-    <name>Test POM</name>
+    <name>Test Parent POM</name>
     <description>
         lorem ipsum.
     </description>
+    <modules>
+        <module>test</module>
+    </modules>
+    
     <dependencies>
-        <dependency>
-            <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-actor</artifactId>
-            <version>2.0</version>
-        </dependency>
-        <dependency>
-            <groupId>com.typesafe.akka</groupId>
-            <artifactId>akka-remote</artifactId>
-            <version>2.0</version>
-        </dependency>
         <dependency>
             <groupId>org.jppf</groupId>
             <artifactId>server</artifactId>
@@ -28,11 +22,6 @@
     </dependencies>
     
     <repositories>
-        <repository>
-            <id>typesafe</id>
-            <name>Typesafe Repository</name>
-            <url>http://repo.typesafe.com/typesafe/releases/</url>
-        </repository>
         <repository>
             <id>public</id>
             <name>ifi Public Repositories</name>
