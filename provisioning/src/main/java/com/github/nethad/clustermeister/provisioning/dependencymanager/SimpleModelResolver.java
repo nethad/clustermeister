@@ -17,7 +17,6 @@ package com.github.nethad.clustermeister.provisioning.dependencymanager;
 
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -58,12 +57,12 @@ public class SimpleModelResolver implements ModelResolver {
      * @param remoteRepositories remote repositories to use for resolution.
      */
     public SimpleModelResolver(RepositorySystem system, RepositorySystemSession session, 
-            RemoteRepository... remoteRepositories) {
+            List<RemoteRepository> remoteRepositories) {
         this.system = system;
         this.session = session;
-        this.repositories = new ArrayList<RemoteRepository>(Arrays.asList(remoteRepositories));
+        this.repositories = new ArrayList<RemoteRepository>(remoteRepositories);
         this.repositoryIds = new HashSet<String>(
-                remoteRepositories.length < 3 ? 3 : remoteRepositories.length);
+                remoteRepositories.size() < 3 ? 3 : remoteRepositories.size());
         
         for(RemoteRepository repository : remoteRepositories) {
             repositoryIds.add(repository.getId());
