@@ -20,3 +20,17 @@
 
 #ignore logs
 *.log
+
+integration-tests/.cache
+
+integration-tests/.classpath
+
+integration-tests/.project
+
+integration-tests/.settings/org.eclipse.core.resources.prefs
+
+integration-tests/.settings/org.eclipse.jdt.core.prefs
+
+integration-tests/.settings/org.eclipse.m2e.core.prefs
+
+.gitignore
