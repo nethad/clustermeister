@@ -15,20 +15,17 @@
  */
 package com.github.nethad.clustermeister.integration.sc06;
 
+import akka.actor.ActorRef;
 import akka.actor.ActorSystem;
-
+import akka.dispatch.Await;
+import static akka.pattern.Patterns.ask;
+import akka.util.FiniteDuration;
 import com.github.nethad.clustermeister.api.Clustermeister;
 import com.github.nethad.clustermeister.api.ExecutorNode;
 import com.github.nethad.clustermeister.api.impl.ClustermeisterFactory;
 import com.github.nethad.clustermeister.integration.AbstractScenario;
-import com.github.nethad.clustermeister.integration.Assertions;
-import java.util.*;
-import akka.actor.ActorRef;
-import akka.dispatch.Await;
-import akka.util.FiniteDuration;
-
 import com.google.common.util.concurrent.ListenableFuture;
-import static akka.pattern.Patterns.ask;
+import java.util.Collection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +42,7 @@ public class Scenario06 extends AbstractScenario {
 
 	@Override
 	public void runScenario() {
-		logger.info("Scenario 06 started...");
+ 		logger.info("Scenario 06 started...");
 
 		Clustermeister clustermeister = ClustermeisterFactory.create();
 		try {
@@ -69,12 +66,13 @@ public class Scenario06 extends AbstractScenario {
 
 			Integer cores1 = proxiedNode.numberOfCores();
 
-			Integer expected1 = Runtime.getRuntime().availableProcessors();
+//			Integer expected1 = Runtime.getRuntime().availableProcessors();
 
-			System.out.println("First result: " + cores1);
+//			System.out.println("First result: " + cores1);
 
-			Assertions.assertEquals(expected1, cores1,
-					"Result is not as expected.");
+//			Assertions.assertEquals(expected1, cores1,
+//					"Result is not as expected.");
+            addToReport("first result", cores1);
 
 			akka.dispatch.Future<Object> coresFuture = ask(proxyActor,
 					ExampleRequests.simpleNumberOfCores(), 100000);
@@ -82,11 +80,12 @@ public class Scenario06 extends AbstractScenario {
 					new FiniteDuration(100, "Seconds"));
 
 			System.out.println("Second result: " + cores2);
+            addToReport("second result", cores2);
 
-			Integer expected2 = Runtime.getRuntime().availableProcessors();
+//			Integer expected2 = Runtime.getRuntime().availableProcessors();
 
-			Assertions.assertEquals(expected2, cores2,
-					"Result is not as expected.");
+//			Assertions.assertEquals(expected2, cores2,
+//					"Result is not as expected.");
 
 		} catch (Exception ex) {
 			logger.warn("Exception on result", ex);
