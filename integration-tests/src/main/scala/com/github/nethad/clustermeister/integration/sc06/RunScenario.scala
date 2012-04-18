@@ -16,8 +16,8 @@
 
 package com.github.nethad.clustermeister.integration.sc06
 
-object RunScenario extends Application {
-  override def main(args:Array[String]) = {
+object RunScenario extends App {
+  
     new ScalaScenario06().runScenario
-  }
+  
 }
