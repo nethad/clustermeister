@@ -38,23 +38,23 @@ public abstract class AbstractScenario implements NodeConnectionListener {
     
     public abstract void runScenario() throws Exception;
     
-    protected void addToReport(String key, Object value) {
+    public void addToReport(String key, Object value) {
         report.append(key).append("\t").append(value.toString()).append("\n");
     }
 
-    protected void execute() throws InterruptedException {
+    public void execute() throws InterruptedException {
         startDriver();
         if (startNode) {
             startNode();
         }
     }
     
-    protected void execute(int numberOfNodes) throws InterruptedException {
+    public void execute(int numberOfNodes) throws InterruptedException {
         this.numberOfNodes = numberOfNodes;
         execute();
     }
     
-    protected void execute(boolean startNode) throws InterruptedException {
+    public void execute(boolean startNode) throws InterruptedException {
         this.startNode = startNode;
         execute();
     }

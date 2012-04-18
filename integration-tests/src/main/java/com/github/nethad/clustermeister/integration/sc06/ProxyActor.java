@@ -12,6 +12,7 @@ public class ProxyActor extends UntypedActor implements Node {
 
 	public void onReceive(Object message) throws Exception {
 		log.info("Received message" + message);
+            
 		if (message instanceof Request<?>) {
 			@SuppressWarnings("unchecked")
 			Request<Node> request = (Request<Node>) message;
