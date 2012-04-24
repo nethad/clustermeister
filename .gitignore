@@ -34,3 +34,4 @@ integration-tests/.settings/org.eclipse.jdt.core.prefs
 integration-tests/.settings/org.eclipse.m2e.core.prefs
 
 .gitignore
+/integration-tests/.settings/

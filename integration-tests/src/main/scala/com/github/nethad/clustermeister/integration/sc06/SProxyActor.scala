@@ -26,6 +26,7 @@ class SProxyActor extends UntypedActor with Node {
     
   override def onReceive(message: Any) = message match {
     case Request(command, returnResult) => 
+      println("system get property class path: "+System.getProperty("java.class.path"))
       log.info("Received message "+message)
       val result = command.apply(this)
       if (returnResult) {

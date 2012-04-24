@@ -29,6 +29,9 @@ object Scenario07 extends App {
 class Scenario07 extends AbstractScenario {
   
   override def runScenario() = {
+    
+    
+    
     val graph = GraphBuilder.withNodeProvisioner(new ClustermeisterNodeProvisioner()).withLoggingLevel(LoggingLevel.Debug).build
     
     graph.addVertex(new PageRankVertex(1))
