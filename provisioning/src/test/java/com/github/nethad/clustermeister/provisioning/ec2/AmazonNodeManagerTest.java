@@ -21,11 +21,11 @@ import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.google.common.base.Optional;
 import java.io.File;
 import java.util.Collection;
 import java.util.concurrent.Future;
+import org.apache.commons.configuration.Configuration;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -50,7 +50,7 @@ public class AmazonNodeManagerTest {
     public void testSomeMethod() throws InterruptedException, Exception {
         final String settings = "/home/daniel/clustermeister-amazonapi.properties";
 
-        FileConfiguration config = new FileConfiguration(settings);
+        Configuration config = new FileConfiguration(settings);
 
         AmazonNodeManager nodeManager = new AmazonNodeManager(config);
 

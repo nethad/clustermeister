@@ -15,7 +15,6 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
-import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import java.io.InputStream;
 import java.util.HashMap;

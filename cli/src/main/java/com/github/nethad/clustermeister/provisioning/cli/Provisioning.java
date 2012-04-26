@@ -15,7 +15,6 @@
  */
 package com.github.nethad.clustermeister.provisioning.cli;
 
-import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
@@ -28,6 +27,8 @@ import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.util.StringTokenizer;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,7 +106,11 @@ public class Provisioning {
         if (configFilePath == null || !(new File(configFilePath).exists())) {
             logger.warn("Configuration file \""+configFilePath+"\" does not exist.");
         } else {
-            configuration = new FileConfiguration(configFilePath);
+            try {
+                configuration = new FileConfiguration(configFilePath);
+            } catch (ConfigurationException ex) {
+                throw new RuntimeException(ex);
+            }
         }
     }
 

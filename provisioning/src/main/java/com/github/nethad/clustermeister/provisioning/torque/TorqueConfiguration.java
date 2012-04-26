@@ -15,7 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
-import com.github.nethad.clustermeister.api.Configuration;
+import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

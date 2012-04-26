@@ -15,7 +15,6 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
-import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
@@ -39,6 +38,7 @@ import com.google.inject.Injector;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
+import org.apache.commons.configuration.Configuration;
 import org.jppf.management.JMXDriverConnectionWrapper;
 import org.jppf.management.JMXNodeConnectionWrapper;
 import org.slf4j.Logger;

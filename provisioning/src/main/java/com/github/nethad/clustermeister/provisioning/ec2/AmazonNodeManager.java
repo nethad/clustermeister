@@ -15,7 +15,6 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
-import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
@@ -40,6 +39,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeoutException;
+import org.apache.commons.configuration.Configuration;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeState;

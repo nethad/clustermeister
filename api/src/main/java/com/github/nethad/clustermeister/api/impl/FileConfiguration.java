@@ -15,47 +15,26 @@
  */
 package com.github.nethad.clustermeister.api.impl;
 
-import com.github.nethad.clustermeister.api.Configuration;
 import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
-import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import java.net.URL;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.commons.configuration.PropertiesConfiguration;
 
 /**
  *
  * @author thomas
  */
-public class FileConfiguration implements Configuration {
-    private Properties properties;
+public class FileConfiguration extends PropertiesConfiguration {
 
-    public FileConfiguration(String filePath) {
-        File file = new File(filePath);
-        if (!file.exists()) {
-            throw new RuntimeException("File "+filePath+" does not exist.");
-        }
-        try {
-            properties = new Properties();
-            properties.load(new FileReader(file));
-        } catch (IOException ex) {
-            Logger.getLogger(FileConfiguration.class.getName()).log(Level.SEVERE, null, ex);
-        }
+    public FileConfiguration(File file) throws ConfigurationException {
+        super(file);
     }
 
-    @Override
-    public String getString(String key, String defaultValue) {
-        return properties.getProperty(key, defaultValue);
+    public FileConfiguration(String fileName) throws ConfigurationException {
+        super(fileName);
     }
 
-    @Override
-    public int getInt(String key, int defaultValue) {
-        try {
-            return Integer.parseInt(properties.getProperty(key));
-        } catch (NumberFormatException e) {
-            Logger.getLogger(FileConfiguration.class.getName()).log(Level.WARNING, null, e);
-            return defaultValue;
-        }
+    public FileConfiguration(URL url) throws ConfigurationException {
+        super(url);
     }
-    
 }

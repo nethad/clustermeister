@@ -15,7 +15,6 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
-import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredentials;
@@ -40,6 +39,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
+import org.apache.commons.configuration.Configuration;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.ComputeMetadata;
@@ -78,6 +78,7 @@ public class AmazonInstanceManager implements SshClientProvider {
             LoggerFactory.getLogger(AmazonInstanceManager.class);
     private String accessKeyId;
     private String secretKey;
+    private Map<String, String> artifactsToPreload = new HashMap<String, String>();
     private final ListenableFuture<ComputeServiceContext> contextFuture;
     private final SettableFuture<TemplateBuilder> templateBuilderFuture;
     private final ListeningExecutorService executorService;

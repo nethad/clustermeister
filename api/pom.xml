@@ -50,6 +50,11 @@
             <artifactId>jmxremote_optional</artifactId>
             <scope>runtime</scope>
         </dependency>
+        <dependency>
+            <groupId>commons-configuration</groupId>
+            <artifactId>commons-configuration</artifactId>
+            <version>1.8</version>
+        </dependency>
     </dependencies>
 </project>
 

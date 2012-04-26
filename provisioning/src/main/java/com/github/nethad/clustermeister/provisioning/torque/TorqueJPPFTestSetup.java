@@ -34,6 +34,7 @@ import java.rmi.server.UnicastRemoteObject;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.concurrent.ExecutionException;
+import org.apache.commons.configuration.ConfigurationException;
 
 /**
  *
@@ -55,7 +56,11 @@ public class TorqueJPPFTestSetup {
 
     private void execute() {
         final String configurationFilePath = System.getProperty("user.home") + "/.clustermeister/configuration.properties";
-        torqueNodeManager = new TorqueNodeManager(new FileConfiguration(configurationFilePath));
+        try {
+            torqueNodeManager = new TorqueNodeManager(new FileConfiguration(configurationFilePath));
+        } catch (ConfigurationException ex) {
+            throw new RuntimeException(ex);
+        }
         jppfLocalDriver = new JPPFLocalDriver();
         torqueNodeManager.addPublicIpListener(jppfLocalDriver);
         
