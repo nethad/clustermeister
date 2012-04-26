@@ -67,6 +67,21 @@ public class DependencyManager {
             }
         }
         
+        List<Object> poms = configuration.getList("preload.pom", Collections.EMPTY_LIST);
+        for (Object pomPath : poms) {
+            logger.info("Resolving artifacts from POM file: {}.", pomPath);
+            try {
+                List<File> dependencies = 
+                        repositorySystem.resolveDependenciesFromPom(new File(pomPath.toString()));
+                for(File artifact : dependencies) {
+                    artifactsToPreload.add(artifact);
+                }
+                logger.debug("{} resolved to {}.", pomPath, dependencies);
+            } catch (DependencyResolutionException ex) {
+                logger.warn("Could not resolve artifacts from {}.\n{}", pomPath, ex.getMessage());
+            }
+        }
+        
         return artifactsToPreload;
     }
 }
