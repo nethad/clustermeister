@@ -17,11 +17,13 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Configuration;
 import com.github.nethad.clustermeister.api.Credentials;
+import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.PasswordCredentials;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonEC2JPPFDeployer.Event;
-import com.github.nethad.clustermeister.api.JPPFConstants;
+import com.github.nethad.clustermeister.provisioning.utils.JCloudsSshClientWrapper;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientImpl;
 import com.github.nethad.clustermeister.provisioning.utils.SocksTunnel;
 import com.google.common.base.Charsets;
@@ -42,10 +44,12 @@ import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.compute.domain.NodeMetadataBuilder;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.ec2.compute.options.EC2TemplateOptions;
+import org.jclouds.ssh.SshClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +65,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author thomas, daniel
  */
-public class AmazonInstanceManager {
+public class AmazonInstanceManager implements SshClientProvider {
 
     /**
      * jClouds group name.
@@ -456,5 +460,13 @@ public class AmazonInstanceManager {
         } catch (Exception ex) {
             throw new IllegalStateException("InstanceManager is not ready.", ex);
         }
+    }
+
+    @Override
+    public SSHClient getSshClientForNode(final AmazonNode node) {
+        SshClient sshClient = valueOrNotReady(contextFuture).utils().sshForNode().apply(
+                NodeMetadataBuilder.fromNodeMetadata(node.getInstanceMetadata()).build());
+
+        return new JCloudsSshClientWrapper(sshClient); 
     }
 }
