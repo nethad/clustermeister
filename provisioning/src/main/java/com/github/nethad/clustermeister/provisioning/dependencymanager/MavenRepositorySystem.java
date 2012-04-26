@@ -225,7 +225,7 @@ public class MavenRepositorySystem {
         return createRemoteRepository("central", "default", "http://repo1.maven.org/maven2/");
     }
     
-    protected RemoteRepository createRemoteRepository(String id, String type, String url) {
+    public RemoteRepository createRemoteRepository(String id, String type, String url) {
         return new RemoteRepository(id, type, url);
     }
     

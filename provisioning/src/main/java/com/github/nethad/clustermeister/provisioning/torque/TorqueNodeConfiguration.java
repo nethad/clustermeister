@@ -17,6 +17,8 @@ package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
+import java.io.File;
+import java.util.Collection;
 
 /**
  * TODO: node specification class, this represents a not yet created node
@@ -58,6 +60,11 @@ public class TorqueNodeConfiguration implements NodeConfiguration {
 
     public int getNumberOfCpus() {
         return numberOfCpus;
+    }
+
+    @Override
+    public Collection<File> getArtifactsToPreload() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
 	
 }

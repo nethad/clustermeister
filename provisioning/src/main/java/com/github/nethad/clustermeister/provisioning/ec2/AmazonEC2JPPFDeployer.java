@@ -22,6 +22,9 @@ import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Monitor;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -43,7 +46,8 @@ import org.slf4j.LoggerFactory;
  * @author daniel
  */
 public abstract class AmazonEC2JPPFDeployer extends Observable {
-    public static enum Event{JPPF_PREPARED};
+    public static enum Event{DEPLOYMENT_PREPARED, JPPF_UPLOADED, 
+            DEPENDENCIES_PRELOADED, JPPF_CONFIGURATED, DEPLOYMENT_FINISHED};
     
     protected static final String UUID_PREFIX = "UUID=";
 
@@ -155,23 +159,34 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
                     new Object[]{nodeTypeStr, metadata.getId(), getPublicIp()});
 
             prepareJPPF();
-            setChanged();
-            notifyObservers(Event.JPPF_PREPARED);
+            sendEvent(Event.DEPLOYMENT_PREPARED);
             Monitor monitor = getMonitor();
             monitor.enter();
             try {
-                if(getUploadNecessary()) {
+                if(getUploadNecessary(crc32File, getZipChecksum(zipFile))) {
                     uploadJPPF();
                 }
+                sendEvent(Event.JPPF_UPLOADED);
+                
+                for(File artifact : nodeConfiguration.getArtifactsToPreload()) {
+                    long checksum = FileUtils.getCRC32ForFile(artifact);
+                    String checksumFilePath = CLUSTERMEISTER_BIN + "/lib/" + artifact.getName() + ".crc";
+                    if(getUploadNecessary(checksumFilePath, checksum)) {
+                        uploadArtifact(artifact, checksumFilePath, checksum);
+                    }
+                }
+                sendEvent(Event.DEPENDENCIES_PRELOADED);
             } finally {
                 monitor.leave();
             }
             setupJPPF();
             uploadConfiguration(getSettings());
+            sendEvent(Event.JPPF_CONFIGURATED);
 
             logger.debug("Starting JPPF-{} on {}...", nodeTypeStr, metadata.getId());
             startJPPF();
             uuid = getUUID();
+            sendEvent(Event.DEPLOYMENT_FINISHED);
             logger.debug("JPPF-{} deployed on {}.", nodeTypeStr, metadata.getId());
         } catch(Throwable ex){
             logger.debug("Deployment of JPPF-{} failed.", nodeConfiguration.getType().toString());
@@ -183,9 +198,14 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
         }
         return uuid;
     }
+
+    protected void sendEvent(Event event) {
+        setChanged();
+        notifyObservers(event);
+    }
     
     protected void prepareJPPF() {
-        execute("rm -rf " + getDirectoryName() + " && mkdir " + CLUSTERMEISTER_BIN);
+        execute("rm -rf " + getDirectoryName() + " && mkdir -p " + CLUSTERMEISTER_BIN + "/lib");
     }
 
     protected ExecResponse execute(String command) {
@@ -264,7 +284,7 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
         return publicIp;
     }
 
-    protected long getChecksum(String filePath) {
+    protected long getZipChecksum(String filePath) {
         if(localChecksum != null) {
             return localChecksum.longValue();
         }
@@ -280,23 +300,23 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
             closeInputstream(file);
         }
     }
-
-    protected boolean getUploadNecessary() {
+    
+    protected boolean getUploadNecessary(String filePath, long checkSum) {
         boolean crcFileExists = getBoolResult(execute(
-                FileUtils.getFileExistsShellCommand(crc32File)));
-        boolean uploadDriver = true;
+                FileUtils.getFileExistsShellCommand(filePath)));
+        boolean uploadNecessary = true;
         if (crcFileExists) {
             try {
                 long remoteChecksum = Long.parseLong(getStringResult(
-                        execute("cat " + crc32File)));
-                uploadDriver = (remoteChecksum != getChecksum(zipFile));
+                        execute("cat " + filePath)));
+                uploadNecessary = (remoteChecksum != checkSum);
             } catch (NumberFormatException ex) {
                 logger.warn("Invalid remote checksum.", ex);
             }
         }
-        return uploadDriver;
+        return uploadNecessary;
     }
-
+    
     protected SshClient getSSHClient() {
         if(sshClient == null) {
             sshClient = context.utils().sshForNode().apply(
@@ -315,7 +335,24 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
             closeInputstream(file);
         }
         upload(new ByteArrayInputStream(
-                String.valueOf(getChecksum(zipFile)).getBytes(Charsets.UTF_8)), crc32File);
+                String.valueOf(getZipChecksum(zipFile)).getBytes(Charsets.UTF_8)), crc32File);
+    }
+    
+    protected void uploadArtifact(File artifact, String checksumFilePath, long checksum) {
+        logger.info("Uploading {}", artifact.getName());
+        final InputStream file;
+        try {
+            file = new FileInputStream(artifact);
+            try {
+                //TODO: it is possible the file names of two different files are the same!
+                upload(file, "/home/ec2-user/" + CLUSTERMEISTER_BIN + "/lib/" + artifact.getName());
+            } finally {
+                closeInputstream(file);
+            }
+        } catch (FileNotFoundException ex) {
+            logger.warn("Could artifact to preload.", ex);
+        }
+        upload(new ByteArrayInputStream(String.valueOf(checksum).getBytes(Charsets.UTF_8)), checksumFilePath);
     }
 
     protected void uploadConfiguration(Properties nodeProperties) {

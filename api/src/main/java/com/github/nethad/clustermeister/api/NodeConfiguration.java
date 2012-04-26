@@ -15,6 +15,9 @@
  */
 package com.github.nethad.clustermeister.api;
 
+import java.io.File;
+import java.util.Collection;
+
 /**
  *
  * @author daniel
@@ -25,4 +28,6 @@ public interface NodeConfiguration {
 	public String getDriverAddress();
 	
 	public boolean isDriverDeployedLocally();
+        
+	public Collection<File> getArtifactsToPreload();
 }

@@ -20,6 +20,7 @@ import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.PasswordCredentials;
+import com.github.nethad.clustermeister.provisioning.dependencymanager.DependencyManager;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonEC2JPPFDeployer.Event;
 import com.github.nethad.clustermeister.provisioning.utils.JCloudsSshClientWrapper;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
@@ -35,6 +36,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.Monitor;
 import com.google.common.util.concurrent.SettableFuture;
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.Future;
@@ -65,7 +67,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author thomas, daniel
  */
-public class AmazonInstanceManager implements SshClientProvider {
+public class AmazonInstanceManager {
 
     /**
      * jClouds group name.
@@ -78,7 +80,7 @@ public class AmazonInstanceManager implements SshClientProvider {
             LoggerFactory.getLogger(AmazonInstanceManager.class);
     private String accessKeyId;
     private String secretKey;
-    private Map<String, String> artifactsToPreload = new HashMap<String, String>();
+    private Collection<File> artifactsToPreload = null;
     private final ListenableFuture<ComputeServiceContext> contextFuture;
     private final SettableFuture<TemplateBuilder> templateBuilderFuture;
     private final ListeningExecutorService executorService;
@@ -214,6 +216,8 @@ public class AmazonInstanceManager implements SshClientProvider {
 
         ComputeServiceContext context = valueOrNotReady(contextFuture);
 
+        nodeConfig.setArtifactsToPreload(artifactsToPreload);
+        
         int managementPort;
         String uuid = null;
         switch (nodeConfig.getType()) {
@@ -226,7 +230,7 @@ public class AmazonInstanceManager implements SshClientProvider {
                 Observer sshConnectionCallback = new Observer() {
                     @Override
                     public void update(Observable arg0, Object event) {
-                        if(event == Event.JPPF_PREPARED) {
+                        if(event == Event.DEPLOYMENT_PREPARED) {
                             openReverseChannel(instanceMetadata, nodeConfig);
                         }
                     }
@@ -447,8 +451,9 @@ public class AmazonInstanceManager implements SshClientProvider {
         secretKey = checkNotNull(
                 configuration.getString("amazon.secretKey", null), 
                 "No Amazon secret key configured.").trim();
+        artifactsToPreload = DependencyManager.processConfiguredDependencies(configuration);
     }
-
+    
     /**
      * Retrieves future value or throws IllegalStateException if the future
      * value can not be retrieved anymore.
@@ -461,13 +466,5 @@ public class AmazonInstanceManager implements SshClientProvider {
         } catch (Exception ex) {
             throw new IllegalStateException("InstanceManager is not ready.", ex);
         }
-    }
-
-    @Override
-    public SSHClient getSshClientForNode(final AmazonNode node) {
-        SshClient sshClient = valueOrNotReady(contextFuture).utils().sshForNode().apply(
-                NodeMetadataBuilder.fromNodeMetadata(node.getInstanceMetadata()).build());
-
-        return new JCloudsSshClientWrapper(sshClient); 
     }
 }
