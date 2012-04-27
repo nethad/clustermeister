@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
+import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeType;
@@ -33,7 +34,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  *
- * @author thomas
+ * @author thomas, daniel
  */
 public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
     private final Logger logger = LoggerFactory.getLogger(AmazonCommandLineEvaluation.class);
@@ -47,11 +48,11 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
         this.nodeManager = nodeManager;
         this.handle = handle;
         amazonManagementClient = JPPFConfiguratedComponentFactory.getInstance().
-        createManagementByJobsClient("localhost", 11111);
+                createManagementByJobsClient("localhost", JPPFConstants.DEFAULT_SERVER_PORT);
         nodeManager.registerManagementClient(amazonManagementClient);
         buildCommandHelp();
     }
-    
+
     private void buildCommandHelp() {
         commandHelp.put(CommandLineEvaluation.COMMAND_ADDNODES, "[number of nodes]  [processing threads per node]");
     }
@@ -90,23 +91,15 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
         amazonNodeConfiguration.setRegion("eu-west-1c");
         
         logger.info("Starting {} nodes.", numberOfNodes);
-        List<ListenableFuture<? extends Node>> futures = 
-                new ArrayList<ListenableFuture<? extends Node>>(numberOfNodes);
+        List<ListenableFuture<? extends Object>> futures = 
+                new ArrayList<ListenableFuture<? extends Object>>(numberOfNodes);
         for (int i = 0; i < numberOfNodes; i++) {
             futures.add(nodeManager.addNode(amazonNodeConfiguration, 
                     Optional.<String>absent()));
         }
-        try {
-            List<? extends Node> startedNodes = Futures.successfulAsList(futures).get();
-            int failedNodes = Iterables.frequency(startedNodes, null);
-            if(failedNodes > 0) {
-                logger.warn("{} nodes failed to start.", failedNodes);
-            }
-        } catch (InterruptedException ex) {
-            logger.warn("Interrupted while waiting for nodes to start. Nodes may not be started properly.", ex);
-        } catch (ExecutionException ex) {
-            logger.warn("Failed to wait for nodes to start.", ex);
-        }
+        waitForFuturesToComplete(futures, 
+                "Interrupted while waiting for nodes to start. Nodes may not be started properly.", 
+                "Failed to wait for nodes to start.", "{} nodes failed to start.");
     }
 
     @Override
@@ -116,7 +109,18 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
 
     @Override
     public void shutdown(StringTokenizer tokenizer) {
-        nodeManager.removeAllNodes(AmazonInstanceShutdownMethod.TERMINATE);
+        logger.info("Shutting down all nodes.");
+        Collection<? extends Node> nodes = nodeManager.getNodes();
+        List<ListenableFuture<? extends Object>> futures = 
+                new ArrayList<ListenableFuture<? extends Object>>(nodes.size());
+        for(Node node : nodes) {
+            futures.add(nodeManager.removeNode((AmazonNode) node, 
+                    AmazonInstanceShutdownMethod.TERMINATE));
+        }
+        waitForFuturesToComplete(futures, 
+                "Interrupted while waiting for nodes to shut down. Nodes may not all be stopped properly.", 
+                "Failed to wait for nodes to stop.", "{} nodes failed to shut down.");
+        
         amazonManagementClient.close();
         nodeManager.close();
     }
@@ -140,4 +144,19 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
         }
     }
     
+    private void waitForFuturesToComplete(List<ListenableFuture<? extends Object>> futures, 
+            String interruptedMessage, String executionExceptionMessage, 
+            String unsuccessfulFuturesMessage) {
+        try {
+            List<Object> startedNodes = Futures.successfulAsList(futures).get();
+            int failedNodes = Iterables.frequency(startedNodes, null);
+            if(failedNodes > 0) {
+                logger.warn(unsuccessfulFuturesMessage, failedNodes);
+            }
+        } catch (InterruptedException ex) {
+            logger.warn(interruptedMessage, ex);
+        } catch (ExecutionException ex) {
+            logger.warn(executionExceptionMessage, ex);
+        }
+    }
 }

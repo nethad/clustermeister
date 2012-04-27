@@ -124,31 +124,31 @@ public class AmazonNodeManager {
         this.managementClient = client;
     }
     
-    public void removeAllNodes(AmazonInstanceShutdownMethod shutdownMethod) {
-        try {
-            managementClient.shutdownAllNodes();
-            managedNodesMonitor.enter();
-            try {
-                for(AmazonNode node : nodes) {
-                    switch(shutdownMethod) {
-                        case SHUTDOWN: {
-                            amazonInstanceManager.suspendInstance(node.getInstanceId());
-                            break;
-                        }
-                        case TERMINATE: {
-                            amazonInstanceManager.terminateInstance(node.getInstanceId());
-                            break;
-                        }
-                    }
-                }
-                nodes.clear();
-            } finally {
-                managedNodesMonitor.leave();
-            }
-        } catch (Exception ex) {
-            logger.warn("Failed to shut down all nodes.", ex);
-        }
-    }
+//    public void removeAllNodes(AmazonInstanceShutdownMethod shutdownMethod) {
+//        try {
+//            managementClient.shutdownAllNodes();
+//            managedNodesMonitor.enter();
+//            try {
+//                for(AmazonNode node : nodes) {
+//                    switch(shutdownMethod) {
+//                        case SHUTDOWN: {
+//                            amazonInstanceManager.suspendInstance(node.getInstanceId());
+//                            break;
+//                        }
+//                        case TERMINATE: {
+//                            amazonInstanceManager.terminateInstance(node.getInstanceId());
+//                            break;
+//                        }
+//                    }
+//                }
+//                nodes.clear();
+//            } finally {
+//                managedNodesMonitor.leave();
+//            }
+//        } catch (Exception ex) {
+//            logger.warn("Failed to shut down all nodes.", ex);
+//        }
+//    }
     
     public void close() {
         if (amazonInstanceManager != null) {
