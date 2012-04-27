@@ -104,7 +104,15 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
 
     @Override
     public void state(StringTokenizer tokenizer) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        Collection<? extends Node> nodes = nodeManager.getNodes();
+        if(nodes == null || nodes.isEmpty()) {
+            System.out.println("No nodes registered.");
+        }
+        
+        for(Node node : nodes) {
+            System.out.println(node);
+        }
+        
     }
 
     @Override
