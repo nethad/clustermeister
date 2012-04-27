@@ -127,6 +127,10 @@ public class ClustermeisterSample implements Serializable {
             }
         }
     }
+    
+    private void readmeExample() {
+
+    }
 
     private void custom() {
         // gather all node information
@@ -171,7 +175,7 @@ public class ClustermeisterSample implements Serializable {
 
         @Override
         public String call() throws Exception {
-            return "It works!";
+            return "Hello world!";
         }
         
     }

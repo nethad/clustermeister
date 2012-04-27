@@ -270,11 +270,15 @@ public class JPPFTestNode {
     }
     
     private synchronized void log(String message, String... args) {
-        logger.info(message, args);
+//        logger.info(message, args);
+    	System.out.println(String.format(message.replaceAll("\\{\\}", "%s"), (Object[])args));
     }
     
     private synchronized void log(String message, String arg, Exception ex) {
-        logger.info(message, arg, ex);
+//        logger.info(message, arg, ex);
+        System.out.println(String.format(message.replaceAll("\\{\\}", "%s"), arg));
+        System.out.println("Exception: "+ex.getMessage());
+        ex.printStackTrace();
     }
 
 
