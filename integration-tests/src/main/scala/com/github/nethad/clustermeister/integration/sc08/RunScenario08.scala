@@ -16,11 +16,8 @@
 
 package com.github.nethad.clustermeister.integration.sc08
 
-import akka.actor.Actor
-import akka.japi.Creator
-
-class SProxyCreator extends Creator[Actor] {
-
-  override def create(): Actor = new SProxyActor()
+object RunScenario08 extends App {
   
+  new Scenario08().runScenario
+
 }

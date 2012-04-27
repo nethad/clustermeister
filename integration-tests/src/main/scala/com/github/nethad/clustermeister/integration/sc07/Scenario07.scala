@@ -22,7 +22,7 @@ import com.signalcollect.configuration.LoggingLevel
 
 object Scenario07 extends App {
   
-  new Scenario07().execute
+  new Scenario07().withDriverOnly().execute()
   
 }
 
