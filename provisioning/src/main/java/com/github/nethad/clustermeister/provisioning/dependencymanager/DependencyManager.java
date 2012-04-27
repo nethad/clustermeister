@@ -34,7 +34,7 @@ import org.sonatype.aether.resolution.DependencyResolutionException;
  */
 public class DependencyManager {
     private final static Logger logger =
-            LoggerFactory.getLogger(AmazonInstanceManager.class);
+            LoggerFactory.getLogger(DependencyManager.class);
     
     public static Collection<File> processConfiguredDependencies(Configuration configuration) {
         List<File> artifactsToPreload = new LinkedList<File>();
