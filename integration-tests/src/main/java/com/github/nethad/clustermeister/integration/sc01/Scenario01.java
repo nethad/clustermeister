@@ -36,7 +36,7 @@ public class Scenario01 extends AbstractScenario {
     private final Logger logger = LoggerFactory.getLogger(Scenario01.class);
     
     public static void main(String... args) throws InterruptedException {
-        new Scenario01().execute(1);
+        new Scenario01().withNumberOfNodes(1).execute();
     }
 
     @Override

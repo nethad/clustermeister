@@ -27,20 +27,23 @@ import java.util.Collection;
  */
 public class TorqueNodeConfiguration implements NodeConfiguration {
 	
-	private String driverAddress;
-    private int numberOfCpus;
+	private final String driverAddress;
+    private final int numberOfCpus;
+//    private final Configuration configuration;
+    private final Collection<File> artifactsToPreload;
 
-	public TorqueNodeConfiguration() {
-        this.numberOfCpus = 1;
-	}
+//	public TorqueNodeConfiguration() {
+//        this.numberOfCpus = 1;
+//	}
 	
-	public TorqueNodeConfiguration(String driverAddress, int numberOfCpus) {
+	public TorqueNodeConfiguration(String driverAddress, int numberOfCpus, Collection<File> artifactsToPreload) {
 		this.driverAddress = driverAddress;
         this.numberOfCpus = numberOfCpus;
+        this.artifactsToPreload = artifactsToPreload;
 	}
     
-    public static TorqueNodeConfiguration configurationForNode(String driverAddress, int numberOfCpus) {
-        return new TorqueNodeConfiguration(driverAddress, numberOfCpus);
+    public static TorqueNodeConfiguration configurationForNode(String driverAddress, int numberOfCpus, Collection<File> artifactsToPreload) {
+        return new TorqueNodeConfiguration(driverAddress, numberOfCpus, artifactsToPreload);
     }
 	
 	@Override
@@ -61,10 +64,10 @@ public class TorqueNodeConfiguration implements NodeConfiguration {
     public int getNumberOfCpus() {
         return numberOfCpus;
     }
-
+    
     @Override
     public Collection<File> getArtifactsToPreload() {
-        throw new UnsupportedOperationException("Not supported yet.");
+        return artifactsToPreload;
     }
 	
 }

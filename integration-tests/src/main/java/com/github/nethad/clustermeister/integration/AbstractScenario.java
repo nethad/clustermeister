@@ -49,14 +49,24 @@ public abstract class AbstractScenario implements NodeConnectionListener {
         }
     }
     
-    public void execute(int numberOfNodes) throws InterruptedException {
-        this.numberOfNodes = numberOfNodes;
-        execute();
+//    public void execute(int numberOfNodes) throws InterruptedException {
+//        this.numberOfNodes = numberOfNodes;
+//        execute();
+//    }
+    
+//    public void execute(boolean startNode) throws InterruptedException {
+//        this.startNode = startNode;
+//        execute();
+//    }
+    
+    public AbstractScenario withDriverOnly() {
+    	this.startNode = false;
+    	return this;
     }
     
-    public void execute(boolean startNode) throws InterruptedException {
-        this.startNode = startNode;
-        execute();
+    public AbstractScenario withNumberOfNodes(int numberOfNodes) {
+    	this.numberOfNodes = numberOfNodes;
+    	return this;
     }
 
     private void startDriver() {

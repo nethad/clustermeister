@@ -69,7 +69,7 @@ class ClustermeisterNodeProvisioner extends NodeProvisioner {
         implicit val timeout = new Timeout(1800 seconds)
 
         for (node <- cm.get.getAllNodes) {
-          val actorNameFuture = node.execute(NodeControllerBootstrap(node.getID, nodeProvisionerAddress, config, true))
+          val actorNameFuture = node.execute(NodeControllerBootstrap(node.getID, nodeProvisionerAddress, config, false))
           println("Started node controller: " + actorNameFuture.get)
         }
         val nodesFuture = nodeProvisioner ? "GetNodes"

@@ -18,7 +18,10 @@ package com.github.nethad.clustermeister.provisioning.torque;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
+import com.github.nethad.clustermeister.provisioning.dependencymanager.DependencyManager;
 import com.google.common.util.concurrent.ListenableFuture;
+import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -38,10 +41,12 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
     private final TorqueNodeManager nodeManager;
     private final CommandLineHandle handle;
     private Map<String, String> commandHelp = new HashMap<String, String>();
+    private final Collection<File> artifactsToPreload;
 
     public TorqueCommandLineEvaluation(TorqueNodeManager nodeManager, CommandLineHandle handle) {
         this.nodeManager = nodeManager;
         this.handle = handle;
+        this.artifactsToPreload = DependencyManager.processConfiguredDependencies(nodeManager.getConfiguration());
         buildCommandHelp();
     }
     
@@ -68,7 +73,7 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
         int numberOfCpusPerNode = Integer.parseInt(tokenizer.nextToken());
         
         final TorqueNodeConfiguration torqueNodeConfiguration =
-                TorqueNodeConfiguration.configurationForNode(driverHost, numberOfCpusPerNode);
+                TorqueNodeConfiguration.configurationForNode(driverHost, numberOfCpusPerNode, artifactsToPreload);
                 
         ListenableFuture<? extends Node> lastNode = null;
         for (int i = 0; i < numberOfNodes; i++) {

@@ -187,5 +187,10 @@ public class GanymedSSHClient implements SSHClient {
     public boolean isConnected() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
+
+    @Override
+    public String executeWithResultSilent(String command) throws SSHClientException {
+        throw new UnsupportedOperationException("Not supported yet.");
+    }
     
 }

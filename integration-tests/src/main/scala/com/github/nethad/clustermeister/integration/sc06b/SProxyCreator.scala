@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.github.nethad.clustermeister.integration.sc08
+package com.github.nethad.clustermeister.integration.sc06b
 
 import akka.actor.Actor
 import akka.japi.Creator

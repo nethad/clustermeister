@@ -27,7 +27,7 @@ import java.io.IOException;
 public class Scenario05 extends AbstractScenario {
     
     public static void main(String... args) throws InterruptedException {
-        new Scenario05().execute(false);
+        new Scenario05().withDriverOnly().execute();
     }
 
     @Override

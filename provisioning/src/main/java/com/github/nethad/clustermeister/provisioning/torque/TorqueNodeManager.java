@@ -173,13 +173,13 @@ public class TorqueNodeManager implements TorqueNodeManagement {
         }
 	}
 
-	public void deployResources() {
-		try {
-			nodeDeployer.deployInfrastructure();
-		} catch (SSHClientException ex) {
-			logger.error(null, ex);
-		}
-	}
+//	public void deployResources() {
+//		try {
+//			nodeDeployer.deployInfrastructure();
+//		} catch (SSHClientException ex) {
+//			logger.error(null, ex);
+//		}
+//	}
 
 	@Override
 	public void addManagedNode(TorqueNode torqueNode) {
@@ -210,6 +210,10 @@ public class TorqueNodeManager implements TorqueNodeManagement {
     
     public void addPublicIpListener(Observer publicIpListener) {
         this.nodeDeployer.addListener(publicIpListener);
+    }
+    
+    public Configuration getConfiguration() {
+        return this.configuration;
     }
 	
 }

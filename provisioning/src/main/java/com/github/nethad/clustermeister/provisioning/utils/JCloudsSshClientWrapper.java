@@ -46,6 +46,11 @@ public class JCloudsSshClientWrapper implements SSHClient {
 
     @Override
     public String executeWithResult(String command) throws SSHClientException {
+        return executeWithResultSilent(command);
+    }
+    
+    @Override
+    public String executeWithResultSilent(String command) throws SSHClientException {
         ExecResponse response = sshClient.exec(command);
         return response.getOutput();
     }
