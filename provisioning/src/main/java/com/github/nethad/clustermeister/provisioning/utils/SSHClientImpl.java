@@ -339,6 +339,11 @@ public class SSHClientImpl implements SSHClient {
     @Override
     public String executeWithResult(String command) throws SSHClientException {
         logger.info("ssh-shell$ " + command);
+        return executeWithResultSilent(command);
+    }
+    
+    @Override
+    public String executeWithResultSilent(String command) throws SSHClientException {
         return sshExec(command, System.err);
     }
 
@@ -481,4 +486,5 @@ public class SSHClientImpl implements SSHClient {
         } 
         return reverseTunnel;
     }
+    
 }

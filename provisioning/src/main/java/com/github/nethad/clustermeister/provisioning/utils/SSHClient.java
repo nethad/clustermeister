@@ -29,6 +29,8 @@ public interface SSHClient {
     
     public String executeWithResult(String command) throws SSHClientException;
     
+    public String executeWithResultSilent(String command) throws SSHClientException;
+    
     public void executeAndSysout(String command) throws SSHClientException;
     
     public void sftpUpload(String srcPath, String destPath) throws SSHClientException;
