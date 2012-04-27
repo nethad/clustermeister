@@ -50,10 +50,6 @@ public class TorqueJPPFNodeDeployerTest {
         TorqueConfiguration configuration = TorqueConfiguration.buildFromConfig(new ConfigurationForTesting(configValues));
         sshClient = mock(SSHClient.class);
         torqueJPPFNodeDeployer = new TorqueJPPFNodeDeployer(configuration, sshClient) {
-            @Override
-            boolean isResourceAlreadyDeployedAndUpToDate() {
-                return true;
-            }
 
             @Override
             InputStream getResourceStream(String resource) {

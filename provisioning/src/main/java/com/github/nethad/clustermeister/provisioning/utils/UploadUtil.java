@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.utils;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import java.io.*;
 import java.util.Collection;
@@ -84,7 +85,8 @@ public class UploadUtil {
         }
     }
     
-    private void deleteConfigurationFiles() {
+    @VisibleForTesting
+    void deleteConfigurationFiles() {
         try {
             // delete config files (separate config files for each node are generated)
             sshClient.executeAndSysout("rm -rf " + JPPF_NODE_DIR + "/config/jppf-node-*.properties");
@@ -187,12 +189,15 @@ public class UploadUtil {
         } catch (SSHClientException ex) {
             logger.warn("Exception while unpacking and copying resources.", ex);
         }
-        
     }
     
     private InputStream getResourceStream(String resource) {
         return getClass().getResourceAsStream(resource);
     }
 
+    @VisibleForTesting
+    Collection<File> getArtifactsToPreload() {
+        return this.artifactsToPreload;
+    }
     
 }

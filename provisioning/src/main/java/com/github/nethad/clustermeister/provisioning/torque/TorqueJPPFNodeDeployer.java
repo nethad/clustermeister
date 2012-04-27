@@ -34,17 +34,6 @@ import org.slf4j.LoggerFactory;
 public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNotifier {
     
     Logger logger = LoggerFactory.getLogger(TorqueJPPFNodeDeployer.class);
-
-    private static final String DEPLOY_ZIP_NAME = DEPLOY_BASE_NAME + ".zip";
-    private static final String LOCAL_DEPLOY_ZIP_PATH = "/" + DEPLOY_ZIP_NAME;
-//    private static final String AKKA_ZIP = "akka-libs.tar.bz2";
-//    private static final String AKKA_REMOTE_ZIP_PATH = DEPLOY_BASE_NAME + "/lib/" + AKKA_ZIP;
-    private static final String REMOTE_LIB_DIR = DEPLOY_BASE_NAME + "/lib/";
-    private static final String CRC32_FILE = DEPLOY_BASE_NAME + "/CRC32";
-//    private static final String AKKA_CRC32_FILE = DEPLOY_BASE_NAME + "/AKKA_CRC32";
-    
-    private static final String CRC32_DIR = DEPLOY_BASE_NAME + "/crc32/";
-    private static final String CRC32_SUFFIX = "_CRC32";
             
     private String host;
     private int port;
@@ -53,18 +42,11 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
     private boolean isInfrastructureDeployed;
     private AtomicInteger currentNodeNumber;
     private final long sessionId;
-    private String deployZipCRC32;
-//    private long akkaLibsZipCRC32;
     private final TorqueConfiguration configuration;
     private String email;
-//    private String akkaZip;
     private ArrayList<Observer> publicIpListener;
     private String publicIp;
     
-//    protected File akkaZipFile;
-    private HashMap<String, String> artifactCrc32Map = new HashMap<String, String>();
-    
-
     public TorqueJPPFNodeDeployer(TorqueConfiguration configuration, SSHClient sshClient) {
         this.configuration = configuration;
         isInfrastructureDeployed = false;
@@ -83,27 +65,6 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
     @VisibleForTesting
     boolean isInfrastructureDeployed() {
         return isInfrastructureDeployed;
-    }
-
-    private void computeCRC(Collection<File> artifactsToPreload) {
-        try {
-            deployZipCRC32 = String.valueOf(FileUtils.getCRC32(getResourceStream(LOCAL_DEPLOY_ZIP_PATH)));
-//            akkaZipFile = new File(akkaZip);
-//            if (akkaZipFile.exists()) {
-//                logger.info("akka libs zip exists.");
-//                akkaLibsZipCRC32 = FileUtils.getCRC32ForFile(akkaZipFile);
-//            } else {
-//                logger.info("akka libs zip does NOT exist. {}", akkaZip);
-//                akkaLibsZipCRC32 = 0L;
-//            }
-            
-            for (File artifact : artifactsToPreload) {
-                artifactCrc32Map.put(crc32PathForFile(artifact), String.valueOf(FileUtils.getCRC32ForFile(artifact)));
-            }
-            
-        } catch (IOException ex) {
-            logger.error("Can not read resource.", ex);
-        }
     }
     
     private void connectToSSH() throws SSHClientException {
@@ -137,69 +98,8 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
         }
         UploadUtil uploadUtil = new UploadUtil(sshClient);
         uploadUtil.deployInfrastructure(artifactsToPreload);
-//        
-//        computeCRC(artifactsToPreload);
-//        
-//        // delete config files (separate config files for each node are generated)
-//        sshClient.executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "/config/*.properties");
-//
-//        if (!isResourceAlreadyDeployedAndUpToDate()) {
-//            logger.info("Resource is not up to date.");
-//            // remove previously uploaded files (might be outdated/not necessary)
-//            sshClient.executeAndSysout("rm -rf " + DEPLOY_BASE_NAME + "*");
-//
-//            uploadResources(artifactsToPreload);
-//        } else {
-//            logger.info("Resource is up to date.");
-//        }
+
         isInfrastructureDeployed = true;
-    }
-
-    private void uploadResources(Collection<File> artifactsToPreload) throws SSHClientException {
-        // upload zip archive with all files, unpack it
-        sshClient.sftpUpload(getResourceStream(LOCAL_DEPLOY_ZIP_PATH), DEPLOY_ZIP_NAME);
-        sshClient.executeAndSysout("unzip " + DEPLOY_ZIP_NAME);
-        sshClient.executeAndSysout("mkdir -p "+CRC32_DIR);
-        
-        uploadArtifacts(artifactsToPreload);
-        
-//        sshClient.sftpUpload(getResourceStream(DEPLOY_QSUB), DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB);
-        sshClient.sftpUpload(new ByteArrayInputStream(deployZipCRC32.getBytes(Charsets.UTF_8)), CRC32_FILE);
-//        sshClient.sftpUpload(new ByteArrayInputStream(
-//                String.valueOf(akkaLibsZipCRC32).getBytes(Charsets.UTF_8)), AKKA_CRC32_FILE);
-    }
-
-    private void uploadArtifacts(Collection<File> artifactsToPreload) throws SSHClientException {
-        // upload akka libraries
-        // TODO deactivated akka upload for testing purposes
-//        sshClient.sftpUpload(getResourcePath(AKKA_ZIP), AKKA_REMOTE_ZIP_PATH);
-//        if (akkaZipFile.exists()) {
-//            logger.info("upload akka zip.");
-//            sshClient.sftpUpload(akkaZipFile.getAbsolutePath(), AKKA_REMOTE_ZIP_PATH);
-//            sshClient.executeAndSysout("cd "+DEPLOY_BASE_NAME+"/lib/ && tar xvf " + AKKA_ZIP);
-////            sshClient.executeAndSysout("cd "+DEPLOY_BASE_NAME+"/lib/ && cat unzip.log");
-//        }
-        
-        for (File artifact : artifactsToPreload) {
-            try {
-                String remoteArtifactPath = REMOTE_LIB_DIR + artifact.getName();
-                logger.info("Uploading to {}", remoteArtifactPath);
-                sshClient.sftpUpload(new FileInputStream(artifact), remoteArtifactPath);
-                
-                String remoteCrc32Path = crc32PathForFile(artifact);
-                String crc32 = artifactCrc32Map.get(remoteCrc32Path);
-                logger.info("Uploading CRC32 to {}", remoteCrc32Path);
-                sshClient.sftpUpload(new ByteArrayInputStream(crc32.getBytes(Charsets.UTF_8)), remoteCrc32Path);
-            } catch (FileNotFoundException ex) {
-                logger.warn("Artifact file {} does not exist.", artifact.getAbsolutePath(), ex);
-            } catch (IOException ex) {
-                logger.warn("Exception while computing CRC32 for file {}", artifact.getAbsolutePath(), ex);
-            } 
-        }
-    }
-    
-    private String crc32PathForFile(File file) {
-        return String.format("%s%s%s", CRC32_DIR, file.getName(), CRC32_SUFFIX);
     }
 
     public TorqueNode submitJob(TorqueNodeConfiguration nodeConfiguration, TorqueNodeManagement torqueNodeManagement) throws SSHClientException {
@@ -246,48 +146,6 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
     public void disconnectSshConnection() {
         sshClient.disconnect();
         sshClient = null;
-    }
-
-    @VisibleForTesting
-    boolean isResourceAlreadyDeployedAndUpToDate() {
-        
-        if (!doesFileExistOnRemote(CRC32_FILE)) {
-            logger.info("CRC32 for jppf-node is missing.");
-            return false;
-        }
-        
-        for (String path : artifactCrc32Map.keySet()) {
-            if (!doesFileExistOnRemote(path)) {
-                return false;
-            }
-        }
-        
-        try {
-            String md5sumDeployZipRemote = sshClient.executeWithResult("cat " + CRC32_FILE);
-            if (!md5sumDeployZipRemote.equals(deployZipCRC32)) {
-                return false;
-            }
-            for (Map.Entry<String, String> entry : artifactCrc32Map.entrySet()) {
-                String remoteCrc32 = sshClient.executeWithResult("cat "+entry.getKey());
-                if (!entry.getValue().equals(remoteCrc32)) {
-                    return false;
-                }
-            }
-        } catch (SSHClientException ex) {
-            logger.error("SSH exception", ex);
-        }
-        return true;
-    }
-
-    private boolean doesFileExistOnRemote(String filePath) {
-        try {
-            String command = FileUtils.getFileExistsShellCommand(filePath);
-            final String result = sshClient.executeWithResult(command);
-            return Boolean.parseBoolean(result);
-        } catch (SSHClientException ex) {
-            logger.error("SSH exception", ex);
-        }
-        return false;
     }
 
     InputStream getResourceStream(String resource) {
