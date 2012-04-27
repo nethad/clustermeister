@@ -25,9 +25,9 @@ import java.util.List;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
 import static org.hamcrest.Matchers.*;
-import org.junit.AfterClass;
+import org.junit.After;
 import static org.junit.Assert.*;
-import org.junit.BeforeClass;
+import org.junit.Before;
 import org.junit.Test;
 import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.resolution.DependencyResolutionException;
@@ -38,15 +38,15 @@ import org.sonatype.aether.resolution.DependencyResolutionException;
  */
 public class MavenRepositorySystemTest {
 
-    private static MavenRepositorySystem mavenRepositorySystem;
+    private MavenRepositorySystem mavenRepositorySystem;
     
-    @BeforeClass
-    public static void setUpClass() throws Exception {
+    @Before
+    public void beforeTest() throws Exception {
         mavenRepositorySystem = new MavenRepositorySystem();
     }
 
-    @AfterClass
-    public static void tearDownClass() throws Exception {
+    @After
+    public void afterTest() throws Exception {
         mavenRepositorySystem = null;
     }
     
@@ -83,7 +83,6 @@ public class MavenRepositorySystemTest {
                     "akka-actor-2.0.jar",
                     "scala-library-2.9.1-1.jar",
                     "akka-remote-2.0.jar",
-                    "netty-3.3.0.Final.jar",
                     "protobuf-java-2.4.1.jar",
                     "sjson_2.9.1-0.15.jar",
                     "dispatch-json_2.9.1-0.8.5.jar",
@@ -94,6 +93,28 @@ public class MavenRepositorySystemTest {
                     "objenesis-1.2.jar",
                     "commons-io-1.4.jar",
                     "h2-lzf-1.0.jar",
+                    "server-3.0.1.jar"
+                ))));
+    }
+    
+    @Test
+    public void testResolveDependenciesFromPomWithGlobalExclusion() throws URISyntaxException, DependencyResolutionException {
+        mavenRepositorySystem.addGlobalExclusion("voldemort.store.compress:h2-lzf::");
+        List<File> dependencies = mavenRepositorySystem.resolveDependenciesFromPom(getTestPom());
+        assertTrue("Dependencies do not match.", 
+                Iterables.all(dependencies, getContainsAllFileNamesPredicate(getExpectedSet(
+                    "akka-actor-2.0.jar",
+                    "scala-library-2.9.1-1.jar",
+                    "akka-remote-2.0.jar",
+                    "protobuf-java-2.4.1.jar",
+                    "sjson_2.9.1-0.15.jar",
+                    "dispatch-json_2.9.1-0.8.5.jar",
+                    "httpclient-4.1.jar",
+                    "httpcore-4.1.jar",
+                    "commons-logging-1.1.1.jar",
+                    "commons-codec-1.4.jar",
+                    "objenesis-1.2.jar",
+                    "commons-io-1.4.jar",
                     "server-3.0.1.jar"
                 ))));
     }

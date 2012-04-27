@@ -39,6 +39,16 @@ public class DependencyManager {
     public static Collection<File> processConfiguredDependencies(Configuration configuration) {
         List<File> artifactsToPreload = new LinkedList<File>();
         MavenRepositorySystem repositorySystem = new MavenRepositorySystem();
+        
+        List<Object> excludePatterns = configuration.getList("preload.exclude", Collections.EMPTY_LIST);
+        for (Object excludePattern : excludePatterns) {
+            String excludePatternString = excludePattern.toString();
+            if(excludePattern != null && !excludePatternString.isEmpty()) {
+                logger.info("Excluding {} from dependency resolution.", excludePattern);
+                repositorySystem.addGlobalExclusion(excludePatternString);
+            }
+        }
+        
         List<Object> repositories = configuration.getList("maven.repository", Collections.EMPTY_LIST);
         for (Object repositorySpecification : repositories) {
             try {

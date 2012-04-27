@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import org.apache.maven.model.Model;
 import org.apache.maven.model.Repository;
 import org.apache.maven.model.building.DefaultModelBuilderFactory;
@@ -46,6 +47,8 @@ import org.sonatype.aether.connector.file.FileRepositoryConnectorFactory;
 import org.sonatype.aether.connector.wagon.WagonProvider;
 import org.sonatype.aether.connector.wagon.WagonRepositoryConnectorFactory;
 import org.sonatype.aether.graph.Dependency;
+import org.sonatype.aether.graph.DependencyFilter;
+import org.sonatype.aether.graph.Exclusion;
 import org.sonatype.aether.repository.LocalRepository;
 import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.resolution.DependencyRequest;
@@ -53,6 +56,9 @@ import org.sonatype.aether.resolution.DependencyResolutionException;
 import org.sonatype.aether.resolution.DependencyResult;
 import org.sonatype.aether.spi.connector.RepositoryConnectorFactory;
 import org.sonatype.aether.util.artifact.DefaultArtifact;
+import org.sonatype.aether.util.artifact.JavaScopes;
+import org.sonatype.aether.util.filter.DependencyFilterUtils;
+import org.sonatype.aether.util.filter.PatternExclusionsDependencyFilter;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
 /**
@@ -68,6 +74,7 @@ public class MavenRepositorySystem {
     private LocalRepository localRepository;
     private List<RemoteRepository> additionalRepositories;
     private Settings settings;
+    private Set<String> globalExclusions;
 
     public MavenRepositorySystem() {
         this.repositorySystem = initRepositorySystem();
@@ -75,17 +82,18 @@ public class MavenRepositorySystem {
         this.localRepository = new LocalRepository(getDefaultLocalRepository(settings));
         this.centralRepository = createCentralRepository();
         this.additionalRepositories = new ArrayList<RemoteRepository>();
+        this.globalExclusions = new HashSet<String>();
     }
     
     public List<File> resolveDependencies(String groupId, String artifactId, String version) 
             throws DependencyResolutionException {
         Artifact artifact = new DefaultArtifact(groupId, artifactId, "", "jar", version);
-        return resolveDependencies(artifact, Collections.EMPTY_LIST);
+        return resolveDependencies(artifact, Collections.EMPTY_LIST, Collections.EMPTY_LIST);
     }
     
     public List<File> resolveDependencies(String coords) throws DependencyResolutionException {
         Artifact artifact = new DefaultArtifact(coords);
-        return resolveDependencies(artifact, Collections.EMPTY_LIST);
+        return resolveDependencies(artifact, Collections.EMPTY_LIST, Collections.EMPTY_LIST);
     }
     
     public List<File> resolveDependenciesFromPom(File pom) throws DependencyResolutionException {
@@ -95,17 +103,23 @@ public class MavenRepositorySystem {
             Artifact artifact = new DefaultArtifact(dependency.getGroupId(), 
                     dependency.getArtifactId(), dependency.getType(), 
                     dependency.getVersion());
-            files.addAll(resolveDependencies(artifact, model.getRepositories()));
+            files.addAll(resolveDependencies(artifact, model.getRepositories(), getSonatypeExclusions(dependency)));
         }
         
         return new ArrayList<File>(files);
     }
-    
-    protected List<File> resolveDependencies(Artifact artifact, List<Repository> repositories) 
+
+    protected List<File> resolveDependencies(Artifact artifact, List<Repository> repositories, List<Exclusion> exclusions) 
             throws DependencyResolutionException {
         
         RepositorySystemSession session = createSession();
-        Dependency dependency = new Dependency(artifact, "runtime");
+        Dependency dependency = new Dependency(artifact, JavaScopes.RUNTIME, false, exclusions);
+        DependencyFilter classpathFilter = DependencyFilterUtils.classpathFilter(JavaScopes.RUNTIME);
+        
+        PatternExclusionsDependencyFilter patternExclusionFilter = 
+                new PatternExclusionsDependencyFilter(globalExclusions);
+        DependencyFilter filter = DependencyFilterUtils.andFilter(classpathFilter, 
+                patternExclusionFilter);
         
         CollectRequest collectRequest = new CollectRequest();
         collectRequest.setRoot(dependency);
@@ -114,8 +128,8 @@ public class MavenRepositorySystem {
         }
         DependencyRequest dependencyRequest = new DependencyRequest();
         dependencyRequest.setCollectRequest(collectRequest);
-        DependencyResult result = repositorySystem.
-                resolveDependencies(session, dependencyRequest);
+        dependencyRequest.setFilter(filter);
+        DependencyResult result = repositorySystem.resolveDependencies(session, dependencyRequest);
         
         PreorderNodeListGenerator listGen = new PreorderNodeListGenerator();
         result.getRoot().accept(listGen);
@@ -129,6 +143,19 @@ public class MavenRepositorySystem {
     
     public void removeRepository(RemoteRepository repository) {
         this.additionalRepositories.remove(repository);
+    }
+    
+    /**
+     * Each pattern segment is optional and supports full and partial * wildcards. 
+     * An empty pattern segment is treated as an implicit wildcard.
+     * 
+     * For example, org.apache.* would match all artifacts whose group id started 
+     * with org.apache. , and :::*-SNAPSHOT would match all snapshot artifacts.
+     * 
+     * @param pattern [groupId]:[artifactId]:[extension]:[version]
+     */
+    public void addGlobalExclusion(String pattern) {
+        globalExclusions.add(pattern);
     }
     
     protected Model getEffectiveModel(File pom) {
@@ -181,6 +208,23 @@ public class MavenRepositorySystem {
         session.setRepositoryListener(
                 new LoggingRepositoryListener(LogLevel.TRACE, LogLevel.TRACE));
         return session;
+    }
+    
+    protected List<Exclusion> getSonatypeExclusions(org.apache.maven.model.Dependency dependency) {
+        List<org.apache.maven.model.Exclusion> mavenExclusions = dependency.getExclusions();
+        List<Exclusion> exclusions = new ArrayList<Exclusion>(mavenExclusions.size());
+        for(org.apache.maven.model.Exclusion mavenExclusion : mavenExclusions) {
+            exclusions.add(new Exclusion(stringOrWildcard(mavenExclusion.getGroupId()), 
+                    stringOrWildcard(mavenExclusion.getArtifactId()), "*", "*"));
+        }
+        return exclusions;
+    }
+    
+    private String stringOrWildcard(String string) {
+        if(string == null || string.isEmpty()) {
+            return "*";
+        }
+        return string;
     }
     
     private RepositorySystem initRepositorySystem() {

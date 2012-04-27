@@ -24,6 +24,12 @@
             <groupId>com.typesafe.akka</groupId>
             <artifactId>akka-remote</artifactId>
             <version>2.0</version>
+            <exclusions>
+                <exclusion>
+                    <artifactId>netty</artifactId>
+                    <groupId>io.netty</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
     </dependencies>
     
