@@ -28,7 +28,7 @@ public class TorqueNodeConfigurationTest {
 
     @Test
     public void factoryMethodNode() {
-        TorqueNodeConfiguration configurationForDriver = TorqueNodeConfiguration.configurationForNode("driverIp", 3);
+        TorqueNodeConfiguration configurationForDriver = TorqueNodeConfiguration.configurationForNode("driverIp", 3, null);
         assertThat(configurationForDriver.getDriverAddress(), is("driverIp"));
         assertThat(configurationForDriver.getNumberOfCpus(), is(3));
         assertThat(configurationForDriver.getType(), is(NodeType.NODE));

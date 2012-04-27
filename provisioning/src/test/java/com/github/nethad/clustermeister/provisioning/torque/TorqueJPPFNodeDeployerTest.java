@@ -16,11 +16,9 @@
 package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
+import java.io.File;
 import java.io.InputStream;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Observable;
-import java.util.Observer;
+import java.util.*;
 import org.junit.AfterClass;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -72,10 +70,10 @@ public class TorqueJPPFNodeDeployerTest {
     public void deployInfrastructure() throws Exception {
         assertThat(torqueJPPFNodeDeployer.isInfrastructureDeployed(), is(false));
         
-        torqueJPPFNodeDeployer.deployInfrastructure();
+        torqueJPPFNodeDeployer.deployInfrastructure(new LinkedList<File>());
         
         verify(sshClient).connect(eq("user"), eq("ssh.example.com"), eq(30));
-        verify(sshClient).executeAndSysout(eq("rm -rf jppf-node/config/*.properties"));
+        verify(sshClient).executeAndSysout(eq("rm -rf jppf-node/config/jppf-node-*.properties"));
         assertThat(torqueJPPFNodeDeployer.isInfrastructureDeployed(), is(true));
     }
     
