@@ -15,7 +15,6 @@
  */
 package com.github.nethad.clustermeister.provisioning.dependencymanager;
 
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
 import static com.google.common.base.Preconditions.*;
 import java.io.File;
 import java.util.Collection;
@@ -39,6 +38,19 @@ public class DependencyManager {
     public static Collection<File> processConfiguredDependencies(Configuration configuration) {
         List<File> artifactsToPreload = new LinkedList<File>();
         MavenRepositorySystem repositorySystem = new MavenRepositorySystem();
+        
+        //dependencies known to be present in jppf node or known to cause problems
+        repositorySystem.addGlobalExclusion("org.jppf");
+        repositorySystem.addGlobalExclusion("com.github.nethad.clustermeister:clustermeister");
+        repositorySystem.addGlobalExclusion("com.github.nethad.clustermeister:provisioning");
+        repositorySystem.addGlobalExclusion("com.github.nethad.clustermeister:api");
+        repositorySystem.addGlobalExclusion("com.github.nethad.clustermeister:cli");
+        repositorySystem.addGlobalExclusion("com.github.nethad.clustermeister:common-node");
+        repositorySystem.addGlobalExclusion("com.github.nethad.clustermeister:node");
+        repositorySystem.addGlobalExclusion("com.github.nethad.clustermeister:driver");
+        repositorySystem.addGlobalExclusion("org.jvnet.opendmk:jmxremote_optional");
+        repositorySystem.addGlobalExclusion("log4j");
+        repositorySystem.addGlobalExclusion("slf4j");
         
         List<Object> excludePatterns = configuration.getList("preload.exclude", Collections.EMPTY_LIST);
         for (Object excludePattern : excludePatterns) {
