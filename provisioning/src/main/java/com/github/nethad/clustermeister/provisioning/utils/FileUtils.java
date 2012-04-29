@@ -31,7 +31,6 @@ import java.util.zip.CRC32;
 public class FileUtils {
 
     private static MessageDigest digest = null;
-    private static CRC32 crc32 = new CRC32();
     private final static String HEXES = "0123456789ABCDEF";
 
     public static synchronized long getCRC32(final InputStream in) throws IOException {
@@ -40,11 +39,11 @@ public class FileUtils {
             public InputStream getInput() throws IOException {
                 return in;
             }
-        }, crc32);
+        }, new CRC32());
     }
     
     public static synchronized long getCRC32ForFile(File file) throws IOException {
-        return Files.getChecksum(file, crc32);
+        return Files.getChecksum(file, new CRC32());
     }
 
     public static synchronized String getMD5ForFile(File file) throws IOException {
