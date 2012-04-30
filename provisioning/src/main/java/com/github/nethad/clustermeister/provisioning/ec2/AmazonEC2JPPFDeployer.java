@@ -15,7 +15,12 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
+import com.github.nethad.clustermeister.provisioning.utils.FileResource;
 import com.github.nethad.clustermeister.provisioning.utils.FileUtils;
+import com.github.nethad.clustermeister.provisioning.utils.JCloudsSshClientWrapper;
+import com.github.nethad.clustermeister.provisioning.utils.RemoteResourceManager;
+import com.github.nethad.clustermeister.provisioning.utils.InputStreamResource;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import com.google.common.base.Charsets;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Iterables;
@@ -152,29 +157,44 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
         String uuid = null;
         SshClient ssh = getSSHClient();
         ssh.connect();
+        RemoteResourceManager remoteResourceManager = 
+                new RemoteResourceManager(new JCloudsSshClientWrapper(sshClient), "/home/ec2-user", 
+                RemoteResourceManager.DEFAULT_REMOTE_RESOURCES_DIR_NAME, 
+                RemoteResourceManager.DEFAULT_REMOTE_SEPARATOR);
+        InputStreamResource jppfZipResource = new InputStreamResource(
+                String.format("/%s", zipFile), this.getClass(), zipFile, getDirectoryName());
+        jppfZipResource.setUnzipContents(true);
+        remoteResourceManager.addResource(jppfZipResource);
         try {
             checkPrecondition();
             final String nodeTypeStr = nodeConfiguration.getType().toString();
             logger.debug("Deploying JPPF-{} to {} ({}).", 
                     new Object[]{nodeTypeStr, metadata.getId(), getPublicIp()});
 
-            prepareJPPF();
+            prepareJPPF(remoteResourceManager);
             sendEvent(Event.DEPLOYMENT_PREPARED);
             Monitor monitor = getMonitor();
             monitor.enter();
             try {
-                if(getUploadNecessary(crc32File, getZipChecksum(zipFile))) {
-                    uploadJPPF();
-                }
+                remoteResourceManager.uploadResources();
+                remoteResourceManager.deployResources();
+                remoteResourceManager.removeResource(jppfZipResource);
+//                if(getUploadNecessary(crc32File, getZipChecksum(zipFile))) {
+//                    uploadJPPF();
+//                }
                 sendEvent(Event.JPPF_UPLOADED);
                 
                 for(File artifact : nodeConfiguration.getArtifactsToPreload()) {
-                    long checksum = FileUtils.getCRC32ForFile(artifact);
-                    String checksumFilePath = CLUSTERMEISTER_BIN + "/lib/" + artifact.getName() + ".crc";
-                    if(getUploadNecessary(checksumFilePath, checksum)) {
-                        uploadArtifact(artifact, checksumFilePath, checksum);
-                    }
+                    remoteResourceManager.addResource(
+                            new FileResource(artifact, getDirectoryName() + jppfFolder + "lib"));
+//                    long checksum = FileUtils.getCRC32ForFile(artifact);
+//                    String checksumFilePath = CLUSTERMEISTER_BIN + "/lib/" + artifact.getName() + ".crc";
+//                    if(getUploadNecessary(checksumFilePath, checksum)) {
+//                        uploadArtifact(artifact, checksumFilePath, checksum);
+//                    }
                 }
+                remoteResourceManager.uploadResources();
+                remoteResourceManager.deployResources();
                 sendEvent(Event.DEPENDENCIES_PRELOADED);
             } finally {
                 monitor.leave();
@@ -204,8 +224,13 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
         notifyObservers(event);
     }
     
-    protected void prepareJPPF() {
-        execute("rm -rf " + getDirectoryName() + " && mkdir -p " + CLUSTERMEISTER_BIN + "/lib");
+    protected void prepareJPPF(RemoteResourceManager remoteResourceManager) {
+        execute(String.format("rm -rf %s", getDirectoryName()));
+        try {
+            remoteResourceManager.prepareResourceDirectory();
+        } catch (SSHClientException ex) {
+            logger.error("Could not prepare resource manager.", ex);
+        }
     }
 
     protected ExecResponse execute(String command) {
@@ -215,7 +240,7 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
     }
 
     protected ExecResponse logExecResponse(ExecResponse response) {
-        logger.trace("Exit Code: {}", response.getExitCode());
+        logger.trace("Exit Code: {}", response.getExitStatus());
         if (response.getError() != null && !response.getError().isEmpty()) {
             logger.warn("Execution error: {}.", response.getError());
         }
@@ -232,9 +257,10 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
     }
 
     protected void setupJPPF() {
-        execute("unzip " + CLUSTERMEISTER_BIN + "/" + zipFile + " -d " + 
-                getDirectoryName() + " && chmod +x " + getDirectoryName() + 
-                jppfFolder + startScript);
+//        execute("unzip " + CLUSTERMEISTER_BIN + "/" + zipFile + " -d " + 
+//                getDirectoryName() + " && chmod +x " + getDirectoryName() + 
+//                jppfFolder + startScript);
+        execute("chmod +x " + getDirectoryName() + jppfFolder + startScript);
     }
 
     protected void upload(InputStream source, String to) {
