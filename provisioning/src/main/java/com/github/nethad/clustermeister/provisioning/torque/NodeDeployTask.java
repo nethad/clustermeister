@@ -58,8 +58,9 @@ class NodeDeployTask {
         final String qsubScript = qsubScript(nodeName, nodeConfigFileName, nodeConfiguration.getNumberOfCpus());
         final String base64EncodedQsubScript = base64Encode(qsubScript);
         String submitJobToQsub = "echo \""+base64EncodedQsubScript+"\"| base64 -d | qsub";
-		String jobId = sshClient().executeWithResult(submitJobToQsub);
-		TorqueNode torqueNode = new TorqueNode(jobId, null, null, serverPort, managementPort);
+		String response = sshClient().executeWithResult(submitJobToQsub);
+        logger.info("Started node, response: {}", response);
+		TorqueNode torqueNode = new TorqueNode(response, null, null, serverPort, managementPort);
 		return torqueNode;
 	}
 	
