@@ -15,10 +15,10 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
-import com.github.nethad.clustermeister.provisioning.utils.FileResource;
-import com.github.nethad.clustermeister.provisioning.utils.InputStreamResource;
+import com.github.nethad.clustermeister.provisioning.FileResource;
+import com.github.nethad.clustermeister.provisioning.InputStreamResource;
 import com.github.nethad.clustermeister.provisioning.utils.JCloudsSshClientWrapper;
-import com.github.nethad.clustermeister.provisioning.utils.RemoteResourceManager;
+import com.github.nethad.clustermeister.provisioning.RemoteResourceManager;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Iterables;

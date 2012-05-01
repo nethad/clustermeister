@@ -13,8 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.utils;
+package com.github.nethad.clustermeister.provisioning;
 
+import com.github.nethad.clustermeister.provisioning.utils.FileUtils;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import com.google.common.base.Charsets;
 import static com.google.common.base.Preconditions.*;
 import java.io.ByteArrayInputStream;
