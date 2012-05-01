@@ -180,7 +180,8 @@ public class SSHClientImpl implements SSHClient {
         if (port < 0) {
             throw new SSHClientException("Invalid TCP port.");
         }
-
+        this.port = port;
+        
         try {
             session = jsch.getSession(userName, host, port);
             session.setConfig("StrictHostKeyChecking", "no");
@@ -485,6 +486,29 @@ public class SSHClientImpl implements SSHClient {
           reverseTunnel = new SocksTunnel(this);  
         } 
         return reverseTunnel;
+    }
+
+    @Override
+    public String getHost() {
+        if(notNull(session)) {
+            return session.getHost();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public int getPort() {
+        return port;
+    }
+
+    @Override
+    public String getUserName() {
+        if(notNull(session)) {
+            return session.getUserName();
+        } else {
+            return null;
+        }
     }
     
 }

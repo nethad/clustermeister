@@ -43,4 +43,10 @@ public interface SSHClient {
     
     public boolean isConnected();
     
+    public String getUserName();
+    
+    public String getHost();
+    
+    public int getPort();
+    
 }
