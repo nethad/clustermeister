@@ -18,13 +18,14 @@ package com.github.nethad.clustermeister.provisioning.utils;
 import java.io.File;
 import java.util.Collection;
 import java.util.LinkedList;
-import org.junit.AfterClass;
-import org.junit.Test;
+import static org.hamcrest.Matchers.*;
+import static org.junit.Assert.*;
 import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.Test;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
-import static org.hamcrest.Matchers.sameInstance;
-import static org.junit.Assert.assertThat;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 /**
  *
@@ -35,11 +36,23 @@ public class UploadUtilTest {
     private UploadUtil uploadUtil;
     
     @Before
-    public void setup() {
+    public void setup() throws SSHClientException {
         sshClient = mock(SSHClient.class);
+        when(sshClient.executeWithResultSilent(anyString())).thenAnswer(new Answer<String>() {
+            @Override
+            public String answer(InvocationOnMock invocation) throws Throwable {
+                String arg = (String) invocation.getArguments()[0];
+                if(arg.contains("then echo true; else echo false")) {
+                    return "true";
+                } else {
+                    return "12345678";
+                }
+            }
+        });
         uploadUtil = new UploadUtil(sshClient);
     }
     
+    @Test
     public void delteConfigFiles() throws SSHClientException {
         uploadUtil.deleteConfigurationFiles();
         verify(sshClient).executeAndSysout(eq("rm -rf jppf-node/config/jppf-node-*.properties"));

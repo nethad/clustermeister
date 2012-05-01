@@ -17,8 +17,9 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.provisioning.FileResource;
 import com.github.nethad.clustermeister.provisioning.InputStreamResource;
-import com.github.nethad.clustermeister.provisioning.utils.JCloudsSshClientWrapper;
 import com.github.nethad.clustermeister.provisioning.RemoteResourceManager;
+import com.github.nethad.clustermeister.provisioning.Resource;
+import com.github.nethad.clustermeister.provisioning.utils.JCloudsSshClientWrapper;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Iterables;
@@ -156,7 +157,7 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
                 new RemoteResourceManager(new JCloudsSshClientWrapper(sshClient), "", 
                 RemoteResourceManager.DEFAULT_REMOTE_RESOURCES_DIR_NAME, 
                 RemoteResourceManager.DEFAULT_REMOTE_SEPARATOR);
-        InputStreamResource jppfZipResource = new InputStreamResource(
+        Resource jppfZipResource = new InputStreamResource(
                 String.format("/%s", zipFile), this.getClass(), zipFile, getDirectoryName());
         jppfZipResource.setUnzipContents(true);
         remoteResourceManager.addResource(jppfZipResource);
