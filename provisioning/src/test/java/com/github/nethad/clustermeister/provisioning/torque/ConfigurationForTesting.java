@@ -17,11 +17,7 @@ package com.github.nethad.clustermeister.provisioning.torque;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import org.apache.commons.configuration.Configuration;
 
 /**
@@ -246,6 +242,11 @@ public class ConfigurationForTesting implements Configuration {
 
     @Override
     public List<Object> getList(String key, List<Object> defaultValue) {
-        throw new UnsupportedOperationException("Not supported yet.");
+        LinkedList<Object> list = new LinkedList<Object>();
+        Object value = configValues.get(key);
+        if (value != null) {
+            list.add(configValues.get(key));
+        }
+        return list;
     }
 }
