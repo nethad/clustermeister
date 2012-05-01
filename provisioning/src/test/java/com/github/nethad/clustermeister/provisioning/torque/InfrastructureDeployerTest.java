@@ -33,9 +33,9 @@ import org.mockito.stubbing.Answer;
  *
  * @author thomas
  */
-public class UploadUtilTest {
+public class InfrastructureDeployerTest {
     private SSHClient sshClient;
-    private UploadUtil uploadUtil;
+    private InfrastructureDeployer infrastructureDeployer;
     
     @Before
     public void setup() throws SSHClientException {
@@ -51,22 +51,22 @@ public class UploadUtilTest {
                 }
             }
         });
-        uploadUtil = new UploadUtil(sshClient);
+        infrastructureDeployer = new InfrastructureDeployer(sshClient);
     }
     
     @Test
     public void delteConfigFiles() throws SSHClientException {
-        uploadUtil.deleteConfigurationFiles();
+        infrastructureDeployer.deleteConfigurationFiles();
         verify(sshClient).executeAndSysout(eq("rm -rf jppf-node/config/jppf-node-*.properties"));
     }
     
     @Test
     public void deployInfrastructure() throws Exception {
         final Collection<File> artifactsToPreload = new LinkedList<File>();
-        uploadUtil.deployInfrastructure(artifactsToPreload);
+        infrastructureDeployer.deployInfrastructure(artifactsToPreload);
 
         verify(sshClient).executeAndSysout(eq("rm -rf jppf-node*"));
-        assertThat(uploadUtil.getArtifactsToPreload(), sameInstance(artifactsToPreload));
+        assertThat(infrastructureDeployer.getArtifactsToPreload(), sameInstance(artifactsToPreload));
     }
 
 }

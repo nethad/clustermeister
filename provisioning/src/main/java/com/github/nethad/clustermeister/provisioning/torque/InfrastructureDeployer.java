@@ -31,9 +31,9 @@ import org.slf4j.LoggerFactory;
  *
  * @author thomas
  */
-public class UploadUtil {
+public class InfrastructureDeployer {
     
-    private static final Logger logger = LoggerFactory.getLogger(UploadUtil.class);
+    private static final Logger logger = LoggerFactory.getLogger(InfrastructureDeployer.class);
     
     private static final String RESOURCES_DIR = ".cm-resources";
     
@@ -46,7 +46,7 @@ public class UploadUtil {
     private final SSHClient sshClient;
 
     
-    public UploadUtil(SSHClient sshClient) {
+    public InfrastructureDeployer(SSHClient sshClient) {
         this.sshClient = sshClient;
     }
 

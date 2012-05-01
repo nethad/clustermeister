@@ -15,11 +15,9 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
-import com.github.nethad.clustermeister.provisioning.dependencymanager.DependencyManager;
 import com.github.nethad.clustermeister.provisioning.jppf.PublicIpNotifier;
 import com.github.nethad.clustermeister.provisioning.utils.*;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import com.google.common.net.InetAddresses;
 import java.io.*;
 import java.util.*;
@@ -96,8 +94,8 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
         if (!sshClient.isConnected()) {
             connectToSSH();
         }
-        UploadUtil uploadUtil = new UploadUtil(sshClient);
-        uploadUtil.deployInfrastructure(artifactsToPreload);
+        InfrastructureDeployer infrastructureDeployer = new InfrastructureDeployer(sshClient);
+        infrastructureDeployer.deployInfrastructure(artifactsToPreload);
 
         isInfrastructureDeployed = true;
     }
