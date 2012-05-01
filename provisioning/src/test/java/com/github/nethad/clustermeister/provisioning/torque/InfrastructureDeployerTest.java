@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
+import com.github.nethad.clustermeister.provisioning.RemoteResourceManager;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import java.io.File;
@@ -51,7 +52,8 @@ public class InfrastructureDeployerTest {
                 }
             }
         });
-        infrastructureDeployer = new InfrastructureDeployer(sshClient);
+        RemoteResourceManager rrm = mock(RemoteResourceManager.class);
+        infrastructureDeployer = new InfrastructureDeployer(sshClient, rrm);
     }
     
     @Test

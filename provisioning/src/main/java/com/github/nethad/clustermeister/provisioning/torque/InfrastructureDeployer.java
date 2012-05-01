@@ -44,21 +44,27 @@ public class InfrastructureDeployer {
     
     private Collection<File> artifactsToPreload;
     private final SSHClient sshClient;
+    @VisibleForTesting
+    RemoteResourceManager remoteResourceManager;
 
     
-    public InfrastructureDeployer(SSHClient sshClient) {
+    public InfrastructureDeployer(SSHClient sshClient) {       
+        this(sshClient, new RemoteResourceManager(
+                sshClient, "", RESOURCES_DIR, RemoteResourceManager.DEFAULT_REMOTE_SEPARATOR));
+    }
+    
+    public InfrastructureDeployer(SSHClient sshClient, RemoteResourceManager remoteResourceManager) {
         this.sshClient = sshClient;
+        
+        this.remoteResourceManager = remoteResourceManager;
+        Resource jppfZip = new InputStreamResource(
+            LOCAL_JPPF_NODE_ZIP_PATH, getClass(), JPPF_NODE_ZIP_NAME, ".");
+        jppfZip.setUnzipContents(true);
+        this.remoteResourceManager.addResource(jppfZip);
     }
 
     public void deployInfrastructure(Collection<File> artifactsToPreload) {
         this.artifactsToPreload = artifactsToPreload;
-        
-        RemoteResourceManager remoteResourceManager = new RemoteResourceManager(
-                sshClient, "", RESOURCES_DIR, RemoteResourceManager.DEFAULT_REMOTE_SEPARATOR);
-        Resource jppfZip = new InputStreamResource(
-            LOCAL_JPPF_NODE_ZIP_PATH, getClass(), JPPF_NODE_ZIP_NAME, ".");
-        jppfZip.setUnzipContents(true);
-        remoteResourceManager.addResource(jppfZip);
         for (File artifact : artifactsToPreload) {
             remoteResourceManager.addResource(new FileResource(artifact, REMOTE_LIB_DIR));
         }

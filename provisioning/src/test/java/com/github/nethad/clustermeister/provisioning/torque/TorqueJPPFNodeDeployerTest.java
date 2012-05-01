@@ -65,13 +65,18 @@ public class TorqueJPPFNodeDeployerTest {
         torqueJPPFNodeDeployer = new TorqueJPPFNodeDeployer(configuration, sshClient) {
 
             @Override
-            InputStream getResourceStream(String resource) {
-                if(resource.contains("node")) {
-                    return super.getResourceStream(PACKAGE_PREFIX + resource);
-                } else {
-                    return super.getResourceStream(resource);
-                }
+            void deployInfrastructure(Collection<File> artifactsToPreload) {
+                // do nothing
             }
+            
+//            @Override
+//            InputStream getResourceStream(String resource) {
+//                if(resource.contains("node")) {
+//                    return super.getResourceStream(PACKAGE_PREFIX + resource);
+//                } else {
+//                    return super.getResourceStream(resource);
+//                }
+//            }
         };
     }
     
@@ -79,10 +84,9 @@ public class TorqueJPPFNodeDeployerTest {
     public void deployInfrastructure() throws Exception {
         assertThat(torqueJPPFNodeDeployer.isInfrastructureDeployed(), is(false));
         
-        torqueJPPFNodeDeployer.deployInfrastructure(new LinkedList<File>());
+        torqueJPPFNodeDeployer.prepareAndDeployInfrastructure(new LinkedList<File>());
         
         verify(sshClient).connect(eq("user"), eq("ssh.example.com"), eq(30));
-        verify(sshClient).executeAndSysout(eq("rm -rf jppf-node/config/jppf-node-*.properties"));
         assertThat(torqueJPPFNodeDeployer.isInfrastructureDeployed(), is(true));
     }
     

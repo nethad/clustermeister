@@ -91,6 +91,10 @@ public class RmiInfrastructure {
     public RmiServerForDriver getRmiServerForDriverObject() {
         return rmiServerForDriver;
     }
+    
+    public RmiServerForApi getRmiServerForApiObject() {
+        return rmiServerForApi;
+    }
 
     private void createRmiServerForDriver() throws RemoteException {
         final String name = IRmiServerForDriver.NAME;

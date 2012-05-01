@@ -87,22 +87,27 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
         notifyPublicIp(publicIp);
     }
 
-    public synchronized void deployInfrastructure(Collection<File> artifactsToPreload) throws SSHClientException {
+    public synchronized void prepareAndDeployInfrastructure(Collection<File> artifactsToPreload) throws SSHClientException {
         if (isInfrastructureDeployed) {
             return;
         }
         if (!sshClient.isConnected()) {
             connectToSSH();
         }
-        InfrastructureDeployer infrastructureDeployer = new InfrastructureDeployer(sshClient);
-        infrastructureDeployer.deployInfrastructure(artifactsToPreload);
+        deployInfrastructure(artifactsToPreload);
 
         isInfrastructureDeployed = true;
     }
 
+    @VisibleForTesting
+    void deployInfrastructure(Collection<File> artifactsToPreload) {
+        InfrastructureDeployer infrastructureDeployer = new InfrastructureDeployer(sshClient);
+        infrastructureDeployer.deployInfrastructure(artifactsToPreload);
+    }
+
     public TorqueNode submitJob(TorqueNodeConfiguration nodeConfiguration, TorqueNodeManagement torqueNodeManagement) throws SSHClientException {
         if (!isInfrastructureDeployed) {
-            deployInfrastructure(nodeConfiguration.getArtifactsToPreload());
+            prepareAndDeployInfrastructure(nodeConfiguration.getArtifactsToPreload());
         }
         NodeDeployTask nodeDeployTask = new NodeDeployTask(this, currentNodeNumber.getAndIncrement(), nodeConfiguration, email);
         final TorqueNode torqueNode = nodeDeployTask.execute();

@@ -58,8 +58,9 @@ class NodeDeployTask {
         final String qsubScript = qsubScript(nodeName, nodeConfigFileName, nodeConfiguration.getNumberOfCpus());
         final String base64EncodedQsubScript = base64Encode(qsubScript);
         String submitJobToQsub = "echo \""+base64EncodedQsubScript+"\"| base64 -d | qsub";
-		String jobId = sshClient().executeWithResult(submitJobToQsub);
-		TorqueNode torqueNode = new TorqueNode(jobId, null, null, serverPort, managementPort);
+		String response = sshClient().executeWithResult(submitJobToQsub);
+        logger.info("Started node, response: {}", response);
+		TorqueNode torqueNode = new TorqueNode(response, null, null, serverPort, managementPort);
 		return torqueNode;
 	}
 	
@@ -117,27 +118,27 @@ class NodeDeployTask {
     @VisibleForTesting
     String qsubScript(String nodeName, String nodeConfigFileName, int numberOfCpus) {
         StringBuilder sb = new StringBuilder();
-        sb.append("#PBS -N ").append(nodeName).append("\n")
-            .append("#PBS -l nodes=1:ppn=").append(numberOfCpus).append("\n")
-            .append("#PBS -p 0\n")
-            .append("#PBS -j oe\n")
-            .append("#PBS -m b\n")
-            .append("#PBS -m e\n")
-            .append("#PBS -m a\n")
-            .append("#PBS -V\n")
-            .append("#PBS -o out/").append(nodeName).append(".out\n")
-            .append("#PBS -e err/").append(nodeName).append(".err\n");
+        sb.append("#PBS -N ").append(nodeName).append("\n") // node name
+            .append("#PBS -l nodes=1:ppn=").append(numberOfCpus).append("\n") // number of nodes, processors per node
+            .append("#PBS -q superfast").append("\n") // queue name
+            .append("#PBS -p 0\n") // priority, default: 0
+            .append("#PBS -j oe\n") // join (o)output and (e)rror stream
+            .append("#PBS -m b\n") // mail option: mail is sent when the job begins execution.
+            .append("#PBS -m e\n") // mail option: mail is sent when the job terminates.
+            .append("#PBS -m a\n") // mail option: mail is sent when the job is aborted by the batch system.
+            .append("#PBS -V\n") // export environment variables to batch job
+            .append("#PBS -o out/").append(nodeName).append(".out\n") // path to STDOUT file log
+            .append("#PBS -e err/").append(nodeName).append(".err\n"); // path to STDERR file log
         if (isValidEmail(email)) {
-            sb.append("#PBS -M ").append(email).append("\n");
+            sb.append("#PBS -M ").append(email).append("\n"); // email address
         }
+        // start script
             sb.append("\n")
             .append("workingDir=/home/torque/tmp/${USER}.${PBS_JOBID}\n")
             .append("cp -r ~/jppf-node $workingDir/jppf-node\n")
             .append("cd $workingDir/jppf-node\n")
             .append("chmod +x startNode.sh\n")
             .append("./startNode.sh ").append(nodeConfigFileName).append("\n");
-//            .append("cmd=\"./startNode.sh ").append(nodeConfigFileName).append("\"\n")
-//            .append("$cmd\n");
         return sb.toString();
     }
 
