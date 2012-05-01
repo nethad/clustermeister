@@ -16,9 +16,12 @@
 package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.api.Node;
+import com.github.nethad.clustermeister.api.NodeInformation;
+import com.github.nethad.clustermeister.api.utils.JPPFProperties;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.dependencymanager.DependencyManager;
+import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.io.File;
 import java.util.Collection;
@@ -42,10 +45,12 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
     private final CommandLineHandle handle;
     private Map<String, String> commandHelp = new HashMap<String, String>();
     private final Collection<File> artifactsToPreload;
+    private final RmiInfrastructure rmiInfrastructure;
 
-    public TorqueCommandLineEvaluation(TorqueNodeManager nodeManager, CommandLineHandle handle) {
+    public TorqueCommandLineEvaluation(TorqueNodeManager nodeManager, CommandLineHandle handle, RmiInfrastructure rmiInfrastructure) {
         this.nodeManager = nodeManager;
         this.handle = handle;
+        this.rmiInfrastructure = rmiInfrastructure;
         this.artifactsToPreload = DependencyManager.processConfiguredDependencies(nodeManager.getConfiguration());
         buildCommandHelp();
     }
@@ -60,7 +65,14 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
     
     @Override
     public void state(StringTokenizer tokenizer) {
-        handle.print("running nodes: %d", nodeManager.getNodes().size());
+        Collection<NodeInformation> allNodes = rmiInfrastructure.getRmiServerForApiObject().getAllNodes();
+        handle.print("running nodes: %d", allNodes.size());
+        
+        for (NodeInformation nodeInformation : allNodes) {
+            String id = nodeInformation.getID();
+            String processingThreads = nodeInformation.getJPPFSystemInformation().getJppf().getProperty(JPPFProperties.PROCESSING_THREADS);
+            handle.print("node %s: %s processing threads.", id, processingThreads);
+        }
     }
 
     @Override
