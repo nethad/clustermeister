@@ -48,8 +48,8 @@ import org.slf4j.LoggerFactory;
  * @author daniel
  */
 public abstract class AmazonEC2JPPFDeployer extends Observable {
-    public static enum Event{DEPLOYMENT_PREPARED, JPPF_UPLOADED, 
-            DEPENDENCIES_PRELOADED, JPPF_CONFIGURATED, DEPLOYMENT_FINISHED};
+    public static enum Event{DEPLOYMENT_PREPARED, 
+            RESOURCES_PRELOADED, JPPF_CONFIGURATED, DEPLOYMENT_FINISHED};
     
     protected static final String UUID_PREFIX = "UUID=";
 
@@ -153,10 +153,10 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
         String uuid = null;
         SshClient ssh = getSSHClient();
         ssh.connect();
+        JCloudsSshClientWrapper jCloudsSshClientWrapper = 
+                new JCloudsSshClientWrapper(sshClient, metadata.getLoginPort());
         RemoteResourceManager remoteResourceManager = 
-                new RemoteResourceManager(new JCloudsSshClientWrapper(sshClient), "", 
-                RemoteResourceManager.DEFAULT_REMOTE_RESOURCES_DIR_NAME, 
-                RemoteResourceManager.DEFAULT_REMOTE_SEPARATOR);
+                new RemoteResourceManager(jCloudsSshClientWrapper);
         Resource jppfZipResource = new InputStreamResource(
                 String.format("/%s", zipFile), this.getClass(), zipFile, getDirectoryName());
         jppfZipResource.setUnzipContents(true);
@@ -173,9 +173,6 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
             monitor.enter();
             try {
                 remoteResourceManager.uploadResources();
-                remoteResourceManager.deployResources();
-                remoteResourceManager.removeResource(jppfZipResource);
-                sendEvent(Event.JPPF_UPLOADED);
                 
                 for(File artifact : nodeConfiguration.getArtifactsToPreload()) {
                     remoteResourceManager.addResource(
@@ -183,7 +180,7 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
                 }
                 remoteResourceManager.uploadResources();
                 remoteResourceManager.deployResources();
-                sendEvent(Event.DEPENDENCIES_PRELOADED);
+                sendEvent(Event.RESOURCES_PRELOADED);
             } finally {
                 monitor.leave();
             }

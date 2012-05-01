@@ -23,6 +23,7 @@ import static com.google.common.base.Preconditions.*;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import org.slf4j.Logger;
@@ -177,9 +178,13 @@ public class RemoteResourceManager {
             try {
                 uploadResource(resource);
             } catch (IOException ex) {
-                logger.warn("Failed to upload {}.", resource.getName(), ex);
+                logger.warn("Failed to upload {} to ssh://{}:{}/{}.", 
+                        new Object[]{resource.getName(), sshClient.getHost(), 
+                            sshClient.getPort(), remoteResourcesDir, ex});
             } catch (SSHClientException ex) {
-                logger.warn("Failed to upload {}.", resource.getName(), ex);
+                logger.warn("Failed to upload {} to ssh://{}:{}/{}.", 
+                        new Object[]{resource.getName(), sshClient.getHost(), 
+                            sshClient.getPort(), remoteResourcesDir, ex});
             }
         }
     }
@@ -194,10 +199,11 @@ public class RemoteResourceManager {
      */
     public void deployResources() {
         StringBuilder command = new StringBuilder();
+        List<Resource> deployedResources = 
+                new ArrayList<Resource>(managedResources.size());
         for(Resource resource : managedResources) {
             checkNotNull(resource);
             if(resource.isUploaded() && !resource.isDeployed()) {
-
                 String remoteFile = getRemoteFile(resource);
                 if(resource.isUnzipContents()) {
                     command.append("unzip ");
@@ -212,17 +218,22 @@ public class RemoteResourceManager {
                     command.append(resource.getRemoteDeploymentDirectory());
                     command.append(";");
                 }
+                deployedResources.add(resource);
             }
         }
         
         try {
-            logger.info("Deploying {}", managedResources);
             execute(command.toString());
-            for(Resource resource : managedResources) {
+            for(Resource resource : deployedResources) {
+                logger.info("Deployed {} to ssh://{}:{}/{}", 
+                        new Object[]{resource.getName(), sshClient.getHost(), 
+                            sshClient.getPort(), resource.getRemoteDeploymentDirectory()});
                 resource.setDeployed(true);
             }
         } catch(SSHClientException ex) {
-            logger.warn("Error deploying resources.", ex);
+            logger.warn("Error deploying resources {} to ssh://{}:{}.", 
+                    new Object[]{deployedResources, sshClient.getHost(), 
+                            sshClient.getPort(), ex});
         }
     }
     
@@ -248,15 +259,17 @@ public class RemoteResourceManager {
         long localChecksum = localResource.getResourceChecksum();
         if(!localResource.isUploaded() && !isResourceUploadedAndUpToDate(localResource, localChecksum)) {
             String remoteFile = getRemoteFile(localResource);
-            logger.info("Uploading {} to remote file {}.", 
-                    localResource, remoteFile);
+            logger.info("Uploading {} to ssh://{}:{}/{}.", 
+                    new Object[]{localResource, sshClient.getHost(), 
+                            sshClient.getPort(), remoteFile});
             InputStream resourceData = localResource.getResourceData();
             sshClient.sftpUpload(resourceData, remoteFile);
             resourceData.close();
             
             String remoteCrcFile = getRemoteCrcFile(localResource);
-            logger.debug("Uploading CRC checksum {} to remote file {}.", 
-                    localChecksum, remoteCrcFile);
+            logger.debug("Uploading CRC checksum {} to ssh://{}:{}/{}.", 
+                    new Object[]{localChecksum, sshClient.getHost(), 
+                            sshClient.getPort(), remoteCrcFile});
             byte[] checksumBytes = String.valueOf(localChecksum).
                     getBytes(Charsets.UTF_8);
             sshClient.sftpUpload(new ByteArrayInputStream(checksumBytes), remoteCrcFile);
