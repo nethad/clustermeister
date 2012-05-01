@@ -25,6 +25,7 @@ import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.injection.SSHModule;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
+import com.github.nethad.clustermeister.provisioning.rmi.RmiServerForApi;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientImpl;
@@ -127,15 +128,15 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 	}
     
     public static CommandLineEvaluation commandLineEvaluation(Configuration configuration, CommandLineHandle handle, 
-            Observer observer, RmiInfrastructure rmiInfrastructure) {
+            Observer observer, RmiServerForApi rmiServerForApi) {
         TorqueNodeManager nodeManager = new TorqueNodeManager(configuration);
         nodeManager.addPublicIpListener(observer);
-        return nodeManager.getCommandLineEvaluation(handle, rmiInfrastructure);
+        return nodeManager.getCommandLineEvaluation(handle, rmiServerForApi);
     }
     
-    public CommandLineEvaluation getCommandLineEvaluation(CommandLineHandle handle, RmiInfrastructure rmiInfrastructure) {
+    public CommandLineEvaluation getCommandLineEvaluation(CommandLineHandle handle, RmiServerForApi rmiServerForApi) {
         if (commandLineEvaluation == null) {
-            commandLineEvaluation = new TorqueCommandLineEvaluation(this, handle, rmiInfrastructure);
+            commandLineEvaluation = new TorqueCommandLineEvaluation(this, handle, rmiServerForApi);
         }
         return commandLineEvaluation;
     }
