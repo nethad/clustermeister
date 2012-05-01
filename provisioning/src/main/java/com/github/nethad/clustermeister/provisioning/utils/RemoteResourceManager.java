@@ -55,8 +55,13 @@ public class RemoteResourceManager {
             String remoteResourcesDirName, String remoteSeparator) {
         this.sshClient = sshClient;
         this.remoteSeparator = remoteSeparator;
-        this.remoteResourcesDir = String.format("%s%s%s", 
-                remoteResourcesDirPath, remoteSeparator, remoteResourcesDirName);
+        if(remoteResourcesDirPath == null || remoteResourcesDirPath.isEmpty()) {
+            this.remoteResourcesDir = String.format("%s", remoteResourcesDirName);
+        } else {
+            this.remoteResourcesDir = String.format("%s%s%s", 
+                    remoteResourcesDirPath, remoteSeparator, remoteResourcesDirName);
+            
+        }
         this.remoteCrcDir = String.format("%s%s%s", 
                 remoteResourcesDir, remoteSeparator, REMOTE_CRC_DIR_NAME);
     }
@@ -81,21 +86,35 @@ public class RemoteResourceManager {
         }
     }
     
-    public void deployResources() throws SSHClientException {
+    public void deployResources() {
+        StringBuilder command = new StringBuilder();
         for(Resource resource : managedResources) {
             checkNotNull(resource);
             if(resource.isUploaded() && !resource.isDeployed()) {
-                logger.info("Deploying {} to {}", resource, resource.getRemoteDeploymentDirectory());
+
                 String remoteFile = getRemoteFile(resource);
                 if(resource.isUnzipContents()) {
-                    execute(String.format("unzip %s -d %s", 
-                            remoteFile, resource.getRemoteDeploymentDirectory()));
+                    command.append("unzip ");
+                    command.append(remoteFile);
+                    command.append(" -d ");
+                    command.append(resource.getRemoteDeploymentDirectory());
+                    command.append(";");
                 } else {
-                    execute(String.format("cp %s %s", remoteFile, 
-                            resource.getRemoteDeploymentDirectory()));
+                    command.append("cp ");
+                    command.append(remoteFile);
+                    command.append(" ");
+                    command.append(resource.getRemoteDeploymentDirectory());
+                    command.append(";");
                 }
                 resource.setDeployed(true);
             }
+        }
+        
+        try {
+            logger.info("Deploying {}", managedResources);
+            execute(command.toString());
+        } catch(SSHClientException ex) {
+            logger.warn("Error deploying resources.", ex);
         }
     }
     
@@ -143,7 +162,7 @@ public class RemoteResourceManager {
     protected boolean fileExistOnRemote(String filePath) throws SSHClientException {
         String command = FileUtils.getFileExistsShellCommand(filePath);
         final String result = execute(command);
-        return Boolean.parseBoolean(result);
+        return Boolean.parseBoolean(result.trim());
     }
     
     protected String execute(String command) throws SSHClientException {
