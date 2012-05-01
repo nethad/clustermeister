@@ -119,7 +119,7 @@ public class Provisioning {
     }
 
     private void startAmazon() {
-        commandLineEvaluation = AmazonNodeManager.commandLineEvaluation(configuration, commandLineHandle);
+        commandLineEvaluation = AmazonNodeManager.commandLineEvaluation(configuration, commandLineHandle, rmiInfrastructure);
         jppfLocalDriver = new JPPFLocalDriver();
         jppfLocalDriver.execute();
     }
