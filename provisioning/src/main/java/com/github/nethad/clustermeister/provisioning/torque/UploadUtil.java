@@ -13,12 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.utils;
+package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.provisioning.FileResource;
 import com.github.nethad.clustermeister.provisioning.InputStreamResource;
 import com.github.nethad.clustermeister.provisioning.RemoteResourceManager;
 import com.github.nethad.clustermeister.provisioning.Resource;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.*;
 import java.util.Collection;
