@@ -61,6 +61,7 @@ public class JCloudsSshClientWrapper implements SSHClient {
      * 
      * @return the host name.
      */
+    @Override
     public String getHost() {
         return sshClient.getHostAddress();
     }
@@ -70,6 +71,7 @@ public class JCloudsSshClientWrapper implements SSHClient {
      * 
      * @return the SSH user name.
      */
+    @Override
     public String getUserName() {
         return sshClient.getUsername();
     }
@@ -82,6 +84,7 @@ public class JCloudsSshClientWrapper implements SSHClient {
      * 
      * @return the port.
      */
+    @Override
     public int getPort() {
         return port;
     }

@@ -192,5 +192,27 @@ public class GanymedSSHClient implements SSHClient {
     public String executeWithResultSilent(String command) throws SSHClientException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
-    
+
+    @Override
+    public String getHost() {
+        if(connection != null) {
+            return connection.getHostname();
+        } else {
+            return null;
+        }
+    }
+
+    @Override
+    public String getUserName() {
+        throw new UnsupportedOperationException("This operation can not be supported.");
+    }
+
+    @Override
+    public int getPort() {
+        if(connection != null) {
+            return connection.getPort();
+        } else {
+            return -1;
+        }
+    }
 }
