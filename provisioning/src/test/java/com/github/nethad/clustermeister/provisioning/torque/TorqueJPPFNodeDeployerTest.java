@@ -16,16 +16,18 @@
 package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import java.io.File;
 import java.io.InputStream;
 import java.util.*;
-import org.junit.AfterClass;
-import org.junit.Test;
+import static org.hamcrest.CoreMatchers.*;
 import static org.junit.Assert.*;
 import org.junit.Before;
-import org.junit.BeforeClass;
+import org.junit.Test;
+import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
-import static org.hamcrest.CoreMatchers.*;
+import org.mockito.invocation.InvocationOnMock;
+import org.mockito.stubbing.Answer;
 
 /**
  *
@@ -39,7 +41,7 @@ public class TorqueJPPFNodeDeployerTest {
     private String notifiedIp;
 
     @Before
-    public void setup() throws ConfigurationValueMissingException {
+    public void setup() throws ConfigurationValueMissingException, SSHClientException {
         notifiedIp = null;
         Map<String, Object> configValues = new HashMap<String, Object>();
         configValues.put(TorqueConfiguration.TORQUE_EMAIL_NOTIFY, "test@example.com");
@@ -49,6 +51,17 @@ public class TorqueJPPFNodeDeployerTest {
         configValues.put(TorqueConfiguration.TORQUE_SSH_USER, "user");
         TorqueConfiguration configuration = TorqueConfiguration.buildFromConfig(new ConfigurationForTesting(configValues));
         sshClient = mock(SSHClient.class);
+        when(sshClient.executeWithResultSilent(anyString())).thenAnswer(new Answer<String>() {
+            @Override
+            public String answer(InvocationOnMock invocation) throws Throwable {
+                String arg = (String) invocation.getArguments()[0];
+                if(arg.contains("then echo true; else echo false")) {
+                    return "true";
+                } else {
+                    return "12345678";
+                }
+            }
+        });
         torqueJPPFNodeDeployer = new TorqueJPPFNodeDeployer(configuration, sshClient) {
 
             @Override

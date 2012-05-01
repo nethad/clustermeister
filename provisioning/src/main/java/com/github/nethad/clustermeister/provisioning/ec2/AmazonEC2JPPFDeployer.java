@@ -15,21 +15,18 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
-import com.github.nethad.clustermeister.provisioning.utils.FileResource;
-import com.github.nethad.clustermeister.provisioning.utils.FileUtils;
+import com.github.nethad.clustermeister.provisioning.FileResource;
+import com.github.nethad.clustermeister.provisioning.InputStreamResource;
+import com.github.nethad.clustermeister.provisioning.RemoteResourceManager;
+import com.github.nethad.clustermeister.provisioning.Resource;
 import com.github.nethad.clustermeister.provisioning.utils.JCloudsSshClientWrapper;
-import com.github.nethad.clustermeister.provisioning.utils.RemoteResourceManager;
-import com.github.nethad.clustermeister.provisioning.utils.InputStreamResource;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
-import com.google.common.base.Charsets;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Iterables;
 import com.google.common.util.concurrent.Monitor;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.HashMap;
@@ -81,7 +78,6 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
     protected final AmazonNodeConfiguration nodeConfiguration;
 
     private SshClient sshClient = null;
-    private Long localChecksum = null;
     private String directoryName = null;
     
     static protected Monitor getDriverMonitor(NodeMetadata metadata) {
@@ -158,10 +154,10 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
         SshClient ssh = getSSHClient();
         ssh.connect();
         RemoteResourceManager remoteResourceManager = 
-                new RemoteResourceManager(new JCloudsSshClientWrapper(sshClient), "/home/ec2-user", 
+                new RemoteResourceManager(new JCloudsSshClientWrapper(sshClient), "", 
                 RemoteResourceManager.DEFAULT_REMOTE_RESOURCES_DIR_NAME, 
                 RemoteResourceManager.DEFAULT_REMOTE_SEPARATOR);
-        InputStreamResource jppfZipResource = new InputStreamResource(
+        Resource jppfZipResource = new InputStreamResource(
                 String.format("/%s", zipFile), this.getClass(), zipFile, getDirectoryName());
         jppfZipResource.setUnzipContents(true);
         remoteResourceManager.addResource(jppfZipResource);
@@ -179,19 +175,11 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
                 remoteResourceManager.uploadResources();
                 remoteResourceManager.deployResources();
                 remoteResourceManager.removeResource(jppfZipResource);
-//                if(getUploadNecessary(crc32File, getZipChecksum(zipFile))) {
-//                    uploadJPPF();
-//                }
                 sendEvent(Event.JPPF_UPLOADED);
                 
                 for(File artifact : nodeConfiguration.getArtifactsToPreload()) {
                     remoteResourceManager.addResource(
                             new FileResource(artifact, getDirectoryName() + jppfFolder + "lib"));
-//                    long checksum = FileUtils.getCRC32ForFile(artifact);
-//                    String checksumFilePath = CLUSTERMEISTER_BIN + "/lib/" + artifact.getName() + ".crc";
-//                    if(getUploadNecessary(checksumFilePath, checksum)) {
-//                        uploadArtifact(artifact, checksumFilePath, checksum);
-//                    }
                 }
                 remoteResourceManager.uploadResources();
                 remoteResourceManager.deployResources();
@@ -252,14 +240,7 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
         return response.getOutput().trim();
     }
     
-    protected boolean getBoolResult(ExecResponse response) {
-        return Boolean.parseBoolean(response.getOutput().trim());
-    }
-
     protected void setupJPPF() {
-//        execute("unzip " + CLUSTERMEISTER_BIN + "/" + zipFile + " -d " + 
-//                getDirectoryName() + " && chmod +x " + getDirectoryName() + 
-//                jppfFolder + startScript);
         execute("chmod +x " + getDirectoryName() + jppfFolder + startScript);
     }
 
@@ -310,39 +291,6 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
         return publicIp;
     }
 
-    protected long getZipChecksum(String filePath) {
-        if(localChecksum != null) {
-            return localChecksum.longValue();
-        }
-        final InputStream file = getClass().getResourceAsStream("/" + filePath);
-        try {
-            localChecksum = FileUtils.getCRC32(file);
-            return localChecksum.longValue();
-        } catch (IOException ex) {
-            logger.warn("Can not compute CRC32 checksum.", ex);
-            checkNotNull(localChecksum, "Checksum is null.");
-            return localChecksum.longValue();
-        } finally {
-            closeInputstream(file);
-        }
-    }
-    
-    protected boolean getUploadNecessary(String filePath, long checkSum) {
-        boolean crcFileExists = getBoolResult(execute(
-                FileUtils.getFileExistsShellCommand(filePath)));
-        boolean uploadNecessary = true;
-        if (crcFileExists) {
-            try {
-                long remoteChecksum = Long.parseLong(getStringResult(
-                        execute("cat " + filePath)));
-                uploadNecessary = (remoteChecksum != checkSum);
-            } catch (NumberFormatException ex) {
-                logger.warn("Invalid remote checksum.", ex);
-            }
-        }
-        return uploadNecessary;
-    }
-    
     protected SshClient getSSHClient() {
         if(sshClient == null) {
             sshClient = context.utils().sshForNode().apply(
@@ -350,35 +298,6 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
                 credentials(loginCredentials).build());
         }
         return sshClient;
-    }
-
-    protected void uploadJPPF() {
-        logger.debug("Uploading {}", zipFile);
-        final InputStream file = getClass().getResourceAsStream("/" + zipFile);
-        try {
-            upload(file, "/home/ec2-user/" + CLUSTERMEISTER_BIN + "/" + zipFile);
-        } finally {
-            closeInputstream(file);
-        }
-        upload(new ByteArrayInputStream(
-                String.valueOf(getZipChecksum(zipFile)).getBytes(Charsets.UTF_8)), crc32File);
-    }
-    
-    protected void uploadArtifact(File artifact, String checksumFilePath, long checksum) {
-        logger.info("Uploading {}", artifact.getName());
-        final InputStream file;
-        try {
-            file = new FileInputStream(artifact);
-            try {
-                //TODO: it is possible the file names of two different files are the same!
-                upload(file, "/home/ec2-user/" + CLUSTERMEISTER_BIN + "/lib/" + artifact.getName());
-            } finally {
-                closeInputstream(file);
-            }
-        } catch (FileNotFoundException ex) {
-            logger.warn("Could artifact to preload.", ex);
-        }
-        upload(new ByteArrayInputStream(String.valueOf(checksum).getBytes(Charsets.UTF_8)), checksumFilePath);
     }
 
     protected void uploadConfiguration(Properties nodeProperties) {

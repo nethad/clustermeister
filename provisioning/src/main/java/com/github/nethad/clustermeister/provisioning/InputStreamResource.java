@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.utils;
+package com.github.nethad.clustermeister.provisioning;
 
+import com.github.nethad.clustermeister.provisioning.utils.FileUtils;
 import java.io.IOException;
 import java.io.InputStream;
 

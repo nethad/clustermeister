@@ -94,8 +94,8 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
         if (!sshClient.isConnected()) {
             connectToSSH();
         }
-        UploadUtil uploadUtil = new UploadUtil(sshClient);
-        uploadUtil.deployInfrastructure(artifactsToPreload);
+        InfrastructureDeployer infrastructureDeployer = new InfrastructureDeployer(sshClient);
+        infrastructureDeployer.deployInfrastructure(artifactsToPreload);
 
         isInfrastructureDeployed = true;
     }

@@ -20,6 +20,7 @@ import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
+import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.base.Predicate;
@@ -61,6 +62,8 @@ public class AmazonNodeManager {
     
     final Configuration configuration;
     
+    RmiInfrastructure rmiInfrastructure = null;
+    
     JPPFManagementByJobsClient managementClient = null;
     
     //TODO: make sure this will not cause a memory leak
@@ -82,9 +85,13 @@ public class AmazonNodeManager {
     }
     
     public static CommandLineEvaluation commandLineEvaluation(Configuration configuration, 
-            CommandLineHandle handle) {
+            CommandLineHandle handle, RmiInfrastructure rmiInfrastructure) {
+        AmazonNodeManager amazonNodeManager = new AmazonNodeManager(configuration);
+        amazonNodeManager.registerRmiInfrastructure(rmiInfrastructure);
+        CommandLineEvaluation commandLineEvaluation = 
+                amazonNodeManager.getCommandLineEvaluation(handle);
         
-        return new AmazonNodeManager(configuration).getCommandLineEvaluation(handle);
+        return commandLineEvaluation;
     }
     
     public CommandLineEvaluation getCommandLineEvaluation(CommandLineHandle commandLineHandle) {
@@ -123,6 +130,10 @@ public class AmazonNodeManager {
     
     public void registerManagementClient(JPPFManagementByJobsClient client) {
         this.managementClient = client;
+    }
+    
+    public void registerRmiInfrastructure(RmiInfrastructure rmiInfrastructure) {
+        this.rmiInfrastructure = rmiInfrastructure;
     }
     
 //    public void removeAllNodes(AmazonInstanceShutdownMethod shutdownMethod) {
