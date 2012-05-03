@@ -105,10 +105,11 @@ public class DependencyConfigurationUtil {
      * </p>
      * 
      * <p>
-     *  Additional information extracted from the pom:
+     *  Additional information extracted from the POM:
      *  <ul> 
      *      <li>Dependency exclusions.</li>
      *      <li>Repository specifications.</li>
+     *      <li>Parent POMs are parsed as well (if they can be found).</li>
      *  </ul> 
      * </p>
      * 
