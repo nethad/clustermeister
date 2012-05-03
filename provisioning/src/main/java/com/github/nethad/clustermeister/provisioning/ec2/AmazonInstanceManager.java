@@ -20,7 +20,7 @@ import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.PasswordCredentials;
-import com.github.nethad.clustermeister.provisioning.dependencymanager.DependencyManager;
+import com.github.nethad.clustermeister.provisioning.dependencymanager.DependencyConfigurationUtil;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonEC2JPPFDeployer.Event;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientImpl;
 import com.github.nethad.clustermeister.provisioning.utils.SocksTunnel;
@@ -447,7 +447,7 @@ public class AmazonInstanceManager {
         secretKey = checkNotNull(
                 configuration.getString("amazon.secretKey", null), 
                 "No Amazon secret key configured.").trim();
-        artifactsToPreload = DependencyManager.processConfiguredDependencies(configuration);
+        artifactsToPreload = DependencyConfigurationUtil.getConfiguredDependencies(configuration);
     }
     
     /**
