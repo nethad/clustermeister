@@ -20,6 +20,6 @@ package com.github.nethad.clustermeister.provisioning.dependencymanager;
  *
  * @author daniel
  */
-public enum LogLevel {
+enum LogLevel {
     TRACE, DEBUG, INFO, WARN, ERROR
 }

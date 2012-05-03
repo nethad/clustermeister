@@ -21,7 +21,7 @@ import com.github.nethad.clustermeister.api.utils.JPPFProperties;
 import com.github.nethad.clustermeister.provisioning.Command;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
-import com.github.nethad.clustermeister.provisioning.dependencymanager.DependencyManager;
+import com.github.nethad.clustermeister.provisioning.dependencymanager.DependencyConfigurationUtil;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiServerForApi;
 import com.google.common.annotations.VisibleForTesting;
@@ -57,7 +57,7 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
         this.nodeManager = nodeManager;
         this.handle = handle;
         this.rmiServerForApi = rmiServerForApi;
-        this.artifactsToPreload = DependencyManager.processConfiguredDependencies(nodeManager.getConfiguration());
+        this.artifactsToPreload = DependencyConfigurationUtil.getConfiguredDependencies(nodeManager.getConfiguration());
         buildCommandHelp();
     }
     

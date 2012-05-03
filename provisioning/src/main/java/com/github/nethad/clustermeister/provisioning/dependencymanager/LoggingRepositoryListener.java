@@ -49,7 +49,7 @@ public class LoggingRepositoryListener extends AbstractRepositoryListener {
      * @param infoLogLevel  log level for "info"-type messages.
      * @param errorLogLevel log level for "error" messages.
      */
-    public LoggingRepositoryListener(LogLevel infoLogLevel, LogLevel errorLogLevel) {
+    LoggingRepositoryListener(LogLevel infoLogLevel, LogLevel errorLogLevel) {
         this.infoLogLevel = infoLogLevel;
         this.errorLogLevel = errorLogLevel;
     }
