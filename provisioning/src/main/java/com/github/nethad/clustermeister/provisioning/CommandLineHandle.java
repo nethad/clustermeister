@@ -22,6 +22,15 @@ import java.util.StringTokenizer;
  * @author thomas
  */
 public class CommandLineHandle {
+    private final CommandRegistry commandRegistry;
+
+    public CommandLineHandle(CommandRegistry commandRegistry) {
+        this.commandRegistry = commandRegistry;
+    }
+    
+    public CommandRegistry getCommandRegistry() {
+        return commandRegistry;
+    }
     
     public void expectedArguments(String[] argumentNames) {
         StringBuilder arguments = new StringBuilder();

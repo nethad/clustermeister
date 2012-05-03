@@ -72,7 +72,9 @@ public class ProvisioningCLI {
                 }
                 logger.info("Using configuration in "+configFilePath);
                 logger.info("Using provider "+provider);
-                provisioning = new Provisioning(configFilePath, provider);
+                userInputEvaluation = new UserInputEvaluation();
+                provisioning = new Provisioning(configFilePath, provider, userInputEvaluation);
+                userInputEvaluation.setProvisioning(provisioning);
                 provisioning.execute();
                 startREPL();
             } catch (ParseException ex) {
@@ -91,7 +93,6 @@ public class ProvisioningCLI {
     
     private void startREPL() {
         try {
-            userInputEvaluation = new UserInputEvaluation(provisioning);
             ConsoleReader reader = new ConsoleReader();
             reader.setBellEnabled(false);
             reader.addCompletor(new SimpleCompletor(userInputEvaluation.commands()));

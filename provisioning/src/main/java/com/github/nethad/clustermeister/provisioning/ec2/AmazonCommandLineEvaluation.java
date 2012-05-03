@@ -61,7 +61,6 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
         return commandHelp.keySet().toArray(new String[]{});
     }
     
-    @Override
     public void addNodes(StringTokenizer tokenizer, String driverHost) {
         if (tokenizer.countTokens() != 2) {
             handle.expectedArguments(new String[]{"number of nodes", "processing threads per node"});
@@ -134,22 +133,8 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
     }
 
     @Override
-    public void help(StringTokenizer tokenizer) {
-        throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
     public void handleCommand(String command, StringTokenizer tokenizer) {
         throw new UnsupportedOperationException("Not supported yet.");
-    }
-
-    @Override
-    public String helpText(String command) {
-        if (commandHelp.containsKey(command)) {
-            return commandHelp.get(command);
-        } else {
-            return "!command unknown!";
-        }
     }
     
     private void waitForFuturesToComplete(List<ListenableFuture<? extends Object>> futures, 

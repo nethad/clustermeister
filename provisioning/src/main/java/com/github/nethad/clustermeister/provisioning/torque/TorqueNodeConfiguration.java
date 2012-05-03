@@ -45,6 +45,10 @@ public class TorqueNodeConfiguration implements NodeConfiguration {
     public static TorqueNodeConfiguration configurationForNode(String driverAddress, int numberOfCpus, Collection<File> artifactsToPreload) {
         return new TorqueNodeConfiguration(driverAddress, numberOfCpus, artifactsToPreload);
     }
+    
+    public static TorqueNodeConfiguration configurationForNode(int numberOfCpus, Collection<File> artifactsToPreload) {
+        return new TorqueNodeConfiguration(null, numberOfCpus, artifactsToPreload);
+    }
 	
 	@Override
 	public NodeType getType() {

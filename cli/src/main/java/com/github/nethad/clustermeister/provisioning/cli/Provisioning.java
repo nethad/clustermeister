@@ -15,9 +15,11 @@
  */
 package com.github.nethad.clustermeister.provisioning.cli;
 
+import com.github.nethad.clustermeister.provisioning.CommandRegistry;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
+import com.github.nethad.clustermeister.provisioning.CommandRegistry;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
@@ -48,12 +50,12 @@ public class Provisioning {
     private JPPFLocalDriver jppfLocalDriver;
     private CommandLineHandle commandLineHandle;
 
-    public Provisioning(String configFilePath, Provider provider) {
+    public Provisioning(String configFilePath, Provider provider, CommandRegistry commandRegistry) {
         this.configFilePath = configFilePath;
         this.provider = provider;
         rmiInfrastructure = new RmiInfrastructure();
         rmiInfrastructure.initialize();
-        commandLineHandle = new CommandLineHandle();
+        commandLineHandle = new CommandLineHandle(commandRegistry);
     }
     
     public void execute() {
@@ -78,17 +80,17 @@ public class Provisioning {
         shutdownDriver();
     }   
     
-    public String helpText(String command) {
-        return commandLineEvaluation.helpText(command);
-    }
+//    public String helpText(String command) {
+//        return commandLineEvaluation.helpText(command);
+//    }
     
-    public void commandAddnodes(StringTokenizer tokenizer) {
-        commandLineEvaluation.addNodes(tokenizer, driverHost);
-    }
+//    public void commandAddnodes(StringTokenizer tokenizer) {
+//        commandLineEvaluation.addNodes(tokenizer, driverHost);
+//    }
     
-    public void commandHelp(StringTokenizer tokenizer) {
-        commandLineEvaluation.help(tokenizer);
-    }
+//    public void commandHelp(StringTokenizer tokenizer) {
+//        commandLineEvaluation.help(tokenizer);
+//    }
     
     public void commandUnknownFallback(String command, StringTokenizer tokenizer) {
         commandLineEvaluation.handleCommand(command, tokenizer);
@@ -134,17 +136,11 @@ public class Provisioning {
     private void startTestSetup() {
         commandLineEvaluation = new CommandLineEvaluation() {
             @Override
-            public void addNodes(StringTokenizer tokenizer, String driverHost) {} // do nothing
-            @Override
             public void state(StringTokenizer tokenizer) {} // do nothing
             @Override
             public void shutdown(StringTokenizer tokenizer) {} // do nothing
             @Override
-            public void help(StringTokenizer tokenizer) {} // do nothing
-            @Override
             public void handleCommand(String command, StringTokenizer tokenizer) {} // do nothing
-            @Override
-            public String helpText(String command) { return ""; }
         };
         jppfLocalDriver = new JPPFLocalDriver();
         jppfLocalDriver.execute();
