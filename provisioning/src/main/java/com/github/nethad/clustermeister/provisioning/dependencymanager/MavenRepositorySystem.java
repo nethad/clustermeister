@@ -62,6 +62,7 @@ import org.sonatype.aether.util.filter.PatternExclusionsDependencyFilter;
 import org.sonatype.aether.util.graph.PreorderNodeListGenerator;
 
 /**
+ * Resolved dependencies from Maven style repositories.
  *
  * @author daniel
  */
@@ -76,6 +77,9 @@ public class MavenRepositorySystem {
     private Settings settings;
     private Set<String> globalExclusions;
 
+    /**
+     * Creates a new MavenRepositorySystem.
+     */
     public MavenRepositorySystem() {
         this.repositorySystem = initRepositorySystem();
         this.settings = buildMavenSettings();
@@ -85,36 +89,109 @@ public class MavenRepositorySystem {
         this.globalExclusions = new HashSet<String>();
     }
     
-    public List<File> resolveDependencies(String groupId, String artifactId, String version) 
+    /**
+     * Resolve an artifact and all its runtime dependencies.
+     * 
+     * @param groupId       the artifact group ID.
+     * @param artifactId    the artifact ID.
+     * @param version       the artifact version.
+     * @return 
+     *      The artifact and all its runtime dependencies as files.
+     * @throws DependencyResolutionException 
+     *      If the artifact can not be properly resolved.
+     */
+    public List<File> resolveDependencies(String groupId, String artifactId, 
+            String version) throws DependencyResolutionException {
+        Artifact artifact = 
+                new DefaultArtifact(groupId, artifactId, "", "jar", version);
+        return resolveDependencies(artifact, Collections.EMPTY_LIST, 
+                Collections.EMPTY_LIST);
+    }
+    
+    /**
+     * Resolve an artifact and all its runtime dependencies.
+     * 
+     * <p>
+     *  The artifact specification uses the Maven/Aether artifact coords syntax:
+     * </p>
+     * <p>
+     *  Format: &lt;groupId&gt;:&lt;artifactId&gt;[:&lt;extension&gt;[:&lt;classifier&gt;]]:&lt;version&gt;
+     * <br/>
+     *  Example: my.group:my.artifact:1.0-SNAPSHOT
+     * </p>
+     * 
+     * @param coords the artifact specification.
+     * @return 
+     *      The artifact and all its runtime dependencies as files.
+     * @throws DependencyResolutionException 
+     *      If the artifact can not be properly resolved.
+     */
+    public List<File> resolveDependencies(String coords) 
             throws DependencyResolutionException {
-        Artifact artifact = new DefaultArtifact(groupId, artifactId, "", "jar", version);
-        return resolveDependencies(artifact, Collections.EMPTY_LIST, Collections.EMPTY_LIST);
-    }
-    
-    public List<File> resolveDependencies(String coords) throws DependencyResolutionException {
         Artifact artifact = new DefaultArtifact(coords);
-        return resolveDependencies(artifact, Collections.EMPTY_LIST, Collections.EMPTY_LIST);
+        return resolveDependencies(artifact, Collections.EMPTY_LIST, 
+                Collections.EMPTY_LIST);
     }
     
-    public List<File> resolveDependenciesFromPom(File pom) throws DependencyResolutionException {
+    /**
+     * Resolve all dependencies and transitive runtime dependencies specified in
+     * a POM file.
+     * 
+     * <p>
+     *  Additional information extracted from the POM:
+     *  <ul> 
+     *      <li>Dependency exclusions.</li>
+     *      <li>Repository specifications.</li>
+     *      <li>Parent POMs are parsed as well (if they can be found).</li>
+     *  </ul> 
+     * </p>
+     * 
+     * @param pom   the POM (pom.xml) file.
+     * @return  
+     *      All dependencies specified in the POM and their transitive runtime 
+     *      dependencies as files.
+     * @throws DependencyResolutionException 
+     *      If some artifact can not be properly resolved.
+     */
+    public List<File> resolveDependenciesFromPom(File pom) 
+            throws DependencyResolutionException {
         Model model = getEffectiveModel(pom);
         HashSet<File> files = new HashSet<File>();
         for(org.apache.maven.model.Dependency dependency : model.getDependencies()) {
             Artifact artifact = new DefaultArtifact(dependency.getGroupId(), 
                     dependency.getArtifactId(), dependency.getType(), 
                     dependency.getVersion());
-            files.addAll(resolveDependencies(artifact, model.getRepositories(), getSonatypeExclusions(dependency)));
+            files.addAll(resolveDependencies(artifact, model.getRepositories(), 
+                    getSonatypeExclusions(dependency)));
         }
         
         return new ArrayList<File>(files);
     }
 
-    protected List<File> resolveDependencies(Artifact artifact, List<Repository> repositories, List<Exclusion> exclusions) 
+    /**
+     * Resolve an artifact and its transitive runtime dependencies given a list 
+     * of repositories and artifact exclusions.
+     * 
+     * @param artifact  
+     *      The artifact to resolve.
+     * @param repositories  
+     *      Additional repositories to use for dependency resolution.
+     * @param exclusions
+     *      Artifacts not to include in the final list of files.
+     * @return 
+     *      The artifact and its transitive runtime dependencies as files.
+     * @throws DependencyResolutionException 
+     *      If the artifact can not be properly resolved.
+     */
+    protected List<File> resolveDependencies(Artifact artifact, 
+            List<Repository> repositories, List<Exclusion> exclusions) 
             throws DependencyResolutionException {
         
         RepositorySystemSession session = createSession();
-        Dependency dependency = new Dependency(artifact, JavaScopes.RUNTIME, false, exclusions);
-        DependencyFilter classpathFilter = DependencyFilterUtils.classpathFilter(JavaScopes.RUNTIME);
+        Dependency dependency = new Dependency(artifact, JavaScopes.RUNTIME, 
+                false, exclusions);
+        DependencyFilter classpathFilter = 
+                DependencyFilterUtils.classpathFilter(JavaScopes.RUNTIME);
         
         PatternExclusionsDependencyFilter patternExclusionFilter = 
                 new PatternExclusionsDependencyFilter(globalExclusions);
@@ -129,7 +206,8 @@ public class MavenRepositorySystem {
         DependencyRequest dependencyRequest = new DependencyRequest();
         dependencyRequest.setCollectRequest(collectRequest);
         dependencyRequest.setFilter(filter);
-        DependencyResult result = repositorySystem.resolveDependencies(session, dependencyRequest);
+        DependencyResult result = repositorySystem.resolveDependencies(session, 
+                dependencyRequest);
         
         PreorderNodeListGenerator listGen = new PreorderNodeListGenerator();
         result.getRoot().accept(listGen);
@@ -137,15 +215,31 @@ public class MavenRepositorySystem {
         return listGen.getFiles();
     }
     
+    /**
+     * Add an additional repository.
+     * 
+     * NOTE: the local repository and the Maven central repository are added 
+     * by default.
+     * 
+     * @param repository The repository to use.
+     */
     public void addRepository(RemoteRepository repository) {
         this.additionalRepositories.add(repository);
     }
     
+    /**
+     * Remove a repository.
+     * 
+     * @param repository the repository to remove.
+     */
     public void removeRepository(RemoteRepository repository) {
         this.additionalRepositories.remove(repository);
     }
     
     /**
+     * Specify a pattern that excludes all matching artifacts from any 
+     * dependency resolution.
+     * 
      * Each pattern segment is optional and supports full and partial * wildcards. 
      * An empty pattern segment is treated as an implicit wildcard.
      * 
@@ -158,6 +252,15 @@ public class MavenRepositorySystem {
         globalExclusions.add(pattern);
     }
     
+    /**
+     * Resolve the effective Maven model (pom) for a POM file.
+     * 
+     * This resolves the POM hierarchy (parents and modules) and creates an 
+     * overall model.
+     * 
+     * @param pom the POM file to resolve.
+     * @return the effective model.
+     */
     protected Model getEffectiveModel(File pom) {
         ModelBuildingRequest req = new DefaultModelBuildingRequest();
         req.setProcessPlugins(false);
@@ -176,6 +279,12 @@ public class MavenRepositorySystem {
         return new Model();
     }
 
+    /**
+     * Get all configured repositories.
+     * 
+     * @param repositories additional repositories to include.
+     * @return an unmodifyable list of repositories.
+     */
     public List<RemoteRepository> getRepositories(List<RemoteRepository> repositories) {
         int size = additionalRepositories.size() + repositories.size() + 1;
         List<RemoteRepository> remoteRepositories = new ArrayList<RemoteRepository>(
@@ -199,6 +308,11 @@ public class MavenRepositorySystem {
         return Collections.unmodifiableList(remoteRepositories);
     }
     
+    /**
+     * Creates a repository session.
+     * 
+     * @return the repository session.
+     */
     protected RepositorySystemSession createSession() {
         MavenRepositorySystemSession session = new MavenRepositorySystemSession();
         session.setLocalRepositoryManager(
@@ -210,6 +324,12 @@ public class MavenRepositorySystem {
         return session;
     }
     
+    /**
+     * Creates Sonatype exclusions from Maven dependency exclusions.
+     * 
+     * @param dependency the Maven dependency.
+     * @return the Sonatype exclusion.
+     */
     protected List<Exclusion> getSonatypeExclusions(org.apache.maven.model.Dependency dependency) {
         List<org.apache.maven.model.Exclusion> mavenExclusions = dependency.getExclusions();
         List<Exclusion> exclusions = new ArrayList<Exclusion>(mavenExclusions.size());
@@ -265,10 +385,23 @@ public class MavenRepositorySystem {
         }
     }
     
+    /**
+     * Creates the Maven central repository specification.
+     * 
+     * @return the Maven central repository specification.
+     */
     protected RemoteRepository createCentralRepository() {
         return createRemoteRepository("central", "default", "http://repo1.maven.org/maven2/");
     }
     
+    /**
+     * Creates a repository specification.
+     * 
+     * @param id    some user defined ID for the repository
+     * @param type  the repository type. typically "default".
+     * @param url   the repository URL.
+     * @return the repository specification.
+     */
     public RemoteRepository createRemoteRepository(String id, String type, String url) {
         return new RemoteRepository(id, type, url);
     }

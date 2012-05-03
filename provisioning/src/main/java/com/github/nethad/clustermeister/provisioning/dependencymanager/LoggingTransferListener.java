@@ -50,7 +50,7 @@ public class LoggingTransferListener extends AbstractTransferListener {
      * @param infoLogLevel  log level for "info"-type messages.
      * @param errorLogLevel log level for "error" messages.
      */
-    public LoggingTransferListener(LogLevel infoLogLevel, LogLevel errorLogLevel) {
+    LoggingTransferListener(LogLevel infoLogLevel, LogLevel errorLogLevel) {
         this.infoLogLevel = infoLogLevel;
         this.errorLogLevel = errorLogLevel;
     }
