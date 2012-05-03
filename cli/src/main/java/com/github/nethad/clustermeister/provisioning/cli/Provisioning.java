@@ -126,7 +126,7 @@ public class Provisioning {
 
     private void startTorque() {
         jppfLocalDriver = new JPPFLocalDriver();
-        commandLineEvaluation = TorqueNodeManager.commandLineEvaluation(configuration, commandLineHandle, jppfLocalDriver, rmiInfrastructure);
+        commandLineEvaluation = TorqueNodeManager.commandLineEvaluation(configuration, commandLineHandle, jppfLocalDriver, rmiInfrastructure.getRmiServerForApiObject());
         jppfLocalDriver.execute();
         driverHost = jppfLocalDriver.getIpAddress();
     }
