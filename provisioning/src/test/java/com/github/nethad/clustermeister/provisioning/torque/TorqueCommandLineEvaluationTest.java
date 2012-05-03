@@ -18,7 +18,9 @@ package com.github.nethad.clustermeister.provisioning.torque;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeInformation;
 import com.github.nethad.clustermeister.api.impl.NodeInformationImpl;
+import com.github.nethad.clustermeister.provisioning.Command;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
+import com.github.nethad.clustermeister.provisioning.CommandRegistry;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiServerForApi;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -61,20 +63,20 @@ public class TorqueCommandLineEvaluationTest {
         when(torqueNodeManager.getConfiguration())
                 .thenReturn(new ConfigurationForTesting(new HashMap<String, Object>()));
         commandLineHandle = mock(CommandLineHandle.class);
+        when(commandLineHandle.getCommandRegistry()).thenReturn(new CommandRegistry() {
+
+            @Override
+            public void registerCommand(Command command) {
+                
+            }
+
+            @Override
+            public void unregisterCommand(Command command) {
+                
+            }
+        });
         rmiServerForApi = mock(RmiServerForApi.class);
         commandLineEvaluation = new TorqueCommandLineEvaluation(torqueNodeManager, commandLineHandle, rmiServerForApi);
-    }
-
-    @Test
-    public void thereAreSpecificCommands() {
-        assertThat(commandLineEvaluation.commands().length, greaterThan(0));
-    }
-    
-    @Test
-    public void helpText() {
-        String firstCommand = commandLineEvaluation.commands()[0];
-        String firstCommandHelp = commandLineEvaluation.commandHelp.get(firstCommand);
-        assertThat(commandLineEvaluation.helpText(firstCommand), containsString(firstCommandHelp));
     }
     
     @Test
@@ -83,9 +85,9 @@ public class TorqueCommandLineEvaluationTest {
         settableFuture.set(new TorqueNode("", "", "", 11111, 11198));
         doReturn(settableFuture).when(torqueNodeManager).addNode(any(TorqueNodeConfiguration.class));
         
-        commandLineEvaluation.addNodes(new StringTokenizer("1 1"), "localhost");
+        commandLineEvaluation.addNodes(new StringTokenizer("1 1"));
         
-        verify(torqueNodeManager).addNode(argThat(new MatchesTorqueNodeConfiguration("localhost", 1)));
+        verify(torqueNodeManager).addNode(argThat(new MatchesTorqueNodeConfiguration(null, 1)));
     }
     
     @Test
@@ -103,7 +105,7 @@ public class TorqueCommandLineEvaluationTest {
     }
     
     @Test
-    public void asdf() {
+    public void shutdown() {
         commandLineEvaluation.shutdown(null);
         
         verify(torqueNodeManager).removeAllNodes();
@@ -133,6 +135,13 @@ public class TorqueCommandLineEvaluationTest {
                 return false;
             }
             TorqueNodeConfiguration tnc = (TorqueNodeConfiguration)argument;
+            if (tnc.getDriverAddress() == null) {
+                if (driverAddress == null) { // both are null
+                    return true;
+                } else {
+                    return false;
+                }
+            } 
             return tnc.getDriverAddress().equals(driverAddress) 
                     && tnc.getNumberOfCpus() == numberOfCpus;
         }

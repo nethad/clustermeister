@@ -15,9 +15,9 @@
  */
 package com.github.nethad.clustermeister.provisioning.cli;
 
+import com.github.nethad.clustermeister.provisioning.Command;
+import com.github.nethad.clustermeister.provisioning.CommandRegistry;
 import com.google.common.annotations.VisibleForTesting;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
@@ -26,27 +26,41 @@ import java.util.StringTokenizer;
  *
  * @author thomas
  */
-public class UserInputEvaluation {
+public class UserInputEvaluation implements CommandRegistry {
     private static final String COMMAND_HELP = "help";
     private static final String COMMAND_HELP_QUESTIONMARK = "?";
     private static final String COMMAND_STATE = "state";
     private static final String COMMAND_SHUTDOWN = "shutdown";
-    private static final String COMMAND_ADDNODES = "addnodes";
     private static final String COMMAND_EXIT = "exit";
     private static final String COMMAND_QUIT = "quit";
     
-    private Map<String, String> commandHelpMap = new HashMap<String, String>();
+//    private Map<String, String> commandHelpMap = new HashMap<String, String>();
     private CommandLineTextBuilder commandLineHelpText;
     
-    private final Provisioning provisioning;
+    private Provisioning provisioning;
+    
+    private Map<String, Command> commands = new HashMap<String, Command>();
 
-    public UserInputEvaluation(Provisioning provisioning) {
-        this.provisioning = provisioning;
+    public UserInputEvaluation() {
         buildCommandHelpMap();
     }
     
+    public void setProvisioning(Provisioning provisioning) {
+        this.provisioning = provisioning;
+    }
+    
     public String[] commands() {
-        return commandHelpMap.keySet().toArray(new String[]{});
+        return commands.keySet().toArray(new String[]{});
+    }
+    
+    @Override
+    public void registerCommand(Command command) {
+        commands.put(command.getCommandName(), command);
+    }
+    
+    @Override
+    public void unregisterCommand(Command command) {
+        commands.remove(command.getCommandName());
     }
 
     public void evaluate(String userInput) {
@@ -64,44 +78,52 @@ public class UserInputEvaluation {
     @VisibleForTesting
     protected void handleCommand(StringTokenizer tokenizer) throws Exception {
         final String command = tokenizer.nextToken();
-        if (commandHelpMap.containsKey(command)) {
+        if (commands.containsKey(command)) {
             commandMarshalling(command, tokenizer);
         } else {
-            provisioning.commandUnknownFallback(command, tokenizer);
+//            provisioning.commandUnknownFallback(command, tokenizer);
+            unknownCommand();
         }
     }
 
     private void commandMarshalling(final String command, StringTokenizer tokenizer) {
         if (command.equals(COMMAND_HELP) || command.equals(COMMAND_HELP_QUESTIONMARK)) {
-            command_help(tokenizer);
+            help();
         } else if (command.equals(COMMAND_STATE)) {
             provisioning.commandState(tokenizer);
         } else if (command.equals(COMMAND_SHUTDOWN)) {
             provisioning.commandShutdown(tokenizer);
-        } else if (command.equals(COMMAND_ADDNODES)) {
-            provisioning.commandAddnodes(tokenizer);
+        } else {
+            provisioning.commandUnknownFallback(command, tokenizer);
         }
     }
 
     private void buildCommandHelpMap() {
-        commandHelpMap.put(COMMAND_HELP, "Print out this help.");
-        commandHelpMap.put(COMMAND_HELP_QUESTIONMARK, "Print out this help.");
-        commandHelpMap.put(COMMAND_STATE, "Show the current state.");
-        commandHelpMap.put(COMMAND_SHUTDOWN, "Shuts down all running drivers and nodes.");
-        commandHelpMap.put(COMMAND_ADDNODES, provisioning.helpText(COMMAND_ADDNODES));
-        commandHelpMap.put(COMMAND_EXIT, "Exits this command line.");
-        commandHelpMap.put(COMMAND_QUIT, "Exits this command line.");
+//        commandHelpMap.put(COMMAND_HELP, "Print out this help.");
+//        commandHelpMap.put(COMMAND_HELP_QUESTIONMARK, "Print out this help.");
+//        commandHelpMap.put(COMMAND_STATE, "Show the current state.");
+//        commandHelpMap.put(COMMAND_SHUTDOWN, "Shuts down all running drivers and nodes.");
+//        commandHelpMap.put(COMMAND_ADDNODES, provisioning.helpText(COMMAND_ADDNODES));
+//        commandHelpMap.put(COMMAND_EXIT, "Exits this command line.");
+//        commandHelpMap.put(COMMAND_QUIT, "Exits this command line.");
+        
+        registerCommand(new Command(COMMAND_HELP, null, "Print out this help."));
+        registerCommand(new Command(COMMAND_HELP_QUESTIONMARK, null, "Print out this help."));
+        registerCommand(new Command(COMMAND_STATE, null, "Show the current state."));
+        registerCommand(new Command(COMMAND_SHUTDOWN, null, "Shuts down all running drivers and nodes."));
+        
+        registerCommand(new Command(COMMAND_EXIT, null, "Exits this command line."));
+        registerCommand(new Command(COMMAND_QUIT, null, "Exits this command line."));
     }
     
-    private void command_help(StringTokenizer tokenizer) {
+    private void help() {
         if (commandLineHelpText == null) {
             commandLineHelpText = new CommandLineTextBuilder("Clustermeister Command Line Help");
-            for (Map.Entry<String, String> entry : commandHelpMap.entrySet()) {
-                commandLineHelpText.addLine(entry.getKey(), entry.getValue());
+            for (Command command : commands.values()) {
+                commandLineHelpText.addLine(command.getCommandName(), command.getFormattedArguments(), command.getHelpText());
             }
         }
         commandLineHelpText.print();
-        provisioning.commandHelp(tokenizer);
     }
 
     private void unknownCommand() {

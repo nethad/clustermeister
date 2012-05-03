@@ -35,12 +35,12 @@ public interface CommandLineEvaluation {
     public static final String COMMAND_EXIT = "exit";
     public static final String COMMAND_QUIT = "quit";
     
-    /**
-     * Add nodes to the infrastructure.
-     * @param tokenizer Additional parameters
-     * @param driverHost the host or IP address for the driver
-     */
-    public void addNodes(StringTokenizer tokenizer, String driverHost);
+//    /**
+//     * Add nodes to the infrastructure.
+//     * @param tokenizer Additional parameters
+//     * @param driverHost the host or IP address for the driver
+//     */
+//    public void addNodes(StringTokenizer tokenizer, String driverHost);
     
     /**
      * Print the current state for this backend.
@@ -54,11 +54,11 @@ public interface CommandLineEvaluation {
      */
     public void shutdown(StringTokenizer tokenizer);
     
-    /**
-     * Print a help text.
-     * @param tokenizer Additional parameters
-     */
-    public void help(StringTokenizer tokenizer);
+//    /**
+//     * Print a help text.
+//     * @param tokenizer Additional parameters
+//     */
+//    public void help(StringTokenizer tokenizer);
     
     /**
      * Handle commands which are not shared by other backends.
@@ -67,12 +67,12 @@ public interface CommandLineEvaluation {
      */
     public void handleCommand(String command, StringTokenizer tokenizer);
     
-    /**
-     * Returns a help text for the given command. This is only needed for commands handled by {@link #handleCommand(java.lang.String, java.util.StringTokenizer) }
-     * or built-in commands that take arguments.
-     * @param command
-     * @return 
-     */
-    public String helpText(String command);
+//    /**
+//     * Returns a help text for the given command. This is only needed for commands handled by {@link #handleCommand(java.lang.String, java.util.StringTokenizer) }
+//     * or built-in commands that take arguments.
+//     * @param command
+//     * @return 
+//     */
+//    public String helpText(String command);
     
 }

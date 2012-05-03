@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
  */
 class NodeDeployTask {
 	
-	private Logger logger = LoggerFactory.getLogger(NodeDeployTask.class);
+	private static final Logger logger = LoggerFactory.getLogger(NodeDeployTask.class);
 	private int managementPort;
 	private int nodeNumber;
 	private int serverPort;
@@ -102,10 +102,13 @@ class NodeDeployTask {
 		String nodeConfigurationAddress = nodeConfiguration.getDriverAddress();
 		String torqueNodeDeploymentAddress = this.torqueNodeDeployment.getDriverAddress();
 		if (nodeConfigurationAddress != null) {
+            logger.info("Using driver address found in node configuration.");
 			return nodeConfigurationAddress;
 		} else if (torqueNodeDeploymentAddress != null) {
+            logger.info("Using driver address found in torque node deployer.");
 			return torqueNodeDeploymentAddress;
 		} else {
+            logger.info("Using driver address fallback 'localhost'.");
 			logger.warn("Could not find driver IP address, using localhost");
 			return "localhost";
 		}

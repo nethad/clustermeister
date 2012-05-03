@@ -18,6 +18,7 @@ package com.github.nethad.clustermeister.provisioning.torque;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeInformation;
 import com.github.nethad.clustermeister.api.utils.JPPFProperties;
+import com.github.nethad.clustermeister.provisioning.Command;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.dependencymanager.DependencyManager;
@@ -31,6 +32,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutionException;
+import javax.naming.OperationNotSupportedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,14 +41,15 @@ import org.slf4j.LoggerFactory;
  * @author thomas
  */
 public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
-//    private static final String COMMAND_ADDNODES = "addnodes";
+    private static final String COMMAND_ADDNODES = "addnodes";
+    private static final String COMMAND_REMOVENODE = "removenode";
     
     private static final Logger logger = LoggerFactory.getLogger(TorqueCommandLineEvaluation.class);
     
     private final TorqueNodeManager nodeManager;
     private final CommandLineHandle handle;
     @VisibleForTesting
-    Map<String, String> commandHelp = new HashMap<String, String>();
+//    Map<String, String> commandHelp = new HashMap<String, String>();
     private final Collection<File> artifactsToPreload;
     private final RmiServerForApi rmiServerForApi;
 
@@ -59,12 +62,21 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
     }
     
     private void buildCommandHelp() {
-        commandHelp.put(CommandLineEvaluation.COMMAND_ADDNODES, "[number of nodes]  [processing threads per node]");
+        handle.getCommandRegistry().registerCommand(
+                new Command(
+                    COMMAND_ADDNODES, 
+                    new String[]{"number of nodes", "processing threads per node"}, 
+                    "Add nodes (= torque job) to the cluster."));
+        handle.getCommandRegistry().registerCommand(
+                new Command(
+                    "removenode", 
+                    new String[]{"node ID"}, 
+                    "Remove node from the cluster."));
     }
     
-    public String[] commands() {
-        return commandHelp.keySet().toArray(new String[]{});
-    }
+//    public String[] commands() {
+//        return commandHelp.keySet().toArray(new String[]{});
+//    }
     
     @Override
     public void state(StringTokenizer tokenizer) {
@@ -78,8 +90,8 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
         }
     }
 
-    @Override
-    public void addNodes(StringTokenizer tokenizer, String driverHost) {
+    @VisibleForTesting
+    void addNodes(StringTokenizer tokenizer) {
         if (tokenizer.countTokens() != 2) {
             handle.expectedArguments(new String[]{"number of nodes", "processing threads per node"});
             return;
@@ -88,7 +100,7 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
         int numberOfCpusPerNode = Integer.parseInt(tokenizer.nextToken());
         
         final TorqueNodeConfiguration torqueNodeConfiguration =
-                TorqueNodeConfiguration.configurationForNode(driverHost, numberOfCpusPerNode, artifactsToPreload);
+                TorqueNodeConfiguration.configurationForNode(numberOfCpusPerNode, artifactsToPreload);
                 
         ListenableFuture<? extends Node> lastNode = null;
         for (int i = 0; i < numberOfNodes; i++) {
@@ -112,24 +124,16 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
     }
 
     @Override
-    public void help(StringTokenizer tokenizer) {
-//        for (Map.Entry<String, String> entry : commandHelp.entrySet()) {
-//            handle.print("%s %s", entry.getKey(), entry.getValue());
-//        }
-    }
-
-    @Override
     public void handleCommand(String command, StringTokenizer tokenizer) {
-        handle.print("command %s unknown", command);
-    }
-
-    @Override
-    public String helpText(String command) {
-        if (commandHelp.containsKey(command)) {
-            return commandHelp.get(command);
-        } else {
-            return "!command unknown!";
+        if (command.equals(COMMAND_ADDNODES)) {
+            addNodes(tokenizer);
+        } else if (command.equals(COMMAND_REMOVENODE)) {
+            removeNode(tokenizer);
         }
+    }
+    
+    private void removeNode(StringTokenizer tokenizer) {
+        throw new RuntimeException("Not yet implemented");
     }
     
 }

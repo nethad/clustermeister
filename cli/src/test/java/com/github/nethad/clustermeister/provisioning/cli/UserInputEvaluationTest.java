@@ -15,11 +15,12 @@
  */
 package com.github.nethad.clustermeister.provisioning.cli;
 
+import com.github.nethad.clustermeister.provisioning.Command;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import java.util.StringTokenizer;
 import org.junit.Test;
 import static org.junit.Assert.*;
-import static org.hamcrest.CoreMatchers.*;
+import static org.hamcrest.Matchers.*;
 import org.junit.Before;
 
 /**
@@ -31,25 +32,29 @@ public class UserInputEvaluationTest {
     private Provisioning provisioning;
     private UserInputEvaluation userInputEvaluation;
     
-//    private StringTokenizer setTokenizer;
-
     @Before
     public void setup() {
-//        provisioning = mock(Provisioning.class);
-//        setTokenizer = null;
-        provisioning = new Provisioning(null, Provider.TEST);
+        userInputEvaluation = new UserInputEvaluation();
+        provisioning = new Provisioning(null, Provider.TEST, userInputEvaluation);
+        userInputEvaluation.setProvisioning(provisioning);
         commandLineEvaluation = new TestCommandLineEvaluation();
         provisioning.setCommandLineEvaluation(commandLineEvaluation);
-        userInputEvaluation = new UserInputEvaluation(provisioning);
     }
     
     @Test
-    public void addnodesCommand() {
-        userInputEvaluation.evaluate("addnodes 10 23");
-        assertThat(commandLineEvaluation.getLastCommand(), is("addnodes"));
-        assertThat(commandLineEvaluation.getLastTokenizer().countTokens(), is(2));
-        assertThat(commandLineEvaluation.getLastTokenizer().nextToken(), is("10"));
-        assertThat(commandLineEvaluation.getLastTokenizer().nextToken(), is("23"));
+    public void registerCommand() {
+        assertThat(userInputEvaluation.commands(), not(hasItemInArray("mycommand")));
+        userInputEvaluation.registerCommand(new Command("mycommand", null, ""));
+        assertThat(userInputEvaluation.commands(), hasItemInArray("mycommand"));
+    }
+    
+    @Test
+    public void unregisterCommand() {
+        userInputEvaluation.registerCommand(new Command("mycommand", null, ""));
+        int numberOfCommands = userInputEvaluation.commands().length;
+        userInputEvaluation.unregisterCommand(new Command("mycommand", null, ""));
+        assertThat(userInputEvaluation.commands(), not(hasItemInArray("mycommand")));
+        assertThat(userInputEvaluation.commands().length, is(numberOfCommands-1));
     }
 
     @Test
@@ -67,14 +72,8 @@ public class UserInputEvaluationTest {
     }
     
     @Test
-    public void helpCommand() {
-        userInputEvaluation.evaluate("help");
-        assertThat(commandLineEvaluation.getLastCommand(), is("help"));
-        assertThat(commandLineEvaluation.getLastTokenizer().countTokens(), is(0));
-    }
-    
-    @Test
     public void handleCommand() {
+        userInputEvaluation.registerCommand(new Command("newcommand", new String[]{"arg1", "arg2"}, null));
         userInputEvaluation.evaluate("newcommand arg1 arg2");
         assertThat(commandLineEvaluation.getLastCommand(), is("newcommand"));
         assertThat(commandLineEvaluation.getLastTokenizer().countTokens(), is(2));
@@ -96,12 +95,6 @@ public class UserInputEvaluationTest {
         }
 
         @Override
-        public void addNodes(StringTokenizer tokenizer, String driverHost) {
-            lastCommand = "addnodes";
-            lastTokenizer = tokenizer;
-        }
-
-        @Override
         public void state(StringTokenizer tokenizer) {
             lastCommand = "state";
             lastTokenizer = tokenizer;
@@ -114,22 +107,11 @@ public class UserInputEvaluationTest {
         }
 
         @Override
-        public void help(StringTokenizer tokenizer) {
-            lastCommand = "help";
-            lastTokenizer = tokenizer;
-        }
-
-        @Override
         public void handleCommand(String command, StringTokenizer tokenizer) {
             lastTokenizer = tokenizer;
             this.lastCommand = command;
         }
-
-        @Override
-        public String helpText(String command) {
-            this.lastCommand = command;
-            return "";
-        }
+        
     }
 
 }
