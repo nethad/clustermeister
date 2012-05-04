@@ -16,9 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.cli;
 
 import com.google.common.annotations.VisibleForTesting;
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.io.PrintWriter;
 import java.util.logging.LogManager;
 import jline.ConsoleReader;
@@ -33,11 +31,11 @@ import org.slf4j.LoggerFactory;
  */
 public class ProvisioningCLI {
 
-    private final Logger logger = LoggerFactory.getLogger(ProvisioningCLI.class);
+    private static final Logger logger = LoggerFactory.getLogger(ProvisioningCLI.class);
 
     private static final String OPTION_HELP = "help";
     private static final String OPTION_CONFIG_FILE = "config";
-    private static final String DEFAULT_CONFIG_FILE = System.getProperty("user.home") + "/.clustermeister/configuration.properties";
+    private static final String DEFAULT_CONFIG_FILE = System.getProperty("user.home") + "/.clustermeister/configuration.yml";
     private static final String OPTION_PROVIDER = "provider";
     private static final String DEFAULT_PROVIDER = "torque";
 

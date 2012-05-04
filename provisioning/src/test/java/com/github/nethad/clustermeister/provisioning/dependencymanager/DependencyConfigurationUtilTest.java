@@ -83,7 +83,7 @@ public class DependencyConfigurationUtilTest {
     @Test
     public void testPreloadArtifact() throws DependencyResolutionException {
         PropertiesConfiguration configuration = new PropertiesConfiguration();
-        configuration.addProperty(DependencyConfigurationUtil.PRELOAD_ARTIFACT, 
+        configuration.addProperty(DependencyConfigurationUtil.PRELOAD_ARTIFACTS, 
                 EXAMPLE_APP_COORDS);
         
         DependencyConfigurationUtil.getConfiguredDependencies(configuration);
@@ -100,9 +100,9 @@ public class DependencyConfigurationUtilTest {
     @Test
     public void testPreloadMultipleArtifacts() throws DependencyResolutionException {
         PropertiesConfiguration configuration = new PropertiesConfiguration();
-        configuration.addProperty(DependencyConfigurationUtil.PRELOAD_ARTIFACT, 
+        configuration.addProperty(DependencyConfigurationUtil.PRELOAD_ARTIFACTS, 
                 EXAMPLE_APP_COORDS);
-        configuration.addProperty(DependencyConfigurationUtil.PRELOAD_ARTIFACT, 
+        configuration.addProperty(DependencyConfigurationUtil.PRELOAD_ARTIFACTS, 
                 EXAMPLE_APP2_COORDS);
         
         DependencyConfigurationUtil.getConfiguredDependencies(configuration);
@@ -114,9 +114,9 @@ public class DependencyConfigurationUtilTest {
     @Test
     public void testMavenRepository() throws DependencyResolutionException {
         PropertiesConfiguration configuration = new PropertiesConfiguration();
-        configuration.addProperty(DependencyConfigurationUtil.MAVEN_REPOSITORY, 
+        configuration.addProperty(DependencyConfigurationUtil.MAVEN_REPOSITORIES, 
                 EXAMPLE_MAVEN_REPO);
-        configuration.addProperty(DependencyConfigurationUtil.MAVEN_REPOSITORY, 
+        configuration.addProperty(DependencyConfigurationUtil.MAVEN_REPOSITORIES, 
                 EXAMPLE_MAVEN_REPO2);
         
         DependencyConfigurationUtil.getConfiguredDependencies(configuration);
@@ -135,9 +135,9 @@ public class DependencyConfigurationUtilTest {
     @Test
     public void testExclusion() throws DependencyResolutionException {
         PropertiesConfiguration configuration = new PropertiesConfiguration();
-        configuration.addProperty(DependencyConfigurationUtil.PRELOAD_EXCLUDE, 
+        configuration.addProperty(DependencyConfigurationUtil.PRELOAD_EXCLUDES, 
                 EXAMPLE_APP_COORDS);
-        configuration.addProperty(DependencyConfigurationUtil.PRELOAD_EXCLUDE, 
+        configuration.addProperty(DependencyConfigurationUtil.PRELOAD_EXCLUDES, 
                 EXAMPLE_APP2_COORDS);
         
         DependencyConfigurationUtil.getConfiguredDependencies(configuration);
@@ -151,8 +151,8 @@ public class DependencyConfigurationUtilTest {
         PropertiesConfiguration configuration = new PropertiesConfiguration();
         String pomPath = getClass().getResource(EXAMPLE_POM_PATH).getPath();
         String pom2Path = getClass().getResource(EXAMPLE_POM2_PATH).getPath();
-        configuration.addProperty(DependencyConfigurationUtil.PRELOAD_POM, pomPath);
-        configuration.addProperty(DependencyConfigurationUtil.PRELOAD_POM, pom2Path);
+        configuration.addProperty(DependencyConfigurationUtil.PRELOAD_POMS, pomPath);
+        configuration.addProperty(DependencyConfigurationUtil.PRELOAD_POMS, pom2Path);
         
         DependencyConfigurationUtil.getConfiguredDependencies(configuration);
         

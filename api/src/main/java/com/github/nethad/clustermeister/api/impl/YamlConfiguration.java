@@ -15,11 +15,14 @@
  */
 package com.github.nethad.clustermeister.api.impl;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.HierarchicalConfiguration;
 import org.apache.commons.configuration.tree.ConfigurationNode;
 import org.apache.commons.configuration.tree.ConfigurationNodeVisitor;
@@ -36,8 +39,17 @@ public class YamlConfiguration extends HierarchicalConfiguration {
     public YamlConfiguration() {
         this.setExpressionEngine(new DefaultExpressionEngine());
     }
+
+    public YamlConfiguration(String configFilePath) throws ConfigurationException {
+        this.setExpressionEngine(new DefaultExpressionEngine());
+        try {
+            load(new FileReader(configFilePath));
+        } catch (FileNotFoundException ex) {
+            throw new ConfigurationException(ex);
+        }
+    }
     
-    public void load(Reader reader) {
+    public final void load(Reader reader) {
         Yaml yaml = new Yaml();
         Map<String, Object> document = (Map<String, Object>)yaml.load(reader);
         this.setRootNode(new YamlConfigurationNode("", document));
