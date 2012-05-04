@@ -51,7 +51,7 @@ public class DependencyConfigurationUtil {
      *  NOTE: The Maven central repository is already pre-configured by default.
      * </p>
      */
-    public static final String MAVEN_REPOSITORIES = "maven.repositories";
+    public static final String MAVEN_REPOSITORIES = "preload.maven_repositories";
     
     /**
      * A Maven artifact specification that will be preloaded on to JPPF Nodes 
