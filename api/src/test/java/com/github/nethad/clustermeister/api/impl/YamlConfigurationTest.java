@@ -15,6 +15,8 @@
  */
 package com.github.nethad.clustermeister.api.impl;
 
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
 import java.io.StringReader;
 import java.util.*;
 import org.junit.Test;
@@ -41,7 +43,11 @@ public class YamlConfigurationTest {
             + "      key1: value3\n"
             + "      key2: value4\n"
             + "      otherkey: somevalue\n"
-            + "torque: torquevalue\n";
+            + "torque: torquevalue\n"
+            + "preload:\n"
+            + "  artifacts:\n"
+            + "    - artifact1\n"
+            + "    - artifact2\n";
     
     @Before
     public void setup() {
@@ -64,7 +70,7 @@ public class YamlConfigurationTest {
     }
     
     @Test
-    public void nestedList() {
+    public void nestedMap() {
         List<Object> rawprofiles = yamlConfiguration.getList("amazon.profiles");
         List<LinkedHashMap<String, String>> profiles = new ArrayList<LinkedHashMap<String, String>>();
         for (Object rawprofile : rawprofiles) {
@@ -85,4 +91,14 @@ public class YamlConfigurationTest {
         assertThat(secondProfile.get("key2"), is("value4"));
         assertThat(secondProfile.get("otherkey"), is("somevalue"));
     }
+    
+    @Test
+    public void nestedList() {
+        Collection<String> artifacts = Collections2.transform(yamlConfiguration.getList("preload.artifacts"), new Function<Object, String>(){
+            @Override
+            public String apply(Object input) { return input.toString(); }
+        });
+        assertThat(artifacts, hasItems("artifact1", "artifact2"));
+    }
+    
 }
