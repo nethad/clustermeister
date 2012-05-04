@@ -17,6 +17,7 @@ package com.github.nethad.clustermeister.provisioning.cli;
 
 import com.github.nethad.clustermeister.provisioning.CommandRegistry;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
+import com.github.nethad.clustermeister.api.impl.YamlConfiguration;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.CommandRegistry;
@@ -28,6 +29,7 @@ import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.StringTokenizer;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
@@ -42,7 +44,7 @@ public class Provisioning {
     private CommandLineEvaluation commandLineEvaluation;
     
     private String configFilePath;
-    private String driverHost;
+//    private String driverHost;
     private Provider provider;
     private Configuration configuration;
     private RmiInfrastructure rmiInfrastructure;
@@ -109,7 +111,7 @@ public class Provisioning {
             logger.warn("Configuration file \""+configFilePath+"\" does not exist.");
         } else {
             try {
-                configuration = new FileConfiguration(configFilePath);
+                configuration = new YamlConfiguration(configFilePath);
             } catch (ConfigurationException ex) {
                 throw new RuntimeException(ex);
             }
@@ -130,7 +132,6 @@ public class Provisioning {
         jppfLocalDriver = new JPPFLocalDriver();
         commandLineEvaluation = TorqueNodeManager.commandLineEvaluation(configuration, commandLineHandle, jppfLocalDriver, rmiInfrastructure.getRmiServerForApiObject());
         jppfLocalDriver.execute();
-        driverHost = jppfLocalDriver.getIpAddress();
     }
     
     private void startTestSetup() {
@@ -145,7 +146,6 @@ public class Provisioning {
         jppfLocalDriver = new JPPFLocalDriver();
         jppfLocalDriver.execute();
         jppfLocalDriver.update(null, "127.0.0.1");
-        driverHost = "127.0.0.1";
     }
 
     @VisibleForTesting

@@ -51,7 +51,7 @@ public class DependencyConfigurationUtil {
      *  NOTE: The Maven central repository is already pre-configured by default.
      * </p>
      */
-    public static final String MAVEN_REPOSITORY = "maven.repository";
+    public static final String MAVEN_REPOSITORIES = "maven.repositories";
     
     /**
      * A Maven artifact specification that will be preloaded on to JPPF Nodes 
@@ -71,7 +71,7 @@ public class DependencyConfigurationUtil {
      * @see #PRELOAD_EXCLUDE
      * @see #PRELOAD_POM
      */
-    public static final String PRELOAD_ARTIFACT = "preload.artifact";
+    public static final String PRELOAD_ARTIFACTS = "preload.artifacts";
     
     /**
      * A Maven artifact specification that will be excluded from dependency 
@@ -94,7 +94,7 @@ public class DependencyConfigurationUtil {
      * @see #PRELOAD_ARTIFACT
      * @see #PRELOAD_POM
      */
-    public static final String PRELOAD_EXCLUDE = "preload.exclude";
+    public static final String PRELOAD_EXCLUDES = "preload.excludes";
     
     /**
      * A path to a pom.xml file that will be used to preload all dependencies
@@ -117,7 +117,7 @@ public class DependencyConfigurationUtil {
      * @see #PRELOAD_ARTIFACT
      * @see #PRELOAD_EXCLUDE
      */
-    public static final String PRELOAD_POM = "preload.pom";
+    public static final String PRELOAD_POMS = "preload.poms";
     
     private final static Logger logger =
             LoggerFactory.getLogger(DependencyConfigurationUtil.class);
@@ -145,7 +145,7 @@ public class DependencyConfigurationUtil {
         
         addDefaultGlobalExclusions();
         
-        List<Object> excludePatterns = configuration.getList(PRELOAD_EXCLUDE, 
+        List<Object> excludePatterns = configuration.getList(PRELOAD_EXCLUDES, 
                 Collections.EMPTY_LIST);
         for (Object excludePattern : excludePatterns) {
             String excludePatternString = excludePattern.toString();
@@ -155,7 +155,7 @@ public class DependencyConfigurationUtil {
             }
         }
         
-        List<Object> repositories = configuration.getList(MAVEN_REPOSITORY, 
+        List<Object> repositories = configuration.getList(MAVEN_REPOSITORIES, 
                 Collections.EMPTY_LIST);
         for (Object repositorySpecification : repositories) {
             try {
@@ -171,7 +171,7 @@ public class DependencyConfigurationUtil {
             }
         }
         
-        List<Object> artifacts = configuration.getList(PRELOAD_ARTIFACT, 
+        List<Object> artifacts = configuration.getList(PRELOAD_ARTIFACTS, 
                 Collections.EMPTY_LIST);
         for (Object artifactSpecification : artifacts) {
             logger.info("Resolving artifact {}.", artifactSpecification);
@@ -185,7 +185,7 @@ public class DependencyConfigurationUtil {
             }
         }
         
-        List<Object> poms = configuration.getList(PRELOAD_POM, 
+        List<Object> poms = configuration.getList(PRELOAD_POMS, 
                 Collections.EMPTY_LIST);
         for (Object pomPath : poms) {
             logger.info("Resolving artifacts from POM file: {}.", pomPath);

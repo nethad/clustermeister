@@ -442,10 +442,10 @@ public class AmazonInstanceManager {
     private void loadConfiguration(Configuration configuration) {
         logger.debug("Loading Configuration...");
         accessKeyId = checkNotNull(
-                configuration.getString("amazon.accessKeyId", null), 
+                configuration.getString("amazon.access_key_id", null), 
                 "No Amazon access key ID configured.").trim();
         secretKey = checkNotNull(
-                configuration.getString("amazon.secretKey", null), 
+                configuration.getString("amazon.secret_key", null), 
                 "No Amazon secret key configured.").trim();
         artifactsToPreload = DependencyConfigurationUtil.getConfiguredDependencies(configuration);
     }

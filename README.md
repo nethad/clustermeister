@@ -44,23 +44,23 @@ This prints out:
 
 ```
 usage: cli.jar
- -c,--config <arg>     define the path to your configuration.properties,
+ -c,--config <arg>     define the path to your configuration.yml,
                        default:
-                       /home/username/.clustermeister/configuration.properties
+                       /home/username/.clustermeister/configuration.yml
  -h,--help             show this help text.
  -p,--provider <arg>   specify the provider to use, either 'amazon' or
                        'torque', default: torque
 ```
 
-As you can see, we can choose a provider with the `-p` flag (either `torque` or `amazon`) and provide an configuration file. If no configuration file is specified (with the `-c` flag), the command line client looks for a configuration file in `~/.clustermeister/configuration.properties`. So we need to prepare a configuration file with the following configuration keys:
+As you can see, we can choose a provider with the `-p` flag (either `torque` or `amazon`) and provide an configuration file. If no configuration file is specified (with the `-c` flag), the command line client looks for a configuration file in `~/.clustermeister/configuration.yml`. So we need to prepare a configuration file with the following configuration keys:
 
-```
-# torque configuration
-torque.ssh_user = username
-torque.ssh_privatekey = /path/to/your/private/key
-torque.ssh_host = ssh.example.com
-torque.ssh_port = 22
-torque.email_notify = mail@example.com
+```yaml
+torque:
+  ssh_user: username
+  ssh_privatekey: /path/to/your/private/key
+  ssh_host: ssh.example.com
+  ssh_port: 22
+  email_notify: mail@example.com
 ```
 
 After that, we're able to start the command line client.
@@ -70,7 +70,7 @@ After that, we're able to start the command line client.
 This will print out:
 
 ```
-[INFO ][provisioning.cli.ProvisioningCLI]: Using configuration in /home/username/.clustermeister/configuration.properties
+[INFO ][provisioning.cli.ProvisioningCLI]: Using configuration in /home/username/.clustermeister/configuration.yml
 [INFO ][provisioning.cli.ProvisioningCLI]: Using provider TORQUE
 ...
 ```
