@@ -15,15 +15,13 @@
  */
 package com.github.nethad.clustermeister.provisioning.dependencymanager;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.Iterables;
 import java.io.File;
 import java.net.URISyntaxException;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import org.apache.maven.model.Dependency;
 import org.apache.maven.model.Model;
+import org.hamcrest.BaseMatcher;
+import org.hamcrest.Description;
 import static org.hamcrest.Matchers.*;
 import org.junit.After;
 import static org.junit.Assert.*;
@@ -33,6 +31,7 @@ import org.sonatype.aether.repository.RemoteRepository;
 import org.sonatype.aether.resolution.DependencyResolutionException;
 
 /**
+ * Tests for MavenRepositorySystem.
  *
  * @author daniel
  */
@@ -53,14 +52,12 @@ public class MavenRepositorySystemTest {
     @Test
     public void testEffectiveModel() throws URISyntaxException {
         Model model = mavenRepositorySystem.getEffectiveModel(getTestPom());
-        
-        assertTrue("Dependencies do not match.", 
-                Iterables.all(model.getDependencies(), 
-                    getContainsAllDependenciesPredicate(getExpectedSet(
-                        "akka-actor",
-                        "akka-remote",
-                        "server"
-                ))));
+        assertThat(model.getDependencies(), allOf( 
+                hasItem(new DependencyMatcher("akka-actor", null, null)),
+                hasItem(new DependencyMatcher("akka-remote", null, null)),
+                hasItem(new DependencyMatcher("server", null, null))
+                ));
+        assertThat(model.getDependencies().size(), is(equalTo(3)));
     }
     
     @Test
@@ -69,79 +66,132 @@ public class MavenRepositorySystemTest {
                       "ifi", "default", "https://maven.ifi.uzh.ch/maven2/content/groups/public/");
         mavenRepositorySystem.addRepository(ifiRepo);
         List<File> dependencies = mavenRepositorySystem.resolveDependencies("org.jppf:common:3.0.1");
-        assertThat("Amount of dependencies is wrong.", dependencies.size(), is(equalTo(1)));
-        assertThat("Wrong dependency.", dependencies.get(0).getName(), 
-                containsString("common"));
-        mavenRepositorySystem.removeRepository(ifiRepo);
+        assertThat(dependencies.size(), is(equalTo(1)));
+        assertThat(dependencies.get(0).getName(), containsString("common"));
     }
     
     @Test
     public void testResolveDependenciesFromPom() throws URISyntaxException, DependencyResolutionException {
         List<File> dependencies = mavenRepositorySystem.resolveDependenciesFromPom(getTestPom());
-        assertTrue("Dependencies do not match.", 
-                Iterables.all(dependencies, getContainsAllFileNamesPredicate(getExpectedSet(
-                    "akka-actor-2.0.jar",
-                    "scala-library-2.9.1-1.jar",
-                    "akka-remote-2.0.jar",
-                    "protobuf-java-2.4.1.jar",
-                    "sjson_2.9.1-0.15.jar",
-                    "dispatch-json_2.9.1-0.8.5.jar",
-                    "httpclient-4.1.jar",
-                    "httpcore-4.1.jar",
-                    "commons-logging-1.1.1.jar",
-                    "commons-codec-1.4.jar",
-                    "objenesis-1.2.jar",
-                    "commons-io-1.4.jar",
-                    "h2-lzf-1.0.jar",
-                    "server-3.0.1.jar"
-                ))));
+        
+        assertThat(dependencies, allOf( 
+                hasItem(new FileNameMatcher("akka-actor-2.0.jar")),
+                hasItem(new FileNameMatcher("scala-library-2.9.1-1.jar")),
+                hasItem(new FileNameMatcher("akka-remote-2.0.jar")),
+                hasItem(new FileNameMatcher("protobuf-java-2.4.1.jar")),
+                hasItem(new FileNameMatcher("sjson_2.9.1-0.15.jar")),
+                hasItem(new FileNameMatcher("dispatch-json_2.9.1-0.8.5.jar")),
+                hasItem(new FileNameMatcher("httpclient-4.1.jar")),
+                hasItem(new FileNameMatcher("httpcore-4.1.jar")),
+                hasItem(new FileNameMatcher("commons-logging-1.1.1.jar")),
+                hasItem(new FileNameMatcher("commons-codec-1.4.jar")),
+                hasItem(new FileNameMatcher("objenesis-1.2.jar")),
+                hasItem(new FileNameMatcher("commons-io-1.4.jar")),
+                hasItem(new FileNameMatcher("h2-lzf-1.0.jar")),
+                hasItem(new FileNameMatcher("server-3.0.1.jar"))
+                ));
+        assertThat(dependencies.size(), is(equalTo(14)));
     }
     
     @Test
     public void testResolveDependenciesFromPomWithGlobalExclusion() throws URISyntaxException, DependencyResolutionException {
         mavenRepositorySystem.addGlobalExclusion("voldemort.store.compress:h2-lzf::");
         List<File> dependencies = mavenRepositorySystem.resolveDependenciesFromPom(getTestPom());
-        assertTrue("Dependencies do not match.", 
-                Iterables.all(dependencies, getContainsAllFileNamesPredicate(getExpectedSet(
-                    "akka-actor-2.0.jar",
-                    "scala-library-2.9.1-1.jar",
-                    "akka-remote-2.0.jar",
-                    "protobuf-java-2.4.1.jar",
-                    "sjson_2.9.1-0.15.jar",
-                    "dispatch-json_2.9.1-0.8.5.jar",
-                    "httpclient-4.1.jar",
-                    "httpcore-4.1.jar",
-                    "commons-logging-1.1.1.jar",
-                    "commons-codec-1.4.jar",
-                    "objenesis-1.2.jar",
-                    "commons-io-1.4.jar",
-                    "server-3.0.1.jar"
-                ))));
+        assertThat(dependencies, allOf( 
+                hasItem(new FileNameMatcher("akka-actor-2.0.jar")),
+                hasItem(new FileNameMatcher("scala-library-2.9.1-1.jar")),
+                hasItem(new FileNameMatcher("akka-remote-2.0.jar")),
+                hasItem(new FileNameMatcher("protobuf-java-2.4.1.jar")),
+                hasItem(new FileNameMatcher("sjson_2.9.1-0.15.jar")),
+                hasItem(new FileNameMatcher("dispatch-json_2.9.1-0.8.5.jar")),
+                hasItem(new FileNameMatcher("httpclient-4.1.jar")),
+                hasItem(new FileNameMatcher("httpcore-4.1.jar")),
+                hasItem(new FileNameMatcher("commons-logging-1.1.1.jar")),
+                hasItem(new FileNameMatcher("commons-codec-1.4.jar")),
+                hasItem(new FileNameMatcher("objenesis-1.2.jar")),
+                hasItem(new FileNameMatcher("commons-io-1.4.jar")),
+                hasItem(new FileNameMatcher("server-3.0.1.jar"))
+                ));
+        assertThat(dependencies.size(), is(equalTo(13)));
     }
 
     private File getTestPom() throws URISyntaxException {
         return new File(getClass().getResource("testProject/test/pom.xml").toURI());
     }
     
-    private HashSet<String> getExpectedSet(String... expected) {
-        return new HashSet<String>(Arrays.asList(expected));
+    private class FileNameMatcher extends BaseMatcher<File> {
+        private final String expectedName;
+
+        public FileNameMatcher(String expectedName) {
+            this.expectedName = expectedName;
+        }
+
+        @Override
+        public boolean matches(Object item) {
+            if(item == null) {
+                return false;
+            }
+            if(item instanceof File) {
+                File file = (File) item;
+                boolean result = false;
+                if(expectedName != null && !expectedName.isEmpty()) {
+                    result = file.getName().equals(expectedName);
+                }
+                return result;
+            } else {
+                return false;
+            }
+        }
+
+        @Override
+        public void describeTo(Description description) {
+            description.appendText(expectedName);
+        }
     }
     
-    private Predicate<File> getContainsAllFileNamesPredicate(final HashSet<String> expectedDependencies) {
-        return new Predicate<File>() {
-            @Override
-            public boolean apply(File dep) {
-                return expectedDependencies.contains(dep.getName());
+    private class DependencyMatcher extends BaseMatcher<Dependency> {
+        
+        private final String artifactId;
+        private final String groupId;
+        private final String version;
+
+        public DependencyMatcher(String artifactId, String groupId, String version) {
+            this.artifactId = artifactId;
+            this.groupId = groupId;
+            this.version = version;
+        }
+        
+        @Override
+        public boolean matches(Object item) {
+            if(item == null) {
+                return false;
             }
-        };
-    }
-    
-    private Predicate<Dependency> getContainsAllDependenciesPredicate(final HashSet<String> expectedDependencies) {
-        return new Predicate<Dependency>() {
-            @Override
-            public boolean apply(Dependency dep) {
-                return expectedDependencies.contains(dep.getArtifactId());
+            if(item instanceof Dependency) {
+                Dependency dep = (Dependency) item;
+                boolean result = false;
+                if(artifactId != null && !artifactId.isEmpty()) {
+                    result = dep.getArtifactId().contains(artifactId);
+                }
+                if(groupId != null && !groupId.isEmpty()) {
+                    result = dep.getGroupId().contains(groupId);
+                }
+                if(version != null && !version.isEmpty()) {
+                    result = dep.getVersion().contains(version);
+                }
+                return result;
+            } else {
+                return false;
             }
-        };
+        }
+
+        @Override
+        public void describeTo(Description description) {
+            String desc = String.format("Dependency {groupId=%s, artifactId=%s, version=%s, type=jar}", 
+                    groupId == null ? "*" : groupId,
+                    artifactId == null ? "*" : artifactId,
+                    version == null ? "*" : version);
+            description.appendText(desc);
+        }
+        
     }
 }

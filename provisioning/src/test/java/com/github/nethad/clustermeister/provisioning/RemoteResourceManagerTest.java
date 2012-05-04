@@ -228,10 +228,10 @@ public class RemoteResourceManagerTest {
     public void testIsResourceUploadedAndUpToDate() throws Exception {
         boolean upToDate = resourceManager.isResourceUploadedAndUpToDate(
                 dummyResource, DUMMY_RESOURCE_CHECKSUM);
-        assertThat(upToDate, is(false));
+        assertThat(upToDate, is(equalTo(false)));
         upToDate = resourceManager.isResourceUploadedAndUpToDate(
                 uploadedUndeployedResource, DUMMY_RESOURCE_CHECKSUM);
-        assertThat(upToDate, is(true));
+        assertThat(upToDate, is(equalTo(true)));
     }
 
     /**
@@ -242,10 +242,10 @@ public class RemoteResourceManagerTest {
         boolean exists = resourceManager.fileExistOnRemote(
                 String.format("%s%s%s", resourceManager.remoteResourcesDir, 
                 resourceManager.remoteSeparator, DUMMY_RESOURCE_NAME));
-        assertThat(exists, is(false));
+        assertThat(exists, is(equalTo(false)));
         exists = resourceManager.fileExistOnRemote(
                 String.format("%s%s%s", resourceManager.remoteResourcesDir, 
                 resourceManager.remoteSeparator, UPLOADED_UNDEPLOYED_RESOURCE_NAME));
-        assertThat(exists, is(true));
+        assertThat(exists, is(equalTo(true)));
     }
 }

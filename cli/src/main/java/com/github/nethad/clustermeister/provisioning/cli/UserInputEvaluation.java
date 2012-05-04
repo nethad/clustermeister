@@ -63,6 +63,11 @@ public class UserInputEvaluation implements CommandRegistry {
         commands.remove(command.getCommandName());
     }
 
+    @Override
+    public Command getCommand(String commandName) {
+        return commands.get(commandName);
+    }
+    
     public void evaluate(String userInput) {
         final StringTokenizer tokenizer = new StringTokenizer(userInput);
         if (!tokenizer.hasMoreTokens()) {

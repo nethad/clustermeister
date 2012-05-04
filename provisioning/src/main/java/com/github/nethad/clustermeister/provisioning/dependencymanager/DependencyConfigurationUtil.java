@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.dependencymanager;
 
+import com.google.common.annotations.VisibleForTesting;
 import static com.google.common.base.Preconditions.*;
 import java.io.File;
 import java.util.Collection;
@@ -122,6 +123,13 @@ public class DependencyConfigurationUtil {
             LoggerFactory.getLogger(DependencyConfigurationUtil.class);
     
     /**
+     * The repository system instance to use.
+     */
+    @VisibleForTesting
+    static MavenRepositorySystem repositorySystem = null;
+
+    
+    /**
      * Resolves preload dependencies from a {@link Configuration} and resolves 
      * them using {@link MavenRepositorySystem}.
      * 
@@ -129,12 +137,16 @@ public class DependencyConfigurationUtil {
      * @return All resolved dependencies as files.
      */
     public static Collection<File> getConfiguredDependencies(Configuration configuration) {
+        if(repositorySystem == null) {
+            repositorySystem = new MavenRepositorySystem();
+        }
+        
         List<File> artifactsToPreload = new LinkedList<File>();
-        MavenRepositorySystem repositorySystem = new MavenRepositorySystem();
         
-        addDefaultGlobalExclusions(repositorySystem);
+        addDefaultGlobalExclusions();
         
-        List<Object> excludePatterns = configuration.getList(PRELOAD_EXCLUDE, Collections.EMPTY_LIST);
+        List<Object> excludePatterns = configuration.getList(PRELOAD_EXCLUDE, 
+                Collections.EMPTY_LIST);
         for (Object excludePattern : excludePatterns) {
             String excludePatternString = excludePattern.toString();
             if(excludePattern != null && !excludePatternString.isEmpty()) {
@@ -143,7 +155,8 @@ public class DependencyConfigurationUtil {
             }
         }
         
-        List<Object> repositories = configuration.getList(MAVEN_REPOSITORY, Collections.EMPTY_LIST);
+        List<Object> repositories = configuration.getList(MAVEN_REPOSITORY, 
+                Collections.EMPTY_LIST);
         for (Object repositorySpecification : repositories) {
             try {
                 String[] repositoryInfo = repositorySpecification.toString().split("\\|");
@@ -158,11 +171,13 @@ public class DependencyConfigurationUtil {
             }
         }
         
-        List<Object> artifacts = configuration.getList(PRELOAD_ARTIFACT, Collections.EMPTY_LIST);
+        List<Object> artifacts = configuration.getList(PRELOAD_ARTIFACT, 
+                Collections.EMPTY_LIST);
         for (Object artifactSpecification : artifacts) {
             logger.info("Resolving artifact {}.", artifactSpecification);
             try {
-                List<File> dependencies = repositorySystem.resolveDependencies(artifactSpecification.toString());
+                List<File> dependencies = repositorySystem.
+                        resolveDependencies(artifactSpecification.toString());
                 addToListIfUnique(dependencies, artifactsToPreload);
                 logger.debug("{} resolved to {}.", artifactSpecification, dependencies);
             } catch (DependencyResolutionException ex) {
@@ -170,7 +185,8 @@ public class DependencyConfigurationUtil {
             }
         }
         
-        List<Object> poms = configuration.getList(PRELOAD_POM, Collections.EMPTY_LIST);
+        List<Object> poms = configuration.getList(PRELOAD_POM, 
+                Collections.EMPTY_LIST);
         for (Object pomPath : poms) {
             logger.info("Resolving artifacts from POM file: {}.", pomPath);
             try {
@@ -183,6 +199,8 @@ public class DependencyConfigurationUtil {
             }
         }
         
+        repositorySystem = null;
+        
         return artifactsToPreload;
     }
 
@@ -194,18 +212,19 @@ public class DependencyConfigurationUtil {
         }
     }
 
-    private static void addDefaultGlobalExclusions(MavenRepositorySystem repositorySystem) {
+    private static void addDefaultGlobalExclusions() {
         //dependencies known to be present in jppf node or known to cause problems
-        repositorySystem.addGlobalExclusion("org.jppf");
-        repositorySystem.addGlobalExclusion("com.github.nethad.clustermeister:clustermeister");
-        repositorySystem.addGlobalExclusion("com.github.nethad.clustermeister:provisioning");
-        repositorySystem.addGlobalExclusion("com.github.nethad.clustermeister:api");
-        repositorySystem.addGlobalExclusion("com.github.nethad.clustermeister:cli");
-        repositorySystem.addGlobalExclusion("com.github.nethad.clustermeister:common-node");
-        repositorySystem.addGlobalExclusion("com.github.nethad.clustermeister:node");
-        repositorySystem.addGlobalExclusion("com.github.nethad.clustermeister:driver");
-        repositorySystem.addGlobalExclusion("org.jvnet.opendmk:jmxremote_optional");
-        repositorySystem.addGlobalExclusion("log4j");
-        repositorySystem.addGlobalExclusion("slf4j");
+        MavenRepositorySystem rs = repositorySystem;
+        rs.addGlobalExclusion("org.jppf");
+        rs.addGlobalExclusion("com.github.nethad.clustermeister:clustermeister");
+        rs.addGlobalExclusion("com.github.nethad.clustermeister:provisioning");
+        rs.addGlobalExclusion("com.github.nethad.clustermeister:api");
+        rs.addGlobalExclusion("com.github.nethad.clustermeister:cli");
+        rs.addGlobalExclusion("com.github.nethad.clustermeister:common-node");
+        rs.addGlobalExclusion("com.github.nethad.clustermeister:node");
+        rs.addGlobalExclusion("com.github.nethad.clustermeister:driver");
+        rs.addGlobalExclusion("org.jvnet.opendmk:jmxremote_optional");
+        rs.addGlobalExclusion("log4j");
+        rs.addGlobalExclusion("slf4j");
     }
 }

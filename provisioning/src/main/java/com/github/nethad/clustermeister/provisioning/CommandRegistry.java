@@ -25,4 +25,6 @@ public interface CommandRegistry {
     
     public void unregisterCommand(Command command);
     
+    public Command getCommand(String commandName);
+    
 }

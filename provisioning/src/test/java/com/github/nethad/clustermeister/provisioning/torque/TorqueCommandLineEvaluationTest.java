@@ -74,6 +74,11 @@ public class TorqueCommandLineEvaluationTest {
             public void unregisterCommand(Command command) {
                 
             }
+
+            @Override
+            public Command getCommand(String commandName) {
+                return null;
+            }
         });
         rmiServerForApi = mock(RmiServerForApi.class);
         commandLineEvaluation = new TorqueCommandLineEvaluation(torqueNodeManager, commandLineHandle, rmiServerForApi);
