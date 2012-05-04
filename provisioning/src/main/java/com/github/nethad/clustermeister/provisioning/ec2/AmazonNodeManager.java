@@ -268,6 +268,7 @@ public class AmazonNodeManager {
                 instanceMetadata = amazonInstanceManager.getInstanceMetadata(instanceId.get());
                 if(instanceMetadata.getState() == NodeState.SUSPENDED) {
                     amazonInstanceManager.resumeInstance(instanceMetadata.getId());
+                    instanceMetadata = amazonInstanceManager.getInstanceMetadata(instanceId.get());
                 }
             }
             AmazonNode node;
