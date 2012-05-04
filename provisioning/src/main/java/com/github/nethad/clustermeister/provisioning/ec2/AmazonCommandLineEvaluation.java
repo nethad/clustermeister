@@ -22,6 +22,7 @@ import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.AbstractExecutableCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.AddNodesCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.GetInstancesCommand;
+import com.github.nethad.clustermeister.provisioning.ec2.commands.GetKeypairsCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.ShutdownCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.StartNodeCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.StateCommand;
@@ -100,6 +101,10 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
         handle.getCommandRegistry().registerCommand(new StartNodeCommand(
                 StartNodeCommand.ARG_DESCRIPTIONS, 
                 "Start a JPPF-Node on an AWS E2 instance.", 
+                this));
+        handle.getCommandRegistry().registerCommand(new GetKeypairsCommand(
+                null, 
+                "Get all configured keypair names.", 
                 this));
     }
 }
