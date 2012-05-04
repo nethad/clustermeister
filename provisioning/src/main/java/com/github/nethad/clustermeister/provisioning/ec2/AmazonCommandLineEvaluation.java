@@ -23,6 +23,7 @@ import com.github.nethad.clustermeister.provisioning.ec2.commands.AbstractExecut
 import com.github.nethad.clustermeister.provisioning.ec2.commands.AddNodesCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.GetInstancesCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.ShutdownCommand;
+import com.github.nethad.clustermeister.provisioning.ec2.commands.StartNodeCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.StateCommand;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
@@ -95,6 +96,10 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
         handle.getCommandRegistry().registerCommand(new GetInstancesCommand(
                 GetInstancesCommand.ARG_DESCRIPTIONS, 
                 "Get configured instances and their state from the configure AWS Account.", 
+                this));
+        handle.getCommandRegistry().registerCommand(new StartNodeCommand(
+                StartNodeCommand.ARG_DESCRIPTIONS, 
+                "Start a JPPF-Node on an AWS E2 instance.", 
                 this));
     }
 }
