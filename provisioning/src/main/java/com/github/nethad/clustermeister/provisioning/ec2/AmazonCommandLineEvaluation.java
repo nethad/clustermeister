@@ -21,6 +21,7 @@ import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.AbstractExecutableCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.AddNodesCommand;
+import com.github.nethad.clustermeister.provisioning.ec2.commands.GetInstancesCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.ShutdownCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.StateCommand;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
@@ -90,7 +91,10 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
 
     private void registerCommands() {
         handle.getCommandRegistry().registerCommand(new AddNodesCommand(
-                new String[]{"number of nodes", "processing threads per node"}, 
-                "Add nodes to the cluster.", this));
+                AddNodesCommand.ARG_DESCRIPTIONS, "Add nodes to the cluster.", this));
+        handle.getCommandRegistry().registerCommand(new GetInstancesCommand(
+                GetInstancesCommand.ARG_DESCRIPTIONS, 
+                "Get configured instances and their state from the configure AWS Account.", 
+                this));
     }
 }

@@ -142,7 +142,7 @@ public class AmazonInstanceManager {
      * @return A set containing all registered AWS EC2 instances regardless
      * of state.
      */
-    Set<? extends ComputeMetadata> getInstances() {
+    public Set<? extends ComputeMetadata> getInstances() {
         return valueOrNotReady(contextFuture).getComputeService().listNodes();
     }
 

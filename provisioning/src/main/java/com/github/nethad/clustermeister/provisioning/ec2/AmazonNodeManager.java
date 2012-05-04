@@ -111,6 +111,10 @@ public class AmazonNodeManager {
         }
     }
 
+    public AmazonInstanceManager getInstanceManager() {
+        return amazonInstanceManager;
+    }
+
     public ListenableFuture<? extends Node> addNode(AmazonNodeConfiguration nodeConfiguration,
             Optional<String> instanceId) {
         return executorService.submit(new AmazonNodeManager.AddNodeTask(nodeConfiguration, instanceId));
