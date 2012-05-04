@@ -16,33 +16,26 @@
 package com.github.nethad.clustermeister.provisioning.ec2.commands;
 
 import com.github.nethad.clustermeister.provisioning.Command;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
-import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.Futures;
-import com.google.common.util.concurrent.ListenableFuture;
-import java.util.List;
 import java.util.StringTokenizer;
-import java.util.concurrent.ExecutionException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author daniel
  */
 public abstract class AbstractExecutableCommand extends Command {
-    
-    final static Logger logger = 
-            LoggerFactory.getLogger(AbstractExecutableCommand.class);
 
-    protected AmazonCommandLineEvaluation commandLineEvaluation;
+//    protected CommandLineEvaluation commandLineEvaluation;
     
     public AbstractExecutableCommand(String commandName, String[] arguments, 
-            String helpText, AmazonCommandLineEvaluation commandLineEvaluation) {
+            String helpText) {
         super(commandName, arguments, helpText);
-        
-        this.commandLineEvaluation = commandLineEvaluation;
     }
+    
+        
+    protected int nextTokenAsInteger(StringTokenizer tokenizer) {
+        return Integer.valueOf(tokenizer.nextToken());
+    }
+        
     
     /**
      * Execute the command.
@@ -50,26 +43,4 @@ public abstract class AbstractExecutableCommand extends Command {
      * @param tokenizer The command line arguments.
      */
     public abstract void execute(StringTokenizer tokenizer);
-    
-    /**
-     * Wait for a list of futures to complete.
-     * 
-     * NOTE: for internal use only.
-     * 
-     */
-    void waitForFuturesToComplete(List<ListenableFuture<? extends Object>> futures, 
-            String interruptedMessage, String executionExceptionMessage, 
-            String unsuccessfulFuturesMessage) {
-        try {
-            List<Object> startedNodes = Futures.successfulAsList(futures).get();
-            int failedNodes = Iterables.frequency(startedNodes, null);
-            if(failedNodes > 0) {
-                logger.warn(unsuccessfulFuturesMessage, failedNodes);
-            }
-        } catch (InterruptedException ex) {
-            logger.warn(interruptedMessage, ex);
-        } catch (ExecutionException ex) {
-            logger.warn(executionExceptionMessage, ex);
-        }
-    }
 }

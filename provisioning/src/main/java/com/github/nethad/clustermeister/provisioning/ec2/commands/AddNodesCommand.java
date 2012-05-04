@@ -31,7 +31,7 @@ import java.util.StringTokenizer;
  *
  * @author daniel
  */
-public class AddNodesCommand extends AbstractExecutableCommand {
+public class AddNodesCommand extends AbstractAmazonExecutableCommand {
 
     /**
      * Command name.
@@ -45,8 +45,8 @@ public class AddNodesCommand extends AbstractExecutableCommand {
 
     @Override
     public void execute(StringTokenizer tokenizer) {
-        CommandLineHandle commandLineHandle = commandLineEvaluation.getHandle();
-        AmazonNodeManager nodeManager = commandLineEvaluation.getNodeManager();
+        CommandLineHandle commandLineHandle = getCommandLineHandle();
+        AmazonNodeManager nodeManager = getNodeManager();
         
         if (tokenizer.countTokens() != 2) {
             commandLineHandle.expectedArguments(new String[]{"number of nodes", "processing threads per node"});

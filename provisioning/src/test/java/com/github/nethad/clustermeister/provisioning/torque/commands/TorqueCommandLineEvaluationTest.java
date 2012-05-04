@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.torque;
+package com.github.nethad.clustermeister.provisioning.torque.commands;
 
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeInformation;
@@ -21,9 +21,11 @@ import com.github.nethad.clustermeister.api.impl.NodeInformationImpl;
 import com.github.nethad.clustermeister.provisioning.Command;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.CommandRegistry;
-import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiServerForApi;
-import com.google.common.util.concurrent.ListenableFuture;
+import com.github.nethad.clustermeister.provisioning.torque.ConfigurationForTesting;
+import com.github.nethad.clustermeister.provisioning.torque.TorqueNode;
+import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeConfiguration;
+import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.google.common.util.concurrent.SettableFuture;
 import java.util.Collection;
 import java.util.HashMap;

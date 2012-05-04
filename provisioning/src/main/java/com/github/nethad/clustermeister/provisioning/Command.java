@@ -45,6 +45,14 @@ public class Command {
         }
         return formattedArguments;
     }
+    
+    public String[] getArguments() {
+        return arguments;
+    }
+    
+    public int getArgumentCount() {
+        return arguments.length;
+    }
 
     private void buildFormattedArguments() {
         StringBuilder sb = new StringBuilder();

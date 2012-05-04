@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author thomas, daniel
  */
-public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
+public class AmazonCommandLineEvaluation implements CommandLineEvaluation<AmazonNodeManager> {
     private final Logger logger = LoggerFactory.getLogger(AmazonCommandLineEvaluation.class);
     
     private final AmazonNodeManager nodeManager;
@@ -70,14 +70,6 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
     public JPPFManagementByJobsClient getAmazonManagementClient() {
         return amazonManagementClient;
     }
-
-    public AmazonNodeManager getNodeManager() {
-        return nodeManager;
-    }
-
-    public CommandLineHandle getHandle() {
-        return handle;
-    }
     
     private AbstractExecutableCommand getCommand(String commandName) {
         Command command = handle.getCommandRegistry().getCommand(commandName);
@@ -92,5 +84,15 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
         handle.getCommandRegistry().registerCommand(new AddNodesCommand(
                 new String[]{"number of nodes", "processing threads per node"}, 
                 "Add nodes to the cluster.", this));
+    }
+    
+    @Override
+    public AmazonNodeManager getNodeManager() {
+        return nodeManager;
+    }
+
+    @Override
+    public CommandLineHandle getCommandLineHandle() {
+        return handle;
     }
 }

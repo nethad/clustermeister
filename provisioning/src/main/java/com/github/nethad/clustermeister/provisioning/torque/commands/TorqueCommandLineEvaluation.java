@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.torque;
+package com.github.nethad.clustermeister.provisioning.torque.commands;
 
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeInformation;
@@ -21,18 +21,19 @@ import com.github.nethad.clustermeister.api.utils.JPPFProperties;
 import com.github.nethad.clustermeister.provisioning.Command;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
+import com.github.nethad.clustermeister.provisioning.CommandRegistry;
 import com.github.nethad.clustermeister.provisioning.dependencymanager.DependencyConfigurationUtil;
-import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
+import com.github.nethad.clustermeister.provisioning.ec2.commands.AbstractExecutableCommand;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiServerForApi;
+import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeConfiguration;
+import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.io.File;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.LinkedList;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutionException;
-import javax.naming.OperationNotSupportedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +41,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author thomas
  */
-public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
+public class TorqueCommandLineEvaluation implements CommandLineEvaluation<TorqueNodeManager> {
     private static final String COMMAND_ADDNODES = "addnodes";
     private static final String COMMAND_REMOVENODE = "removenode";
     
@@ -50,28 +51,33 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
     private final CommandLineHandle handle;
     @VisibleForTesting
 //    Map<String, String> commandHelp = new HashMap<String, String>();
-    private final Collection<File> artifactsToPreload;
     private final RmiServerForApi rmiServerForApi;
+    
+    private Collection<AbstractExecutableCommand> commands = new LinkedList<AbstractExecutableCommand>();
 
     public TorqueCommandLineEvaluation(TorqueNodeManager nodeManager, CommandLineHandle handle, RmiServerForApi rmiServerForApi) {
         this.nodeManager = nodeManager;
         this.handle = handle;
         this.rmiServerForApi = rmiServerForApi;
-        this.artifactsToPreload = DependencyConfigurationUtil.getConfiguredDependencies(nodeManager.getConfiguration());
         buildCommandHelp();
     }
     
     private void buildCommandHelp() {
-        handle.getCommandRegistry().registerCommand(
-                new Command(
-                    COMMAND_ADDNODES, 
-                    new String[]{"number of nodes", "processing threads per node"}, 
-                    "Add nodes (= torque job) to the cluster."));
-        handle.getCommandRegistry().registerCommand(
-                new Command(
-                    "removenode", 
-                    new String[]{"node ID"}, 
-                    "Remove node from the cluster."));
+        AbstractExecutableCommand addNodesCommand = new AddNodesCommand(
+                                                      new String[]{"number of nodes", "processing threads per node"}, 
+                                                      "Add nodes (= torque job) to the cluster.", 
+                                                      this);
+        addAndRegisterCommand(addNodesCommand);
+        AbstractExecutableCommand removeNodeCommand = new RemoveNodeCommand(
+                                                          new String[]{"node ID"}, 
+                                                          "Remove node from the cluster.", 
+                                                          this);
+        addAndRegisterCommand(removeNodeCommand);
+    }
+    
+    private void addAndRegisterCommand(AbstractExecutableCommand command) {
+        handle.getCommandRegistry().registerCommand(command);
+        commands.add(command);
     }
     
 //    public String[] commands() {
@@ -80,41 +86,20 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
     
     @Override
     public void state(StringTokenizer tokenizer) {
-        Collection<NodeInformation> allNodes = rmiServerForApi.getAllNodes();
-        handle.print("running nodes: %d", allNodes.size());
-        
-        for (NodeInformation nodeInformation : allNodes) {
-            String id = nodeInformation.getID();
-            String processingThreads = nodeInformation.getJPPFSystemInformation().getJppf().getProperty(JPPFProperties.PROCESSING_THREADS);
-            handle.print("node %s: %s processing threads.", id, processingThreads);
-        }
+        new StateCommand(null, null, this).execute(tokenizer);
+//        Collection<NodeInformation> allNodes = rmiServerForApi.getAllNodes();
+//        handle.print("running nodes: %d", allNodes.size());
+//        
+//        for (NodeInformation nodeInformation : allNodes) {
+//            String id = nodeInformation.getID();
+//            String processingThreads = nodeInformation.getJPPFSystemInformation().getJppf().getProperty(JPPFProperties.PROCESSING_THREADS);
+//            handle.print("node %s: %s processing threads.", id, processingThreads);
+//        }
     }
 
     @VisibleForTesting
     void addNodes(StringTokenizer tokenizer) {
-        if (tokenizer.countTokens() != 2) {
-            handle.expectedArguments(new String[]{"number of nodes", "processing threads per node"});
-            return;
-        }
-        int numberOfNodes = Integer.parseInt(tokenizer.nextToken());
-        int numberOfCpusPerNode = Integer.parseInt(tokenizer.nextToken());
-        
-        final TorqueNodeConfiguration torqueNodeConfiguration =
-                TorqueNodeConfiguration.configurationForNode(numberOfCpusPerNode, artifactsToPreload);
-                
-        ListenableFuture<? extends Node> lastNode = null;
-        for (int i = 0; i < numberOfNodes; i++) {
-            lastNode = nodeManager.addNode(torqueNodeConfiguration);
-        }
-        try {
-            lastNode.get();
-        } catch (InterruptedException ex) {
-            logger.warn("Waited for last node to start up", ex);
-        } catch (ExecutionException ex) {
-            logger.warn("Waited for last node to start up", ex);
-//        } catch (TimeoutException ex) {
-//            logger.warn("Waited for last node to start up", ex);
-        }
+//        new AddNodesCommand(tokenizer, handle, nodeManager).execute();
     }
 
     @Override
@@ -125,15 +110,25 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
 
     @Override
     public void handleCommand(String command, StringTokenizer tokenizer) {
-        if (command.equals(COMMAND_ADDNODES)) {
-            addNodes(tokenizer);
-        } else if (command.equals(COMMAND_REMOVENODE)) {
-            removeNode(tokenizer);
+        for (AbstractExecutableCommand executableCommand : commands) {
+            if (executableCommand.getCommandName().equals(command)) {
+                executableCommand.execute(tokenizer);
+            }
         }
     }
+
+    @Override
+    public CommandLineHandle getCommandLineHandle() {
+        return handle;
+    }
     
-    private void removeNode(StringTokenizer tokenizer) {
-        throw new RuntimeException("Not yet implemented");
+    @Override
+    public TorqueNodeManager getNodeManager() {
+        return nodeManager;
+    }
+    
+    public RmiServerForApi getRmiServerForApi() {
+        return rmiServerForApi;
     }
     
 }

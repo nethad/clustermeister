@@ -142,6 +142,10 @@ public class Provisioning {
             public void shutdown(StringTokenizer tokenizer) {} // do nothing
             @Override
             public void handleCommand(String command, StringTokenizer tokenizer) {} // do nothing
+            @Override
+            public Object getNodeManager() { return null; }
+            @Override
+            public CommandLineHandle getCommandLineHandle() { return null; }
         };
         jppfLocalDriver = new JPPFLocalDriver();
         jppfLocalDriver.execute();

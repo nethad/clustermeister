@@ -26,7 +26,7 @@ import java.util.StringTokenizer;
  *
  * @author daniel
  */
-public class StateCommand extends AbstractExecutableCommand {
+public class StateCommand extends AbstractAmazonExecutableCommand {
     
     /**
      * Command name.
@@ -41,7 +41,7 @@ public class StateCommand extends AbstractExecutableCommand {
     @Override
     public void execute(StringTokenizer tokenizer) {
         AmazonNodeManager nodeManager = commandLineEvaluation.getNodeManager();
-        CommandLineHandle commandLineHandle = commandLineEvaluation.getHandle();
+        CommandLineHandle commandLineHandle = commandLineEvaluation.getCommandLineHandle();
         Collection<? extends Node> nodes = nodeManager.getNodes();
         if(nodes == null || nodes.isEmpty()) {
             commandLineHandle.print("No nodes registered.");

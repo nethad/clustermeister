@@ -32,7 +32,7 @@ import java.util.StringTokenizer;
  *
  * @author daniel
  */
-public class ShutdownCommand extends AbstractExecutableCommand {
+public class ShutdownCommand extends AbstractAmazonExecutableCommand {
 
     /**
      * Command name.

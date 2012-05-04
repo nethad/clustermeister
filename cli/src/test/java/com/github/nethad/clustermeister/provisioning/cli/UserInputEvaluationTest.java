@@ -17,6 +17,7 @@ package com.github.nethad.clustermeister.provisioning.cli;
 
 import com.github.nethad.clustermeister.provisioning.Command;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
+import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import java.util.StringTokenizer;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -110,6 +111,16 @@ public class UserInputEvaluationTest {
         public void handleCommand(String command, StringTokenizer tokenizer) {
             lastTokenizer = tokenizer;
             this.lastCommand = command;
+        }
+
+        @Override
+        public Object getNodeManager() {
+            throw new UnsupportedOperationException("Not supported yet.");
+        }
+
+        @Override
+        public CommandLineHandle getCommandLineHandle() {
+            throw new UnsupportedOperationException("Not supported yet.");
         }
         
     }
