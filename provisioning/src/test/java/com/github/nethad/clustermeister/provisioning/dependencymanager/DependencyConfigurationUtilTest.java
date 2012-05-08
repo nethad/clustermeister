@@ -15,7 +15,11 @@
  */
 package com.github.nethad.clustermeister.provisioning.dependencymanager;
 
+import com.github.nethad.clustermeister.api.impl.YamlConfiguration;
+import com.google.common.base.Charsets;
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.InputStreamReader;
 import java.util.List;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.hamcrest.Matcher;
@@ -113,11 +117,24 @@ public class DependencyConfigurationUtilTest {
     
     @Test
     public void testMavenRepository() throws DependencyResolutionException {
-        PropertiesConfiguration configuration = new PropertiesConfiguration();
-        configuration.addProperty(DependencyConfigurationUtil.MAVEN_REPOSITORIES, 
-                EXAMPLE_MAVEN_REPO);
-        configuration.addProperty(DependencyConfigurationUtil.MAVEN_REPOSITORIES, 
-                EXAMPLE_MAVEN_REPO2);
+        
+        StringBuilder config = new StringBuilder("preload:").append("\n");
+        config.append("  maven_repositories:").append("\n");
+        config.append("    - ").append(EXAMPLE_REPO_ID).append(":").append("\n");
+        config.append("        ").append(DependencyConfigurationUtil.MAVEN_REPO_LAYOUT).
+                append(": ").append(EXAMPLE_REPO_TYPE).append("\n");
+        config.append("        ").append(DependencyConfigurationUtil.MAVEN_REPO_URL).
+                append(": ").append(EXAMPLE_REPO_URL).append("\n");
+        config.append("    - ").append(EXAMPLE_REPO2_ID).append(":").append("\n");
+        config.append("        ").append(DependencyConfigurationUtil.MAVEN_REPO_LAYOUT).
+                append(": ").append(EXAMPLE_REPO2_TYPE).append("\n");
+        config.append("        ").append(DependencyConfigurationUtil.MAVEN_REPO_URL).
+                append(": ").append(EXAMPLE_REPO2_URL).append("\n");
+        ByteArrayInputStream configBytes = new ByteArrayInputStream(
+                config.toString().getBytes(Charsets.UTF_8));
+        
+        YamlConfiguration configuration = new YamlConfiguration();
+        configuration.load(new InputStreamReader(configBytes));
         
         DependencyConfigurationUtil.getConfiguredDependencies(configuration);
         

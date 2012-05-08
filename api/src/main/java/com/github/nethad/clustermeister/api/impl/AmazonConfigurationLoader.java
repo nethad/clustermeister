@@ -19,6 +19,7 @@ import com.github.nethad.clustermeister.api.Credentials;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Maps;
 import java.io.File;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.configuration.Configuration;
@@ -100,7 +101,7 @@ public class AmazonConfigurationLoader {
      * @return the configured credentials.
      */
     public Map<String, Credentials> getConfiguredCredentials() {
-        List<Object> keypairList = configuration.getList(KEYPAIRS);
+        List<Object> keypairList = configuration.getList(KEYPAIRS, Collections.EMPTY_LIST);
         Map<String, Map<String, String>> keypairSpecifications = 
                 ConfigurationUtil.reduceObjectList(keypairList, 
                 "Keypairs must be specified as a list of objects.");

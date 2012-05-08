@@ -15,13 +15,14 @@
  */
 package com.github.nethad.clustermeister.provisioning.dependencymanager;
 
+import com.github.nethad.clustermeister.api.impl.ConfigurationUtil;
 import com.google.common.annotations.VisibleForTesting;
-import static com.google.common.base.Preconditions.*;
 import java.io.File;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,21 +38,44 @@ import org.sonatype.aether.resolution.DependencyResolutionException;
 public class DependencyConfigurationUtil {
     
     /**
-     * A Maven repository configuration.
+     * A Maven repository list configuration.
      * <p>
      *  Sometimes additional Maven repositories need to be configured in order 
      *  to resolve artifacts.
      * </p>
      * <p>
-     *  Format: &lt;id&gt;|&lt;repoLayout&gt;|&lt;url&gt;
-     *  <br/>
-     *  Example: central|default|http://repo1.maven.org/maven2/
+     *  Format: 
+     * <pre>
+     * preload:
+     *   maven_repositories:
+     *     - repoId:
+     *         layout: default|legacy
+     *         url: repo url
+     * </pre>
+     * Example:
+     *  <pre>
+     * preload:
+     *   maven_repositories:
+     *     - central:
+     *         layout: default
+     *         url: http://repo1.maven.org/maven2/
+     * </pre>
      * </p>
      * <p>
      *  NOTE: The Maven central repository is already pre-configured by default.
      * </p>
      */
     public static final String MAVEN_REPOSITORIES = "preload.maven_repositories";
+    
+    /**
+     * Layout configuration property for Maven repositories.
+     */
+    public static final String MAVEN_REPO_LAYOUT = "layout";
+    
+    /**
+     * Url configuration property for Maven repositories.
+     */
+    public static final String MAVEN_REPO_URL = "url";
     
     /**
      * A Maven artifact specification that will be preloaded on to JPPF Nodes 
@@ -155,21 +179,7 @@ public class DependencyConfigurationUtil {
             }
         }
         
-        List<Object> repositories = configuration.getList(MAVEN_REPOSITORIES, 
-                Collections.EMPTY_LIST);
-        for (Object repositorySpecification : repositories) {
-            try {
-                String[] repositoryInfo = repositorySpecification.toString().split("\\|");
-                String helpMessage = "A repository specification needs at least three parts: id|repoLayout|url.";
-                checkArgument(repositoryInfo.length >= 3, helpMessage);
-                RemoteRepository repo = repositorySystem.createRemoteRepository(
-                      repositoryInfo[0], repositoryInfo[1], repositoryInfo[2]);
-                repositorySystem.addRepository(repo);
-                logger.info("Adding repository for dependency resolution: {}.", repo);
-            } catch (Exception ex) {
-                logger.warn("Could not process repository specification.", ex);
-            }
-        }
+        processMavenRepositories(configuration, repositorySystem);
         
         List<Object> artifacts = configuration.getList(PRELOAD_ARTIFACTS, 
                 Collections.EMPTY_LIST);
@@ -226,5 +236,29 @@ public class DependencyConfigurationUtil {
         rs.addGlobalExclusion("org.jvnet.opendmk:jmxremote_optional");
         rs.addGlobalExclusion("log4j");
         rs.addGlobalExclusion("slf4j");
+    }
+    
+    static void processMavenRepositories(Configuration configuration, 
+            MavenRepositorySystem repositorySystem) {
+        
+        List<Object> repoList = configuration.getList(MAVEN_REPOSITORIES, Collections.EMPTY_LIST);
+        Map<String, Map<String, String>> repoSpecification = 
+                ConfigurationUtil.reduceObjectList(repoList, 
+                "Maven repositories must be specified as a list of objects.");
+        for (Map.Entry<String, Map<String, String>> entry : repoSpecification.entrySet()) {
+            String repoId = entry.getKey();
+            Map<String, String> repoValues = entry.getValue();
+            try {
+                String layout = ConfigurationUtil.getCheckedConfigValue(
+                        MAVEN_REPO_LAYOUT, repoValues, "maven repository", repoId);
+                String url = ConfigurationUtil.getCheckedConfigValue(
+                        MAVEN_REPO_URL, repoValues, "maven repository", repoId);
+                RemoteRepository repo = repositorySystem.createRemoteRepository(repoId, layout, url);
+                logger.info("Adding repository for dependency resolution: {}.", repo);
+                repositorySystem.addRepository(repo);
+            } catch(Exception ex) {
+                logger.warn("Could not process repository specification {}.", repoId, ex);
+            }
+        }
     }
 }
