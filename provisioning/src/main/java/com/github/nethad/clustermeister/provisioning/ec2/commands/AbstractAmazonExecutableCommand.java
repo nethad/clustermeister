@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2.commands;
 
+import com.github.nethad.clustermeister.provisioning.AbstractExecutableCommand;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
@@ -31,9 +32,9 @@ import org.slf4j.LoggerFactory;
  * @author thomas
  */
 public abstract class AbstractAmazonExecutableCommand extends AbstractExecutableCommand {
-    
-        final static Logger logger = 
-            LoggerFactory.getLogger(AbstractExecutableCommand.class);
+ 
+    final static Logger logger = 
+            LoggerFactory.getLogger(AbstractAmazonExecutableCommand.class);
 
     protected AmazonCommandLineEvaluation commandLineEvaluation;
     
