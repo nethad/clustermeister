@@ -105,13 +105,13 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
         infrastructureDeployer.deployInfrastructure(artifactsToPreload);
     }
 
-    public TorqueNode submitJob(TorqueNodeConfiguration nodeConfiguration, TorqueNodeManagement torqueNodeManagement) throws SSHClientException {
+    public TorqueNode submitJob(TorqueNodeConfiguration nodeConfiguration) throws SSHClientException {
         if (!isInfrastructureDeployed) {
             prepareAndDeployInfrastructure(nodeConfiguration.getArtifactsToPreload());
         }
         NodeDeployTask nodeDeployTask = new NodeDeployTask(this, currentNodeNumber.getAndIncrement(), nodeConfiguration, email);
         final TorqueNode torqueNode = nodeDeployTask.execute();
-        torqueNodeManagement.addManagedNode(torqueNode);
+//        torqueNodeManagement.addManagedNode(torqueNode);
         return torqueNode;
     }
     
