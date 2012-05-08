@@ -29,12 +29,14 @@ import java.util.StringTokenizer;
 public class StateCommand extends AbstractTorqueExecutableCommand {
     
     private static final String COMMAND = "state";
+    private static final String[] ARGUMENTS = new String[]{};
+    private static final String HELP_TEXT = "state";
     
 //    private RmiServerForApi rmiServerForApi;
 //    private CommandLineHandle handle;
     
-    public StateCommand(String[] arguments, String helpText, TorqueCommandLineEvaluation commandLineEvaluation) {
-        super(COMMAND, arguments, helpText, commandLineEvaluation);
+    public StateCommand(TorqueCommandLineEvaluation commandLineEvaluation) {
+        super(COMMAND, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
     }
     
     @Override

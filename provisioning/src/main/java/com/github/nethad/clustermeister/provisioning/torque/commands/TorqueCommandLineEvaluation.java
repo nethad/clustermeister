@@ -70,15 +70,7 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
     
     @Override
     public void state(StringTokenizer tokenizer) {
-        new StateCommand(null, null, this).execute(tokenizer);
-//        Collection<NodeInformation> allNodes = rmiServerForApi.getAllNodes();
-//        handle.print("running nodes: %d", allNodes.size());
-//        
-//        for (NodeInformation nodeInformation : allNodes) {
-//            String id = nodeInformation.getID();
-//            String processingThreads = nodeInformation.getJPPFSystemInformation().getJppf().getProperty(JPPFProperties.PROCESSING_THREADS);
-//            handle.print("node %s: %s processing threads.", id, processingThreads);
-//        }
+        new StateCommand(this).execute(tokenizer);
     }
 
     @Override
