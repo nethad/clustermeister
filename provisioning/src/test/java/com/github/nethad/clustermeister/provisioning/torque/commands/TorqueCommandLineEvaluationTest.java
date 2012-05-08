@@ -27,16 +27,22 @@ import com.github.nethad.clustermeister.provisioning.torque.TorqueNode;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.google.common.util.concurrent.SettableFuture;
+import java.math.MathContext;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Scanner;
+import org.hamcrest.Matcher;
 import org.jppf.management.JPPFSystemInformation;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
-import static org.mockito.Matchers.*;
 import static org.mockito.Mockito.*;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.hasItem;
+import static org.junit.Assert.assertThat;
+import org.mockito.ArgumentCaptor;
 
 
 /**
@@ -45,7 +51,7 @@ import static org.mockito.Mockito.*;
  */
 public class TorqueCommandLineEvaluationTest {
     private TorqueCommandLineEvaluation commandLineEvaluation;
-    private CommandLineHandle commandLineHandle;
+    private TestCommandLineHandle commandLineHandle;
     private JPPFSystemInformation jppfSystemInformation;
     private RmiServerForApi rmiServerForApi;
     private TorqueNodeManager torqueNodeManager;
@@ -55,23 +61,13 @@ public class TorqueCommandLineEvaluationTest {
         torqueNodeManager = mock(TorqueNodeManager.class);
         when(torqueNodeManager.getConfiguration())
                 .thenReturn(new ConfigurationForTesting(new HashMap<String, Object>()));
-        commandLineHandle = mock(CommandLineHandle.class);
-        when(commandLineHandle.getCommandRegistry()).thenReturn(new CommandRegistry() {
-
+        commandLineHandle = new TestCommandLineHandle(new CommandRegistry() {
             @Override
-            public void registerCommand(Command command) {
-                
-            }
-
+            public void registerCommand(Command command) {}
             @Override
-            public void unregisterCommand(Command command) {
-                
-            }
-
+            public void unregisterCommand(Command command) {}
             @Override
-            public Command getCommand(String commandName) {
-                return null;
-            }
+            public Command getCommand(String commandName) { return null; }
         });
         rmiServerForApi = mock(RmiServerForApi.class);
         commandLineEvaluation = new TorqueCommandLineEvaluation(torqueNodeManager, commandLineHandle, rmiServerForApi);
@@ -89,6 +85,24 @@ public class TorqueCommandLineEvaluationTest {
     }
     
     @Test
+    public void removeNodes() {
+        SettableFuture<TorqueNode> settableFuture = SettableFuture.create();
+        settableFuture.set(null);
+        doReturn(settableFuture).when(torqueNodeManager).removeNodes(anyCollection());
+        
+        Collection<NodeInformation> allNodesFromRmi = new LinkedList<NodeInformation>();
+        allNodesFromRmi.add(new NodeInformationImpl("1", null));
+        when(rmiServerForApi.getAllNodes()).thenReturn(allNodesFromRmi);
+        
+        commandLineEvaluation.handleCommand("removenode", new CommandLineArguments("1"));
+        
+        ArgumentCaptor<Collection> nodeUuidsCaptor = ArgumentCaptor.forClass(Collection.class);
+        verify(torqueNodeManager).removeNodes(nodeUuidsCaptor.capture());
+        assertThat(nodeUuidsCaptor.getValue().size(), is(1));
+        assertThat((Collection<String>)nodeUuidsCaptor.getValue(), hasItem("1"));
+    }
+    
+    @Test
     public void state() {
         Collection<NodeInformation> allNodes = new LinkedList<NodeInformation>();
         allNodes.add(new NodeInformationImpl("1", createSystemInformation()));
@@ -97,9 +111,9 @@ public class TorqueCommandLineEvaluationTest {
         
         commandLineEvaluation.state(null);
         
-        verify(commandLineHandle).print(contains("running nodes: "), eq(2));
-        verify(commandLineHandle).print(contains("node %s:"), eq("1"), any(String.class));
-        verify(commandLineHandle).print(contains("node %s:"), eq("2"), any(String.class));
+        assertThat(commandLineHandle.getPrintOutput(), containsString("running nodes: 2"));
+        assertThat(commandLineHandle.getPrintOutput(), containsString("node 1: "));
+        assertThat(commandLineHandle.getPrintOutput(), containsString("node 2: "));
     }
     
     @Test

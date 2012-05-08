@@ -16,20 +16,14 @@
 package com.github.nethad.clustermeister.provisioning.torque.commands;
 
 import com.github.nethad.clustermeister.api.Node;
-import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
-import com.github.nethad.clustermeister.provisioning.dependencymanager.DependencyConfigurationUtil;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
-import com.github.nethad.clustermeister.provisioning.AbstractExecutableCommand;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
+import com.github.nethad.clustermeister.provisioning.dependencymanager.DependencyConfigurationUtil;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeConfiguration;
-import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.io.File;
 import java.util.Collection;
 import java.util.Scanner;
-import java.util.StringTokenizer;
 import java.util.concurrent.ExecutionException;
-import java.util.logging.Handler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
