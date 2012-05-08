@@ -15,41 +15,48 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2.commands;
 
-import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
-import java.util.Collection;
+import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 /**
  *
  * @author daniel
  */
-public class StateCommand extends AbstractAmazonExecutableCommand {
-    
+public class GetKeypairsCommand extends AbstractAmazonExecutableCommand {
+
     /**
      * Command name.
      */
-    public static final String NAME = "state";
+    public static final String NAME = "getkeypairs";
 
-    public StateCommand(String[] arguments, String helpText, 
+    private static final String SEPARATOR_LINE = "-------------------------------------------------";
+    
+    public GetKeypairsCommand(String[] arguments, String helpText, 
             AmazonCommandLineEvaluation commandLineEvaluation) {
         super(NAME, arguments, helpText, commandLineEvaluation);
     }
-
+    
     @Override
     public void execute(StringTokenizer tokenizer) {
-        AmazonNodeManager nodeManager = getNodeManager();
-        CommandLineHandle commandLineHandle = getCommandLineHandle();
-        Collection<? extends Node> nodes = nodeManager.getNodes();
-        if(nodes == null || nodes.isEmpty()) {
-            commandLineHandle.print("No nodes registered.");
-        }
+        AmazonInstanceManager amazonInstanceManager = 
+                getNodeManager().getInstanceManager();
+        CommandLineHandle handle = getCommandLineHandle();
         
-        for(Node node : nodes) {
-            commandLineHandle.print(node.toString());
+        handle.print("Configured keypair names:");
+        handle.print(SEPARATOR_LINE);
+        Set<String> configuredKeypairNames = 
+                amazonInstanceManager.getConfiguredKeypairNames();
+        
+        if(configuredKeypairNames.isEmpty()) {
+            handle.print("No keypairs configured.");
+        } else {
+            for(String keypairName : configuredKeypairNames) {
+                handle.print(keypairName);
+            }
         }
+        handle.print(SEPARATOR_LINE);
     }
-    
 }

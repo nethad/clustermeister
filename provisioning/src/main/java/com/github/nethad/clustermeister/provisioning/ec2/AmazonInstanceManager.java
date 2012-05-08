@@ -17,6 +17,7 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.JPPFConstants;
+import com.github.nethad.clustermeister.api.impl.AmazonConfigurationLoader;
 import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.PasswordCredentials;
@@ -88,6 +89,7 @@ public class AmazonInstanceManager {
     private final Monitor reverseTunnelMonitor = new Monitor(false);
     private final Map<String, SocksTunnel> instanceToReverseTunnel =
             new HashMap<String, SocksTunnel>();
+    private Map<String, Credentials> keypairs;
 
     /**
      * Creates a new AmazonInstanceManager.
@@ -142,7 +144,7 @@ public class AmazonInstanceManager {
      * @return A set containing all registered AWS EC2 instances regardless
      * of state.
      */
-    Set<? extends ComputeMetadata> getInstances() {
+    public Set<? extends ComputeMetadata> getInstances() {
         return valueOrNotReady(contextFuture).getComputeService().listNodes();
     }
 
@@ -152,8 +154,16 @@ public class AmazonInstanceManager {
      * @param id	The jClouds node ID.
      * @return	jClouds node meta data object.
      */
-    NodeMetadata getInstanceMetadata(String id) {
+    public NodeMetadata getInstanceMetadata(String id) {
         return valueOrNotReady(contextFuture).getComputeService().getNodeMetadata(id);
+    }
+    
+    public Set<String> getConfiguredKeypairNames() {
+        return Collections.unmodifiableSet(keypairs.keySet());
+    }
+    
+    public Credentials getConfiguredCredentials(String keypairName) {
+        return keypairs.get(keypairName);
     }
 
     /**
@@ -189,10 +199,14 @@ public class AmazonInstanceManager {
 
         NodeMetadata metadata = Iterables.getOnlyElement(instances);
         if(!nodeConfiguration.getCredentials().isPresent()) {
+            AmazonGeneratedKeyPairCredentials credentials = 
+                    new AmazonGeneratedKeyPairCredentials(
+                        metadata.getCredentials().getUser(), 
+                        metadata.getCredentials().getPrivateKey());
             //TODO: generated credentials need to be persited somehow for re-use
-            nodeConfiguration.setCredentials(new AmazonGeneratedKeyPairCredentials(
-                    AmazonConfiguredKeyPairCredentials.DEFAULT_USER, 
-                    metadata.getCredentials().getPrivateKey()));
+            String credentialsName = String.format("Keypair for %s", metadata.getId());
+            keypairs.put(credentialsName, credentials);
+            nodeConfiguration.setCredentials(credentials);
         }
         logger.info("Instance {} created.", metadata.getId());
         return metadata;
@@ -441,12 +455,13 @@ public class AmazonInstanceManager {
 
     private void loadConfiguration(Configuration configuration) {
         logger.debug("Loading Configuration...");
-        accessKeyId = checkNotNull(
-                configuration.getString("amazon.access_key_id", null), 
-                "No Amazon access key ID configured.").trim();
-        secretKey = checkNotNull(
-                configuration.getString("amazon.secret_key", null), 
-                "No Amazon secret key configured.").trim();
+        AmazonConfigurationLoader configurationLoader = 
+                new AmazonConfigurationLoader(configuration);
+        accessKeyId = configurationLoader.getAccessKeyId();
+        secretKey = configurationLoader.getSecretKey();
+        
+        keypairs = Collections.synchronizedMap(configurationLoader.getConfiguredCredentials());
+        
         artifactsToPreload = DependencyConfigurationUtil.getConfiguredDependencies(configuration);
     }
     

@@ -114,11 +114,6 @@ public class UserInputEvaluationTest {
         }
 
         @Override
-        public Object getNodeManager() {
-            throw new UnsupportedOperationException("Not supported yet.");
-        }
-
-        @Override
         public CommandLineHandle getCommandLineHandle() {
             throw new UnsupportedOperationException("Not supported yet.");
         }

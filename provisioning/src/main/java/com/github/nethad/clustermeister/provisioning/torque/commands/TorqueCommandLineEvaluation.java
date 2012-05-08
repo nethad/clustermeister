@@ -15,25 +15,15 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque.commands;
 
-import com.github.nethad.clustermeister.api.Node;
-import com.github.nethad.clustermeister.api.NodeInformation;
-import com.github.nethad.clustermeister.api.utils.JPPFProperties;
-import com.github.nethad.clustermeister.provisioning.Command;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
-import com.github.nethad.clustermeister.provisioning.CommandRegistry;
-import com.github.nethad.clustermeister.provisioning.dependencymanager.DependencyConfigurationUtil;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.AbstractExecutableCommand;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiServerForApi;
-import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.util.concurrent.ListenableFuture;
-import java.io.File;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.StringTokenizer;
-import java.util.concurrent.ExecutionException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -78,10 +68,6 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
         commands.add(command);
     }
     
-//    public String[] commands() {
-//        return commandHelp.keySet().toArray(new String[]{});
-//    }
-    
     @Override
     public void state(StringTokenizer tokenizer) {
         new StateCommand(null, null, this).execute(tokenizer);
@@ -93,11 +79,6 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
 //            String processingThreads = nodeInformation.getJPPFSystemInformation().getJppf().getProperty(JPPFProperties.PROCESSING_THREADS);
 //            handle.print("node %s: %s processing threads.", id, processingThreads);
 //        }
-    }
-
-    @VisibleForTesting
-    void addNodes(StringTokenizer tokenizer) {
-//        new AddNodesCommand(tokenizer, handle, nodeManager).execute();
     }
 
     @Override

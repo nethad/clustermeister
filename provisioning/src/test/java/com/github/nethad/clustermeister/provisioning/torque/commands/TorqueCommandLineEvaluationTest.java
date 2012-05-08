@@ -87,12 +87,12 @@ public class TorqueCommandLineEvaluationTest {
     }
     
     @Test
-    public void help() {
+    public void addNodes() {
         SettableFuture<TorqueNode> settableFuture = SettableFuture.create();
         settableFuture.set(new TorqueNode("", "", "", 11111, 11198));
         doReturn(settableFuture).when(torqueNodeManager).addNode(any(TorqueNodeConfiguration.class));
         
-        commandLineEvaluation.addNodes(new StringTokenizer("1 1"));
+        commandLineEvaluation.handleCommand("addnodes", new StringTokenizer("1 1"));
         
         verify(torqueNodeManager).addNode(argThat(new MatchesTorqueNodeConfiguration(null, 1)));
     }
