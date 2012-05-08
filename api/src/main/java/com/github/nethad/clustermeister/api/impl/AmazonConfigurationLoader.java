@@ -109,17 +109,17 @@ public class AmazonConfigurationLoader {
         for (Map.Entry<String, Map<String, String>> entry : keypairSpecifications.entrySet()) {
             String keyPairName = entry.getKey();
             Map<String, String> keyPairValues = entry.getValue();
-            String user = getCheckedConfigValue(USER, keyPairValues, "keypair", 
-                    keyPairName);
-            String privateKeyPath = getCheckedConfigValue(PRIVATE_KEY, 
-                    keyPairValues, "keypair", keyPairName);
-            File privateKey = getCheckedFile(privateKeyPath, PRIVATE_KEY, 
-                    "keypair", keyPairName);
+            String user = ConfigurationUtil.getCheckedConfigValue(
+                    USER, keyPairValues, "keypair", keyPairName);
+            String privateKeyPath = ConfigurationUtil.getCheckedConfigValue(
+                    PRIVATE_KEY, keyPairValues, "keypair", keyPairName);
+            File privateKey = ConfigurationUtil.getCheckedFile(
+                    privateKeyPath, PRIVATE_KEY, "keypair", keyPairName);
             
             String publicKeyPath = keyPairValues.get(PUBLIC_KEY);
             if(publicKeyPath != null) {
-                File publicKey = getCheckedFile(publicKeyPath, PUBLIC_KEY, 
-                        "keypair", keyPairName);
+                File publicKey = ConfigurationUtil.getCheckedFile(
+                        publicKeyPath, PUBLIC_KEY, "keypair", keyPairName);
                 credentials.put(keyPairName,
                         new KeyPairCredentials(user, privateKey, publicKey));
             } else {
@@ -130,22 +130,5 @@ public class AmazonConfigurationLoader {
         }
         
         return credentials;
-    }
-    
-    private File getCheckedFile(String path, String key, String listObjectCategory, String listObjectName) {
-        File file = new File(path);
-        checkArgument(file.isFile() && file.canRead(),
-                "%s for %s %s can not be read from.", key, listObjectCategory, listObjectName);
-        return file;
-    }
-    
-    private String getCheckedConfigValue(String key, Map<String, String> configMap, 
-            String listObjectCategory, String listObjectName) {
-        checkArgument(configMap.containsKey(key),
-                "No key '%s' found for %s %s.", key, listObjectCategory, listObjectName);
-        String value = checkNotNull(configMap.get(key),
-                "No value for key '%s' found for %s %s.", key, listObjectCategory, 
-                listObjectName).trim();
-        return value;
     }
 }

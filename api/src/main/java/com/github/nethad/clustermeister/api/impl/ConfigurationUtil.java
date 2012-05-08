@@ -16,12 +16,15 @@
 package com.github.nethad.clustermeister.api.impl;
 
 import com.google.common.base.Function;
+import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
 /**
+ * Utility methods for reading values from configuration files.
  *
  * @author daniel
  */
@@ -92,5 +95,76 @@ public class ConfigurationUtil {
         } catch(ClassCastException ex) {
             throw new IllegalArgumentException(errorMessage, ex);
         }
+    }
+    
+    /**
+     * Get a {@link File} from a path string.
+     * 
+     * <p>
+     * This method checks if the file exists and is readable.
+     * </p>
+     * 
+     * <p>
+     * The error reporting pattern referred to in the parameter list is: 
+     * <br/>
+     * '&lt;key&gt; for &lt;listObjectCategory&gt; &lt;listObjectName&gt; can 
+     * not be read from.'
+     * </p>
+     * <p>
+     * Example:
+     * <br/>
+     * url for Maven Repository 'My Maven Repository' can not be read from.
+     * </p>
+     * @param path the path to the file.
+     * @param key   
+     *      Configuration key/property name, e.g. 'user_name' (like in: 
+     *      'user_name = Hans Wurst'). This is used for error reporting.
+     * @param listObjectCategory
+     *      Configuration category (e.g. 'Maven Repository'). 
+     *      Used for error reporting.
+     * @param listObjectName
+     *      Configuration category name (e.g. 'My Maven Repository').
+     *      Used for error reporting.
+     * @return the file.
+     */
+    public static File getCheckedFile(String path, String key, String listObjectCategory, String listObjectName) {
+        File file = new File(path);
+        checkArgument(file.isFile() && file.canRead(),
+                "%s for %s '%s' can not be read from.", key, listObjectCategory, listObjectName);
+        return file;
+    }
+    
+    /**
+     * Get a configuration value from a map.
+     * 
+     * <p>
+     * This method checks that the key is contained in the map and the value is 
+     * not null.
+     * </p>
+     * 
+     * <p>
+     * For details about the error reporting pattern referred to below check 
+     * {@link #getCheckedFile(java.lang.String, java.lang.String, java.lang.String, java.lang.String)}.
+     * </p>
+     * @param key   
+     *      Configuration key/property, e.g. 'user_name' (like in: 
+     *      'user_name = Hans Wurst').
+     * @param configMap the map containing the key/value pair.
+     * @param listObjectCategory
+     *      Configuration category (e.g. 'Maven Repository'). 
+     *      Used for error reporting.
+     * @param listObjectName
+     *      Configuration category name (e.g. 'My Maven Repository').
+     *      Used for error reporting.
+     * @return the value.
+     */
+    public static String getCheckedConfigValue(String key, Map<String, String> configMap, 
+            String listObjectCategory, String listObjectName) {
+        checkArgument(configMap.containsKey(key),
+                "No key '%s' found for %s '%s'.", key, listObjectCategory, listObjectName);
+        String value = checkNotNull(configMap.get(key),
+                "No value for key '%s' found for %s '%s'.", key, listObjectCategory, 
+                listObjectName).trim();
+        return value;
     }
 }
