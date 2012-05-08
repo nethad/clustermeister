@@ -16,9 +16,7 @@
 package com.github.nethad.clustermeister.api.impl;
 
 import com.github.nethad.clustermeister.api.Credentials;
-import com.google.common.base.Function;
 import static com.google.common.base.Preconditions.*;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import java.io.File;
 import java.util.List;
@@ -104,7 +102,7 @@ public class AmazonConfigurationLoader {
     public Map<String, Credentials> getConfiguredCredentials() {
         List<Object> keypairList = configuration.getList(KEYPAIRS);
         Map<String, Map<String, String>> keypairSpecifications = 
-                reduceObjectList(keypairList, 
+                ConfigurationUtil.reduceObjectList(keypairList, 
                 "Keypairs must be specified as a list of objects.");
         Map<String, Credentials> credentials = 
                 Maps.newHashMapWithExpectedSize(keypairSpecifications.size());
@@ -149,31 +147,5 @@ public class AmazonConfigurationLoader {
                 "No value for key '%s' found for %s %s.", key, listObjectCategory, 
                 listObjectName).trim();
         return value;
-    }
-    
-    private Map<String, Map<String, String>> reduceObjectList(List<Object> list, 
-            String errorMessage) {
-        try {
-            Map<String, Map<String, String>> result = Maps.newLinkedHashMap();
-            List<Map<String, Map<String, String>>> mapList = Lists.transform(list, 
-                    new Function<Object, Map<String, Map<String, String>>>() {
-                        @Override
-                        public Map apply(Object input) {
-                            return (Map<String, Map<String, String>>) input;
-                        }
-            });
-            for (Map<String, Map<String, String>> map : mapList) {
-                for (Map.Entry<String, Map<String, String>> entry : map.entrySet()) {
-                    String key = entry.getKey();
-                    Map<String, String> value = entry.getValue();
-                    result.put(key, value);
-                }
-            }
-
-            return result;
-            
-        } catch(ClassCastException ex) {
-            throw new IllegalArgumentException(errorMessage, ex);
-        }
     }
 }
