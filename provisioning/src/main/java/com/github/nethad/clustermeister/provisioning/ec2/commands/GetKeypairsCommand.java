@@ -19,26 +19,22 @@ import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
-import java.util.Scanner;
 import java.util.Set;
-import java.util.StringTokenizer;
 
 /**
  *
  * @author daniel
  */
 public class GetKeypairsCommand extends AbstractAmazonExecutableCommand {
-
-    /**
-     * Command name.
-     */
-    public static final String NAME = "getkeypairs";
-
-    private static final String SEPARATOR_LINE = "-------------------------------------------------";
     
-    public GetKeypairsCommand(String[] arguments, String helpText, 
-            AmazonCommandLineEvaluation commandLineEvaluation) {
-        super(NAME, arguments, helpText, commandLineEvaluation);
+    private static final String NAME = "getkeypairs";
+    
+    private static final String[] ARGUMENTS = null;
+    
+    private static final String HELP_TEXT = "Get all configured keypair names.";
+    
+    public GetKeypairsCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
+        super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
     }
     
     @Override

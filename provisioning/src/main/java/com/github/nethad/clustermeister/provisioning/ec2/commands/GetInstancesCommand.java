@@ -33,21 +33,16 @@ import org.jclouds.domain.LocationScope;
  * @author daniel
  */
 public class GetInstancesCommand extends AbstractAmazonExecutableCommand {
+    private static final String VERBOSE = "-v";
 
-    public static final String[] ARG_DESCRIPTIONS = new String[]{"-v   print instance details (verbose)"};
+    private static final String[] ARGUMENTS = new String[]{"-v   print instance details (verbose)"};
     
-    /**
-     * Command name.
-     */
-    public static final String NAME = "getinstances";
+    private static final String HELP_TEXT = "Get configured instances and their state from the configure AWS Account.";
     
-    public static final String VERBOSE = "-v";
+    private static final String NAME = "getinstances";
     
-    private static final String SEPARATOR_LINE = "-------------------------------------------------";
-    
-    public GetInstancesCommand(String[] arguments, String helpText, 
-            AmazonCommandLineEvaluation commandLineEvaluation) {
-        super(NAME, arguments, helpText, commandLineEvaluation);
+    public GetInstancesCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
+        super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
     }
     
     @Override
@@ -64,7 +59,7 @@ public class GetInstancesCommand extends AbstractAmazonExecutableCommand {
             if (scanner.next().equals(VERBOSE)) {
                 verbose = true;
             } else {
-                handle.expectedArguments(ARG_DESCRIPTIONS);
+                handle.expectedArguments(ARGUMENTS);
                 return;
             }
         }

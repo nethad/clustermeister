@@ -25,6 +25,7 @@ import java.util.StringTokenizer;
  * @author daniel
  */
 public abstract class AbstractExecutableCommand extends Command {
+    protected static final String SEPARATOR_LINE = "-------------------------------------------------";
     private Scanner oldScanner;
 
 //    protected CommandLineEvaluation commandLineEvaluation;

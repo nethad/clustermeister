@@ -13,9 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.api.impl;
+package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Credentials;
+import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredentials;
+import com.github.nethad.clustermeister.api.impl.ConfigurationUtil;
+import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Maps;
 import java.io.File;
@@ -46,6 +49,11 @@ public class AmazonConfigurationLoader {
     public static final String KEYPAIRS = "amazon.keypairs";
     
     /**
+     * Amazon profile configurations.
+     */
+    public static final String PROFILES = "amazon.profiles";
+    
+    /**
      * Private key configuration.
      */
     public static final String PRIVATE_KEY = "private_key";
@@ -59,6 +67,11 @@ public class AmazonConfigurationLoader {
      * User name configuration.
      */
     public static final String USER = "user";
+    
+    /**
+     * AMI (Amazon Image) ID configuration.
+     */
+    public static final String AMI_ID = "ami_id";
     
     /**
      * The configuration.
@@ -131,5 +144,28 @@ public class AmazonConfigurationLoader {
         }
         
         return credentials;
+    }
+    
+    public Map<String, AmazonNodeProfile> getConfiguredProfiles() {
+        List<Object> profilesList = configuration.getList(PROFILES, Collections.EMPTY_LIST);
+        Map<String, Map<String, String>> profileSpecifications = 
+                ConfigurationUtil.reduceObjectList(profilesList, 
+                "Profiles must be specified as a list of objects.");
+        Map<String, AmazonNodeProfile> profiles = 
+                Maps.newHashMapWithExpectedSize(profileSpecifications.size());
+        for (Map.Entry<String, Map<String, String>> entry : profileSpecifications.entrySet()) {
+            String profileName = entry.getKey();
+            Map<String, String> profileValues = entry.getValue();
+            String amiId = profileValues.get(AMI_ID);
+            AmazonNodeProfile profile = new AmazonNodeProfile(profileName);
+            if(amiId != null && !amiId.isEmpty()) {
+                profile.setAmiId(amiId.trim());
+            } else {
+                //TODO: ...
+            }
+            profiles.put(profileName, profile);
+        }
+        
+        return profiles;
     }
 }
