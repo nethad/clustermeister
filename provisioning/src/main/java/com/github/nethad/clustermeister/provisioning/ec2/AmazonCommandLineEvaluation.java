@@ -19,7 +19,7 @@ import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.provisioning.Command;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
-import com.github.nethad.clustermeister.provisioning.ec2.commands.AbstractExecutableCommand;
+import com.github.nethad.clustermeister.provisioning.AbstractExecutableCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.AddNodesCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.GetInstancesCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.GetKeypairsCommand;

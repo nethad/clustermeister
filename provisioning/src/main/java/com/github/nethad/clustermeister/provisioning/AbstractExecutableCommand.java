@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.ec2.commands;
+package com.github.nethad.clustermeister.provisioning;
 
 import com.github.nethad.clustermeister.provisioning.Command;
 import java.util.StringTokenizer;

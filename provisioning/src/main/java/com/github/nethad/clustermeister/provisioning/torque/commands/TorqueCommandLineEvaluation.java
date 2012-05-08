@@ -17,7 +17,7 @@ package com.github.nethad.clustermeister.provisioning.torque.commands;
 
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
-import com.github.nethad.clustermeister.provisioning.ec2.commands.AbstractExecutableCommand;
+import com.github.nethad.clustermeister.provisioning.AbstractExecutableCommand;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiServerForApi;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.google.common.annotations.VisibleForTesting;
