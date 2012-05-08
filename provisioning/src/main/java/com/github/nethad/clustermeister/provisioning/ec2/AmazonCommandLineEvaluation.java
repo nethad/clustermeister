@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author thomas, daniel
  */
-public class AmazonCommandLineEvaluation implements CommandLineEvaluation<AmazonNodeManager> {
+public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
     private final Logger logger = LoggerFactory.getLogger(AmazonCommandLineEvaluation.class);
     
     private final AmazonNodeManager nodeManager;
@@ -86,7 +86,6 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation<Amazon
                 "Add nodes to the cluster.", this));
     }
     
-    @Override
     public AmazonNodeManager getNodeManager() {
         return nodeManager;
     }

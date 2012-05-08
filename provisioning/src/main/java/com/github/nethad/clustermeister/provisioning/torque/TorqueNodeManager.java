@@ -96,6 +96,37 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 			return null;
 		}
 	}
+    
+    private class RemoveNormalNodeTask2 implements Callable<Void> {
+        private final Collection<String> nodeUuids;
+
+		public RemoveNormalNodeTask2(Collection<String> nodeUuids) {
+			this.nodeUuids = nodeUuids;
+		}
+
+		@Override
+		public Void call() throws Exception {
+			String driverHost = "localhost";
+            int serverPort = JPPFLocalDriver.SERVER_PORT;
+
+            JPPFManagementByJobsClient client = null;
+            try {
+                client = JPPFConfiguratedComponentFactory.getInstance()
+                    .createManagementByJobsClient(
+                        driverHost, serverPort);
+                try {
+                    client.shutdownNodes(nodeUuids);
+                } catch (Exception ex) {
+                    logger.warn("Not all nodes could be shut down.", ex);
+                }
+            } finally {
+                if (client != null) {
+                    client.close();
+                }
+            }
+            return null;
+		}
+	}
 	
 	private final Configuration configuration;
 	private ListeningExecutorService executorService;
@@ -146,12 +177,17 @@ public class TorqueNodeManager implements TorqueNodeManagement {
         return executorService.submit(new AddNormalNodeTask(nodeConfiguration, this));
 	}
 	
-	public ListenableFuture<Void> removeNode(TorqueNode torqueNode) {
-		Preconditions.checkNotNull(torqueNode, "torqueNode must not be null.");
-        return executorService.submit(
-                new RemoveNormalNodeTask(
-                    Iterables.getFirst(torqueNode.getPublicAddresses(), null), torqueNode.getManagementPort()));
-	}
+//	public ListenableFuture<Void> removeNode(TorqueNode torqueNode) {
+//		Preconditions.checkNotNull(torqueNode, "torqueNode must not be null.");
+//        return executorService.submit(
+//                new RemoveNormalNodeTask(
+//                    Iterables.getFirst(torqueNode.getPublicAddresses(), null), torqueNode.getManagementPort()));
+//	}
+    
+    public ListenableFuture<Void> removeNodes(Collection<String> nodeUuids) {
+        Preconditions.checkNotNull(nodeUuids, "nodeUuids must not be null.");
+        return executorService.submit(new RemoveNormalNodeTask2(nodeUuids));
+    }
 	
 	public void removeAllNodes() {
         logger.info("Remove all nodes.");

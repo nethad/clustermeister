@@ -143,8 +143,6 @@ public class Provisioning {
             @Override
             public void handleCommand(String command, StringTokenizer tokenizer) {} // do nothing
             @Override
-            public Object getNodeManager() { return null; }
-            @Override
             public CommandLineHandle getCommandLineHandle() { return null; }
         };
         jppfLocalDriver = new JPPFLocalDriver();

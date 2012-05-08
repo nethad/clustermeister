@@ -25,7 +25,7 @@ import java.util.StringTokenizer;
  * Commands which are specific to the backend may be handled via {@link #handleCommand(java.lang.String, java.util.StringTokenizer) }.
  * @author thomas
  */
-public interface CommandLineEvaluation<T> {
+public interface CommandLineEvaluation {
     
     public static final String COMMAND_HELP = "help";
     public static final String COMMAND_HELP_QUESTIONMARK = "?";
@@ -73,8 +73,6 @@ public interface CommandLineEvaluation<T> {
 //     * @return 
 //     */
 //    public String helpText(String command);
-    
-    public T getNodeManager();
     
     public CommandLineHandle getCommandLineHandle();
     

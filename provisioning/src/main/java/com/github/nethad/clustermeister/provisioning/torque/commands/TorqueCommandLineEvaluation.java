@@ -41,9 +41,7 @@ import org.slf4j.LoggerFactory;
  *
  * @author thomas
  */
-public class TorqueCommandLineEvaluation implements CommandLineEvaluation<TorqueNodeManager> {
-    private static final String COMMAND_ADDNODES = "addnodes";
-    private static final String COMMAND_REMOVENODE = "removenode";
+public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
     
     private static final Logger logger = LoggerFactory.getLogger(TorqueCommandLineEvaluation.class);
     
@@ -122,7 +120,6 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation<Torque
         return handle;
     }
     
-    @Override
     public TorqueNodeManager getNodeManager() {
         return nodeManager;
     }

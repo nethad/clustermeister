@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque.commands;
 
+import com.github.nethad.clustermeister.provisioning.torque.TorqueNode;
 import java.util.StringTokenizer;
 
 /**
@@ -31,7 +32,7 @@ public class RemoveNodeCommand extends AbstractTorqueExecutableCommand {
 
     @Override
     public void execute(StringTokenizer tokenizer) {
-        throw new UnsupportedOperationException("Not yet implemented");
+        getNodeManager().removeNodes(null);
     }
     
 }
