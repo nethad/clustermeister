@@ -20,11 +20,13 @@ import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.dependencymanager.DependencyConfigurationUtil;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.AbstractExecutableCommand;
+import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.io.File;
 import java.util.Collection;
+import java.util.Scanner;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutionException;
 import java.util.logging.Handler;
@@ -37,21 +39,25 @@ import org.slf4j.LoggerFactory;
  */
 public class AddNodesCommand extends AbstractTorqueExecutableCommand {
     private static final String COMMAND = "addnodes";
+    private static final String[] ARGUMENTS = new String[]{"number of nodes", "processing threads per node"};
+    private static final String HELP_TEXT = "Add nodes (= torque job) to the cluster.";
     
     private static final Logger logger = LoggerFactory.getLogger(AddNodesCommand.class);
 
-    public AddNodesCommand(String[] arguments, String helpText, TorqueCommandLineEvaluation commandLineEvaluation) {
-        super(COMMAND, arguments, helpText, commandLineEvaluation);
+    public AddNodesCommand(TorqueCommandLineEvaluation commandLineEvaluation) {
+        super(COMMAND, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
     }
     
     @Override
-    public void execute(StringTokenizer tokenizer) {
-        if (isArgumentsCountFalse(tokenizer)) {
+    public void execute(CommandLineArguments arguments) {
+        if (isArgumentsCountFalse(arguments)) {
             return;
         }
         
-        int numberOfNodes = nextTokenAsInteger(tokenizer);
-        int numberOfCpusPerNode = nextTokenAsInteger(tokenizer);
+        Scanner scanner = arguments.asScanner();
+        
+        int numberOfNodes = scanner.nextInt();
+        int numberOfCpusPerNode = scanner.nextInt();
         
         Collection<File> artifactsToPreload = DependencyConfigurationUtil.getConfiguredDependencies(getNodeManager().getConfiguration());
         

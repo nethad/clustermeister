@@ -18,6 +18,7 @@ package com.github.nethad.clustermeister.provisioning.cli;
 import com.github.nethad.clustermeister.provisioning.CommandRegistry;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.api.impl.YamlConfiguration;
+import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.CommandRegistry;
@@ -30,6 +31,7 @@ import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.util.Scanner;
 import java.util.StringTokenizer;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
@@ -77,8 +79,8 @@ public class Provisioning {
         }
     }
     
-    public void commandShutdown(StringTokenizer tokenizer) {
-        commandLineEvaluation.shutdown(tokenizer);
+    public void commandShutdown(CommandLineArguments arguments) {
+        commandLineEvaluation.shutdown(arguments);
         shutdownDriver();
     }   
     
@@ -94,12 +96,12 @@ public class Provisioning {
 //        commandLineEvaluation.help(tokenizer);
 //    }
     
-    public void commandUnknownFallback(String command, StringTokenizer tokenizer) {
-        commandLineEvaluation.handleCommand(command, tokenizer);
+    public void commandUnknownFallback(String command, CommandLineArguments arguments) {
+        commandLineEvaluation.handleCommand(command, arguments);
     }
     
-    public void commandState(StringTokenizer tokenizer) {
-        commandLineEvaluation.state(tokenizer);
+    public void commandState(CommandLineArguments arguments) {
+        commandLineEvaluation.state(arguments);
     }
     
     protected Provider getProvider() {
@@ -137,11 +139,11 @@ public class Provisioning {
     private void startTestSetup() {
         commandLineEvaluation = new CommandLineEvaluation() {
             @Override
-            public void state(StringTokenizer tokenizer) {} // do nothing
+            public void state(CommandLineArguments arguments) {} // do nothing
             @Override
-            public void shutdown(StringTokenizer tokenizer) {} // do nothing
+            public void shutdown(CommandLineArguments arguments) {} // do nothing
             @Override
-            public void handleCommand(String command, StringTokenizer tokenizer) {} // do nothing
+            public void handleCommand(String command, CommandLineArguments arguments) {} // do nothing
             @Override
             public CommandLineHandle getCommandLineHandle() { return null; }
         };

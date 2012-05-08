@@ -16,10 +16,12 @@
 package com.github.nethad.clustermeister.provisioning.cli;
 
 import com.github.nethad.clustermeister.provisioning.Command;
+import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandRegistry;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.StringTokenizer;
 
 /**
@@ -69,37 +71,43 @@ public class UserInputEvaluation implements CommandRegistry {
     }
     
     public void evaluate(String userInput) {
-        final StringTokenizer tokenizer = new StringTokenizer(userInput);
-        if (!tokenizer.hasMoreTokens()) {
+        CommandLineArguments arguments = new CommandLineArguments(userInput);
+        if (!arguments.asScanner().hasNext()) {
             return;
         }
         try {
-            handleCommand(tokenizer);
+            handleCommand(arguments);
         } catch (Exception ex) {
             handleException(ex);
         }
     }
     
     @VisibleForTesting
-    protected void handleCommand(StringTokenizer tokenizer) throws Exception {
-        final String command = tokenizer.nextToken();
+    protected void handleCommand(CommandLineArguments arguments) throws Exception {
+        Scanner scanner = arguments.asScanner();
+        final String command = scanner.next();
+        
+        String fullLine = "";
+        if (scanner.hasNext()) {
+            fullLine = scanner.nextLine();
+        }
         if (commands.containsKey(command)) {
-            commandMarshalling(command, tokenizer);
+            commandMarshalling(command, fullLine);
         } else {
 //            provisioning.commandUnknownFallback(command, tokenizer);
             unknownCommand();
         }
     }
 
-    private void commandMarshalling(final String command, StringTokenizer tokenizer) {
+    private void commandMarshalling(final String command, String arguments) {
         if (command.equals(COMMAND_HELP) || command.equals(COMMAND_HELP_QUESTIONMARK)) {
             help();
         } else if (command.equals(COMMAND_STATE)) {
-            provisioning.commandState(tokenizer);
+            provisioning.commandState(new CommandLineArguments(arguments));
         } else if (command.equals(COMMAND_SHUTDOWN)) {
-            provisioning.commandShutdown(tokenizer);
+            provisioning.commandShutdown(new CommandLineArguments(arguments));
         } else {
-            provisioning.commandUnknownFallback(command, tokenizer);
+            provisioning.commandUnknownFallback(command, new CommandLineArguments(arguments));
         }
     }
 

@@ -15,16 +15,11 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2.commands;
 
+import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
-import java.util.Comparator;
-import java.util.Map;
-import java.util.Set;
-import java.util.SortedSet;
-import java.util.StringTokenizer;
-import java.util.TreeMap;
-import java.util.TreeSet;
+import java.util.*;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.Hardware;
 import org.jclouds.compute.domain.NodeMetadata;
@@ -56,14 +51,17 @@ public class GetInstancesCommand extends AbstractAmazonExecutableCommand {
     }
     
     @Override
-    public void execute(StringTokenizer tokenizer) {
+    public void execute(CommandLineArguments arguments) {
         AmazonInstanceManager instanceManager = 
                 getNodeManager().getInstanceManager();
         CommandLineHandle handle = getCommandLineHandle();
         
         boolean verbose = false;
-        if (tokenizer.countTokens() >= ARG_DESCRIPTIONS.length) {
-            if(tokenizer.nextToken().equals(VERBOSE)) {
+        
+        Scanner scanner = arguments.asScanner();
+        
+        if (scanner.hasNext()) {
+            if (scanner.next().equals(VERBOSE)) {
                 verbose = true;
             } else {
                 handle.expectedArguments(ARG_DESCRIPTIONS);

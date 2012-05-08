@@ -19,6 +19,9 @@ import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.AbstractExecutableCommand;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiServerForApi;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Scanner;
 import java.util.StringTokenizer;
 
 /**
@@ -35,6 +38,7 @@ public abstract class AbstractTorqueExecutableCommand extends AbstractExecutable
         this.commandLineEvaluation = commandLineEvaluation;
     }
     
+    @Override
     protected CommandLineHandle getCommandLineHandle() {
         return commandLineEvaluation.getCommandLineHandle();
     }
@@ -45,15 +49,6 @@ public abstract class AbstractTorqueExecutableCommand extends AbstractExecutable
     
     protected RmiServerForApi getRmiServerForApi() {
         return commandLineEvaluation.getRmiServerForApi();
-    }
-    
-    protected boolean isArgumentsCountFalse(StringTokenizer tokenizer) {
-        if (tokenizer.countTokens() != this.getArgumentCount()) {
-            getCommandLineHandle().expectedArguments(this.getArguments());
-            return true;
-        } else {
-            return false;
-        }
     }
         
 }

@@ -17,9 +17,11 @@ package com.github.nethad.clustermeister.provisioning.torque.commands;
 
 import com.github.nethad.clustermeister.api.NodeInformation;
 import com.github.nethad.clustermeister.api.utils.JPPFProperties;
+import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiServerForApi;
 import java.util.Collection;
+import java.util.Scanner;
 import java.util.StringTokenizer;
 
 /**
@@ -40,7 +42,7 @@ public class StateCommand extends AbstractTorqueExecutableCommand {
     }
     
     @Override
-    public void execute(StringTokenizer tokenizer) {
+    public void execute(CommandLineArguments arguments) {
         Collection<NodeInformation> allNodes = getRmiServerForApi().getAllNodes();
         getCommandLineHandle().print("running nodes: %d", allNodes.size());
         

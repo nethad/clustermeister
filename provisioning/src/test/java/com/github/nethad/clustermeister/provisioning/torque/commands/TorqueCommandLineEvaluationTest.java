@@ -15,10 +15,10 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque.commands;
 
-import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeInformation;
 import com.github.nethad.clustermeister.api.impl.NodeInformationImpl;
 import com.github.nethad.clustermeister.provisioning.Command;
+import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.CommandRegistry;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiServerForApi;
@@ -30,22 +30,13 @@ import com.google.common.util.concurrent.SettableFuture;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
-import java.util.StringTokenizer;
-import static org.hamcrest.MatcherAssert.assertThat;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.greaterThan;
+import java.util.Scanner;
 import org.jppf.management.JPPFSystemInformation;
 import org.junit.Before;
 import org.junit.Test;
 import org.mockito.ArgumentMatcher;
-import static org.mockito.Matchers.argThat;
-import static org.mockito.Mockito.doReturn;
-import static org.mockito.Mockito.when;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.any;
-import static org.mockito.Mockito.contains;
-import static org.mockito.Mockito.eq;
+import static org.mockito.Matchers.*;
+import static org.mockito.Mockito.*;
 
 
 /**
@@ -92,7 +83,7 @@ public class TorqueCommandLineEvaluationTest {
         settableFuture.set(new TorqueNode("", "", "", 11111, 11198));
         doReturn(settableFuture).when(torqueNodeManager).addNode(any(TorqueNodeConfiguration.class));
         
-        commandLineEvaluation.handleCommand("addnodes", new StringTokenizer("1 1"));
+        commandLineEvaluation.handleCommand("addnodes", new CommandLineArguments("1 1"));
         
         verify(torqueNodeManager).addNode(argThat(new MatchesTorqueNodeConfiguration(null, 1)));
     }

@@ -16,10 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.JPPFConstants;
-import com.github.nethad.clustermeister.provisioning.Command;
-import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
-import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
-import com.github.nethad.clustermeister.provisioning.AbstractExecutableCommand;
+import com.github.nethad.clustermeister.provisioning.*;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.AddNodesCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.GetInstancesCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.GetKeypairsCommand;
@@ -53,20 +50,20 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
     }
 
     @Override
-    public void state(StringTokenizer tokenizer) {
-        new StateCommand(new String[]{}, "", this).execute(tokenizer);
+    public void state(CommandLineArguments arguments) {
+        new StateCommand(new String[]{}, "", this).execute(arguments);
     }
 
     @Override
-    public void shutdown(StringTokenizer tokenizer) {
-        new ShutdownCommand(new String[]{}, "", this).execute(tokenizer);
+    public void shutdown(CommandLineArguments arguments) {
+        new ShutdownCommand(new String[]{}, "", this).execute(arguments);
     }
 
     @Override
-    public void handleCommand(String commandName, StringTokenizer tokenizer) {
+    public void handleCommand(String commandName, CommandLineArguments arguments) {
         AbstractExecutableCommand command = getCommand(commandName);
         if (command != null) {
-            command.execute(tokenizer);
+            command.execute(arguments);
         }
     }
 
@@ -108,4 +105,5 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
     public CommandLineHandle getCommandLineHandle() {
         return handle;
     }
+
 }

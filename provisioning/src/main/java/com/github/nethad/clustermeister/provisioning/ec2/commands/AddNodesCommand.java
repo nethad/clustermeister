@@ -17,6 +17,7 @@ package com.github.nethad.clustermeister.provisioning.ec2.commands;
 
 import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeType;
+import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeConfiguration;
@@ -25,6 +26,7 @@ import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Scanner;
 import java.util.StringTokenizer;
 
 /**
@@ -48,17 +50,18 @@ public class AddNodesCommand extends AbstractAmazonExecutableCommand {
     }
 
     @Override
-    public void execute(StringTokenizer tokenizer) {
+    public void execute(CommandLineArguments arguments) {
         CommandLineHandle commandLineHandle = getCommandLineHandle();
         AmazonNodeManager nodeManager = getNodeManager();
         
-        if (tokenizer.countTokens() != 2) {
-            commandLineHandle.expectedArguments(ARG_DESCRIPTIONS);
+        if (isArgumentsCountFalse(arguments)) {
             return;
         }
         
-        final int numberOfNodes = Integer.parseInt(tokenizer.nextToken());
-        final int numberOfCpusPerNode = Integer.parseInt(tokenizer.nextToken());
+        Scanner scanner = arguments.asScanner();
+        
+        final int numberOfNodes = scanner.nextInt();
+        final int numberOfCpusPerNode = scanner.nextInt();
                 final AmazonNodeConfiguration amazonNodeConfiguration = new AmazonNodeConfiguration();
         amazonNodeConfiguration.setDriverAddress("localhost");
         amazonNodeConfiguration.setNodeCapabilities(new NodeCapabilities() {

@@ -16,10 +16,12 @@
 package com.github.nethad.clustermeister.provisioning.ec2.commands;
 
 import com.github.nethad.clustermeister.api.Node;
+import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
 import java.util.Collection;
+import java.util.Scanner;
 import java.util.StringTokenizer;
 
 /**
@@ -39,7 +41,7 @@ public class StateCommand extends AbstractAmazonExecutableCommand {
     }
 
     @Override
-    public void execute(StringTokenizer tokenizer) {
+    public void execute(CommandLineArguments arguments) {
         AmazonNodeManager nodeManager = getNodeManager();
         CommandLineHandle commandLineHandle = getCommandLineHandle();
         Collection<? extends Node> nodes = nodeManager.getNodes();

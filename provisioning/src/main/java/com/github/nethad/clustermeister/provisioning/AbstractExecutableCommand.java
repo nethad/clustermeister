@@ -15,7 +15,9 @@
  */
 package com.github.nethad.clustermeister.provisioning;
 
-import com.github.nethad.clustermeister.provisioning.Command;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Scanner;
 import java.util.StringTokenizer;
 
 /**
@@ -23,6 +25,7 @@ import java.util.StringTokenizer;
  * @author daniel
  */
 public abstract class AbstractExecutableCommand extends Command {
+    private Scanner oldScanner;
 
 //    protected CommandLineEvaluation commandLineEvaluation;
     
@@ -31,9 +34,26 @@ public abstract class AbstractExecutableCommand extends Command {
         super(commandName, arguments, helpText);
     }
     
-        
+    protected abstract CommandLineHandle getCommandLineHandle();
+    
+    /**
+     * 
+     * @param tokenizer
+     * @return
+     * @deprecated Use {@link Scanner#nextInt()} instead.
+     */
+    @Deprecated()
     protected int nextTokenAsInteger(StringTokenizer tokenizer) {
         return Integer.valueOf(tokenizer.nextToken());
+    }
+    
+    protected boolean isArgumentsCountFalse(CommandLineArguments arguments) {
+        if (arguments.argumentCount() != getArgumentCount()) {
+            getCommandLineHandle().expectedArguments(getArguments());
+            return true;
+        } else {
+            return false;
+        }
     }
         
     
@@ -42,5 +62,6 @@ public abstract class AbstractExecutableCommand extends Command {
      * 
      * @param tokenizer The command line arguments.
      */
-    public abstract void execute(StringTokenizer tokenizer);
+    public abstract void execute(CommandLineArguments arguments);
+    
 }

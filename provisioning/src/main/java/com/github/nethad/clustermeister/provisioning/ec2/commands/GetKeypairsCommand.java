@@ -15,9 +15,11 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2.commands;
 
+import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
+import java.util.Scanner;
 import java.util.Set;
 import java.util.StringTokenizer;
 
@@ -40,7 +42,7 @@ public class GetKeypairsCommand extends AbstractAmazonExecutableCommand {
     }
     
     @Override
-    public void execute(StringTokenizer tokenizer) {
+    public void execute(CommandLineArguments arguments) {
         AmazonInstanceManager amazonInstanceManager = 
                 getNodeManager().getInstanceManager();
         CommandLineHandle handle = getCommandLineHandle();

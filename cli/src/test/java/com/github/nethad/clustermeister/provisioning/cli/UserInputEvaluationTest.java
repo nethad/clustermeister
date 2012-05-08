@@ -16,8 +16,10 @@
 package com.github.nethad.clustermeister.provisioning.cli;
 
 import com.github.nethad.clustermeister.provisioning.Command;
+import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
+import java.util.Scanner;
 import java.util.StringTokenizer;
 import org.junit.Test;
 import static org.junit.Assert.*;
@@ -62,14 +64,14 @@ public class UserInputEvaluationTest {
     public void stateCommand() {
         userInputEvaluation.evaluate("state");
         assertThat(commandLineEvaluation.getLastCommand(), is("state"));
-        assertThat(commandLineEvaluation.getLastTokenizer().countTokens(), is(0));
+        assertThat(commandLineEvaluation.getLastArguments().asScanner().hasNext(), is(false));
     }
     
     @Test
     public void shutdownCommand() {
         userInputEvaluation.evaluate("shutdown");
         assertThat(commandLineEvaluation.getLastCommand(), is("shutdown"));
-        assertThat(commandLineEvaluation.getLastTokenizer().countTokens(), is(0));
+        assertThat(commandLineEvaluation.getLastArguments().asScanner().hasNext(), is(false));
     }
     
     @Test
@@ -77,18 +79,18 @@ public class UserInputEvaluationTest {
         userInputEvaluation.registerCommand(new Command("newcommand", new String[]{"arg1", "arg2"}, null));
         userInputEvaluation.evaluate("newcommand arg1 arg2");
         assertThat(commandLineEvaluation.getLastCommand(), is("newcommand"));
-        assertThat(commandLineEvaluation.getLastTokenizer().countTokens(), is(2));
-        assertThat(commandLineEvaluation.getLastTokenizer().nextToken(), is("arg1"));
-        assertThat(commandLineEvaluation.getLastTokenizer().nextToken(), is("arg2"));
+        Scanner scanner = commandLineEvaluation.getLastArguments().asScanner();
+        assertThat(scanner.next(), is("arg1"));
+        assertThat(scanner.next(), is("arg2"));
     }
     
     class TestCommandLineEvaluation implements CommandLineEvaluation {
         
-        private StringTokenizer lastTokenizer;
+        private CommandLineArguments lastArguments;
         private String lastCommand;
         
-        public StringTokenizer getLastTokenizer() {
-            return lastTokenizer;
+        public CommandLineArguments getLastArguments() {
+            return lastArguments;
         }
         
         public String getLastCommand() {
@@ -96,21 +98,21 @@ public class UserInputEvaluationTest {
         }
 
         @Override
-        public void state(StringTokenizer tokenizer) {
+        public void state(CommandLineArguments arguments) {
             lastCommand = "state";
-            lastTokenizer = tokenizer;
+            lastArguments = arguments;
         }
 
         @Override
-        public void shutdown(StringTokenizer tokenizer) {
+        public void shutdown(CommandLineArguments arguments) {
             lastCommand = "shutdown";
-            lastTokenizer = tokenizer;
+            lastArguments = arguments;
         }
 
         @Override
-        public void handleCommand(String command, StringTokenizer tokenizer) {
-            lastTokenizer = tokenizer;
+        public void handleCommand(String command, CommandLineArguments arguments) {
             this.lastCommand = command;
+            lastArguments = arguments;
         }
 
         @Override

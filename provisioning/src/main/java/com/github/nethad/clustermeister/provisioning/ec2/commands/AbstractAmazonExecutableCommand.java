@@ -44,6 +44,7 @@ public abstract class AbstractAmazonExecutableCommand extends AbstractExecutable
         this.commandLineEvaluation = commandLineEvaluation;
     }
     
+    @Override
     protected CommandLineHandle getCommandLineHandle() {
         return commandLineEvaluation.getCommandLineHandle();
     }

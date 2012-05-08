@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.ec2.commands;
 
 import com.github.nethad.clustermeister.api.Node;
+import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceShutdownMethod;
@@ -23,10 +24,7 @@ import com.github.nethad.clustermeister.provisioning.ec2.AmazonNode;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.google.common.util.concurrent.ListenableFuture;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  *
@@ -45,7 +43,7 @@ public class ShutdownCommand extends AbstractAmazonExecutableCommand {
     }
 
     @Override
-    public void execute(StringTokenizer tokenizer) {
+    public void execute(CommandLineArguments arguments) {
         AmazonNodeManager nodeManager = commandLineEvaluation.getNodeManager();
         JPPFManagementByJobsClient amazonManagementClient = 
                 commandLineEvaluation.getAmazonManagementClient();

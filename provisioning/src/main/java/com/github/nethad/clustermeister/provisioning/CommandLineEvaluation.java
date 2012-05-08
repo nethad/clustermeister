@@ -1,5 +1,6 @@
 package com.github.nethad.clustermeister.provisioning;
 
+import java.util.Scanner;
 import java.util.StringTokenizer;
 
 /*
@@ -45,13 +46,13 @@ public interface CommandLineEvaluation {
      * Print the current state for this backend.
      * @param tokenizer Additional parameters
      */
-    public void state(StringTokenizer tokenizer);
+    public void state(CommandLineArguments arguments);
     
     /**
      * Shutdown this infrastructure.
      * @param tokenizer Additional parameters
      */
-    public void shutdown(StringTokenizer tokenizer);
+    public void shutdown(CommandLineArguments arguments);
     
 //    /**
 //     * Print a help text.
@@ -64,7 +65,7 @@ public interface CommandLineEvaluation {
      * @param command the first argument (=command) provided by the user
      * @param tokenizer Additional parameters entered by the user
      */
-    public void handleCommand(String command, StringTokenizer tokenizer);
+    public void handleCommand(String command, CommandLineArguments arguments);
     
 //    /**
 //     * Returns a help text for the given command. This is only needed for commands handled by {@link #handleCommand(java.lang.String, java.util.StringTokenizer) }

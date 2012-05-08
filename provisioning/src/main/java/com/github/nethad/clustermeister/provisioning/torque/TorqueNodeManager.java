@@ -111,14 +111,13 @@ public class TorqueNodeManager implements TorqueNodeManagement {
 
             JPPFManagementByJobsClient client = null;
             try {
-                client = JPPFConfiguratedComponentFactory.getInstance()
-                    .createManagementByJobsClient(
+                client = JPPFConfiguratedComponentFactory.getInstance().createManagementByJobsClient(
                         driverHost, serverPort);
-                try {
-                    client.shutdownNodes(nodeUuids);
-                } catch (Exception ex) {
-                    logger.warn("Not all nodes could be shut down.", ex);
+                for (String uuid : nodeUuids) {
+                    client.shutdownNode(uuid);
                 }
+            } catch (Exception ex) {
+                logger.warn("Not all nodes could be shut down.", ex);
             } finally {
                 if (client != null) {
                     client.close();

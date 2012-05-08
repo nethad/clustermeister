@@ -18,11 +18,13 @@ package com.github.nethad.clustermeister.provisioning.torque.commands;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.AbstractExecutableCommand;
+import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiServerForApi;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Collection;
 import java.util.LinkedList;
+import java.util.Scanner;
 import java.util.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,16 +53,8 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
     }
     
     private void buildCommandHelp() {
-        AbstractExecutableCommand addNodesCommand = new AddNodesCommand(
-                                                      new String[]{"number of nodes", "processing threads per node"}, 
-                                                      "Add nodes (= torque job) to the cluster.", 
-                                                      this);
-        addAndRegisterCommand(addNodesCommand);
-        AbstractExecutableCommand removeNodeCommand = new RemoveNodeCommand(
-                                                          new String[]{"node ID"}, 
-                                                          "Remove node from the cluster.", 
-                                                          this);
-        addAndRegisterCommand(removeNodeCommand);
+        addAndRegisterCommand(new AddNodesCommand(this));
+        addAndRegisterCommand(new RemoveNodeCommand(this));
     }
     
     private void addAndRegisterCommand(AbstractExecutableCommand command) {
@@ -69,21 +63,21 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
     }
     
     @Override
-    public void state(StringTokenizer tokenizer) {
-        new StateCommand(this).execute(tokenizer);
+    public void state(CommandLineArguments arguments) {
+        new StateCommand(this).execute(arguments);
     }
 
     @Override
-    public void shutdown(StringTokenizer tokenizer) {
+    public void shutdown(CommandLineArguments arguments) {
         nodeManager.removeAllNodes();
         nodeManager.shutdown();
     }
 
     @Override
-    public void handleCommand(String command, StringTokenizer tokenizer) {
+    public void handleCommand(String command, CommandLineArguments arguments) {
         for (AbstractExecutableCommand executableCommand : commands) {
             if (executableCommand.getCommandName().equals(command)) {
-                executableCommand.execute(tokenizer);
+                executableCommand.execute(arguments);
             }
         }
     }

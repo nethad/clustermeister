@@ -20,6 +20,7 @@ import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
+import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
@@ -27,6 +28,7 @@ import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeConfiguration
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ListenableFuture;
+import java.util.Scanner;
 import java.util.StringTokenizer;
 import java.util.concurrent.ExecutionException;
 import org.jclouds.compute.domain.NodeMetadata;
@@ -52,18 +54,20 @@ public class StartNodeCommand extends AbstractAmazonExecutableCommand {
     }
 
     @Override
-    public void execute(StringTokenizer tokenizer) {
+    public void execute(CommandLineArguments arguments) {
         CommandLineHandle handle = getCommandLineHandle();
         AmazonNodeManager nodeManager = getNodeManager();
         AmazonInstanceManager instanceManager = nodeManager.getInstanceManager();
         
-        if (tokenizer.countTokens() < 2) {
-            handle.expectedArguments(ARG_DESCRIPTIONS);
+        
+        if (this.isArgumentsCountFalse(arguments)) {
             return;
         }
         
-        String instanceId = tokenizer.nextToken();
-        String keypairName = tokenizer.nextToken();
+        Scanner scanner = arguments.asScanner();
+        
+        String instanceId = scanner.next();
+        String keypairName = scanner.next();
         Credentials configuredCredentials = 
                 instanceManager.getConfiguredCredentials(keypairName);
         if(configuredCredentials == null || 
