@@ -15,19 +15,11 @@
  */
 package com.github.nethad.clustermeister.provisioning;
 
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Scanner;
-import java.util.StringTokenizer;
-
 /**
  *
  * @author daniel
  */
 public abstract class AbstractExecutableCommand extends Command {
-    protected static final String SEPARATOR_LINE = "-------------------------------------------------";
-    private Scanner oldScanner;
-
 //    protected CommandLineEvaluation commandLineEvaluation;
     
     public AbstractExecutableCommand(String commandName, String[] arguments, 
@@ -36,17 +28,6 @@ public abstract class AbstractExecutableCommand extends Command {
     }
     
     protected abstract CommandLineHandle getCommandLineHandle();
-    
-    /**
-     * 
-     * @param tokenizer
-     * @return
-     * @deprecated Use {@link Scanner#nextInt()} instead.
-     */
-    @Deprecated()
-    protected int nextTokenAsInteger(StringTokenizer tokenizer) {
-        return Integer.valueOf(tokenizer.nextToken());
-    }
     
     protected boolean isArgumentsCountFalse(CommandLineArguments arguments) {
         if (arguments.argumentCount() != getArgumentCount()) {
