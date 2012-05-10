@@ -19,11 +19,15 @@ import com.github.nethad.clustermeister.api.Clustermeister;
 import com.github.nethad.clustermeister.api.JPPFConstants;
 
 /**
- *
+ * A factory to instantiate the {@link Clustermeister} object. This is the entry point to the Clustermeister API.
  * @author thomas
  */
 public class ClustermeisterFactory {
     
+    /**
+     * Instantiates a {@link Clustermeister} object.
+     * @return a configured Clustermeister object.
+     */
     public static Clustermeister create() {
         
         System.setProperty(JPPFConstants.CONFIG_PLUGIN, JPPFClientConfiguration.class.getCanonicalName());
