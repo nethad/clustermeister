@@ -108,7 +108,7 @@ public class StartNodeCommand extends AbstractAmazonExecutableCommand {
                 }
             });
             amazonNodeConfiguration.setNodeType(NodeType.NODE);
-            amazonNodeConfiguration.setRegion(instanceMetadata.getLocation().getId());
+            amazonNodeConfiguration.setLocation(instanceMetadata.getLocation().getId());
 
             amazonNodeConfiguration.setCredentials(configuredCredentials);
 

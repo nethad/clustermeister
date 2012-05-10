@@ -25,6 +25,7 @@ import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.SortedMap;
 import org.apache.commons.configuration.Configuration;
 
 /**
@@ -34,44 +35,49 @@ import org.apache.commons.configuration.Configuration;
  */
 public class AmazonConfigurationLoader {
     /**
-     * AWS Access key ID.
+     * AWS Access key ID configuration property.
      */
     public static final String ACCESS_KEY_ID = "amazon.access_key_id";
     
     /**
-     * AWS secret key.
+     * AWS secret key configuration property.
      */
     public static final String SECRET_KEY = "amazon.secret_key";
     
     /**
-     * Amazon key pair configuration.
+     * Amazon key pair configurations property.
      */
     public static final String KEYPAIRS = "amazon.keypairs";
     
     /**
-     * Amazon profile configurations.
+     * Amazon profile configurations property.
      */
     public static final String PROFILES = "amazon.profiles";
     
     /**
-     * Private key configuration.
+     * Private key configuration property.
      */
     public static final String PRIVATE_KEY = "private_key";
     
     /**
-     * Private key configuration.
+     * Private key configuration property.
      */
     public static final String PUBLIC_KEY = "public_key";
     
     /**
-     * User name configuration.
+     * User name configuration property.
      */
     public static final String USER = "user";
     
     /**
-     * AMI (Amazon Image) ID configuration.
+     * AMI (Amazon Image) ID configuration property.
      */
     public static final String AMI_ID = "ami_id";
+    
+    /**
+     * AWS EC2 location (Region or Availability Zone) configuration property.
+     */
+    public static final String LOCATION = "location";
     
     /**
      * The configuration.
@@ -146,23 +152,18 @@ public class AmazonConfigurationLoader {
         return credentials;
     }
     
-    public Map<String, AmazonNodeProfile> getConfiguredProfiles() {
+    public Map<String, AWSInstanceProfile> getConfiguredProfiles() {
         List<Object> profilesList = configuration.getList(PROFILES, Collections.EMPTY_LIST);
         Map<String, Map<String, String>> profileSpecifications = 
                 ConfigurationUtil.reduceObjectList(profilesList, 
                 "Profiles must be specified as a list of objects.");
-        Map<String, AmazonNodeProfile> profiles = 
-                Maps.newHashMapWithExpectedSize(profileSpecifications.size());
+        SortedMap<String, AWSInstanceProfile> profiles = Maps.newTreeMap();
         for (Map.Entry<String, Map<String, String>> entry : profileSpecifications.entrySet()) {
             String profileName = entry.getKey();
             Map<String, String> profileValues = entry.getValue();
+            String location = profileValues.get(LOCATION);
             String amiId = profileValues.get(AMI_ID);
-            AmazonNodeProfile profile = new AmazonNodeProfile(profileName);
-            if(amiId != null && !amiId.isEmpty()) {
-                profile.setAmiId(amiId.trim());
-            } else {
-                //TODO: ...
-            }
+            AWSInstanceProfile profile = new AWSInstanceProfile(profileName, location, amiId);
             profiles.put(profileName, profile);
         }
         

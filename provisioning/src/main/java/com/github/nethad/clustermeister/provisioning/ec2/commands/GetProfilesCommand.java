@@ -17,9 +17,10 @@ package com.github.nethad.clustermeister.provisioning.ec2.commands;
 
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
+import com.github.nethad.clustermeister.provisioning.ec2.AWSInstanceProfile;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
-import java.util.Set;
+import java.util.Collection;
 
 /**
  *
@@ -44,14 +45,14 @@ public class GetProfilesCommand extends AbstractAmazonExecutableCommand {
         
         handle.print("Configured profile names:");
         handle.print(SEPARATOR_LINE);
-        Set<String> configuredProfileNames = 
-                amazonInstanceManager.getConfiguredProfileNames();
+        Collection<AWSInstanceProfile> configuredProfileNames = 
+                amazonInstanceManager.getConfiguredProfiles();
         
         if(configuredProfileNames.isEmpty()) {
             handle.print("No profiles configured.");
         } else {
-            for(String profileName : configuredProfileNames) {
-                handle.print(profileName);
+            for(AWSInstanceProfile profileName : configuredProfileNames) {
+                handle.print(profileName.toString());
             }
         }
         handle.print(SEPARATOR_LINE);

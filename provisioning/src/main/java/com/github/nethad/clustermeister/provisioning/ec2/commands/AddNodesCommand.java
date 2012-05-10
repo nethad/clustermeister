@@ -15,13 +15,18 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2.commands;
 
+import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
+import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
+import com.github.nethad.clustermeister.provisioning.ec2.AWSInstanceProfile;
 import com.google.common.base.Optional;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +39,7 @@ import java.util.Scanner;
 public class AddNodesCommand extends AbstractAmazonExecutableCommand {
     
     private static final String[] ARGUMENTS = 
-            new String[]{"number of nodes", "processing threads per node"};
+            new String[]{"number of nodes", "processing threads per node", "profile"};
 
     private static final String HELP_TEXT = "Add nodes to the cluster.";
     
@@ -48,6 +53,7 @@ public class AddNodesCommand extends AbstractAmazonExecutableCommand {
     @Override
     public void execute(CommandLineArguments arguments) {
         AmazonNodeManager nodeManager = getNodeManager();
+        AmazonInstanceManager instanceManager = nodeManager.getInstanceManager();
         
         if (isArgumentsCountFalse(arguments)) {
             return;
@@ -57,7 +63,14 @@ public class AddNodesCommand extends AbstractAmazonExecutableCommand {
         
         final int numberOfNodes = scanner.nextInt();
         final int numberOfCpusPerNode = scanner.nextInt();
-                final AmazonNodeConfiguration amazonNodeConfiguration = new AmazonNodeConfiguration();
+        final String profileName = scanner.next();
+        AWSInstanceProfile profile = instanceManager.getConfiguredProfile(profileName);
+        if(profile == null) {
+            getCommandLineHandle().print("Unknown profile '%s'.", profileName);
+            return;
+        }
+        
+        final AmazonNodeConfiguration amazonNodeConfiguration = new AmazonNodeConfiguration();
         amazonNodeConfiguration.setDriverAddress("localhost");
         amazonNodeConfiguration.setNodeCapabilities(new NodeCapabilities() {
             @Override
@@ -76,14 +89,30 @@ public class AddNodesCommand extends AbstractAmazonExecutableCommand {
             }
         });
         amazonNodeConfiguration.setNodeType(NodeType.NODE);
-        amazonNodeConfiguration.setRegion("eu-west-1c");
+        amazonNodeConfiguration.setLocation(profile.getLocation());
+        if(profile.getAmiId().isPresent()) {
+            amazonNodeConfiguration.setImageId(profile.getAmiId().get());
+        }
         
         logger.info("Starting {} nodes.", numberOfNodes);
         List<ListenableFuture<? extends Object>> futures = 
                 new ArrayList<ListenableFuture<? extends Object>>(numberOfNodes);
         for (int i = 0; i < numberOfNodes; i++) {
-            futures.add(nodeManager.addNode(amazonNodeConfiguration, 
-                    Optional.<String>absent()));
+            ListenableFuture<? extends Node> future = 
+                    nodeManager.addNode(amazonNodeConfiguration, Optional.<String>absent());
+            Futures.addCallback(future, new FutureCallback<Node>() {
+                @Override
+                public void onSuccess(Node result) {
+                    //nop
+                }
+
+                @Override
+                public void onFailure(Throwable t) {
+                    logger.warn("Node start failure.", t);
+                }
+
+            });
+            futures.add(future);
         }
         waitForFuturesToComplete(futures, 
                 "Interrupted while waiting for nodes to start. Nodes may not be started properly.", 

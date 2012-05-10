@@ -20,6 +20,7 @@ import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import java.io.File;
 import java.util.Collection;
@@ -37,7 +38,7 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
 
     private NodeType nodeType = NodeType.NODE;
     private Optional<Credentials> credentials = Optional.absent();
-    private Optional<String> region = Optional.absent();
+    private Optional<String> location = Optional.absent();
     private Optional<String> imageId = Optional.absent();
     private String driverAddress = "";
     private boolean driverDeployedLocally = false;
@@ -81,12 +82,12 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
     }
 
 
-    public void setRegion(String region) {
-        this.region = Optional.fromNullable(region);
+    public void setLocation(String region) {
+        this.location = Optional.fromNullable(region);
     }
     
-    public Optional<String> getRegion() {
-        return region;
+    public Optional<String> getLocation() {
+        return location;
     }
 
     public void setImageId(String imageId) {
@@ -114,12 +115,14 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
     }
     
     Template getTemplate(TemplateBuilder templateBuilder) {
-        if(imageId.isPresent()) {
-            templateBuilder.imageId(imageId.get());
+        if(location.isPresent()) {
+            //takes zone or region
+            templateBuilder.locationId(location.get());
+        }
+        if(imageId.isPresent() && location.isPresent()) {
+            //TODO: zone vs region! needs region!
+            templateBuilder.imageId(Joiner.on('/').join(location.get(), imageId.get()));
         } else {
-            if(region.isPresent()) {
-                templateBuilder.locationId(region.get());
-            }
             templateBuilder.hardwareId(InstanceType.T1_MICRO);
             templateBuilder.osFamily(OsFamily.AMZN_LINUX);
         }

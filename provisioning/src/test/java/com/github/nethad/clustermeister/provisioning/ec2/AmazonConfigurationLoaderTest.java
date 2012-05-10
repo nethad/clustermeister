@@ -45,6 +45,8 @@ public class AmazonConfigurationLoaderTest {
     private static final String PROFILE2 = "profile2";
     private static final String AMI_ID1 = "a-11234";
     private static final String AMI_ID2 = "a-98765";
+    private static final String LOCATION1 = "eu-west-1";
+    private static final String LOCATION2 = "us-east-1a";
     private static final String USER1 = "user1";
     private static final String USER2 = "user2";
     private ByteArrayInputStream configBytes;
@@ -75,14 +77,19 @@ public class AmazonConfigurationLoaderTest {
         config.append("  profiles:").append("\n");
         config.append("    - ").append(PROFILE1).append(":").append("\n");
         config.append("        ami_id: ").append(AMI_ID1).append("\n");
+        config.append("        location: ").append(LOCATION1).append("\n");
         config.append("    - ").append(PROFILE2).append(":").append("\n");
         config.append("        ami_id: ").append(AMI_ID2).append("\n");
+        config.append("        location: ").append(LOCATION2).append("\n");
         configBytes = new ByteArrayInputStream(config.toString().getBytes(Charsets.UTF_8));
         
         config = new StringBuilder("amazon:").append("\n");
         config.append("  access_key_id: ").append("\n");
         config.append("  keypairs:").append("\n");
         config.append("    - ").append(KEYPAIR1).append(":").append("\n");
+        config.append("        ami_id: ").append(AMI_ID1).append("\n");
+        config.append("  profiles:").append("\n");
+        config.append("    - ").append(PROFILE1).append(":").append("\n");
         config.append("        ami_id: ").append(AMI_ID1).append("\n");
         badConfigBytes = new ByteArrayInputStream(config.toString().getBytes(Charsets.UTF_8));
     }
@@ -150,21 +157,29 @@ public class AmazonConfigurationLoaderTest {
         ));
     }
     
-    @Test
-    public void testGetConfiguredProfiles() throws ConfigurationException {
-        goodConfigSetup();
-        Map<String, AmazonNodeProfile> result = configLoader.getConfiguredProfiles();
-        assertThat(result, allOf(
-                Matchers.<String, AmazonNodeProfile>hasKey(PROFILE1),
-                Matchers.<String, AmazonNodeProfile>hasKey(PROFILE2)
-        ));
-        assertThat(result.get(PROFILE1).getAmiId(), is(equalTo(AMI_ID1)));
-        assertThat(result.get(PROFILE2).getAmiId(), is(equalTo(AMI_ID2)));
-    }
-    
     @Test(expected=IllegalArgumentException.class)
     public void testGetBadConfiguredCredentials() throws ConfigurationException {
         badConfigSetup();
         configLoader.getConfiguredCredentials();
+    }
+    
+    @Test
+    public void testGetConfiguredProfiles() throws ConfigurationException {
+        goodConfigSetup();
+        Map<String, AWSInstanceProfile> result = configLoader.getConfiguredProfiles();
+        assertThat(result, allOf(
+                Matchers.<String, AWSInstanceProfile>hasKey(PROFILE1),
+                Matchers.<String, AWSInstanceProfile>hasKey(PROFILE2)
+        ));
+        assertThat(result.get(PROFILE1).getAmiId().get(), is(equalTo(AMI_ID1)));
+        assertThat(result.get(PROFILE1).getLocation(), is(equalTo(LOCATION1)));
+        assertThat(result.get(PROFILE2).getAmiId().get(), is(equalTo(AMI_ID2)));
+        assertThat(result.get(PROFILE2).getLocation(), is(equalTo(LOCATION2)));
+    }
+    
+    @Test(expected=IllegalArgumentException.class)
+    public void testGetBadConfiguredProfiles() throws ConfigurationException {
+        badConfigSetup();
+        configLoader.getConfiguredProfiles();
     }
 }

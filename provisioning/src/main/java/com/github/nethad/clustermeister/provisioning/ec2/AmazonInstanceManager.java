@@ -89,7 +89,7 @@ public class AmazonInstanceManager {
     private final Map<String, SocksTunnel> instanceToReverseTunnel =
             new HashMap<String, SocksTunnel>();
     private Map<String, Credentials> keypairs;
-    private Map<String, AmazonNodeProfile> profiles;
+    private Map<String, AWSInstanceProfile> profiles;
 
     /**
      * Creates a new AmazonInstanceManager.
@@ -166,11 +166,11 @@ public class AmazonInstanceManager {
         return keypairs.get(keypairName);
     }
     
-    public Set<String> getConfiguredProfileNames() {
-        return Collections.unmodifiableSet(profiles.keySet());
+    public Collection<AWSInstanceProfile> getConfiguredProfiles() {
+        return profiles.values();
     }
     
-    public AmazonNodeProfile getConfiguredProfile(String profileName) {
+    public AWSInstanceProfile getConfiguredProfile(String profileName) {
         return profiles.get(profileName);
     }
 
@@ -449,7 +449,7 @@ public class AmazonInstanceManager {
     private ListenableFuture<ComputeServiceContext> createContext() {
         logger.debug("Creating Context...");
 
-        //TODO: how to enable lazy image fetching?
+        //TODO: how to enable lazy image fetching? --> Idea: create lazy and normal context and choose based on need of template
 //        //Optimization: lazy image fetching
 //        //set AMI queries to nothing
 //        Properties properties = new Properties();
