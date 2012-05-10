@@ -13,15 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.api.impl;
+package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Credentials;
+import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredentials;
+import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
+import com.github.nethad.clustermeister.api.impl.YamlConfiguration;
 import com.google.common.base.Charsets;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.util.Map;
 import org.apache.commons.configuration.ConfigurationException;
+import org.hamcrest.Matchers;
 import static org.hamcrest.Matchers.*;
 import org.junit.After;
 import static org.junit.Assert.*;
@@ -37,6 +41,10 @@ public class AmazonConfigurationLoaderTest {
     private static final String ACCESS_KEY_ID = "ABCDEFGHIJKLMNOPQRSTUVW";
     private static final String KEYPAIR1 = "keypair1";
     private static final String KEYPAIR2 = "keypair2";
+    private static final String PROFILE1 = "profile1";
+    private static final String PROFILE2 = "profile2";
+    private static final String AMI_ID1 = "a-11234";
+    private static final String AMI_ID2 = "a-98765";
     private static final String USER1 = "user1";
     private static final String USER2 = "user2";
     private ByteArrayInputStream configBytes;
@@ -64,13 +72,18 @@ public class AmazonConfigurationLoaderTest {
         config.append("        user: ").append(USER2).append("\n");
         config.append("        private_key: ").append(privateKeyPath).append("\n");
         config.append("        public_key: ").append(publicKeyPath).append("\n");
+        config.append("  profiles:").append("\n");
+        config.append("    - ").append(PROFILE1).append(":").append("\n");
+        config.append("        ami_id: ").append(AMI_ID1).append("\n");
+        config.append("    - ").append(PROFILE2).append(":").append("\n");
+        config.append("        ami_id: ").append(AMI_ID2).append("\n");
         configBytes = new ByteArrayInputStream(config.toString().getBytes(Charsets.UTF_8));
         
         config = new StringBuilder("amazon:").append("\n");
         config.append("  access_key_id: ").append("\n");
         config.append("  keypairs:").append("\n");
         config.append("    - ").append(KEYPAIR1).append(":").append("\n");
-        config.append("        private_key: ").append(privateKeyPath).append("\n");
+        config.append("        ami_id: ").append(AMI_ID1).append("\n");
         badConfigBytes = new ByteArrayInputStream(config.toString().getBytes(Charsets.UTF_8));
     }
 
@@ -135,10 +148,18 @@ public class AmazonConfigurationLoaderTest {
                 hasEntry(KEYPAIR1, c1),
                 hasEntry(KEYPAIR2, c2)
         ));
-        assertThat(result.get(KEYPAIR1).getUser(), is(equalTo(USER1)));
-        assertThat(result.get(KEYPAIR1), is(AmazonConfiguredKeyPairCredentials.class));
-        assertThat(result.get(KEYPAIR2).getUser(), is(equalTo(USER2)));
-        assertThat(result.get(KEYPAIR2), is(KeyPairCredentials.class));
+    }
+    
+    @Test
+    public void testGetConfiguredProfiles() throws ConfigurationException {
+        goodConfigSetup();
+        Map<String, AmazonNodeProfile> result = configLoader.getConfiguredProfiles();
+        assertThat(result, allOf(
+                Matchers.<String, AmazonNodeProfile>hasKey(PROFILE1),
+                Matchers.<String, AmazonNodeProfile>hasKey(PROFILE2)
+        ));
+        assertThat(result.get(PROFILE1).getAmiId(), is(equalTo(AMI_ID1)));
+        assertThat(result.get(PROFILE2).getAmiId(), is(equalTo(AMI_ID2)));
     }
     
     @Test(expected=IllegalArgumentException.class)

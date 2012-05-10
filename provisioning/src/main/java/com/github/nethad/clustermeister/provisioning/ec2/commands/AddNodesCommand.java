@@ -18,7 +18,6 @@ package com.github.nethad.clustermeister.provisioning.ec2.commands;
 import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
-import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
@@ -27,7 +26,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Scanner;
-import java.util.StringTokenizer;
 
 /**
  *
@@ -35,23 +33,20 @@ import java.util.StringTokenizer;
  */
 public class AddNodesCommand extends AbstractAmazonExecutableCommand {
     
-    public static final String[] ARG_DESCRIPTIONS = new String[]{"number of nodes", 
-        "processing threads per node"};
+    private static final String[] ARGUMENTS = 
+            new String[]{"number of nodes", "processing threads per node"};
 
-
-    /**
-     * Command name.
-     */
-    public static final String NAME = "addnodes";
+    private static final String HELP_TEXT = "Add nodes to the cluster.";
     
-    public AddNodesCommand(String[] arguments, String helpText, 
-            AmazonCommandLineEvaluation commandLineEvaluation) {
-        super(NAME, arguments, helpText, commandLineEvaluation);
+    private static final String NAME = "addnodes";
+    
+    
+    public AddNodesCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
+        super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
     }
 
     @Override
     public void execute(CommandLineArguments arguments) {
-        CommandLineHandle commandLineHandle = getCommandLineHandle();
         AmazonNodeManager nodeManager = getNodeManager();
         
         if (isArgumentsCountFalse(arguments)) {

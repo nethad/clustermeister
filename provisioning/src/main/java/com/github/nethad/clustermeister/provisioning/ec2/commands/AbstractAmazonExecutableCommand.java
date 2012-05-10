@@ -33,6 +33,8 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractAmazonExecutableCommand extends AbstractExecutableCommand {
  
+    protected static final String SEPARATOR_LINE = "-------------------------------------------------";
+    
     final static Logger logger = 
             LoggerFactory.getLogger(AbstractAmazonExecutableCommand.class);
 

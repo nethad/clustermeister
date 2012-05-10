@@ -17,7 +17,6 @@ package com.github.nethad.clustermeister.provisioning.ec2.commands;
 
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
-import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceShutdownMethod;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNode;
@@ -32,14 +31,14 @@ import java.util.*;
  */
 public class ShutdownCommand extends AbstractAmazonExecutableCommand {
 
-    /**
-     * Command name.
-     */
-    public static final String NAME = "shutdown";
+    private static final String[] ARGUMENTS = null;
+    
+    private static final String HELP_TEXT = "";
+    
+    private static final String NAME = "shutdown";
 
-    public ShutdownCommand(String[] arguments, String helpText, 
-            AmazonCommandLineEvaluation commandLineEvaluation) {
-        super(NAME, arguments, helpText, commandLineEvaluation);
+    public ShutdownCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
+        super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
     }
 
     @Override

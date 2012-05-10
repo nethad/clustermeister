@@ -29,7 +29,6 @@ import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.Scanner;
-import java.util.StringTokenizer;
 import java.util.concurrent.ExecutionException;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeState;
@@ -41,16 +40,14 @@ import org.jclouds.compute.domain.Processor;
  */
 public class StartNodeCommand extends AbstractAmazonExecutableCommand {
 
-    public static final String[] ARG_DESCRIPTIONS = new String[]{"instance ID", "keypair name"};
+    private static final String[] ARGUMENTS = new String[]{"instance ID", "keypair name"};
     
-    /**
-     * Command name.
-     */
-    public static final String NAME = "startnode";
+    private static final String HELP_TEXT = "Start a JPPF-Node on an AWS E2 instance.";
+    
+    private static final String NAME = "startnode";
 
-    public StartNodeCommand(String[] arguments, String helpText,
-            AmazonCommandLineEvaluation commandLineEvaluation) {
-        super(NAME, arguments, helpText, commandLineEvaluation);
+    public StartNodeCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
+        super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
     }
 
     @Override

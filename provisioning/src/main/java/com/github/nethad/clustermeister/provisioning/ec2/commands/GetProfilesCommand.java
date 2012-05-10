@@ -15,41 +15,45 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2.commands;
 
-import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
-import java.util.Collection;
+import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
+import java.util.Set;
 
 /**
  *
  * @author daniel
  */
-public class StateCommand extends AbstractAmazonExecutableCommand {
+public class GetProfilesCommand extends AbstractAmazonExecutableCommand {
+    private static final String NAME = "getprofiles";
     
     private static final String[] ARGUMENTS = null;
     
-    private static final String HELP_TEXT = "";
-    
-    private static final String NAME = "state";
+    private static final String HELP_TEXT = "Get all configured profiles names.";
 
-    public StateCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
+    public GetProfilesCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
         super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
     }
-
+    
     @Override
     public void execute(CommandLineArguments arguments) {
-        AmazonNodeManager nodeManager = getNodeManager();
-        CommandLineHandle commandLineHandle = getCommandLineHandle();
-        Collection<? extends Node> nodes = nodeManager.getNodes();
-        if(nodes == null || nodes.isEmpty()) {
-            commandLineHandle.print("No nodes registered.");
-        }
+        AmazonInstanceManager amazonInstanceManager = 
+                getNodeManager().getInstanceManager();
+        CommandLineHandle handle = getCommandLineHandle();
         
-        for(Node node : nodes) {
-            commandLineHandle.print(node.toString());
+        handle.print("Configured profile names:");
+        handle.print(SEPARATOR_LINE);
+        Set<String> configuredProfileNames = 
+                amazonInstanceManager.getConfiguredProfileNames();
+        
+        if(configuredProfileNames.isEmpty()) {
+            handle.print("No profiles configured.");
+        } else {
+            for(String profileName : configuredProfileNames) {
+                handle.print(profileName);
+            }
         }
+        handle.print(SEPARATOR_LINE);
     }
-    
 }

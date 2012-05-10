@@ -20,7 +20,6 @@ package com.github.nethad.clustermeister.provisioning;
  * @author daniel
  */
 public abstract class AbstractExecutableCommand extends Command {
-
 //    protected CommandLineEvaluation commandLineEvaluation;
     
     public AbstractExecutableCommand(String commandName, String[] arguments, 

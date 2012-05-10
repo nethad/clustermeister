@@ -20,12 +20,12 @@ import com.github.nethad.clustermeister.provisioning.*;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.AddNodesCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.GetInstancesCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.GetKeypairsCommand;
+import com.github.nethad.clustermeister.provisioning.ec2.commands.GetProfilesCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.ShutdownCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.StartNodeCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.StateCommand;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
-import java.util.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,6 +39,8 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
     private final AmazonNodeManager nodeManager;
     private final CommandLineHandle handle;
     private final JPPFManagementByJobsClient amazonManagementClient;
+    private ShutdownCommand shutdownCommand;
+    private StateCommand stateCommand;
     
     public AmazonCommandLineEvaluation(AmazonNodeManager nodeManager, CommandLineHandle handle) {
         this.nodeManager = nodeManager;
@@ -51,12 +53,12 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
 
     @Override
     public void state(CommandLineArguments arguments) {
-        new StateCommand(new String[]{}, "", this).execute(arguments);
+        stateCommand.execute(arguments);
     }
 
     @Override
     public void shutdown(CommandLineArguments arguments) {
-        new ShutdownCommand(new String[]{}, "", this).execute(arguments);
+        shutdownCommand.execute(arguments);
     }
 
     @Override
@@ -81,20 +83,13 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
     }
 
     private void registerCommands() {
-        handle.getCommandRegistry().registerCommand(new AddNodesCommand(
-                AddNodesCommand.ARG_DESCRIPTIONS, "Add nodes to the cluster.", this));
-        handle.getCommandRegistry().registerCommand(new GetInstancesCommand(
-                GetInstancesCommand.ARG_DESCRIPTIONS, 
-                "Get configured instances and their state from the configure AWS Account.", 
-                this));
-        handle.getCommandRegistry().registerCommand(new StartNodeCommand(
-                StartNodeCommand.ARG_DESCRIPTIONS, 
-                "Start a JPPF-Node on an AWS E2 instance.", 
-                this));
-        handle.getCommandRegistry().registerCommand(new GetKeypairsCommand(
-                null, 
-                "Get all configured keypair names.", 
-                this));
+        stateCommand = new StateCommand(this);
+        shutdownCommand = new ShutdownCommand(this);
+        handle.getCommandRegistry().registerCommand(new AddNodesCommand(this));
+        handle.getCommandRegistry().registerCommand(new GetInstancesCommand(this));
+        handle.getCommandRegistry().registerCommand(new StartNodeCommand(this));
+        handle.getCommandRegistry().registerCommand(new GetKeypairsCommand(this));
+        handle.getCommandRegistry().registerCommand(new GetProfilesCommand(this));
     }
     
     public AmazonNodeManager getNodeManager() {

@@ -17,7 +17,6 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.JPPFConstants;
-import com.github.nethad.clustermeister.api.impl.AmazonConfigurationLoader;
 import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.PasswordCredentials;
@@ -90,6 +89,7 @@ public class AmazonInstanceManager {
     private final Map<String, SocksTunnel> instanceToReverseTunnel =
             new HashMap<String, SocksTunnel>();
     private Map<String, Credentials> keypairs;
+    private Map<String, AmazonNodeProfile> profiles;
 
     /**
      * Creates a new AmazonInstanceManager.
@@ -164,6 +164,14 @@ public class AmazonInstanceManager {
     
     public Credentials getConfiguredCredentials(String keypairName) {
         return keypairs.get(keypairName);
+    }
+    
+    public Set<String> getConfiguredProfileNames() {
+        return Collections.unmodifiableSet(profiles.keySet());
+    }
+    
+    public AmazonNodeProfile getConfiguredProfile(String profileName) {
+        return profiles.get(profileName);
     }
 
     /**
@@ -461,6 +469,7 @@ public class AmazonInstanceManager {
         secretKey = configurationLoader.getSecretKey();
         
         keypairs = Collections.synchronizedMap(configurationLoader.getConfiguredCredentials());
+        profiles = Collections.synchronizedMap(configurationLoader.getConfiguredProfiles());
         
         artifactsToPreload = DependencyConfigurationUtil.getConfiguredDependencies(configuration);
     }
