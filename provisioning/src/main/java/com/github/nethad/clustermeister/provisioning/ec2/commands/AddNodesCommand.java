@@ -70,7 +70,8 @@ public class AddNodesCommand extends AbstractAmazonExecutableCommand {
             return;
         }
         
-        final AmazonNodeConfiguration amazonNodeConfiguration = new AmazonNodeConfiguration();
+        final AmazonNodeConfiguration amazonNodeConfiguration = 
+                AmazonNodeConfiguration.fromInstanceProfile(profile);
         amazonNodeConfiguration.setDriverAddress("localhost");
         amazonNodeConfiguration.setNodeCapabilities(new NodeCapabilities() {
             @Override
@@ -89,10 +90,6 @@ public class AddNodesCommand extends AbstractAmazonExecutableCommand {
             }
         });
         amazonNodeConfiguration.setNodeType(NodeType.NODE);
-        amazonNodeConfiguration.setLocation(profile.getLocation());
-        if(profile.getAmiId().isPresent()) {
-            amazonNodeConfiguration.setImageId(profile.getAmiId().get());
-        }
         
         logger.info("Starting {} nodes.", numberOfNodes);
         List<ListenableFuture<? extends Object>> futures = 

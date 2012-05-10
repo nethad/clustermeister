@@ -35,21 +35,36 @@ import org.jclouds.ec2.domain.InstanceType;
  * @author daniel
  */
 public class AmazonNodeConfiguration implements NodeConfiguration {
-
+    
+    private AWSInstanceProfile profile = null;
     private NodeType nodeType = NodeType.NODE;
     private Optional<Credentials> credentials = Optional.absent();
-    private Optional<String> location = Optional.absent();
-    private Optional<String> imageId = Optional.absent();
     private String driverAddress = "";
     private boolean driverDeployedLocally = false;
     private int managementPort = JPPFConstants.DEFAULT_MANAGEMENT_PORT;
     private NodeCapabilities nodeCapabilities = null;
     private Collection<File> artifactsToPreload = Collections.EMPTY_LIST;
 
+    public static AmazonNodeConfiguration fromInstanceProfile(
+            AWSInstanceProfile instanceProfile) {
+        
+        return new AmazonNodeConfiguration(instanceProfile);
+    }
+
+    /**
+     * Default Constructor.
+     */
+//    public AmazonNodeConfiguration() {}
+    
+    private AmazonNodeConfiguration(AWSInstanceProfile instanceProfile) {
+        this.profile = instanceProfile;
+    }
+    
     public void setNodeType(NodeType nodeType) {
         this.nodeType = nodeType;
     }
 
+    
     @Override
     public NodeType getType() {
         return nodeType;
@@ -81,21 +96,12 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
         return driverDeployedLocally;
     }
 
-
-    public void setLocation(String region) {
-        this.location = Optional.fromNullable(region);
-    }
-    
-    public Optional<String> getLocation() {
-        return location;
+    public String getLocation() {
+        return profile.getLocation();
     }
 
-    public void setImageId(String imageId) {
-        this.imageId = Optional.fromNullable(imageId);
-    }
-    
     public Optional<String> getImageId() {
-        return imageId;
+        return profile.getAmiId();
     }
     
     void setManagementPort(int managementPort) {
@@ -115,13 +121,14 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
     }
     
     Template getTemplate(TemplateBuilder templateBuilder) {
-        if(location.isPresent()) {
-            //takes zone or region
-            templateBuilder.locationId(location.get());
-        }
-        if(imageId.isPresent() && location.isPresent()) {
+        //takes zone or region
+        templateBuilder.locationId(profile.getLocation());
+        
+        if(getImageId().isPresent()) {
             //TODO: zone vs region! needs region!
-            templateBuilder.imageId(Joiner.on('/').join(location.get(), imageId.get()));
+            String jCloudsIMageId = 
+                    Joiner.on('/').join(getLocation(), getImageId().get());
+            templateBuilder.imageId(jCloudsIMageId);
         } else {
             templateBuilder.hardwareId(InstanceType.T1_MICRO);
             templateBuilder.osFamily(OsFamily.AMZN_LINUX);

@@ -22,6 +22,7 @@ import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
+import com.github.nethad.clustermeister.provisioning.ec2.AWSInstanceProfile;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeConfiguration;
@@ -81,7 +82,8 @@ public class StartNodeCommand extends AbstractAmazonExecutableCommand {
         NodeState state = instanceMetadata.getState();
         if(state == NodeState.RUNNING || state == NodeState.SUSPENDED) {
             final AmazonNodeConfiguration amazonNodeConfiguration = 
-                    new AmazonNodeConfiguration();
+                    AmazonNodeConfiguration.fromInstanceProfile(
+                    AWSInstanceProfile.fromInstanceMetadata(instanceMetadata));
             amazonNodeConfiguration.setDriverAddress("localhost");
 
             int numberOfCores = 0;
@@ -108,7 +110,6 @@ public class StartNodeCommand extends AbstractAmazonExecutableCommand {
                 }
             });
             amazonNodeConfiguration.setNodeType(NodeType.NODE);
-            amazonNodeConfiguration.setLocation(instanceMetadata.getLocation().getId());
 
             amazonNodeConfiguration.setCredentials(configuredCredentials);
 

@@ -21,6 +21,9 @@ import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ComparisonChain;
 import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.jclouds.compute.domain.NodeMetadata;
+import org.jclouds.domain.Location;
+import org.jclouds.domain.LocationScope;
 
 /**
  *
@@ -31,6 +34,16 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
     private final String location;
     private final Optional<String> amiId;
 
+    public static AWSInstanceProfile fromInstanceMetadata(NodeMetadata instanceMetadata) {
+        //TODO: region/zone support
+        String region = instanceMetadata.getLocation().getId();
+        if(instanceMetadata.getLocation().getScope() == LocationScope.ZONE) {
+            region = instanceMetadata.getLocation().getParent().getId();
+        }
+        return new AWSInstanceProfile("<generated for >" + instanceMetadata.getId(), 
+                region, instanceMetadata.getImageId());
+    }
+    
     public AWSInstanceProfile(String profileName, String location, String amiId) {
         profileName = getCheckedString(profileName, "Invalid profile name.");
         this.profileName = profileName;
