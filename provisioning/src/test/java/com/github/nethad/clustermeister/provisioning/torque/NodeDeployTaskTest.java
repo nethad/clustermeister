@@ -20,6 +20,9 @@ import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.Map;
+import org.apache.commons.configuration.Configuration;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
 import static org.junit.Assert.assertEquals;
@@ -40,14 +43,33 @@ public class NodeDeployTaskTest {
     private SSHClient sshClient;
     private TorqueNodeConfiguration torqueNodeConfiguration;
     private TorqueNodeDeployment torqueNodeDeployment;
+    private TorqueConfiguration torqueConfiguration;
 
     @Before
-    public void setup() {
+    public void setup() throws ConfigurationValueMissingException {
         torqueNodeDeployment = mock(TorqueNodeDeployment.class);
         sshClient = mock(SSHClient.class);
         when(torqueNodeDeployment.sshClient()).thenReturn(sshClient);
         torqueNodeConfiguration = new TorqueNodeConfiguration("driverIp", NUMBER_OF_CPUS, null);
-        nodeDeployTask = new NodeDeployTask(torqueNodeDeployment, 10, torqueNodeConfiguration, "test@example.com");
+        torqueConfiguration = TorqueConfiguration.buildFromConfig(buildConfig());
+        nodeDeployTask = new NodeDeployTask(torqueNodeDeployment, 10, torqueNodeConfiguration, torqueConfiguration);
+    }
+    
+    private Configuration buildConfig(boolean isQueueSet) {
+        Map<String, Object> configValues = new HashMap<String, Object>();
+        configValues.put(TorqueConfiguration.TORQUE_SSH_HOST, "ssh.example.com");
+        configValues.put(TorqueConfiguration.TORQUE_SSH_PORT, 22);
+        configValues.put(TorqueConfiguration.TORQUE_SSH_PRIVATEKEY, "/path/to/privatekey");
+        configValues.put(TorqueConfiguration.TORQUE_SSH_USER, "user");
+        if (isQueueSet) {
+            configValues.put(TorqueConfiguration.TORQUE_QUEUE_NAME, "myqueue");
+        }
+        configValues.put(TorqueConfiguration.TORQUE_EMAIL_NOTIFY, "test@example.com");
+        return new ConfigurationForTesting(configValues);
+    }
+    
+    private Configuration buildConfig() {
+        return buildConfig(true);
     }
 
     @Test
@@ -97,6 +119,19 @@ public class NodeDeployTaskTest {
     public void qsubScript() throws Exception {
         String qsubScript = nodeDeployTask.qsubScript("NodeName", "node-config.properties", NUMBER_OF_CPUS);
         assertThat(qsubScript, containsString("#PBS -l nodes=1:ppn=42"));
+        assertThat(qsubScript, containsString("#PBS -q myqueue"));
+        assertThat(qsubScript, containsString("#PBS -o out/NodeName.out"));
+        assertThat(qsubScript, containsString("#PBS -M test@example.com"));
+        assertThat(qsubScript, containsString("./startNode.sh node-config.properties"));
+    }
+    
+    @Test
+    public void qsubScript_defaultValues() throws Exception {
+        torqueConfiguration = TorqueConfiguration.buildFromConfig(buildConfig(false));
+        nodeDeployTask = new NodeDeployTask(torqueNodeDeployment, 10, torqueNodeConfiguration, torqueConfiguration);
+        String qsubScript = nodeDeployTask.qsubScript("NodeName", "node-config.properties", NUMBER_OF_CPUS);
+        assertThat(qsubScript, containsString("#PBS -l nodes=1:ppn=42"));
+        assertThat(qsubScript, containsString("#PBS -q superfast"));
         assertThat(qsubScript, containsString("#PBS -o out/NodeName.out"));
         assertThat(qsubScript, containsString("#PBS -M test@example.com"));
         assertThat(qsubScript, containsString("./startNode.sh node-config.properties"));

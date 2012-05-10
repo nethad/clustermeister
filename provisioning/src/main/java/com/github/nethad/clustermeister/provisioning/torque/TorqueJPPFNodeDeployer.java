@@ -44,6 +44,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
     private String email;
     private ArrayList<Observer> publicIpListener;
     private String publicIp;
+    private String queueName;
     
     public TorqueJPPFNodeDeployer(TorqueConfiguration configuration, SSHClient sshClient) {
         this.configuration = configuration;
@@ -109,7 +110,8 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
         if (!isInfrastructureDeployed) {
             prepareAndDeployInfrastructure(nodeConfiguration.getArtifactsToPreload());
         }
-        NodeDeployTask nodeDeployTask = new NodeDeployTask(this, currentNodeNumber.getAndIncrement(), nodeConfiguration, email);
+        NodeDeployTask nodeDeployTask = 
+                new NodeDeployTask(this, currentNodeNumber.getAndIncrement(), nodeConfiguration, configuration);
         final TorqueNode torqueNode = nodeDeployTask.execute();
 //        torqueNodeManagement.addManagedNode(torqueNode);
         return torqueNode;
@@ -121,6 +123,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
           user = configuration.getSshUser();
 //          privateKeyFilePath = configuration.getPrivateKeyPath();
           email = configuration.getEmailNotify();
+          queueName = configuration.getQueueName();
 //          akkaZip = System.getProperty("user.home")+"/.clustermeister/"+AKKA_ZIP;
     }
 

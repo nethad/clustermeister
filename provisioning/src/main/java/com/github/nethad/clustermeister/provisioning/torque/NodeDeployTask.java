@@ -40,13 +40,16 @@ class NodeDeployTask {
 	private final TorqueNodeDeployment torqueNodeDeployment;
 	private final TorqueNodeConfiguration nodeConfiguration;
     private final String email;
+    private final String queueName;
 
-	public NodeDeployTask(TorqueNodeDeployment torqueNodeDeployment, int nodeNumber, TorqueNodeConfiguration nodeConfiguration, String email) {
+	public NodeDeployTask(TorqueNodeDeployment torqueNodeDeployment, int nodeNumber, 
+            TorqueNodeConfiguration nodeConfiguration, TorqueConfiguration torqueConfiguration) {
 		this.torqueNodeDeployment = torqueNodeDeployment;
 		this.nodeNumber = nodeNumber;
 		this.nodeConfiguration = nodeConfiguration;
 		this.managementPort = TorqueNodeDeployment.DEFAULT_MANAGEMENT_PORT + nodeNumber;
-        this.email = email;
+        this.email = torqueConfiguration.getEmailNotify();
+        this.queueName = torqueConfiguration.getQueueName();
 	}
 
 	public TorqueNode execute() throws SSHClientException {
@@ -55,7 +58,8 @@ class NodeDeployTask {
 		String nodeConfigFileName = configFileName();
 		uploadNodeConfiguration(nodeConfigFileName, driverAddress());
         
-        final String qsubScript = qsubScript(nodeName, nodeConfigFileName, nodeConfiguration.getNumberOfCpus());
+        final String qsubScript = qsubScript(nodeName, nodeConfigFileName, 
+                nodeConfiguration.getNumberOfCpus());
         final String base64EncodedQsubScript = base64Encode(qsubScript);
         String submitJobToQsub = "echo \""+base64EncodedQsubScript+"\"| base64 -d | qsub";
 		String response = sshClient().executeWithResult(submitJobToQsub);
@@ -123,7 +127,7 @@ class NodeDeployTask {
         StringBuilder sb = new StringBuilder();
         sb.append("#PBS -N ").append(nodeName).append("\n") // node name
             .append("#PBS -l nodes=1:ppn=").append(numberOfCpus).append("\n") // number of nodes, processors per node
-            .append("#PBS -q superfast").append("\n") // queue name
+            .append("#PBS -q ").append(queueName).append("\n") // queue name
             .append("#PBS -p 0\n") // priority, default: 0
             .append("#PBS -j oe\n") // join (o)output and (e)rror stream
             .append("#PBS -m b\n") // mail option: mail is sent when the job begins execution.

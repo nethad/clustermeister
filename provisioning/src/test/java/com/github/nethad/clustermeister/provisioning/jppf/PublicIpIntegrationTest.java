@@ -45,7 +45,7 @@ public class PublicIpIntegrationTest {
     public void setup() throws Exception {
         SSHClient sshClientMock = mock(SSHClient.class);
         when(sshClientMock.executeWithResult(contains("$SSH_CLIENT"))).thenReturn("1.2.3.5 1234 4321");
-        TorqueConfiguration torqueConfiguration = new TorqueConfiguration(null, null, null, 22, null);
+        TorqueConfiguration torqueConfiguration = new TorqueConfiguration(null, null, null, 22, null, null);
         nodeDeployer = new TorqueJPPFNodeDeployer(torqueConfiguration, sshClientMock);
     }
 
