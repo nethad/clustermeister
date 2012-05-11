@@ -47,6 +47,8 @@ public class AmazonConfigurationLoaderTest {
     private static final String AMI_ID2 = "a-98765";
     private static final String LOCATION1 = "eu-west-1";
     private static final String LOCATION2 = "us-east-1a";
+    private static final String TYPE1 = "type1";
+    private static final String TYPE2 = "type2";
     private static final String USER1 = "user1";
     private static final String USER2 = "user2";
     private ByteArrayInputStream configBytes;
@@ -78,9 +80,11 @@ public class AmazonConfigurationLoaderTest {
         config.append("    - ").append(PROFILE1).append(":").append("\n");
         config.append("        ami_id: ").append(AMI_ID1).append("\n");
         config.append("        region: ").append(LOCATION1).append("\n");
+        config.append("        type: ").append(TYPE1).append("\n");
         config.append("    - ").append(PROFILE2).append(":").append("\n");
         config.append("        ami_id: ").append(AMI_ID2).append("\n");
         config.append("        region: ").append(LOCATION2).append("\n");
+        config.append("        type: ").append(TYPE2).append("\n");
         configBytes = new ByteArrayInputStream(config.toString().getBytes(Charsets.UTF_8));
         
         config = new StringBuilder("amazon:").append("\n");
@@ -173,8 +177,10 @@ public class AmazonConfigurationLoaderTest {
         ));
         assertThat(result.get(PROFILE1).getAmiId().get(), is(equalTo(AMI_ID1)));
         assertThat(result.get(PROFILE1).getRegion(), is(equalTo(LOCATION1)));
+        assertThat(result.get(PROFILE1).getType(), is(equalTo(TYPE1)));
         assertThat(result.get(PROFILE2).getAmiId().get(), is(equalTo(AMI_ID2)));
         assertThat(result.get(PROFILE2).getRegion(), is(equalTo(LOCATION2)));
+        assertThat(result.get(PROFILE2).getType(), is(equalTo(TYPE2)));
     }
     
     @Test(expected=NullPointerException.class)

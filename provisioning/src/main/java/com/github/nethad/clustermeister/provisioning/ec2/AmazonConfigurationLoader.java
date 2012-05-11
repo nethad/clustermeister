@@ -85,6 +85,11 @@ public class AmazonConfigurationLoader {
     public static final String ZONE = "zone";
     
     /**
+     * AWS EC2 hardware type configuration property.
+     */
+    public static final String TYPE = "type";
+    
+    /**
      * The configuration.
      */
     final Configuration configuration;
@@ -170,6 +175,7 @@ public class AmazonConfigurationLoader {
                     profileName(profileName).
                     region(profileValues.get(REGION)).
                     zone(profileValues.get(ZONE)).
+                    type(profileValues.get(TYPE)).
                     amiId(profileValues.get(AMI_ID)).
                     build();
             profiles.put(profileName, profile);

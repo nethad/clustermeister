@@ -34,6 +34,7 @@ import org.jclouds.domain.LocationScope;
 public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
     private String profileName;
     private String region;
+    private String type;
     private Optional<String> zone;
     private Optional<String> amiId;
     
@@ -61,6 +62,7 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
                 profileName(String.format("<generated fro %s>", instanceMetadata.getId())).
                 region(regionId).
                 zone(zoneId).
+                type(instanceMetadata.getHardware().getId()).
                 amiId(instanceMetadata.getImageId()).
                 build();
         
@@ -125,10 +127,23 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
         return zone;
     }
     
+    /**
+     * Returns the AWS hardware type configured for this profile.
+     * 
+     * @return the AWS hardware type (e.g. t1.micro). 
+     * 
+     * @see 
+     *      <a href="http://aws.amazon.com/ec2/instance-types/">
+     *      Amazon EC2 Instance Types</a>
+     */
+    public String getType() {
+        return type;
+    }
+    
     @Override
     public String toString() {
         ToStringHelper helper = Objects.toStringHelper(profileName).
-                add("Region", region);
+                add("Region", region).add("Type", type);
         if(zone.isPresent()) {
             helper.add("Zone", zone.get());
         }
@@ -188,6 +203,9 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
             this.profile.region = checkString(
                     this.profile.region, "Invalid %s for profile '%s'.", 
                     AmazonConfigurationLoader.REGION, this.profile.profileName);
+            this.profile.type = checkString(
+                    this.profile.type, "Invalid %s for profile '%s'.", 
+                    AmazonConfigurationLoader.TYPE, this.profile.profileName);
             if(this.profile.zone.isPresent()) {
                 this.profile.zone = Optional.of(checkString(
                         this.profile.zone.get(), "Invalid %s for profile '%s'.", 
@@ -250,6 +268,17 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
         }
         
         /**
+         * Sets an AWS hardware type.
+         * 
+         * @param type the AWS hardware type API name (e.g. t1.micro).
+         * @return this instance for chaining.
+         */
+        public T type(String type) {
+            this.profile.type = type;
+            return self();
+        }
+        
+        /**
          * Check a string reference for being non-null and not empty.
          * 
          * Throws {@link IllegalArgumentException} or {@link NullPointerException} 
@@ -283,6 +312,7 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
      * <ul>
      * <li>profile name</li>
      * <li>region</li>
+     * <li>type</li>
      * <li>AMI ID</li>
      * </ul>
      * </p>

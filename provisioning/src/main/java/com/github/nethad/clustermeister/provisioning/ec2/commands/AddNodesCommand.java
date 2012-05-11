@@ -19,11 +19,11 @@ import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
+import com.github.nethad.clustermeister.provisioning.ec2.AWSInstanceProfile;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
-import com.github.nethad.clustermeister.provisioning.ec2.AWSInstanceProfile;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -97,23 +97,27 @@ public class AddNodesCommand extends AbstractAmazonExecutableCommand {
         for (int i = 0; i < numberOfNodes; i++) {
             ListenableFuture<? extends Node> future = 
                     nodeManager.addNode(amazonNodeConfiguration, Optional.<String>absent());
-            Futures.addCallback(future, new FutureCallback<Node>() {
-                @Override
-                public void onSuccess(Node result) {
-                    //nop
-                }
-
-                @Override
-                public void onFailure(Throwable t) {
-                    logger.warn("Node start failure.", t);
-                }
-
-            });
+            addFailureLogger(future);
             futures.add(future);
         }
         waitForFuturesToComplete(futures, 
                 "Interrupted while waiting for nodes to start. Nodes may not be started properly.", 
                 "Failed to wait for nodes to start.", "{} nodes failed to start.");
+    }
+
+    private void addFailureLogger(ListenableFuture<? extends Node> future) {
+        Futures.addCallback(future, new FutureCallback<Node>() {
+            @Override
+            public void onSuccess(Node result) {
+                //nop
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                logger.warn("Node start failure.", t);
+            }
+
+        });
     }
     
 }
