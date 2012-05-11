@@ -176,7 +176,7 @@ public class AmazonConfigurationLoader {
         for (Map.Entry<String, Map<String, String>> entry : profileSpecifications.entrySet()) {
             String profileName = entry.getKey();
             Map<String, String> profileValues = entry.getValue();
-            AWSInstanceProfile profile = AWSInstanceProfile.newAmiIdBuilder().
+            AWSInstanceProfile profile = AWSInstanceProfile.newBuilder().
                     profileName(profileName).
                     region(profileValues.get(REGION)).
                     zone(profileValues.get(ZONE)).

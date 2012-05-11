@@ -113,8 +113,11 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
                     Joiner.on('/').join(profile.getRegion(), profile.getAmiId().get());
             templateBuilder.imageId(jCloudsImageId);
         } else {
+            //fallback
+            //this will launch the highest version of the AMZN_LINUX template
             templateBuilder.osFamily(OsFamily.AMZN_LINUX);
         }
+        
         return templateBuilder.build();
     }
 

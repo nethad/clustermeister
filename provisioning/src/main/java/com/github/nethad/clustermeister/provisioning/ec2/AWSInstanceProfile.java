@@ -35,9 +35,9 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
     private String profileName;
     private String region;
     private String type;
-    private Optional<String> zone;
-    private Optional<String> amiId;
-    private Optional<String> keypairName;
+    private Optional<String> zone = Optional.<String>absent();
+    private Optional<String> amiId = Optional.<String>absent();
+    private Optional<String> keypairName = Optional.<String>absent();
     
     /**
      * Create a new {@link AWSInstanceProfile} from AWS EC2 instance meta data.
@@ -59,7 +59,7 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
                     instanceMetadata.getId()));
         }
         
-        return newAmiIdBuilder().
+        return newBuilder().
                 profileName(String.format("<generated fro %s>", instanceMetadata.getId())).
                 region(regionId).
                 zone(zoneId).
@@ -78,8 +78,8 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
      * 
      * @return a new builder.
      */
-    public static AmiIdBuilder newAmiIdBuilder() {
-        return new AmiIdBuilder();
+    public static Builder newBuilder() {
+        return new Builder();
     }
 
     /**
@@ -199,7 +199,19 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
                 result();
     }
     
-    private static abstract class Builder<T extends Builder> {
+    /**
+     * Builds new {@link AWSInstanceProfile}.
+     * 
+     * <p>
+     * This builder requires mandatory configuration of:
+     * <ul>
+     * <li>profile name</li>
+     * <li>region</li>
+     * <li>type</li>
+     * </ul>
+     * </p>
+     */
+    public static class Builder {
         /**
          * Default message for {@link #checkString(java.lang.String, java.lang.String, java.lang.Object[])}
          * when checking a key value pair.
@@ -227,26 +239,28 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
             this.profile.type = checkString(
                     this.profile.type, KEY_VALUE_MESSAGE, 
                     AmazonConfigurationLoader.TYPE, this.profile.profileName);
+            
+            if(this.profile.amiId.isPresent()) {
+                this.profile.amiId = Optional.of(checkString(
+                        this.profile.amiId.get(), KEY_VALUE_MESSAGE, 
+                        AmazonConfigurationLoader.AMI_ID, this.profile.profileName));
+                
+            }
+            
             if(this.profile.zone.isPresent()) {
                 this.profile.zone = Optional.of(checkString(
                         this.profile.zone.get(), KEY_VALUE_MESSAGE, 
                         AmazonConfigurationLoader.ZONE, this.profile.profileName));
             }
+            
             if(this.profile.keypairName.isPresent()) {
                 this.profile.keypairName = Optional.of(checkString(
                         this.profile.keypairName.get(), KEY_VALUE_MESSAGE, 
                         AmazonConfigurationLoader.KEYPAIR, this.profile.profileName));
             }
             
-            doBuild();
-            
             return profile;
         }
-        
-        /**
-         * Checks for mandatory values for what makes this builder special.
-         */
-        protected abstract void doBuild();
         
         /**
          * Set a profile name.
@@ -255,9 +269,9 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
          *      the name should be unique and is used to refer to this profile.
          * @return this instance for chaining.
          */
-        public T profileName(String profileName) {
+        public Builder profileName(String profileName) {
             this.profile.profileName = profileName;
-            return self();
+            return this;
         }
         
         /**
@@ -266,9 +280,9 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
          * @param amiId the AMI ID (e.g. ami-f9231b8d).
          * @return this instance for chaining.
          */
-        public T amiId(String amiId) {
+        public Builder amiId(String amiId) {
             this.profile.amiId = Optional.fromNullable(amiId);
-            return self();
+            return this;
         }
         
         /**
@@ -277,9 +291,9 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
          * @param region the AWS region ID (e.g. eu-west-1).
          * @return this instance for chaining.
          */
-        public T region(String region) {
+        public Builder region(String region) {
             this.profile.region = region;
-            return self();
+            return this;
         }
         
         /**
@@ -288,9 +302,9 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
          * @param zone the AWS availability zone (e.g. eu-west-1a).
          * @return this instance for chaining.
          */
-        public T zone(String zone) {
+        public Builder zone(String zone) {
             this.profile.zone = Optional.fromNullable(zone);
-            return self();
+            return this;
         }
         
         /**
@@ -299,9 +313,9 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
          * @param type the AWS hardware type API name (e.g. t1.micro).
          * @return this instance for chaining.
          */
-        public T type(String type) {
+        public Builder type(String type) {
             this.profile.type = type;
-            return self();
+            return this;
         }
         
         /**
@@ -312,9 +326,9 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
          *      keypairs configuration).
          * @return this instance for chaining.
          */
-        public T keypairName(String keypairName) {
+        public Builder keypairName(String keypairName) {
             this.profile.keypairName = Optional.fromNullable(keypairName);
-            return self();
+            return this;
         }
         
         /**
@@ -335,33 +349,6 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
             checkArgument(!trimmed.isEmpty(), message, messageArgs);
             
             return trimmed;
-        }
-        
-        private T self() {
-            return (T) this;
-        }
-    }
-    
-    /**
-     * Builds new {@link AWSInstanceProfile} instances with AMI 
-     * (Amazon Machine Image) IDs.
-     * 
-     * <p>
-     * This builder requires mandatory configuration of:
-     * <ul>
-     * <li>profile name</li>
-     * <li>region</li>
-     * <li>type</li>
-     * <li>AMI ID</li>
-     * </ul>
-     * </p>
-     */
-    public static class AmiIdBuilder extends Builder<AmiIdBuilder> {
-        @Override
-        protected void doBuild() {
-            this.profile.amiId = Optional.of(checkString(
-                    this.profile.amiId.get(), KEY_VALUE_MESSAGE, 
-                    AmazonConfigurationLoader.AMI_ID, this.profile.profileName));
         }
     }
 }
