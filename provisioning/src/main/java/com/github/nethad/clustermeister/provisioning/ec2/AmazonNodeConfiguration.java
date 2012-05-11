@@ -96,12 +96,8 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
         return driverDeployedLocally;
     }
 
-    public String getLocation() {
-        return profile.getRegion();
-    }
-
-    public Optional<String> getImageId() {
-        return profile.getAmiId();
+    public AWSInstanceProfile getProfile() {
+        return profile;
     }
     
     void setManagementPort(int managementPort) {
@@ -121,13 +117,15 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
     }
     
     Template getTemplate(TemplateBuilder templateBuilder) {
-        //takes zone or region
-        templateBuilder.locationId(profile.getRegion());
+        if(profile.getZone().isPresent()) {
+            templateBuilder.locationId(profile.getZone().get());
+        } else {
+            templateBuilder.locationId(profile.getRegion());
+        }
         
-        if(getImageId().isPresent()) {
-            //TODO: zone vs region! needs region!
+        if(profile.getAmiId().isPresent()) {
             String jCloudsIMageId = 
-                    Joiner.on('/').join(getLocation(), getImageId().get());
+                    Joiner.on('/').join(profile.getRegion(), profile.getAmiId().get());
             templateBuilder.imageId(jCloudsIMageId);
         } else {
             templateBuilder.hardwareId(InstanceType.T1_MICRO);
