@@ -109,8 +109,8 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
         }
         
         if(profile.getAmiId().isPresent()) {
-            String jCloudsImageId = 
-                    Joiner.on('/').join(profile.getRegion(), profile.getAmiId().get());
+            String jCloudsImageId = Joiner.on('/').join(profile.getRegion(), 
+                    profile.getAmiId().get());
             templateBuilder.imageId(jCloudsImageId);
         } else {
             //fallback

@@ -28,12 +28,9 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.Monitor;
-import com.google.common.util.concurrent.SettableFuture;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -45,7 +42,6 @@ import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.Template;
-import org.jclouds.compute.domain.TemplateBuilder;
 import org.jclouds.domain.Location;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.ec2.compute.options.EC2TemplateOptions;
@@ -79,7 +75,6 @@ public class AmazonInstanceManager {
     private String secretKey;
     private Collection<File> artifactsToPreload = null;
     private final ListenableFuture<ComputeServiceContext> contextFuture;
-    private final SettableFuture<TemplateBuilder> templateBuilderFuture;
     private final ListeningExecutorService executorService;
     private final Monitor portCounterMonitor = new Monitor(false);
     private final Map<String, Integer> instanceToPortCounter =
@@ -105,24 +100,8 @@ public class AmazonInstanceManager {
     AmazonInstanceManager(Configuration config, ListeningExecutorService executorService) {
         this.executorService = executorService;
         loadConfiguration(config);
-        templateBuilderFuture = SettableFuture.create();
         //from here the configuration must be loaded.
         contextFuture = createContext();
-        Futures.addCallback(contextFuture, new FutureCallback<ComputeServiceContext>() {
-
-            @Override
-            public void onSuccess(ComputeServiceContext context) {
-                templateBuilderFuture.set(context.getComputeService().templateBuilder());
-//                System.out.println("HW Profiles:" + context.getComputeService().listHardwareProfiles());
-//                System.out.println("Locations:" + context.getComputeService().listAssignableLocations());
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                templateBuilderFuture.setException(t);
-                throw new RuntimeException(t);
-            }
-        }, executorService);
     }
 
     /**
@@ -200,7 +179,7 @@ public class AmazonInstanceManager {
         logger.info("Creating a new instance...");
         ComputeServiceContext context = valueOrNotReady(contextFuture);
         Template template = nodeConfiguration.getTemplate(
-                valueOrNotReady(templateBuilderFuture));
+                context.getComputeService().templateBuilder());
 
         if (userMetaData.isPresent()) {
             template.getOptions().userMetadata(userMetaData.get());
@@ -437,7 +416,7 @@ public class AmazonInstanceManager {
                 awsOptions.overrideLoginCredentials(buildLoginCredentials(nodeConfiguration));
             }
         } else {
-            //TODO: ???
+            //amazon will generate its own keypair.
         }
     }
 
@@ -463,7 +442,8 @@ public class AmazonInstanceManager {
         logger.debug("Creating Context...");
 
         //TODO: how to enable lazy image fetching? --> Idea: create lazy and normal context and choose based on need of template
-//        //Optimization: lazy image fetching
+        //TODO: can properties be changed at runtime?
+        //Optimization: lazy image fetching
 //        //set AMI queries to nothing
 //        Properties properties = new Properties();
 //        properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY, "");
