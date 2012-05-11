@@ -28,7 +28,6 @@ import java.util.Collections;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
-import org.jclouds.ec2.domain.InstanceType;
 
 /**
  *
@@ -117,6 +116,8 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
     }
     
     Template getTemplate(TemplateBuilder templateBuilder) {
+        templateBuilder.hardwareId(profile.getType());
+        
         if(profile.getZone().isPresent()) {
             templateBuilder.locationId(profile.getZone().get());
         } else {
@@ -124,11 +125,10 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
         }
         
         if(profile.getAmiId().isPresent()) {
-            String jCloudsIMageId = 
+            String jCloudsImageId = 
                     Joiner.on('/').join(profile.getRegion(), profile.getAmiId().get());
-            templateBuilder.imageId(jCloudsIMageId);
+            templateBuilder.imageId(jCloudsImageId);
         } else {
-            templateBuilder.hardwareId(InstanceType.T1_MICRO);
             templateBuilder.osFamily(OsFamily.AMZN_LINUX);
         }
         return templateBuilder.build();
