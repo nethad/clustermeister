@@ -48,6 +48,7 @@ public class AmazonConfigurationLoaderTest {
     private static final String REGION1 = "eu-west-1";
     private static final String REGION2 = "us-east-1";
     private static final String ZONE1 = "eu-west-1a";
+    private static final String SHUTDOWN_STATE1 = "suspended";
     private static final String TYPE1 = "type1";
     private static final String TYPE2 = "type2";
     private static final String USER1 = "user1";
@@ -84,6 +85,7 @@ public class AmazonConfigurationLoaderTest {
         config.append("        zone: ").append(ZONE1).append("\n");
         config.append("        type: ").append(TYPE1).append("\n");
         config.append("        keypair: ").append(KEYPAIR1).append("\n");
+        config.append("        shutdown_state: ").append(SHUTDOWN_STATE1).append("\n");
         config.append("    - ").append(PROFILE2).append(":").append("\n");
         config.append("        ami_id: ").append(AMI_ID2).append("\n");
         config.append("        region: ").append(REGION2).append("\n");
@@ -183,11 +185,13 @@ public class AmazonConfigurationLoaderTest {
         assertThat(result.get(PROFILE1).getType(), is(equalTo(TYPE1)));
         assertThat(result.get(PROFILE1).getZone().get(), is(equalTo(ZONE1)));
         assertThat(result.get(PROFILE1).getKeyPairName().get(), is(equalTo(KEYPAIR1)));
+        assertThat(result.get(PROFILE1).getShutdownState().get(), is(equalTo(SHUTDOWN_STATE1)));
         assertThat(result.get(PROFILE2).getAmiId().get(), is(equalTo(AMI_ID2)));
         assertThat(result.get(PROFILE2).getRegion(), is(equalTo(REGION2)));
         assertThat(result.get(PROFILE2).getType(), is(equalTo(TYPE2)));
         assertThat(result.get(PROFILE2).getZone().isPresent(), is(equalTo(false)));
         assertThat(result.get(PROFILE2).getKeyPairName().isPresent(), is(equalTo(false)));
+        assertThat(result.get(PROFILE2).getShutdownState().isPresent(), is(equalTo(false)));
     }
     
     @Test(expected=NullPointerException.class)

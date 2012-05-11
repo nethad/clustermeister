@@ -118,7 +118,13 @@ public class TorqueNode implements Node {
 	public int getServerPort() {
 		return serverPort;
 	}
-	
+
+    @Override
+    public <T extends Node> T as(Class<T> clazz) {
+        return clazz.cast(this);
+    }
+
+        
 	
 	
 }

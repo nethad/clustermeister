@@ -95,6 +95,11 @@ public class AmazonConfigurationLoader {
     public static final String KEYPAIR = "keypair";
     
     /**
+     * Shutdown state configuration property.
+     */
+    public static final String SHUTDOWN_STATE = "shutdown_state";
+    
+    /**
      * The configuration.
      */
     final Configuration configuration;
@@ -183,6 +188,7 @@ public class AmazonConfigurationLoader {
                     type(profileValues.get(TYPE)).
                     amiId(profileValues.get(AMI_ID)).
                     keypairName(profileValues.get(KEYPAIR)).
+                    shutdownState(profileValues.get(SHUTDOWN_STATE)).
                     build();
             profiles.put(profileName, profile);
         }

@@ -38,6 +38,7 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
     private Optional<String> zone = Optional.<String>absent();
     private Optional<String> amiId = Optional.<String>absent();
     private Optional<String> keypairName = Optional.<String>absent();
+    private Optional<String> shutdownState = Optional.<String>absent();
     
     /**
      * Create a new {@link AWSInstanceProfile} from AWS EC2 instance meta data.
@@ -66,6 +67,7 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
                 type(instanceMetadata.getHardware().getId()).
                 amiId(instanceMetadata.getImageId()).
                 keypairName(null).
+                shutdownState(instanceMetadata.getState().name()).
                 build();
         
     }
@@ -151,6 +153,17 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
         return keypairName;
     }
     
+    /**
+     * Returns the shutdown state configured for this profile.
+     * 
+     * @return 
+     *      the state to put the instance in when it is shut down 
+     *      (terminated|suspended|running). 
+     */
+    public Optional<String> getShutdownState() {
+        return shutdownState;
+    }
+    
     @Override
     public String toString() {
         ToStringHelper helper = Objects.toStringHelper(profileName).
@@ -164,7 +177,11 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
         helper.add("Type", type);
         
         if(keypairName.isPresent()) {
-            helper.add("keypair", keypairName.get());
+            helper.add("Keypair", keypairName.get());
+        }
+        
+        if(shutdownState.isPresent()) {
+            helper.add("Shutdown State", shutdownState.get());
         }
         
         return helper.toString();
@@ -259,6 +276,21 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
                         AmazonConfigurationLoader.KEYPAIR, this.profile.profileName));
             }
             
+            if(this.profile.shutdownState.isPresent()) {
+                this.profile.shutdownState = Optional.of(checkString(
+                        this.profile.shutdownState.get(), KEY_VALUE_MESSAGE, 
+                        AmazonConfigurationLoader.SHUTDOWN_STATE, this.profile.profileName));
+                try {
+                    String shutdownStateStr = this.profile.shutdownState.get().toUpperCase();
+                    AmazonInstanceShutdownState.valueOf(shutdownStateStr);
+                } catch(IllegalArgumentException ex) {
+                    throw new IllegalArgumentException(
+                            String.format(KEY_VALUE_MESSAGE, 
+                            AmazonConfigurationLoader.SHUTDOWN_STATE, 
+                            this.profile.profileName), ex);
+                }
+            }
+            
             return profile;
         }
         
@@ -328,6 +360,19 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
          */
         public Builder keypairName(String keypairName) {
             this.profile.keypairName = Optional.fromNullable(keypairName);
+            return this;
+        }
+        
+        /**
+         * Sets a shutdown state.
+         * 
+         * @param keypairName 
+         *      the state to put the instance in when it is shut down 
+         *      (terminated|suspended|running).
+         * @return this instance for chaining.
+         */
+        public Builder shutdownState(String shutdownState) {
+            this.profile.shutdownState = Optional.fromNullable(shutdownState);
             return this;
         }
         
