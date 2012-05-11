@@ -37,6 +37,7 @@ import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeMetadataBuilder;
+import org.jclouds.compute.domain.Processor;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.io.Payloads;
 import org.jclouds.ssh.SshClient;
@@ -48,6 +49,14 @@ import org.slf4j.LoggerFactory;
  * @author daniel
  */
 public abstract class AmazonEC2JPPFDeployer extends Observable {
+
+    protected int getNumberOfProcessingThreads() {
+        int numberOfCores = 0;
+        for (Processor processor : metadata.getHardware().getProcessors()) {
+            numberOfCores += (int) processor.getCores();
+        }
+        return numberOfCores;
+    }
     public static enum Event{DEPLOYMENT_PREPARED, 
             RESOURCES_PRELOADED, JPPF_CONFIGURATED, DEPLOYMENT_FINISHED};
     

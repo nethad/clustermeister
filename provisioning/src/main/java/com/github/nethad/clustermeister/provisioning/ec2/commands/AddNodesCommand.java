@@ -16,7 +16,6 @@
 package com.github.nethad.clustermeister.provisioning.ec2.commands;
 
 import com.github.nethad.clustermeister.api.Node;
-import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.ec2.AWSInstanceProfile;
@@ -39,7 +38,7 @@ import java.util.Scanner;
 public class AddNodesCommand extends AbstractAmazonExecutableCommand {
     
     private static final String[] ARGUMENTS = 
-            new String[]{"number of nodes", "processing threads per node", "profile"};
+            new String[]{"number of nodes", "profile"};
 
     private static final String HELP_TEXT = "Add nodes to the cluster.";
     
@@ -62,7 +61,6 @@ public class AddNodesCommand extends AbstractAmazonExecutableCommand {
         Scanner scanner = arguments.asScanner();
         
         final int numberOfNodes = scanner.nextInt();
-        final int numberOfCpusPerNode = scanner.nextInt();
         final String profileName = scanner.next();
         AWSInstanceProfile profile = instanceManager.getConfiguredProfile(profileName);
         if(profile == null) {
@@ -73,22 +71,6 @@ public class AddNodesCommand extends AbstractAmazonExecutableCommand {
         final AmazonNodeConfiguration amazonNodeConfiguration = 
                 AmazonNodeConfiguration.fromInstanceProfile(profile);
         amazonNodeConfiguration.setDriverAddress("localhost");
-        amazonNodeConfiguration.setNodeCapabilities(new NodeCapabilities() {
-            @Override
-            public int getNumberOfProcessors() {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-
-            @Override
-            public int getNumberOfProcessingThreads() {
-                return numberOfCpusPerNode;
-            }
-
-            @Override
-            public String getJppfConfig() {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-        });
         amazonNodeConfiguration.setNodeType(NodeType.NODE);
         
         logger.info("Starting {} nodes.", numberOfNodes);

@@ -17,7 +17,6 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.JPPFConstants;
-import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.google.common.base.Joiner;
@@ -41,7 +40,6 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
     private String driverAddress = "";
     private boolean driverDeployedLocally = false;
     private int managementPort = JPPFConstants.DEFAULT_MANAGEMENT_PORT;
-    private NodeCapabilities nodeCapabilities = null;
     private Collection<File> artifactsToPreload = Collections.EMPTY_LIST;
 
     public static AmazonNodeConfiguration fromInstanceProfile(
@@ -50,11 +48,6 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
         return new AmazonNodeConfiguration(instanceProfile);
     }
 
-    /**
-     * Default Constructor.
-     */
-//    public AmazonNodeConfiguration() {}
-    
     private AmazonNodeConfiguration(AWSInstanceProfile instanceProfile) {
         this.profile = instanceProfile;
     }
@@ -63,7 +56,6 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
         this.nodeType = nodeType;
     }
 
-    
     @Override
     public NodeType getType() {
         return nodeType;
@@ -107,14 +99,6 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
         return managementPort;
     }
 
-    public void setNodeCapabilities(NodeCapabilities nodeCapabilities) {
-        this.nodeCapabilities = nodeCapabilities;
-    }
-
-    public NodeCapabilities getNodeCapabilities() {
-        return nodeCapabilities;
-    }
-    
     Template getTemplate(TemplateBuilder templateBuilder) {
         templateBuilder.hardwareId(profile.getType());
         

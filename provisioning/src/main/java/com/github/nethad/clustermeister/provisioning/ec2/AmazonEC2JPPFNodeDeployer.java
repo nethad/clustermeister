@@ -16,7 +16,6 @@
 package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.JPPFConstants;
-import com.github.nethad.clustermeister.api.NodeCapabilities;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.util.concurrent.Monitor;
 import java.io.InputStream;
@@ -69,11 +68,9 @@ public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
             nodeProperties.setProperty(JPPFConstants.MANAGEMENT_HOST, getPrivateIp());
             nodeProperties.setProperty(JPPFConstants.MANAGEMENT_PORT, 
                     String.valueOf(nodeConfiguration.getManagementPort()));
-            NodeCapabilities nodeCapabilities = nodeConfiguration.getNodeCapabilities();
-            checkState(nodeCapabilities != null && !(nodeCapabilities.getNumberOfProcessingThreads() < 1),
-                    "Invalid processing threads capability setting.");
+            
             nodeProperties.setProperty(JPPFConstants.PROCESSING_THREADS, 
-                    String.valueOf(nodeCapabilities.getNumberOfProcessingThreads()));
+                    String.valueOf(getNumberOfProcessingThreads()));
             return nodeProperties;
         } finally {
             closeInputstream(in);

@@ -17,7 +17,6 @@ package com.github.nethad.clustermeister.provisioning.ec2.commands;
 
 import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.Node;
-import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
@@ -33,7 +32,6 @@ import java.util.Scanner;
 import java.util.concurrent.ExecutionException;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeState;
-import org.jclouds.compute.domain.Processor;
 
 /**
  *
@@ -71,7 +69,7 @@ public class StartNodeCommand extends AbstractAmazonExecutableCommand {
         if(configuredCredentials == null || 
                 !(configuredCredentials instanceof KeyPairCredentials)) {
             handle.print(String.format(
-                    "No configured keypair credentials found for keypair %s.", 
+                    "No configured keypair credentials found for keypair '%s'.", 
                     keypairName));
             return;
         }
@@ -84,33 +82,9 @@ public class StartNodeCommand extends AbstractAmazonExecutableCommand {
             final AmazonNodeConfiguration amazonNodeConfiguration = 
                     AmazonNodeConfiguration.fromInstanceProfile(
                     AWSInstanceProfile.fromInstanceMetadata(instanceMetadata));
+            
             amazonNodeConfiguration.setDriverAddress("localhost");
-
-            int numberOfCores = 0;
-            for(Processor processor : instanceMetadata.getHardware().getProcessors()) {
-                numberOfCores += (int) processor.getCores();
-            }
-
-            final int numberOfProcessingThreads = numberOfCores;
-
-            amazonNodeConfiguration.setNodeCapabilities(new NodeCapabilities() {
-                @Override
-                public int getNumberOfProcessors() {
-                    return instanceMetadata.getHardware().getProcessors().size();
-                }
-
-                @Override
-                public int getNumberOfProcessingThreads() {
-                    return numberOfProcessingThreads;
-                }
-
-                @Override
-                public String getJppfConfig() {
-                    throw new UnsupportedOperationException("Not supported yet.");
-                }
-            });
             amazonNodeConfiguration.setNodeType(NodeType.NODE);
-
             amazonNodeConfiguration.setCredentials(configuredCredentials);
 
             logger.info("Starting node on {}", instanceId);
