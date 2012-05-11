@@ -55,17 +55,17 @@ public class AmazonConfigurationLoader {
     public static final String PROFILES = "amazon.profiles";
     
     /**
-     * Private key configuration property.
+     * Private key file path configuration property.
      */
     public static final String PRIVATE_KEY = "private_key";
     
     /**
-     * Private key configuration property.
+     * Public key file path configuration property.
      */
     public static final String PUBLIC_KEY = "public_key";
     
     /**
-     * User name configuration property.
+     * Username configuration property.
      */
     public static final String USER = "user";
     
@@ -88,6 +88,11 @@ public class AmazonConfigurationLoader {
      * AWS EC2 hardware type configuration property.
      */
     public static final String TYPE = "type";
+    
+    /**
+     * Keypair configuration property.
+     */
+    public static final String KEYPAIR = "keypair";
     
     /**
      * The configuration.
@@ -177,6 +182,7 @@ public class AmazonConfigurationLoader {
                     zone(profileValues.get(ZONE)).
                     type(profileValues.get(TYPE)).
                     amiId(profileValues.get(AMI_ID)).
+                    keypairName(profileValues.get(KEYPAIR)).
                     build();
             profiles.put(profileName, profile);
         }

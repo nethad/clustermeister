@@ -37,6 +37,7 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
     private String type;
     private Optional<String> zone;
     private Optional<String> amiId;
+    private Optional<String> keypairName;
     
     /**
      * Create a new {@link AWSInstanceProfile} from AWS EC2 instance meta data.
@@ -64,6 +65,7 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
                 zone(zoneId).
                 type(instanceMetadata.getHardware().getId()).
                 amiId(instanceMetadata.getImageId()).
+                keypairName(null).
                 build();
         
     }
@@ -140,6 +142,15 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
         return type;
     }
     
+    /**
+     * Returns the keypair name configured for this profile.
+     * 
+     * @return the keypair name (referencing an entry in the keypairs configuration). 
+     */
+    public Optional<String> getKeyPairName() {
+        return keypairName;
+    }
+    
     @Override
     public String toString() {
         ToStringHelper helper = Objects.toStringHelper(profileName).
@@ -150,8 +161,11 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
         if(amiId.isPresent()) {
             helper.add("AMI ID", amiId.get());
         }
-        
         helper.add("Type", type);
+        
+        if(keypairName.isPresent()) {
+            helper.add("keypair", keypairName.get());
+        }
         
         return helper.toString();
     }
@@ -186,6 +200,11 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
     }
     
     private static abstract class Builder<T extends Builder> {
+        /**
+         * Default message for {@link #checkString(java.lang.String, java.lang.String, java.lang.Object[])}
+         * when checking a key value pair.
+         */
+        protected static final String KEY_VALUE_MESSAGE = "Invalid %s for profile '%s'.";
         
         /**
          * The profile to set values on.
@@ -203,15 +222,20 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
             this.profile.profileName = checkString(
                     this.profile.profileName, "Invalid profile name.");
             this.profile.region = checkString(
-                    this.profile.region, "Invalid %s for profile '%s'.", 
+                    this.profile.region, KEY_VALUE_MESSAGE, 
                     AmazonConfigurationLoader.REGION, this.profile.profileName);
             this.profile.type = checkString(
-                    this.profile.type, "Invalid %s for profile '%s'.", 
+                    this.profile.type, KEY_VALUE_MESSAGE, 
                     AmazonConfigurationLoader.TYPE, this.profile.profileName);
             if(this.profile.zone.isPresent()) {
                 this.profile.zone = Optional.of(checkString(
-                        this.profile.zone.get(), "Invalid %s for profile '%s'.", 
+                        this.profile.zone.get(), KEY_VALUE_MESSAGE, 
                         AmazonConfigurationLoader.ZONE, this.profile.profileName));
+            }
+            if(this.profile.keypairName.isPresent()) {
+                this.profile.keypairName = Optional.of(checkString(
+                        this.profile.keypairName.get(), KEY_VALUE_MESSAGE, 
+                        AmazonConfigurationLoader.KEYPAIR, this.profile.profileName));
             }
             
             doBuild();
@@ -281,6 +305,19 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
         }
         
         /**
+         * Sets a keypair name.
+         * 
+         * @param keypairName 
+         *      the keypair name (referencing a keypair configured in the 
+         *      keypairs configuration).
+         * @return this instance for chaining.
+         */
+        public T keypairName(String keypairName) {
+            this.profile.keypairName = Optional.fromNullable(keypairName);
+            return self();
+        }
+        
+        /**
          * Check a string reference for being non-null and not empty.
          * 
          * Throws {@link IllegalArgumentException} or {@link NullPointerException} 
@@ -323,7 +360,7 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
         @Override
         protected void doBuild() {
             this.profile.amiId = Optional.of(checkString(
-                    this.profile.amiId.get(), "Invalid %s for profile '%s'.", 
+                    this.profile.amiId.get(), KEY_VALUE_MESSAGE, 
                     AmazonConfigurationLoader.AMI_ID, this.profile.profileName));
         }
     }

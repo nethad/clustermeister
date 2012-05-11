@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2.commands;
 
+import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
@@ -68,17 +69,29 @@ public class AddNodesCommand extends AbstractAmazonExecutableCommand {
             return;
         }
         
-        final AmazonNodeConfiguration amazonNodeConfiguration = 
+        final AmazonNodeConfiguration nodeConfiguration = 
                 AmazonNodeConfiguration.fromInstanceProfile(profile);
-        amazonNodeConfiguration.setDriverAddress("localhost");
-        amazonNodeConfiguration.setNodeType(NodeType.NODE);
+        nodeConfiguration.setDriverAddress("localhost");
+        nodeConfiguration.setNodeType(NodeType.NODE);
+        
+        if(profile.getKeyPairName().isPresent()) {
+            String keyPairName = profile.getKeyPairName().get();
+            if(instanceManager.getConfiguredKeypairNames().contains(keyPairName)) {
+                Credentials credentials = 
+                        instanceManager.getConfiguredCredentials(keyPairName);
+                nodeConfiguration.setCredentials(credentials);
+            } else {
+                logger.error("Keypair {} configured in profile but not found in keypairs configuration.", keyPairName);
+                return;
+            }
+        }
         
         logger.info("Starting {} nodes.", numberOfNodes);
         List<ListenableFuture<? extends Object>> futures = 
                 new ArrayList<ListenableFuture<? extends Object>>(numberOfNodes);
         for (int i = 0; i < numberOfNodes; i++) {
             ListenableFuture<? extends Node> future = 
-                    nodeManager.addNode(amazonNodeConfiguration, Optional.<String>absent());
+                    nodeManager.addNode(nodeConfiguration, Optional.<String>absent());
             addFailureLogger(future);
             futures.add(future);
         }
