@@ -123,7 +123,20 @@ public class AmazonNodeManager {
     /**
      *
      * @param node
-     * @param shutdownMethod
+     * @param shutdownState 
+     * @return	The future returns null upon successful completion.
+     */
+    public ListenableFuture<Void> removeNode(AmazonNode node, 
+            AmazonInstanceShutdownState shutdownState) {
+        return executorService.submit(
+                new AmazonNodeManager.RemoveNodeTask(node, shutdownState, 
+                amazonInstanceManager));
+        
+    }
+    
+    /**
+     *
+     * @param node
      * @return	The future returns null upon successful completion.
      */
     public ListenableFuture<Void> removeNode(AmazonNode node) {
