@@ -22,63 +22,116 @@ import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ComparisonChain;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.domain.Location;
 import org.jclouds.domain.LocationScope;
 
 /**
+ * Represents a profile configuration list entry.
+ * 
+ * This class parses and holds AWS EC2 instance configurations.
  *
  * @author daniel
  */
 public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
-    private final String profileName;
-    private final String location;
-    private final Optional<String> amiId;
-
+    private String profileName;
+    private String region;
+    private Optional<String> zone;
+    private Optional<String> amiId;
+    
+    /**
+     * Create a new {@link AWSInstanceProfile} from AWS EC2 instance meta data.
+     * 
+     * @param instanceMetadata  the instance meta data.
+     * @return a new {@link AWSInstanceProfile} constructed from the instance meta data.
+     */
     public static AWSInstanceProfile fromInstanceMetadata(NodeMetadata instanceMetadata) {
-        //TODO: region/zone support
-        String region = instanceMetadata.getLocation().getId();
+        String zoneId = null;
+        String regionId;
         if(instanceMetadata.getLocation().getScope() == LocationScope.ZONE) {
-            region = instanceMetadata.getLocation().getParent().getId();
+            zoneId = instanceMetadata.getLocation().getId();
+            regionId = instanceMetadata.getLocation().getParent().getId();
+        } else if(instanceMetadata.getLocation().getScope() == LocationScope.REGION) {
+            regionId = instanceMetadata.getLocation().getId();
+        } else {
+            throw new IllegalStateException(String.format(
+                    "Instance metadata for '%s' does not contain a region.", 
+                    instanceMetadata.getId()));
         }
-        return new AWSInstanceProfile("<generated for >" + instanceMetadata.getId(), 
-                region, instanceMetadata.getImageId());
+        
+        return newAmiIdBuilder().
+                profileName(String.format("<generated fro %s>", instanceMetadata.getId())).
+                region(regionId).
+                zone(zoneId).
+                amiId(instanceMetadata.getImageId()).
+                build();
+        
     }
     
-    public AWSInstanceProfile(String profileName, String location, String amiId) {
-        profileName = getCheckedString(profileName, "Invalid profile name.");
-        this.profileName = profileName;
-        location = getCheckedString(location, "Invalid %s for profile '%s'.", 
-                AmazonConfigurationLoader.LOCATION, profileName);
-        this.location = location;
-        amiId = getCheckedString(amiId, "Invalid %s for profile '%s'.", 
-                AmazonConfigurationLoader.AMI_ID, profileName);
-        this.amiId = Optional.of(amiId);
+    /**
+     * A builder to construct a new {@link AWSInstanceProfile} with an 
+     * AMI (Amazon Machine Image) ID.
+     * 
+     * @see AmiIdBuilder
+     * 
+     * @return a new builder.
+     */
+    public static AmiIdBuilder newAmiIdBuilder() {
+        return new AmiIdBuilder();
     }
+
+    /**
+     * Private Default Constructor.
+     * 
+     * Only use with Builders.
+     */
+    private AWSInstanceProfile() {}
     
+    /**
+     * Returns the configured name for this profile.
+     * 
+     * This value is mandatory.
+     * 
+     * @return the profile name. 
+     */
     public String getProfileName() {
         return profileName;
     }
-    
+
+    /**
+     * Returns the AMI (Amazon Machine Image) ID configured for this profile.
+     * 
+     * @return the AMI ID.
+     */
     public Optional<String> getAmiId() {
         return amiId;
     }
-
-    public String getLocation() {
-        return location;
+    
+    /**
+     * Returns the AWS region ID configured for this profile.
+     * 
+     * This value is mandatory.
+     * 
+     * @return the AWS region ID (e.g. eu-west-1).
+     */
+    public String getRegion() {
+        return region;
     }
     
-    private String getCheckedString(String string, String message, Object... messageArgs) {
-        checkArgument(string != null, message, messageArgs);
-        string = string.trim();
-        checkArgument(!string.isEmpty(), message, messageArgs);
-        
-        return string;
+    /**
+     * Returns the AWS Availability Zone configured for this profile.
+     * 
+     * @return the AWS availability zone (e.g. eu-west-1a).
+     */
+    public Optional<String> getZone() {
+        return zone;
     }
     
     @Override
     public String toString() {
         ToStringHelper helper = Objects.toStringHelper(profileName).
-                                     add("location", location);
+                add("Region", region);
+        if(zone.isPresent()) {
+            helper.add("Zone", zone.get());
+        }
         if(amiId.isPresent()) {
             helper.add("AMI ID", amiId.get());
         }
@@ -98,7 +151,8 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
             return false;
         }
         AWSInstanceProfile otherProfile = (AWSInstanceProfile) obj;
-        return new EqualsBuilder().append(profileName, otherProfile.profileName).
+        return new EqualsBuilder().
+                append(profileName, otherProfile.profileName).
                 isEquals();
     }
 
@@ -111,8 +165,134 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
     public int compareTo(AWSInstanceProfile that) {
         return ComparisonChain.start().
                 compare(this.profileName, that.profileName).
-                compare(this.location, that.location).
-                compare(this.amiId.orNull(), that.amiId.orNull()).
                 result();
+    }
+    
+    private static abstract class Builder<T extends Builder> {
+        
+        /**
+         * The profile to set values on.
+         */
+        protected AWSInstanceProfile profile = new AWSInstanceProfile();
+        
+        /**
+         * Build a new {@link AWSInstanceProfile} from the previously set values.
+         * 
+         * @return 
+         *      the new {@link AWSInstanceProfile} if contains all mandatory 
+         *      values for this builder.
+         */
+        public AWSInstanceProfile build() {
+            this.profile.profileName = checkString(
+                    this.profile.profileName, "Invalid profile name.");
+            this.profile.region = checkString(
+                    this.profile.region, "Invalid %s for profile '%s'.", 
+                    AmazonConfigurationLoader.REGION, this.profile.profileName);
+            if(this.profile.zone.isPresent()) {
+                this.profile.zone = Optional.of(checkString(
+                        this.profile.zone.get(), "Invalid %s for profile '%s'.", 
+                        AmazonConfigurationLoader.ZONE, this.profile.profileName));
+            }
+            
+            doBuild();
+            
+            return profile;
+        }
+        
+        /**
+         * Checks for mandatory values for what makes this builder special.
+         */
+        protected abstract void doBuild();
+        
+        /**
+         * Set a profile name.
+         * 
+         * @param profileName 
+         *      the name should be unique and is used to refer to this profile.
+         * @return this instance for chaining.
+         */
+        public T profileName(String profileName) {
+            this.profile.profileName = profileName;
+            return self();
+        }
+        
+        /**
+         * Set an AMI (Amazon Machine Image) ID.
+         * 
+         * @param amiId the AMI ID (e.g. ami-f9231b8d).
+         * @return this instance for chaining.
+         */
+        public T amiId(String amiId) {
+            this.profile.amiId = Optional.fromNullable(amiId);
+            return self();
+        }
+        
+        /**
+         * Set an AWS Region ID.
+         * 
+         * @param region the AWS region ID (e.g. eu-west-1).
+         * @return this instance for chaining.
+         */
+        public T region(String region) {
+            this.profile.region = region;
+            return self();
+        }
+        
+        /**
+         * Sets an AWS Availability Zone.
+         * 
+         * @param zone the AWS availability zone (e.g. eu-west-1a).
+         * @return this instance for chaining.
+         */
+        public T zone(String zone) {
+            this.profile.zone = Optional.fromNullable(zone);
+            return self();
+        }
+        
+        /**
+         * Check a string reference for being non-null and not empty.
+         * 
+         * Throws {@link IllegalArgumentException} or {@link NullPointerException} 
+         * if the string reference does not meet the criteria.
+         * 
+         * @param string    the string reference to check.
+         * @param message   error message pattern
+         * @param messageArgs arguments to fill into the message patterns (replacing %s).
+         * 
+         * @return the trimmed String.
+         */
+        protected String checkString(String string, String message, Object... messageArgs) {
+            checkNotNull(string, message, messageArgs);
+            String trimmed = string.trim();
+            checkArgument(!trimmed.isEmpty(), message, messageArgs);
+            
+            return trimmed;
+        }
+        
+        private T self() {
+            return (T) this;
+        }
+    }
+    
+    /**
+     * Builds new {@link AWSInstanceProfile} instances with AMI 
+     * (Amazon Machine Image) IDs.
+     * 
+     * <p>
+     * This builder requires mandatory configuration of:
+     * <ul>
+     * <li>profile name</li>
+     * <li>region</li>
+     * <li>AMI ID</li>
+     * </ul>
+     * </p>
+     */
+    public static class AmiIdBuilder extends Builder<AmiIdBuilder> {
+        @Override
+        protected void doBuild() {
+            this.profile.amiId = Optional.of(checkString(
+                    this.profile.amiId.get(), "Invalid %s for profile '%s'.", 
+                    AmazonConfigurationLoader.AMI_ID, this.profile.profileName));
+        }
     }
 }

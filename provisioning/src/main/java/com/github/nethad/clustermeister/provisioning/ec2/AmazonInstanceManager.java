@@ -46,6 +46,7 @@ import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
+import org.jclouds.domain.Location;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.ec2.compute.options.EC2TemplateOptions;
 import org.slf4j.Logger;
@@ -112,6 +113,8 @@ public class AmazonInstanceManager {
             @Override
             public void onSuccess(ComputeServiceContext context) {
                 templateBuilderFuture.set(context.getComputeService().templateBuilder());
+//                System.out.println("HW Profiles:" + context.getComputeService().listHardwareProfiles());
+//                System.out.println("Locations:" + context.getComputeService().listAssignableLocations());
             }
 
             @Override
@@ -146,6 +149,16 @@ public class AmazonInstanceManager {
      */
     public Set<? extends ComputeMetadata> getInstances() {
         return valueOrNotReady(contextFuture).getComputeService().listNodes();
+    }
+    
+    /**
+     * Performs an Amazon API call to retrieve all AWS EC2 Locations 
+     * (Zones and Regions).
+     *
+     * @return A set containing all registered AWS EC2 locations.
+     */
+    public Set<? extends Location> getLocations() {
+        return valueOrNotReady(contextFuture).getComputeService().listAssignableLocations();
     }
 
     /**

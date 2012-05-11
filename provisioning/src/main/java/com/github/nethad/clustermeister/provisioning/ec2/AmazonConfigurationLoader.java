@@ -75,9 +75,14 @@ public class AmazonConfigurationLoader {
     public static final String AMI_ID = "ami_id";
     
     /**
-     * AWS EC2 location (Region or Availability Zone) configuration property.
+     * AWS EC2 Region configuration property.
      */
-    public static final String LOCATION = "location";
+    public static final String REGION = "region";
+    
+    /**
+     * AWS EC2 Availability Zone configuration property.
+     */
+    public static final String ZONE = "zone";
     
     /**
      * The configuration.
@@ -161,9 +166,12 @@ public class AmazonConfigurationLoader {
         for (Map.Entry<String, Map<String, String>> entry : profileSpecifications.entrySet()) {
             String profileName = entry.getKey();
             Map<String, String> profileValues = entry.getValue();
-            String location = profileValues.get(LOCATION);
-            String amiId = profileValues.get(AMI_ID);
-            AWSInstanceProfile profile = new AWSInstanceProfile(profileName, location, amiId);
+            AWSInstanceProfile profile = AWSInstanceProfile.newAmiIdBuilder().
+                    profileName(profileName).
+                    region(profileValues.get(REGION)).
+                    zone(profileValues.get(ZONE)).
+                    amiId(profileValues.get(AMI_ID)).
+                    build();
             profiles.put(profileName, profile);
         }
         

@@ -97,7 +97,7 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
     }
 
     public String getLocation() {
-        return profile.getLocation();
+        return profile.getRegion();
     }
 
     public Optional<String> getImageId() {
@@ -122,7 +122,7 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
     
     Template getTemplate(TemplateBuilder templateBuilder) {
         //takes zone or region
-        templateBuilder.locationId(profile.getLocation());
+        templateBuilder.locationId(profile.getRegion());
         
         if(getImageId().isPresent()) {
             //TODO: zone vs region! needs region!

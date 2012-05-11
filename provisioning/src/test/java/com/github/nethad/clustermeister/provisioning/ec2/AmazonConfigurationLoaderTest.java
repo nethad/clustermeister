@@ -77,17 +77,17 @@ public class AmazonConfigurationLoaderTest {
         config.append("  profiles:").append("\n");
         config.append("    - ").append(PROFILE1).append(":").append("\n");
         config.append("        ami_id: ").append(AMI_ID1).append("\n");
-        config.append("        location: ").append(LOCATION1).append("\n");
+        config.append("        region: ").append(LOCATION1).append("\n");
         config.append("    - ").append(PROFILE2).append(":").append("\n");
         config.append("        ami_id: ").append(AMI_ID2).append("\n");
-        config.append("        location: ").append(LOCATION2).append("\n");
+        config.append("        region: ").append(LOCATION2).append("\n");
         configBytes = new ByteArrayInputStream(config.toString().getBytes(Charsets.UTF_8));
         
         config = new StringBuilder("amazon:").append("\n");
         config.append("  access_key_id: ").append("\n");
         config.append("  keypairs:").append("\n");
         config.append("    - ").append(KEYPAIR1).append(":").append("\n");
-        config.append("        ami_id: ").append(AMI_ID1).append("\n");
+        config.append("        public_key: ").append(publicKeyPath).append("\n");
         config.append("  profiles:").append("\n");
         config.append("    - ").append(PROFILE1).append(":").append("\n");
         config.append("        ami_id: ").append(AMI_ID1).append("\n");
@@ -172,12 +172,12 @@ public class AmazonConfigurationLoaderTest {
                 Matchers.<String, AWSInstanceProfile>hasKey(PROFILE2)
         ));
         assertThat(result.get(PROFILE1).getAmiId().get(), is(equalTo(AMI_ID1)));
-        assertThat(result.get(PROFILE1).getLocation(), is(equalTo(LOCATION1)));
+        assertThat(result.get(PROFILE1).getRegion(), is(equalTo(LOCATION1)));
         assertThat(result.get(PROFILE2).getAmiId().get(), is(equalTo(AMI_ID2)));
-        assertThat(result.get(PROFILE2).getLocation(), is(equalTo(LOCATION2)));
+        assertThat(result.get(PROFILE2).getRegion(), is(equalTo(LOCATION2)));
     }
     
-    @Test(expected=IllegalArgumentException.class)
+    @Test(expected=NullPointerException.class)
     public void testGetBadConfiguredProfiles() throws ConfigurationException {
         badConfigSetup();
         configLoader.getConfiguredProfiles();
