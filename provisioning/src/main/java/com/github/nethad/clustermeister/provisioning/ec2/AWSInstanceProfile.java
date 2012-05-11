@@ -143,14 +143,16 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
     @Override
     public String toString() {
         ToStringHelper helper = Objects.toStringHelper(profileName).
-                add("Region", region).add("Type", type);
+                add("Region", region);
         if(zone.isPresent()) {
             helper.add("Zone", zone.get());
         }
         if(amiId.isPresent()) {
             helper.add("AMI ID", amiId.get());
         }
-                
+        
+        helper.add("Type", type);
+        
         return helper.toString();
     }
 
