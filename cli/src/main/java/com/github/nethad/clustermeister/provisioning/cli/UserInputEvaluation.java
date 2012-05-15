@@ -16,13 +16,13 @@
 package com.github.nethad.clustermeister.provisioning.cli;
 
 import com.github.nethad.clustermeister.provisioning.Command;
+import com.github.nethad.clustermeister.provisioning.CommandImpl;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandRegistry;
 import com.google.common.annotations.VisibleForTesting;
-import java.util.HashMap;
+import com.google.common.collect.Maps;
 import java.util.Map;
 import java.util.Scanner;
-import java.util.StringTokenizer;
 
 /**
  *
@@ -41,7 +41,7 @@ public class UserInputEvaluation implements CommandRegistry {
     
     private Provisioning provisioning;
     
-    private Map<String, Command> commands = new HashMap<String, Command>();
+    private Map<String, Command> commands = Maps.newHashMap();
 
     public UserInputEvaluation() {
         buildCommandHelpMap();
@@ -120,13 +120,13 @@ public class UserInputEvaluation implements CommandRegistry {
 //        commandHelpMap.put(COMMAND_EXIT, "Exits this command line.");
 //        commandHelpMap.put(COMMAND_QUIT, "Exits this command line.");
         
-        registerCommand(new Command(COMMAND_HELP, null, "Print out this help."));
-        registerCommand(new Command(COMMAND_HELP_QUESTIONMARK, null, "Print out this help."));
-        registerCommand(new Command(COMMAND_STATE, null, "Show the current state."));
-        registerCommand(new Command(COMMAND_SHUTDOWN, null, "Shuts down all running drivers and nodes."));
+        registerCommand(new CommandImpl(COMMAND_HELP, null, "Print out this help."));
+        registerCommand(new CommandImpl(COMMAND_HELP_QUESTIONMARK, null, "Print out this help."));
+        registerCommand(new CommandImpl(COMMAND_STATE, null, "Show the current state."));
+        registerCommand(new CommandImpl(COMMAND_SHUTDOWN, null, "Shuts down all running drivers and nodes."));
         
-        registerCommand(new Command(COMMAND_EXIT, null, "Exits this command line."));
-        registerCommand(new Command(COMMAND_QUIT, null, "Exits this command line."));
+        registerCommand(new CommandImpl(COMMAND_EXIT, null, "Exits this command line."));
+        registerCommand(new CommandImpl(COMMAND_QUIT, null, "Exits this command line."));
     }
     
     private void help() {

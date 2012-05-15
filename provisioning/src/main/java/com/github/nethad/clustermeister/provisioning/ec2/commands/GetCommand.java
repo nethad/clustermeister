@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2.commands;
 
+import com.github.nethad.clustermeister.provisioning.AbstractCompositeCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
 
 /**
@@ -43,8 +44,8 @@ public class GetCommand extends AbstractCompositeCommand {
     public GetCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
         super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
         
-        registerCommand(new GetInstancesCommand(commandLineEvaluation));
-        registerCommand(new GetKeypairsCommand(commandLineEvaluation));
-        registerCommand(new GetProfilesCommand(commandLineEvaluation));
+        registerSubCommand(new GetInstancesCommand(commandLineEvaluation));
+        registerSubCommand(new GetKeypairsCommand(commandLineEvaluation));
+        registerSubCommand(new GetProfilesCommand(commandLineEvaluation));
     }
 }

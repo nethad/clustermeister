@@ -13,19 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.ec2.commands;
+package com.github.nethad.clustermeister.provisioning;
 
-import com.github.nethad.clustermeister.provisioning.AbstractExecutableCommand;
-import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
 import com.google.common.collect.Maps;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.SortedMap;
 
 /**
- * A Command that holds a set of subcommands and delegates execution to 
+ * A CommandImpl that holds a set of subcommands and delegates execution to 
  * subcommands based on the first argument matching the subcommand name.
  * <p>
  * Useful to collect a number of commands with the same prefix.
@@ -41,9 +40,11 @@ import java.util.SortedMap;
  * </p>
  * @author daniel
  */
-public abstract class AbstractCompositeCommand extends AbstractAmazonExecutableCommand {
+public abstract class AbstractCompositeCommand extends AbstractExecutableCommand 
+    implements CompositeCommand {
     
-    private SortedMap<String, AbstractExecutableCommand> subCommands = Maps.newTreeMap();
+    private final CommandLineEvaluation commandLineEvaluation;
+    private SortedMap<String, ExecutableCommand> subCommands = Maps.newTreeMap();
     
     /**
      * Creates a new command with a command line evaluation reference for access 
@@ -55,8 +56,9 @@ public abstract class AbstractCompositeCommand extends AbstractAmazonExecutableC
      * @param commandLineEvaluation the command line evaluation instance reference.
      */
     public AbstractCompositeCommand(String commandName, String[] arguments, 
-            String helpText, AmazonCommandLineEvaluation commandLineEvaluation) {
-        super(commandName, arguments, helpText, commandLineEvaluation);
+            String helpText, CommandLineEvaluation commandLineEvaluation) {
+        super(commandName, arguments, helpText);
+        this.commandLineEvaluation = commandLineEvaluation;
     }
     
     @Override
@@ -69,7 +71,7 @@ public abstract class AbstractCompositeCommand extends AbstractAmazonExecutableC
         Scanner scanner = arguments.asScanner();
         final String command = scanner.next();
         
-        AbstractExecutableCommand subCommand = subCommands.get(command); 
+        ExecutableCommand subCommand = subCommands.get(command); 
         if(subCommand != null) {
             String remainingArguments = "";
             if(scanner.hasNext()) {
@@ -86,24 +88,37 @@ public abstract class AbstractCompositeCommand extends AbstractAmazonExecutableC
         return String.format("%s\n\tsubcommands:%s", super.getHelpText(), getSubCommandsHelp());
     }
     
-    /**
-     * Register a sub command to this composite command.
-     * <p>
-     * When the first argument to this command matches the subcommand's name, 
-     * the registered command is executed with the remaining arguments.
-     * </p>
-     * @param command   the command to register. 
-     */
-    protected void registerCommand(AbstractAmazonExecutableCommand command) {
+    @Override
+    public void registerSubCommand(ExecutableCommand command) {
         subCommands.put(command.getCommandName(), command);
+    }
+    
+    @Override
+    public void unregisterSubCommand(ExecutableCommand command) {
+        subCommands.remove(command.getCommandName());
+    }
+    
+    @Override
+    public Collection<ExecutableCommand> getSubCommands() {
+        return Collections.<ExecutableCommand>unmodifiableCollection(subCommands.values());
+    }
+
+    @Override
+    public ExecutableCommand getSubCommand(String commandName) {
+        return subCommands.get(commandName);
+    }
+    
+    @Override
+    protected CommandLineHandle getCommandLineHandle() {
+        return commandLineEvaluation.getCommandLineHandle();
     }
     
     private String getSubCommandsHelp() {
         StringBuilder sb = new StringBuilder();
-        Iterator<Map.Entry<String, AbstractExecutableCommand>> iterator = 
+        Iterator<Map.Entry<String, ExecutableCommand>> iterator = 
                 subCommands.entrySet().iterator();
         while(iterator.hasNext()) {
-            Map.Entry<String, AbstractExecutableCommand> cEntry = iterator.next();
+            Map.Entry<String, ExecutableCommand> cEntry = iterator.next();
             sb.append("\n\t\t").
                     append(cEntry.getKey());
             String[] arguments = cEntry.getValue().getArguments();

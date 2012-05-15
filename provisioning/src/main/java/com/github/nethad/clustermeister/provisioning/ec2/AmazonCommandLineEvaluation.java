@@ -16,7 +16,11 @@
 package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.JPPFConstants;
-import com.github.nethad.clustermeister.provisioning.*;
+import com.github.nethad.clustermeister.provisioning.AbstractExecutableCommand;
+import com.github.nethad.clustermeister.provisioning.Command;
+import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
+import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
+import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.AddNodesCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.GetCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.InstanceCommand;
