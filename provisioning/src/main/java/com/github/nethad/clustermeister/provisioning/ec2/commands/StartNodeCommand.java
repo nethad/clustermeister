@@ -42,7 +42,7 @@ public class StartNodeCommand extends AbstractAmazonExecutableCommand {
 
     private static final String[] ARGUMENTS = new String[]{"instance ID", "keypair name"};
     
-    private static final String HELP_TEXT = "Start a JPPF-Node on an AWS E2 instance.";
+    private static final String HELP_TEXT = "Start a JPPF-Node on an AWS EC2 instance.";
     
     private static final String NAME = "startnode";
 

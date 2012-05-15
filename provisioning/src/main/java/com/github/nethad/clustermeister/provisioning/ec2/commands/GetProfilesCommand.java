@@ -27,7 +27,7 @@ import java.util.Collection;
  * @author daniel
  */
 public class GetProfilesCommand extends AbstractAmazonExecutableCommand {
-    private static final String NAME = "getprofiles";
+    private static final String NAME = "profiles";
     
     private static final String[] ARGUMENTS = null;
     

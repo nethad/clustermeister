@@ -37,9 +37,9 @@ public class GetInstancesCommand extends AbstractAmazonExecutableCommand {
 
     private static final String[] ARGUMENTS = new String[]{"-v   print instance details (verbose)"};
     
-    private static final String HELP_TEXT = "Get configured instances and their state from the configure AWS Account.";
+    private static final String HELP_TEXT = "Get configured instances and their state from the configured AWS Account.";
     
-    private static final String NAME = "getinstances";
+    private static final String NAME = "instances";
     
     public GetInstancesCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
         super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
@@ -63,9 +63,11 @@ public class GetInstancesCommand extends AbstractAmazonExecutableCommand {
             }
         }
         
+        handle.print("Retrieving instances from the configured AWS Account...");
+        Set<? extends ComputeMetadata> instances = ec2Facade.getInstances();
+        
         StringBuilder output = new StringBuilder("AWS EC2 Instances for this account:\n");
         output.append(SEPARATOR_LINE).append("\n");
-        Set<? extends ComputeMetadata> instances = ec2Facade.getInstances();
         if(instances.isEmpty()) {
             output.append("No instances found.\n");
         } else {
@@ -117,7 +119,14 @@ public class GetInstancesCommand extends AbstractAmazonExecutableCommand {
 
                 output.append("\n\t\t}\n");
             } else {
-                output.append("\t\t").append(computeMetadata.getId()).append("\n");
+                output.append("\t\t").append(computeMetadata.getId());
+                if (computeMetadata instanceof NodeMetadata) {
+                    NodeMetadata nodeMetadata = (NodeMetadata) computeMetadata;
+                    output.append(" (").
+                    append(nodeMetadata.getState()).
+                    append(") ");
+                }
+                output.append("\n");
             }
         }
     }

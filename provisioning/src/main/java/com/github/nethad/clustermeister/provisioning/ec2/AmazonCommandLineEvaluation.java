@@ -18,9 +18,7 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.provisioning.*;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.AddNodesCommand;
-import com.github.nethad.clustermeister.provisioning.ec2.commands.GetInstancesCommand;
-import com.github.nethad.clustermeister.provisioning.ec2.commands.GetKeypairsCommand;
-import com.github.nethad.clustermeister.provisioning.ec2.commands.GetProfilesCommand;
+import com.github.nethad.clustermeister.provisioning.ec2.commands.GetCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.InstanceCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.ShutdownCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.StartNodeCommand;
@@ -87,10 +85,8 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
         stateCommand = new StateCommand(this);
         shutdownCommand = new ShutdownCommand(this);
         handle.getCommandRegistry().registerCommand(new AddNodesCommand(this));
-        handle.getCommandRegistry().registerCommand(new GetInstancesCommand(this));
+        handle.getCommandRegistry().registerCommand(new GetCommand(this));
         handle.getCommandRegistry().registerCommand(new StartNodeCommand(this));
-        handle.getCommandRegistry().registerCommand(new GetKeypairsCommand(this));
-        handle.getCommandRegistry().registerCommand(new GetProfilesCommand(this));
         handle.getCommandRegistry().registerCommand(new InstanceCommand(this));
     }
     

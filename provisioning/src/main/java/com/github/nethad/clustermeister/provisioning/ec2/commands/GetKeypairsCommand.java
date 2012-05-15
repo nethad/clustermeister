@@ -27,7 +27,7 @@ import java.util.Set;
  */
 public class GetKeypairsCommand extends AbstractAmazonExecutableCommand {
     
-    private static final String NAME = "getkeypairs";
+    private static final String NAME = "keypairs";
     
     private static final String[] ARGUMENTS = null;
     

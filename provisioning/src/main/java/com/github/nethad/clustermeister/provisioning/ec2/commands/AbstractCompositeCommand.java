@@ -49,7 +49,10 @@ public abstract class AbstractCompositeCommand extends AbstractAmazonExecutableC
         
         AbstractExecutableCommand subCommand = subCommands.get(command); 
         if(subCommand != null) {
-            String remainingArguments = scanner.nextLine();
+            String remainingArguments = "";
+            if(scanner.hasNext()) {
+                remainingArguments = scanner.nextLine();
+            }
             subCommand.execute(new CommandLineArguments(remainingArguments));
         } else {
             getCommandLineHandle().print("Unknown command '%s'", command);
@@ -72,9 +75,14 @@ public abstract class AbstractCompositeCommand extends AbstractAmazonExecutableC
         while(iterator.hasNext()) {
             Map.Entry<String, AbstractExecutableCommand> cEntry = iterator.next();
             sb.append("\n\t\t").
-                    append(cEntry.getKey()).
-                    append(" - ").
-                    append(cEntry.getValue().getHelpText());
+                    append(cEntry.getKey());
+            String[] arguments = cEntry.getValue().getArguments();
+            if(arguments != null) {
+                for(String argument : arguments) {
+                    sb.append(" [").append(argument).append("]");
+                }
+            }
+            sb.append("\n\t\t\t").append(cEntry.getValue().getHelpText());
         }
         
         return sb.toString();
