@@ -28,4 +28,9 @@ public interface Node {
 	public Set<String> getPublicAddresses();
 	public Set<String> getPrivateAddresses();
 	public int getManagementPort();
+        
+        /**
+         * Casts this instance to {@code clazz}.
+         */
+        public <T extends Node> T as(Class<T> clazz);
 }

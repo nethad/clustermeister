@@ -17,9 +17,9 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.JPPFConstants;
-import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
+import com.google.common.base.Joiner;
 import com.google.common.base.Optional;
 import java.io.File;
 import java.util.Collection;
@@ -27,24 +27,31 @@ import java.util.Collections;
 import org.jclouds.compute.domain.OsFamily;
 import org.jclouds.compute.domain.Template;
 import org.jclouds.compute.domain.TemplateBuilder;
-import org.jclouds.ec2.domain.InstanceType;
 
 /**
  *
  * @author daniel
  */
 public class AmazonNodeConfiguration implements NodeConfiguration {
-
+    
+    private AWSInstanceProfile profile = null;
     private NodeType nodeType = NodeType.NODE;
     private Optional<Credentials> credentials = Optional.absent();
-    private Optional<String> region = Optional.absent();
-    private Optional<String> imageId = Optional.absent();
     private String driverAddress = "";
     private boolean driverDeployedLocally = false;
     private int managementPort = JPPFConstants.DEFAULT_MANAGEMENT_PORT;
-    private NodeCapabilities nodeCapabilities = null;
     private Collection<File> artifactsToPreload = Collections.EMPTY_LIST;
 
+    public static AmazonNodeConfiguration fromInstanceProfile(
+            AWSInstanceProfile instanceProfile) {
+        
+        return new AmazonNodeConfiguration(instanceProfile);
+    }
+
+    private AmazonNodeConfiguration(AWSInstanceProfile instanceProfile) {
+        this.profile = instanceProfile;
+    }
+    
     public void setNodeType(NodeType nodeType) {
         this.nodeType = nodeType;
     }
@@ -80,21 +87,8 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
         return driverDeployedLocally;
     }
 
-
-    public void setRegion(String region) {
-        this.region = Optional.fromNullable(region);
-    }
-    
-    public Optional<String> getRegion() {
-        return region;
-    }
-
-    public void setImageId(String imageId) {
-        this.imageId = Optional.fromNullable(imageId);
-    }
-    
-    public Optional<String> getImageId() {
-        return imageId;
+    public AWSInstanceProfile getProfile() {
+        return profile;
     }
     
     void setManagementPort(int managementPort) {
@@ -105,24 +99,25 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
         return managementPort;
     }
 
-    public void setNodeCapabilities(NodeCapabilities nodeCapabilities) {
-        this.nodeCapabilities = nodeCapabilities;
-    }
-
-    public NodeCapabilities getNodeCapabilities() {
-        return nodeCapabilities;
-    }
-    
     Template getTemplate(TemplateBuilder templateBuilder) {
-        if(imageId.isPresent()) {
-            templateBuilder.imageId(imageId.get());
+        templateBuilder.hardwareId(profile.getType());
+        
+        if(profile.getZone().isPresent()) {
+            templateBuilder.locationId(profile.getZone().get());
         } else {
-            if(region.isPresent()) {
-                templateBuilder.locationId(region.get());
-            }
-            templateBuilder.hardwareId(InstanceType.T1_MICRO);
+            templateBuilder.locationId(profile.getRegion());
+        }
+        
+        if(profile.getAmiId().isPresent()) {
+            String jCloudsImageId = Joiner.on('/').join(profile.getRegion(), 
+                    profile.getAmiId().get());
+            templateBuilder.imageId(jCloudsImageId);
+        } else {
+            //fallback
+            //this will launch the highest version of the AMZN_LINUX template
             templateBuilder.osFamily(OsFamily.AMZN_LINUX);
         }
+        
         return templateBuilder.build();
     }
 

@@ -15,13 +15,18 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2.commands;
 
-import com.github.nethad.clustermeister.api.NodeCapabilities;
+import com.github.nethad.clustermeister.api.Credentials;
+import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
+import com.github.nethad.clustermeister.provisioning.ec2.AWSInstanceProfile;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
+import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
 import com.google.common.base.Optional;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.ArrayList;
 import java.util.List;
@@ -34,7 +39,7 @@ import java.util.Scanner;
 public class AddNodesCommand extends AbstractAmazonExecutableCommand {
     
     private static final String[] ARGUMENTS = 
-            new String[]{"number of nodes", "processing threads per node"};
+            new String[]{"number of nodes", "profile"};
 
     private static final String HELP_TEXT = "Add nodes to the cluster.";
     
@@ -48,6 +53,7 @@ public class AddNodesCommand extends AbstractAmazonExecutableCommand {
     @Override
     public void execute(CommandLineArguments arguments) {
         AmazonNodeManager nodeManager = getNodeManager();
+        AmazonInstanceManager instanceManager = nodeManager.getInstanceManager();
         
         if (isArgumentsCountFalse(arguments)) {
             return;
@@ -56,38 +62,57 @@ public class AddNodesCommand extends AbstractAmazonExecutableCommand {
         Scanner scanner = arguments.asScanner();
         
         final int numberOfNodes = scanner.nextInt();
-        final int numberOfCpusPerNode = scanner.nextInt();
-                final AmazonNodeConfiguration amazonNodeConfiguration = new AmazonNodeConfiguration();
-        amazonNodeConfiguration.setDriverAddress("localhost");
-        amazonNodeConfiguration.setNodeCapabilities(new NodeCapabilities() {
-            @Override
-            public int getNumberOfProcessors() {
-                throw new UnsupportedOperationException("Not supported yet.");
+        final String profileName = scanner.next();
+        AWSInstanceProfile profile = instanceManager.getConfiguredProfile(profileName);
+        if(profile == null) {
+            getCommandLineHandle().print("Unknown profile '%s'.", profileName);
+            return;
+        }
+        
+        final AmazonNodeConfiguration nodeConfiguration = 
+                AmazonNodeConfiguration.fromInstanceProfile(profile);
+        nodeConfiguration.setDriverAddress("localhost");
+        nodeConfiguration.setNodeType(NodeType.NODE);
+        
+        if(profile.getKeyPairName().isPresent()) {
+            String keyPairName = profile.getKeyPairName().get();
+            if(instanceManager.getConfiguredKeypairNames().contains(keyPairName)) {
+                Credentials credentials = 
+                        instanceManager.getConfiguredCredentials(keyPairName);
+                nodeConfiguration.setCredentials(credentials);
+            } else {
+                logger.error("Keypair {} configured in profile but not found in keypairs configuration.", keyPairName);
+                return;
             }
-
-            @Override
-            public int getNumberOfProcessingThreads() {
-                return numberOfCpusPerNode;
-            }
-
-            @Override
-            public String getJppfConfig() {
-                throw new UnsupportedOperationException("Not supported yet.");
-            }
-        });
-        amazonNodeConfiguration.setNodeType(NodeType.NODE);
-        amazonNodeConfiguration.setRegion("eu-west-1c");
+        }
         
         logger.info("Starting {} nodes.", numberOfNodes);
         List<ListenableFuture<? extends Object>> futures = 
                 new ArrayList<ListenableFuture<? extends Object>>(numberOfNodes);
         for (int i = 0; i < numberOfNodes; i++) {
-            futures.add(nodeManager.addNode(amazonNodeConfiguration, 
-                    Optional.<String>absent()));
+            ListenableFuture<? extends Node> future = 
+                    nodeManager.addNode(nodeConfiguration, Optional.<String>absent());
+            addFailureLogger(future);
+            futures.add(future);
         }
         waitForFuturesToComplete(futures, 
                 "Interrupted while waiting for nodes to start. Nodes may not be started properly.", 
                 "Failed to wait for nodes to start.", "{} nodes failed to start.");
+    }
+
+    private void addFailureLogger(ListenableFuture<? extends Node> future) {
+        Futures.addCallback(future, new FutureCallback<Node>() {
+            @Override
+            public void onSuccess(Node result) {
+                //nop
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                logger.warn("Node start failure.", t);
+            }
+
+        });
     }
     
 }

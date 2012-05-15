@@ -18,7 +18,7 @@ package com.github.nethad.clustermeister.provisioning.ec2.commands;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceShutdownMethod;
+import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceShutdownState;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNode;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
@@ -52,8 +52,8 @@ public class ShutdownCommand extends AbstractAmazonExecutableCommand {
         List<ListenableFuture<? extends Object>> futures = 
                 new ArrayList<ListenableFuture<? extends Object>>(nodes.size());
         for(Node node : nodes) {
-            futures.add(nodeManager.removeNode((AmazonNode) node, 
-                    AmazonInstanceShutdownMethod.TERMINATE));
+            AmazonNode amazonNode = node.as(AmazonNode.class);
+            futures.add(nodeManager.removeNode(amazonNode));
         }
         waitForFuturesToComplete(futures, 
                 "Interrupted while waiting for nodes to shut down. Nodes may not all be stopped properly.", 

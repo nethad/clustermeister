@@ -123,13 +123,26 @@ public class AmazonNodeManager {
     /**
      *
      * @param node
-     * @param shutdownMethod
+     * @param shutdownState 
      * @return	The future returns null upon successful completion.
      */
-    public ListenableFuture<Void> removeNode(AmazonNode node,
-            AmazonInstanceShutdownMethod shutdownMethod) {
+    public ListenableFuture<Void> removeNode(AmazonNode node, 
+            AmazonInstanceShutdownState shutdownState) {
         return executorService.submit(
-                new AmazonNodeManager.RemoveNodeTask(node, shutdownMethod, amazonInstanceManager));
+                new AmazonNodeManager.RemoveNodeTask(node, shutdownState, 
+                amazonInstanceManager));
+        
+    }
+    
+    /**
+     *
+     * @param node
+     * @return	The future returns null upon successful completion.
+     */
+    public ListenableFuture<Void> removeNode(AmazonNode node) {
+        return executorService.submit(
+                new AmazonNodeManager.RemoveNodeTask(node, 
+                node.getInstanceShutdownState(), amazonInstanceManager));
     }
     
     public void registerManagementClient(JPPFManagementByJobsClient client) {
@@ -140,18 +153,18 @@ public class AmazonNodeManager {
         this.rmiInfrastructure = rmiInfrastructure;
     }
     
-//    public void removeAllNodes(AmazonInstanceShutdownMethod shutdownMethod) {
+//    public void removeAllNodes(AmazonInstanceShutdownState shutdownMethod) {
 //        try {
 //            managementClient.shutdownAllNodes();
 //            managedNodesMonitor.enter();
 //            try {
 //                for(AmazonNode node : nodes) {
 //                    switch(shutdownMethod) {
-//                        case SHUTDOWN: {
+//                        case SUSPENDED: {
 //                            amazonInstanceManager.suspendInstance(node.getInstanceId());
 //                            break;
 //                        }
-//                        case TERMINATE: {
+//                        case TERMINATED: {
 //                            amazonInstanceManager.terminateInstance(node.getInstanceId());
 //                            break;
 //                        }
@@ -240,8 +253,6 @@ public class AmazonNodeManager {
         }
     }
 
-
-
     private class AddNodeTask implements Callable<AmazonNode> {
 
         private final AmazonNodeConfiguration nodeConfiguration;
@@ -298,13 +309,13 @@ public class AmazonNodeManager {
     private class RemoveNodeTask implements Callable<Void> {
 
         private final AmazonNode node;
-        private final AmazonInstanceShutdownMethod shutdownMethod;
+        private final AmazonInstanceShutdownState shutdownState;
         private final AmazonInstanceManager instanceManager;
 
-        public RemoveNodeTask(AmazonNode node, AmazonInstanceShutdownMethod shutdownMethod,
+        public RemoveNodeTask(AmazonNode node, AmazonInstanceShutdownState shutdownMethod,
                 AmazonInstanceManager instanceManager) {
             this.node = node;
-            this.shutdownMethod = shutdownMethod;
+            this.shutdownState = shutdownMethod;
             this.instanceManager = instanceManager;
         }
 
@@ -329,19 +340,17 @@ public class AmazonNodeManager {
                     throw new IllegalArgumentException("Invalid node type");
                 }
             }
-
-            switch (shutdownMethod) {
-                case SHUTDOWN: {
+            
+            switch (shutdownState) {
+                case SUSPENDED: {
                     instanceManager.suspendInstance(node.getInstanceId());
                     break;
                 }
-                case TERMINATE: {
+                case TERMINATED: {
                     instanceManager.terminateInstance(node.getInstanceId());
                     break;
                 }
-                case NO_SHUTDOWN: {
-                    logger.info("{} specified. Instance continues running.", 
-                            AmazonInstanceShutdownMethod.NO_SHUTDOWN.toString());
+                case RUNNING: {
                     //do nothing
                     break;
                 }

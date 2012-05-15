@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.api.impl;
 
 import com.github.nethad.clustermeister.api.ExecutorNode;
+import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeCapabilities;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.github.nethad.clustermeister.api.utils.JPPFProperties;
@@ -122,6 +123,11 @@ public class ExecutorNodeImpl implements ExecutorNode {
     @Override
     public int getManagementPort() {
         throw new UnsupportedOperationException("Not supported yet.");
+    }
+
+    @Override
+    public <T extends Node> T as(Class<T> clazz) {
+        return clazz.cast(this);
     }
     
 }

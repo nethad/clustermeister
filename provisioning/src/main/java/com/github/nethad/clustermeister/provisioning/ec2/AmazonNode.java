@@ -50,6 +50,18 @@ public class AmazonNode implements Node {
     NodeMetadata getInstanceMetadata() {
         return instanceMetadata;
     }
+    
+    public AmazonInstanceShutdownState getInstanceShutdownState() {
+        AmazonInstanceShutdownState shutdownState;
+        Optional<String> configuredState = nodeConfiguration.getProfile().getShutdownState();
+        if(configuredState.isPresent()) {
+            shutdownState = AmazonInstanceShutdownState.valueOf(
+                    configuredState.get().toUpperCase());
+        } else {
+            shutdownState = AmazonInstanceShutdownState.SUSPENDED;
+        }
+        return shutdownState;
+    }
 
     public String getState() {
         return instanceMetadata.getState().toString();
@@ -135,5 +147,10 @@ public class AmazonNode implements Node {
     @Override
     public int hashCode() {
         return Objects.hashCode(id);
+    }
+    
+    @Override
+    public <T extends Node> T as(Class<T> clazz) {
+        return clazz.cast(this);
     }
 }

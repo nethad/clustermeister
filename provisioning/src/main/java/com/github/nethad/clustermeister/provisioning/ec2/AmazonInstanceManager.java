@@ -28,12 +28,9 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.FutureCallback;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.Monitor;
-import com.google.common.util.concurrent.SettableFuture;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
@@ -45,7 +42,7 @@ import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.Template;
-import org.jclouds.compute.domain.TemplateBuilder;
+import org.jclouds.domain.Location;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.ec2.compute.options.EC2TemplateOptions;
 import org.slf4j.Logger;
@@ -78,7 +75,6 @@ public class AmazonInstanceManager {
     private String secretKey;
     private Collection<File> artifactsToPreload = null;
     private final ListenableFuture<ComputeServiceContext> contextFuture;
-    private final SettableFuture<TemplateBuilder> templateBuilderFuture;
     private final ListeningExecutorService executorService;
     private final Monitor portCounterMonitor = new Monitor(false);
     private final Map<String, Integer> instanceToPortCounter =
@@ -89,7 +85,7 @@ public class AmazonInstanceManager {
     private final Map<String, SocksTunnel> instanceToReverseTunnel =
             new HashMap<String, SocksTunnel>();
     private Map<String, Credentials> keypairs;
-    private Map<String, AmazonNodeProfile> profiles;
+    private Map<String, AWSInstanceProfile> profiles;
 
     /**
      * Creates a new AmazonInstanceManager.
@@ -104,22 +100,8 @@ public class AmazonInstanceManager {
     AmazonInstanceManager(Configuration config, ListeningExecutorService executorService) {
         this.executorService = executorService;
         loadConfiguration(config);
-        templateBuilderFuture = SettableFuture.create();
         //from here the configuration must be loaded.
         contextFuture = createContext();
-        Futures.addCallback(contextFuture, new FutureCallback<ComputeServiceContext>() {
-
-            @Override
-            public void onSuccess(ComputeServiceContext context) {
-                templateBuilderFuture.set(context.getComputeService().templateBuilder());
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                templateBuilderFuture.setException(t);
-                throw new RuntimeException(t);
-            }
-        }, executorService);
     }
 
     /**
@@ -147,6 +129,16 @@ public class AmazonInstanceManager {
     public Set<? extends ComputeMetadata> getInstances() {
         return valueOrNotReady(contextFuture).getComputeService().listNodes();
     }
+    
+    /**
+     * Performs an Amazon API call to retrieve all AWS EC2 Locations 
+     * (Zones and Regions).
+     *
+     * @return A set containing all registered AWS EC2 locations.
+     */
+    public Set<? extends Location> getLocations() {
+        return valueOrNotReady(contextFuture).getComputeService().listAssignableLocations();
+    }
 
     /**
      * Get meta data for a given instance.
@@ -166,11 +158,11 @@ public class AmazonInstanceManager {
         return keypairs.get(keypairName);
     }
     
-    public Set<String> getConfiguredProfileNames() {
-        return Collections.unmodifiableSet(profiles.keySet());
+    public Collection<AWSInstanceProfile> getConfiguredProfiles() {
+        return profiles.values();
     }
     
-    public AmazonNodeProfile getConfiguredProfile(String profileName) {
+    public AWSInstanceProfile getConfiguredProfile(String profileName) {
         return profiles.get(profileName);
     }
 
@@ -187,7 +179,7 @@ public class AmazonInstanceManager {
         logger.info("Creating a new instance...");
         ComputeServiceContext context = valueOrNotReady(contextFuture);
         Template template = nodeConfiguration.getTemplate(
-                valueOrNotReady(templateBuilderFuture));
+                context.getComputeService().templateBuilder());
 
         if (userMetaData.isPresent()) {
             template.getOptions().userMetadata(userMetaData.get());
@@ -424,7 +416,7 @@ public class AmazonInstanceManager {
                 awsOptions.overrideLoginCredentials(buildLoginCredentials(nodeConfiguration));
             }
         } else {
-            //TODO: ???
+            //amazon will generate its own keypair.
         }
     }
 
@@ -449,8 +441,9 @@ public class AmazonInstanceManager {
     private ListenableFuture<ComputeServiceContext> createContext() {
         logger.debug("Creating Context...");
 
-        //TODO: how to enable lazy image fetching?
-//        //Optimization: lazy image fetching
+        //TODO: how to enable lazy image fetching? --> Idea: create lazy and normal context and choose based on need of template
+        //TODO: can properties be changed at runtime?
+        //Optimization: lazy image fetching
 //        //set AMI queries to nothing
 //        Properties properties = new Properties();
 //        properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY, "");

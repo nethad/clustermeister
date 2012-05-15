@@ -20,8 +20,19 @@ package com.github.nethad.clustermeister.provisioning.ec2;
  *
  * @author daniel
  */
-public enum AmazonInstanceShutdownMethod {
-	TERMINATE,
-	SHUTDOWN,
-	NO_SHUTDOWN
+public enum AmazonInstanceShutdownState {
+        /**
+         * Can not be started anymore.
+         */
+	TERMINATED,
+        
+        /**
+         * Stopped.
+         */
+	SUSPENDED,
+        
+        /**
+         * Keep instance running (Shut down only JPPF node).
+         */
+	RUNNING;
 }
