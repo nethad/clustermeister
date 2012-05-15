@@ -22,6 +22,7 @@ import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
 import java.util.Set;
 
 /**
+ * Get all configured keypair names.
  *
  * @author daniel
  */
@@ -33,6 +34,12 @@ public class GetKeypairsCommand extends AbstractAmazonExecutableCommand {
     
     private static final String HELP_TEXT = "Get all configured keypair names.";
     
+    /**
+     * Creates a new command with a command line evaluation reference for access 
+     * to the Clustermeister provisioning infrastructure.
+     * 
+     * @param commandLineEvaluation the command line evaluation instance reference.
+     */
     public GetKeypairsCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
         super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
     }

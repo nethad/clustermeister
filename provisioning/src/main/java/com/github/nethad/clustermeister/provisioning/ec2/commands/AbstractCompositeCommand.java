@@ -25,13 +25,35 @@ import java.util.Scanner;
 import java.util.SortedMap;
 
 /**
- *
+ * A Command that holds a set of subcommands and delegates execution to 
+ * subcommands based on the first argument matching the subcommand name.
+ * <p>
+ * Useful to collect a number of commands with the same prefix.
+ * </p>
+ * <p>
+ * Example: 
+ * <table border="1">
+ *   <tr><th>as top level commands</th><th>as subcommands</th></tr>
+ *   <tr><td>get<i>instances</i></td><td>get <i>instances</i></td></tr>
+ *   <tr><td>get<i>locations</i></td><td>get <i>locations</i></td></tr>
+ *   <tr><td>get<i>profiles</i></td><td>get <i>profiles</i></td></tr>
+ * </table>
+ * </p>
  * @author daniel
  */
 public abstract class AbstractCompositeCommand extends AbstractAmazonExecutableCommand {
     
     private SortedMap<String, AbstractExecutableCommand> subCommands = Maps.newTreeMap();
     
+    /**
+     * Creates a new command with a command line evaluation reference for access 
+     * to the Clustermeister provisioning infrastructure.
+     * 
+     * @param commandName   the name of the command.
+     * @param arguments the arguments of the command, may be null.
+     * @param helpText the help text of the command.
+     * @param commandLineEvaluation the command line evaluation instance reference.
+     */
     public AbstractCompositeCommand(String commandName, String[] arguments, 
             String helpText, AmazonCommandLineEvaluation commandLineEvaluation) {
         super(commandName, arguments, helpText, commandLineEvaluation);
@@ -64,6 +86,14 @@ public abstract class AbstractCompositeCommand extends AbstractAmazonExecutableC
         return String.format("%s\n\tsubcommands:%s", super.getHelpText(), getSubCommandsHelp());
     }
     
+    /**
+     * Register a sub command to this composite command.
+     * <p>
+     * When the first argument to this command matches the subcommand's name, 
+     * the registered command is executed with the remaining arguments.
+     * </p>
+     * @param command   the command to register. 
+     */
     protected void registerCommand(AbstractAmazonExecutableCommand command) {
         subCommands.put(command.getCommandName(), command);
     }

@@ -18,6 +18,7 @@ package com.github.nethad.clustermeister.provisioning.ec2.commands;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
 
 /**
+ * Registers all get * commands.
  *
  * @author daniel
  */
@@ -28,6 +29,17 @@ public class GetCommand extends AbstractCompositeCommand {
     
     private static final String NAME = "get";
 
+    /**
+     * Creates a new command with a command line evaluation reference for access 
+     * to the Clustermeister provisioning infrastructure.
+     * 
+     * <p>
+     * This constructor registers GetInstancesCommand, GetKeypairsCommand and 
+     * GetProfilesCommand as subcommands.
+     * </p>
+     * 
+     * @param commandLineEvaluation the command line evaluation instance reference.
+     */
     public GetCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
         super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
         

@@ -18,6 +18,7 @@ package com.github.nethad.clustermeister.provisioning.ec2.commands;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
 
 /**
+ * Registers all instance * commands.
  *
  * @author daniel
  */
@@ -29,8 +30,17 @@ public class InstanceCommand extends AbstractCompositeCommand {
     
     private static final String NAME = "instance";
 
-    
-    
+    /**
+     * Creates a new command with a command line evaluation reference for access 
+     * to the Clustermeister provisioning infrastructure.
+     * 
+     * <p>
+     * This constructor registers InstanceTerminateCommand, 
+     * InstanceSuspendCommand and InstanceResumeCommand as subcommands.
+     * </p>
+     * 
+     * @param commandLineEvaluation the command line evaluation instance reference.
+     */
     public InstanceCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
         super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
         

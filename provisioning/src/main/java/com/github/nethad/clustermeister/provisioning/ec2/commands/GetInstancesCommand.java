@@ -29,6 +29,7 @@ import org.jclouds.domain.Location;
 import org.jclouds.domain.LocationScope;
 
 /**
+ * Get configured instances and their state from the configured AWS Account.
  *
  * @author daniel
  */
@@ -41,6 +42,12 @@ public class GetInstancesCommand extends AbstractAmazonExecutableCommand {
     
     private static final String NAME = "instances";
     
+    /**
+     * Creates a new command with a command line evaluation reference for access 
+     * to the Clustermeister provisioning infrastructure.
+     * 
+     * @param commandLineEvaluation the command line evaluation instance reference.
+     */
     public GetInstancesCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
         super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
     }

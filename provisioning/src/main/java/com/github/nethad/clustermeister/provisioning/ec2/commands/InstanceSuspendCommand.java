@@ -20,16 +20,23 @@ import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvalua
 import java.util.Scanner;
 
 /**
+ * Shutdown a running AWS EC2 instance.
  *
  * @author daniel
  */
 public class InstanceSuspendCommand extends AbstractAmazonExecutableCommand {
     private static final String[] ARGUMENTS = new String[]{"instance id"};
 
-    private static final String HELP_TEXT = "Shutdown instance.";
+    private static final String HELP_TEXT = "Shutdown a running AWS EC2 instance.";
     
     private static final String NAME = "suspend";
 
+    /**
+     * Creates a new command with a command line evaluation reference for access 
+     * to the Clustermeister provisioning infrastructure.
+     * 
+     * @param commandLineEvaluation the command line evaluation instance reference.
+     */
     public InstanceSuspendCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
         super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
     }

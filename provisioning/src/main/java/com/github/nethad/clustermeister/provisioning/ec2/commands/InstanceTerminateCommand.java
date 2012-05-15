@@ -20,6 +20,7 @@ import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvalua
 import java.util.Scanner;
 
 /**
+ * Shutdown and delete an AWS EC2 instance.
  *
  * @author daniel
  */
@@ -27,10 +28,16 @@ public class InstanceTerminateCommand extends AbstractAmazonExecutableCommand {
 
     private static final String[] ARGUMENTS = new String[]{"instance id"};
 
-    private static final String HELP_TEXT = "Shutdown and delete instance.";
+    private static final String HELP_TEXT = "Shutdown and delete an AWS EC2 instance.";
     
     private static final String NAME = "terminate";
 
+    /**
+     * Creates a new command with a command line evaluation reference for access 
+     * to the Clustermeister provisioning infrastructure.
+     * 
+     * @param commandLineEvaluation the command line evaluation instance reference.
+     */
     public InstanceTerminateCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
         super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
     }

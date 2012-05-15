@@ -23,6 +23,7 @@ import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
 import java.util.Collection;
 
 /**
+ * Show all registered JPPF Nodes.
  *
  * @author daniel
  */
@@ -30,10 +31,16 @@ public class StateCommand extends AbstractAmazonExecutableCommand {
     
     private static final String[] ARGUMENTS = null;
     
-    private static final String HELP_TEXT = "";
+    private static final String HELP_TEXT = "Show all registered JPPF Nodes.";
     
     private static final String NAME = "state";
 
+    /**
+     * Creates a new command with a command line evaluation reference for access 
+     * to the Clustermeister provisioning infrastructure.
+     * 
+     * @param commandLineEvaluation the command line evaluation instance reference.
+     */
     public StateCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
         super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
     }

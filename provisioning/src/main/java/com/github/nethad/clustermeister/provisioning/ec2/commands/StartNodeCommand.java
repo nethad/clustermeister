@@ -35,6 +35,7 @@ import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.NodeState;
 
 /**
+ * Start a JPPF-Node on an AWS EC2 instance.
  *
  * @author daniel
  */
@@ -46,6 +47,12 @@ public class StartNodeCommand extends AbstractAmazonExecutableCommand {
     
     private static final String NAME = "startnode";
 
+    /**
+     * Creates a new command with a command line evaluation reference for access 
+     * to the Clustermeister provisioning infrastructure.
+     * 
+     * @param commandLineEvaluation the command line evaluation instance reference.
+     */
     public StartNodeCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
         super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
     }
@@ -89,25 +96,26 @@ public class StartNodeCommand extends AbstractAmazonExecutableCommand {
             amazonNodeConfiguration.setNodeType(NodeType.NODE);
             amazonNodeConfiguration.setCredentials(configuredCredentials);
 
-            logger.info("Starting node on {}", instanceId);
+            handle.print("Starting node on %s", instanceId);
             ListenableFuture<? extends Node> future =
                     nodeManager.addNode(amazonNodeConfiguration,
                     Optional.of(instanceId));
             try {
                 Node node = future.get();
                 if(node != null) {
-                    logger.info("Node started on {}", instanceId);
+                    handle.print("Node started on %s", instanceId);
                 } else {
-                    logger.info("Failed to start node on {}.", instanceId);
+                    handle.print("Failed to start node on %s.", instanceId);
                 }
             } catch (InterruptedException ex) {
-                logger.warn("Interrupted.", ex);
+                logger.warn("Interrupted while waiting for node to start.", ex);
             } catch (ExecutionException ex) {
-                logger.warn("Execution exception.", ex);
+                logger.warn("Could not wait for node to start.", ex);
             }
         } else {
             handle.print(String.format(
-                    "Can not start node on instance in state %s.", state));
+                    "Can not start node on %s because the instance is in state '%s'.", 
+                    instanceId, state));
         }
         
     }
