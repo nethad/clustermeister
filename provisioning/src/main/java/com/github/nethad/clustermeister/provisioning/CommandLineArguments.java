@@ -31,10 +31,18 @@ public class CommandLineArguments {
         this.stringTokenizer = new StringTokenizer(argumentString);
     }
     
+    /**
+     * Instantiate a new scanner object for the argument string provided.
+     * @return 
+     */
     public Scanner asScanner() {
         return new Scanner(argumentString);
     }
     
+    /**
+     * Counts the arguments (delimited by white-spaces) provided in the argument string.
+     * @return the number of arguments
+     */
     public int argumentCount() {
         return stringTokenizer.countTokens();
     }  

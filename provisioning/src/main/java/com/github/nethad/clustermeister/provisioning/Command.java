@@ -16,7 +16,7 @@
 package com.github.nethad.clustermeister.provisioning;
 
 /**
- *
+ * Represtens a command line command with its arguments and help text.
  * @author thomas
  */
 public class Command {

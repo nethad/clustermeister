@@ -16,11 +16,10 @@
 package com.github.nethad.clustermeister.provisioning;
 
 /**
- *
+ * A base class for executable commands.
  * @author daniel
  */
 public abstract class AbstractExecutableCommand extends Command {
-//    protected CommandLineEvaluation commandLineEvaluation;
     
     public AbstractExecutableCommand(String commandName, String[] arguments, 
             String helpText) {
@@ -29,6 +28,12 @@ public abstract class AbstractExecutableCommand extends Command {
     
     protected abstract CommandLineHandle getCommandLineHandle();
     
+    /**
+     * Checks whether the provided arguments conform to the number specified. It further prints a help text to the user
+     * explaining what arguments are expected.
+     * @param arguments
+     * @return <code>true</code> if the number of arguments is false, <code>false</code> otherwise.
+     */
     protected boolean isArgumentsCountFalse(CommandLineArguments arguments) {
         if (arguments.argumentCount() != getArgumentCount()) {
             getCommandLineHandle().expectedArguments(getArguments());
@@ -37,7 +42,6 @@ public abstract class AbstractExecutableCommand extends Command {
             return false;
         }
     }
-        
     
     /**
      * Execute the command.

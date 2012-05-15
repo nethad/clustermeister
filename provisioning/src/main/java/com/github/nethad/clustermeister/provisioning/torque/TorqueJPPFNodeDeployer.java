@@ -16,11 +16,16 @@
 package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.provisioning.jppf.PublicIpNotifier;
-import com.github.nethad.clustermeister.provisioning.utils.*;
+import com.github.nethad.clustermeister.provisioning.utils.PublicIp;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
+import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.net.InetAddresses;
-import java.io.*;
-import java.util.*;
+import java.io.File;
+import java.io.InputStream;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Observer;
 import java.util.concurrent.atomic.AtomicInteger;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -130,6 +135,9 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
           user = configuration.getSshUser();
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getDriverAddress() {
         if (publicIp == null) {
@@ -142,16 +150,25 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
         return publicIp;
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public String getSessionId() {
         return String.valueOf(sessionId);
     }
 
+    /**
+     * {@inheritDoc}
+     */
     @Override
     public SSHClient sshClient() {
         return sshClient;
     }
 
+    /**
+     * Disconnects SSH connection used for deployment.
+     */
     public void disconnectSshConnection() {
         sshClient.disconnect();
         sshClient = null;

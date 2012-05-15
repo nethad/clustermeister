@@ -15,7 +15,6 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
-import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.injection.SSHModule;
@@ -29,11 +28,12 @@ import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import com.google.common.base.Preconditions;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
-import com.google.common.util.concurrent.Monitor;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import java.util.*;
+import java.util.Collection;
+import java.util.List;
+import java.util.Observer;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import org.apache.commons.configuration.Configuration;

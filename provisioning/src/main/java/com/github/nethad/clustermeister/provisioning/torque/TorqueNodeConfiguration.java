@@ -29,13 +29,8 @@ public class TorqueNodeConfiguration implements NodeConfiguration {
 	
 	private final String driverAddress;
     private final int numberOfCpus;
-//    private final Configuration configuration;
     private final Collection<File> artifactsToPreload;
 
-//	public TorqueNodeConfiguration() {
-//        this.numberOfCpus = 1;
-//	}
-	
 	public TorqueNodeConfiguration(String driverAddress, int numberOfCpus, Collection<File> artifactsToPreload) {
 		this.driverAddress = driverAddress;
         this.numberOfCpus = numberOfCpus;

@@ -17,7 +17,6 @@ package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.NodeType;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonNode;
 import com.google.common.base.Objects;
 import java.util.HashSet;
 import java.util.Set;

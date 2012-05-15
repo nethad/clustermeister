@@ -26,12 +26,22 @@ public interface TorqueNodeDeployment {
 	public static final int DEFAULT_MANAGEMENT_PORT = 11198;
 	public static final String DEPLOY_BASE_NAME = "jppf-node";
 	public static final String DEPLOY_CONFIG_SUFFIX = ".properties";
-//	public static final String DEPLOY_QSUB = "qsub-node.sh";
-//	public static final String PATH_TO_QSUB_SCRIPT = "./" + DEPLOY_BASE_NAME + "/" + DEPLOY_QSUB;
 
+    /**
+     * Returns the driver's IP address.
+     * @return 
+     */
 	public String getDriverAddress();
 
+    /**
+     * Returns a unique identifier for the current session, which may be used for naming.
+     * @return 
+     */
 	public String getSessionId();
 	
+    /**
+     * Returns a SSH client instance used for deployment.
+     * @return 
+     */
 	public SSHClient sshClient();
 }
