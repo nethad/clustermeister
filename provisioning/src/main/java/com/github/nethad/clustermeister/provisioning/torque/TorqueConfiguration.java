@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
+import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,8 +25,6 @@ import org.slf4j.LoggerFactory;
  * @author thomas
  */
 public class TorqueConfiguration {
-    
-    private static final String CONFIGURATION_FILE = System.getProperty("user.home") + "/.clustermeister/configuration.properties";
     
     public static final String TORQUE_SSH_USER = "torque.ssh_user";
     public static final String TORQUE_SSH_PRIVATEKEY = "torque.ssh_privatekey";
@@ -37,11 +36,6 @@ public class TorqueConfiguration {
     
     private static final Logger logger = LoggerFactory.getLogger(TorqueConfiguration.class);
     
-//    torque.ssh_user = tritter
-//torque.ssh_privatekey = /home/thomas/.ssh/id_dsa_kraken
-//torque.ssh_host = kraken.ifi.uzh.ch
-//torque.ssh_port = 22
-//torque.email_notify = thomas.ritter@uzh.ch
     private String sshUser;
     private String privateKeyPath;
     private String sshHost;
@@ -58,6 +52,12 @@ public class TorqueConfiguration {
         this.queueName = queueName;
     }
     
+    /**
+     * Extracts Torque-specific configuration from a {@link Configuration} source.
+     * @param configuration to read configuration values from
+     * @return a {@link TorqueConfiguration} object.
+     * @throws ConfigurationValueMissingException 
+     */
     public static TorqueConfiguration buildFromConfig(Configuration configuration) throws ConfigurationValueMissingException {
         String sshHost = 
                 checkString(configuration, TORQUE_SSH_HOST, "", "You didn't specify an ssh host");
@@ -95,37 +95,9 @@ public class TorqueConfiguration {
     }
     
     private static String loggerMessage(String message, String configOption, String defaultValue) {
-        return message + ", you could do so in "+CONFIGURATION_FILE +" with "+configOption + ". "
+        return message + ", you could do so in "+ FileConfiguration.DEFAULT_CONFIG_FILE +" with "+configOption + ". "
                 + "Using default value \""+defaultValue+"\".";
     }
-    
-//    public void printWarningsIfMissing(String sshUser, String privateKeyPath, String sshHost, int sshPort, String emailNotify) {
-//        checkString(sshUser, "You didn't specify a ssh user", TORQUE_SSH_USER);
-//        checkString(privateKeyPath, "You didn't specify to path to your private key", TORQUE_SSH_PRIVATEKEY);
-//        checkString(sshHost, "You didn't specify the ssh host", TORQUE_SSH_HOST);
-//        checkInt(sshPort, "You didn't specify an ssh port", TORQUE_SSH_PORT);
-//        checkString(emailNotify, "You didn't specify your email address", TORQUE_EMAIL_NOTIFY);
-//    }
-//    
-//    private void checkString(String toCheck, String loggerMessage, String configOption) {
-//        if (isEmptyStringOrNull(toCheck)) {
-//            logger.warn(loggerMessage(loggerMessage, configOption));
-//        }
-//    }
-//    
-//    private void checkInt(int toCheck, String loggerMessage, String configOption) {
-//        if (toCheck == -1) {
-//            logger.warn(loggerMessage(loggerMessage, configOption));
-//        }
-//    }
-//    
-//    private boolean isEmptyStringOrNull(String string) {
-//        return string == null || string.isEmpty();
-//    }
-//    
-//    private String loggerMessage(String message, String configOption) {
-//        return message + ", you could do so in "+CONFIGURATION_FILE +" with "+configOption + ".";
-//    }
 
     public String getSshUser() {
         return sshUser;

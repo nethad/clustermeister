@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.cli;
 
+import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -35,8 +36,8 @@ public class ProvisioningCLI {
 
     private static final String OPTION_HELP = "help";
     private static final String OPTION_CONFIG_FILE = "config";
-    private static final String CONFIG_FILE_NAME = "configuration.yml";
-    private static final String DEFAULT_CONFIG_FILE = System.getProperty("user.home") + "/.clustermeister/" + CONFIG_FILE_NAME;
+//    private static final String CONFIG_FILE_NAME = "configuration.yml";
+//    private static final String DEFAULT_CONFIG_FILE = System.getProperty("user.home") + "/.clustermeister/" + CONFIG_FILE_NAME;
     private static final String OPTION_PROVIDER = "provider";
     private static final String DEFAULT_PROVIDER = "torque";
 
@@ -127,7 +128,7 @@ public class ProvisioningCLI {
         CommandLineParser parser = new PosixParser();
         CommandLine cmd = parser.parse(getOptions(), args);
         showHelp = cmd.hasOption(OPTION_HELP);
-        configFilePath = cmd.getOptionValue(OPTION_CONFIG_FILE, DEFAULT_CONFIG_FILE);
+        configFilePath = cmd.getOptionValue(OPTION_CONFIG_FILE, FileConfiguration.DEFAULT_CONFIG_FILE);
         provider = Provider.fromString(cmd.getOptionValue(OPTION_PROVIDER, DEFAULT_PROVIDER));
     }
 
@@ -135,7 +136,7 @@ public class ProvisioningCLI {
         if (options == null) {
             options = new Options();
             options.addOption("h", OPTION_HELP, false, "show this help text.");
-            options.addOption("c", OPTION_CONFIG_FILE, true, "define the path to your "+CONFIG_FILE_NAME+", default: "+DEFAULT_CONFIG_FILE);
+            options.addOption("c", OPTION_CONFIG_FILE, true, "define the path to your "+FileConfiguration.CONFIG_FILE_NAME+", default: "+FileConfiguration.DEFAULT_CONFIG_FILE);
             options.addOption("p", OPTION_PROVIDER, true, "specify the provider to use, either 'amazon' or 'torque', default: "+DEFAULT_PROVIDER);
         }
         return options;

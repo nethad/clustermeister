@@ -41,10 +41,8 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
     private AtomicInteger currentNodeNumber;
     private final long sessionId;
     private final TorqueConfiguration configuration;
-    private String email;
     private ArrayList<Observer> publicIpListener;
     private String publicIp;
-    private String queueName;
     
     public TorqueJPPFNodeDeployer(TorqueConfiguration configuration, SSHClient sshClient) {
         this.configuration = configuration;
@@ -88,6 +86,11 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
         notifyPublicIp(publicIp);
     }
 
+    /**
+     * Deploy infrastructure via SSH and connect to it if necessary. This method is idempotent.
+     * @param artifactsToPreload files to be deployed, e.g. libraries as jar files.
+     * @throws SSHClientException 
+     */
     public synchronized void prepareAndDeployInfrastructure(Collection<File> artifactsToPreload) throws SSHClientException {
         if (isInfrastructureDeployed) {
             return;
@@ -106,25 +109,25 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
         infrastructureDeployer.deployInfrastructure(artifactsToPreload);
     }
 
-    public TorqueNode submitJob(TorqueNodeConfiguration nodeConfiguration) throws SSHClientException {
+    /**
+     * Deploys a new node to Torque and deploys infrastructure beforehand if necessary.
+     * @param nodeConfiguration deployment configuration
+     * @return
+     * @throws SSHClientException 
+     */
+    public void deployNewNode(TorqueNodeConfiguration nodeConfiguration) throws SSHClientException {
         if (!isInfrastructureDeployed) {
             prepareAndDeployInfrastructure(nodeConfiguration.getArtifactsToPreload());
         }
         NodeDeployTask nodeDeployTask = 
                 new NodeDeployTask(this, currentNodeNumber.getAndIncrement(), nodeConfiguration, configuration);
-        final TorqueNode torqueNode = nodeDeployTask.execute();
-//        torqueNodeManagement.addManagedNode(torqueNode);
-        return torqueNode;
+        nodeDeployTask.execute();
     }
     
     private void loadConfiguration() {     
           host = configuration.getSshHost();
           port = configuration.getSshPort();
           user = configuration.getSshUser();
-//          privateKeyFilePath = configuration.getPrivateKeyPath();
-          email = configuration.getEmailNotify();
-          queueName = configuration.getQueueName();
-//          akkaZip = System.getProperty("user.home")+"/.clustermeister/"+AKKA_ZIP;
     }
 
     @Override

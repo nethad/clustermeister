@@ -54,7 +54,7 @@ public class TorqueNodeManager {
 	
 
 
-	private class AddNodeTask implements Callable<TorqueNode> {
+	private class AddNodeTask implements Callable<Void> {
 
 		private final TorqueNodeConfiguration nodeConfiguration;
 
@@ -63,8 +63,9 @@ public class TorqueNodeManager {
 		}
 
 		@Override
-		public TorqueNode call() throws Exception {
-			return nodeDeployer.submitJob(nodeConfiguration);
+		public Void call() throws Exception {
+			nodeDeployer.deployNewNode(nodeConfiguration);
+            return null;
 		}
 	}
     
@@ -141,7 +142,7 @@ public class TorqueNodeManager {
         return commandLineEvaluation;
     }
 
-	public ListenableFuture<? extends Node> addNode(TorqueNodeConfiguration nodeConfiguration) {
+	public ListenableFuture<Void> addNode(TorqueNodeConfiguration nodeConfiguration) {
         return executorService.submit(new AddNodeTask(nodeConfiguration));
 	}
     

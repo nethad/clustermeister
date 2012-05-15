@@ -25,6 +25,9 @@ import org.apache.commons.configuration.PropertiesConfiguration;
  * @author thomas
  */
 public class FileConfiguration extends PropertiesConfiguration {
+    
+    public static final String CONFIG_FILE_NAME = "configuration.yml";
+    public static final String DEFAULT_CONFIG_FILE = System.getProperty("user.home") + "/.clustermeister/" + CONFIG_FILE_NAME;
 
     public FileConfiguration(File file) throws ConfigurationException {
         super(file);

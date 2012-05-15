@@ -119,7 +119,7 @@ public class TorqueJPPFTestSetup {
 //        torqueNodeManager.deployResources();
         TorqueNodeConfiguration nodeConfiguration = TorqueNodeConfiguration.configurationForNode(driverIpAddress, 1, new LinkedList<File>());
         for (int i = 0; i < NUMBER_OF_NODES; i++) {
-            ListenableFuture<? extends Node> node = torqueNodeManager.addNode(nodeConfiguration);
+            ListenableFuture<Void> node = torqueNodeManager.addNode(nodeConfiguration);
             try {
                 node.get();
             } catch (InterruptedException ex) {

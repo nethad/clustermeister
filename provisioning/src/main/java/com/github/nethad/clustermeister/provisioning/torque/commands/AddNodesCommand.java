@@ -58,7 +58,7 @@ public class AddNodesCommand extends AbstractTorqueExecutableCommand {
         final TorqueNodeConfiguration torqueNodeConfiguration =
                 TorqueNodeConfiguration.configurationForNode(numberOfCpusPerNode, artifactsToPreload);
                 
-        ListenableFuture<? extends Node> lastNode = null;
+        ListenableFuture<Void> lastNode = null;
         for (int i = 0; i < numberOfNodes; i++) {
             lastNode = getNodeManager().addNode(torqueNodeConfiguration);
         }

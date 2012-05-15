@@ -29,6 +29,8 @@ import org.slf4j.LoggerFactory;
 
 /**
  *
+ * Deploys a new node to Torque, assuming that all artifacts are deployed beforehand.
+ * 
  * @author thomas
  */
 class NodeDeployTask {
@@ -52,7 +54,11 @@ class NodeDeployTask {
         this.queueName = torqueConfiguration.getQueueName();
 	}
 
-	public TorqueNode execute() throws SSHClientException {
+    /**
+     * Deploys a new node with its configuration and starts a Torque job (with qsub).
+     * @throws SSHClientException 
+     */
+	public void execute() throws SSHClientException {
 		String nodeNameBase = "CMNode" + torqueNodeDeployment.getSessionId();
 		String nodeName = nodeNameBase + "_" + nodeNumber;
 		String nodeConfigFileName = configFileName();
@@ -64,8 +70,8 @@ class NodeDeployTask {
         String submitJobToQsub = "echo \""+base64EncodedQsubScript+"\"| base64 -d | qsub";
 		String response = sshClient().executeWithResult(submitJobToQsub);
         logger.info("Started node, response: {}", response);
-		TorqueNode torqueNode = new TorqueNode(response, null, null, serverPort, managementPort);
-		return torqueNode;
+//		TorqueNode torqueNode = new TorqueNode(response, null, null, serverPort, managementPort);
+//		return torqueNode;
 	}
 	
     @VisibleForTesting
