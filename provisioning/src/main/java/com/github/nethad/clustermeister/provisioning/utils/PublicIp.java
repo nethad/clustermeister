@@ -23,9 +23,14 @@ import java.net.URL;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * Uses <a href="http://whatismyip.com">whatismyip.com</a> to determine this machine's external IP address.
+ * This object should not be used to determine external IPs, as it relies on an external service. 
+ * Use it as a fallback only.
  * @author thomas
+ * @deprecated This object should not be used to determine external IPs, as it relies on an external service. 
+ * Use it as a fallback only.
  */
+@Deprecated
 public class PublicIp implements PublicIpRequestable {
 	public static final String WHATISMYIP_WEBSERVICE_URL = "http://automation.whatismyip.com/n09230945.asp";
 	private String publicIp;

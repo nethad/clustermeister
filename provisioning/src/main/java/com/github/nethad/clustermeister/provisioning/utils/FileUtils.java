@@ -33,6 +33,12 @@ public class FileUtils {
     private static MessageDigest digest = null;
     private final static String HEXES = "0123456789ABCDEF";
 
+    /**
+     * Compute Cyclic Redundancy Check (CRC32).
+     * @param in the InputStream to compute
+     * @return CRC32 for the given InputStream
+     * @throws IOException 
+     */
     public static synchronized long getCRC32(final InputStream in) throws IOException {
         return ByteStreams.getChecksum(new InputSupplier<InputStream>() {
             @Override
@@ -41,20 +47,44 @@ public class FileUtils {
             }
         }, new CRC32());
     }
-    
+   
+    /**
+     * Compute Cyclic Redunancy Check (CRC32).
+     * @param file the File to compute
+     * @return CRC32 for the given File.
+     * @throws IOException 
+     */
     public static synchronized long getCRC32ForFile(File file) throws IOException {
         return Files.getChecksum(file, new CRC32());
     }
 
+    /**
+     * Compute the MD5 sum.
+     * @param file the File to compute
+     * @return the MD5 sum for the given file
+     * @throws IOException 
+     */
     public static synchronized String getMD5ForFile(File file) throws IOException {
         return getHexString(Files.getDigest(file, digest));
     }
 
+    /**
+     * Builds a shell (bash) command which checks whether a file path exists.
+     * The shell command returns <code>true</code> if the path exists, <code>false</code> otherwise.
+     * @param filePath the file path as a string to build the shell command for
+     * @return the shell command to check the file path
+     */
     public static String getFileExistsShellCommand(String filePath) {
         StringBuilder sb = new StringBuilder("if  [ -f ");
         return appendIfElseBoolean(sb, filePath);
     }
 
+    /**
+     * Builds a shell (bash) command which checks whether a directory path exists.
+     * The shell command returns <code>true</code> if the path exists, <code>false</code> otherwise.
+     * @param dirPath the directory path as a string to build the shell command for
+     * @return the shell command to check the directory path.
+     */
     public static String getDirectoryExistsShellCommand(String dirPath) {
         StringBuilder sb = new StringBuilder("if  [ -d ");
         return appendIfElseBoolean(sb, dirPath);

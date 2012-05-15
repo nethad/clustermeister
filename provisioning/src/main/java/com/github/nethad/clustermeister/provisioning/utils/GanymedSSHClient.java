@@ -34,20 +34,24 @@ public class GanymedSSHClient implements SSHClient {
     private Connection connection;
     private String privateKeyFilePath;
 
+    @Deprecated
     public GanymedSSHClient(String privateKeyFilePath) {
         this.privateKeyFilePath = privateKeyFilePath;
     }
     
+    @Deprecated
     public GanymedSSHClient() {
         // default constructor.
     }
 
     @Override
+    @Deprecated
     public void connect(String userName, String host) throws SSHClientException {
         connect(userName, host, 22);
     }
 
     @Override
+    @Deprecated
     public void connect(String userName, String host, int port) throws SSHClientException {
         connection = new Connection(host, port);
         try {
@@ -67,6 +71,7 @@ public class GanymedSSHClient implements SSHClient {
     }
 
     @Override
+    @Deprecated
     public String executeWithResult(String command) throws SSHClientException {
         logger.info("$ " + command);
         Session session = null;
@@ -90,11 +95,13 @@ public class GanymedSSHClient implements SSHClient {
     }
 
     @Override
+    @Deprecated
     public void executeAndSysout(String command) throws SSHClientException {
         System.out.println("=> " + executeWithResult(command));
     }
 
     @Override
+    @Deprecated
     public void sftpUpload(String srcPath, String destPath) throws SSHClientException {
         throw new UnsupportedOperationException("Not yet implemented");
 //        try {
@@ -145,6 +152,7 @@ public class GanymedSSHClient implements SSHClient {
     }
 
     @Override
+    @Deprecated
     public void sftpUpload(InputStream stream, String dest) throws SSHClientException {
         checkIfConnectionIsOpen();
         try {
@@ -157,6 +165,7 @@ public class GanymedSSHClient implements SSHClient {
     }
 
     @Override
+    @Deprecated
     public void disconnect() {
         if (connection != null) {
             connection.close();
@@ -179,21 +188,25 @@ public class GanymedSSHClient implements SSHClient {
     }
 
     @Override
+    @Deprecated
     public void setPrivateKey(String privateKeyPath) throws SSHClientException {
         this.privateKeyFilePath = privateKeyPath;
     }
 
     @Override
+    @Deprecated
     public boolean isConnected() {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
+    @Deprecated
     public String executeWithResultSilent(String command) throws SSHClientException {
         throw new UnsupportedOperationException("Not supported yet.");
     }
 
     @Override
+    @Deprecated
     public String getHost() {
         if(connection != null) {
             return connection.getHostname();
@@ -203,11 +216,13 @@ public class GanymedSSHClient implements SSHClient {
     }
 
     @Override
+    @Deprecated
     public String getUserName() {
         throw new UnsupportedOperationException("This operation can not be supported.");
     }
 
     @Override
+    @Deprecated
     public int getPort() {
         if(connection != null) {
             return connection.getPort();
