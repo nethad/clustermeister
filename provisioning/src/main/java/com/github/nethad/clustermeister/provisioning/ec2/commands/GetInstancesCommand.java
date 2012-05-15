@@ -18,7 +18,7 @@ package com.github.nethad.clustermeister.provisioning.ec2.commands;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
+import com.github.nethad.clustermeister.provisioning.ec2.AwsEc2Facade;
 import java.util.*;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.Hardware;
@@ -47,8 +47,7 @@ public class GetInstancesCommand extends AbstractAmazonExecutableCommand {
     
     @Override
     public void execute(CommandLineArguments arguments) {
-        AmazonInstanceManager instanceManager = 
-                getNodeManager().getInstanceManager();
+        AwsEc2Facade ec2Facade = getNodeManager().getEc2Facade();
         CommandLineHandle handle = getCommandLineHandle();
         
         boolean verbose = false;
@@ -66,7 +65,7 @@ public class GetInstancesCommand extends AbstractAmazonExecutableCommand {
         
         StringBuilder output = new StringBuilder("AWS EC2 Instances for this account:\n");
         output.append(SEPARATOR_LINE).append("\n");
-        Set<? extends ComputeMetadata> instances = instanceManager.getInstances();
+        Set<? extends ComputeMetadata> instances = ec2Facade.getInstances();
         if(instances.isEmpty()) {
             output.append("No instances found.\n");
         } else {

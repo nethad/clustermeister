@@ -20,29 +20,24 @@ import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.PasswordCredentials;
-import com.github.nethad.clustermeister.provisioning.dependencymanager.DependencyConfigurationUtil;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonEC2JPPFDeployer.Event;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientImpl;
 import com.github.nethad.clustermeister.provisioning.utils.SocksTunnel;
 import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
-import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.Monitor;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
-import org.apache.commons.configuration.Configuration;
+import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.RunNodesException;
-import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.compute.domain.Template;
-import org.jclouds.domain.Location;
 import org.jclouds.domain.LoginCredentials;
 import org.jclouds.ec2.compute.options.EC2TemplateOptions;
 import org.slf4j.Logger;
@@ -71,11 +66,8 @@ public class AmazonInstanceManager {
     static final String GROUP_NAME = "clustermeister";
     private final static Logger logger =
             LoggerFactory.getLogger(AmazonInstanceManager.class);
-    private String accessKeyId;
-    private String secretKey;
-    private Collection<File> artifactsToPreload = null;
-    private final ListenableFuture<ComputeServiceContext> contextFuture;
-    private final ListeningExecutorService executorService;
+    private final ComputeContextManager contextManager;
+    private final AwsEc2Facade ec2Facade;
     private final Monitor portCounterMonitor = new Monitor(false);
     private final Map<String, Integer> instanceToPortCounter =
             new HashMap<String, Integer>();
@@ -84,74 +76,39 @@ public class AmazonInstanceManager {
     private final Monitor reverseTunnelMonitor = new Monitor(false);
     private final Map<String, SocksTunnel> instanceToReverseTunnel =
             new HashMap<String, SocksTunnel>();
-    private Map<String, Credentials> keypairs;
-    private Map<String, AWSInstanceProfile> profiles;
+    private final Collection<File> artifactsToPreload;
+    private final Map<String, Credentials> keypairs;
+    private final Map<String, AWSInstanceProfile> profiles;
 
-    /**
-     * Creates a new AmazonInstanceManager.
-     *
-     * This class is designed to be used by the AmazonNodeManager and each
-     * AmazonNodeManager should use only a single instance.
-     *
-     * @param config The configuration containing AWS credentials.
-     * @param executorService The ExecutorService used to perform asynchronous
-     * tasks, such as context set-up and template building.
-     */
-    AmazonInstanceManager(Configuration config, ListeningExecutorService executorService) {
-        this.executorService = executorService;
-        loadConfiguration(config);
-        //from here the configuration must be loaded.
-        contextFuture = createContext();
+    
+     /**
+      * Creates a new AmazonInstanceManager.
+      *
+      * This class is designed to be used by the AmazonNodeManager and each
+      * AmazonNodeManager should use only a single instance.
+      *
+      */
+    AmazonInstanceManager(ComputeContextManager contextManager, 
+            AwsEc2Facade ec2Facade, 
+            Map<String, Credentials> keypairs, 
+            Map<String, AWSInstanceProfile> profiles, 
+            Collection<File> artifactsToPreload) {
+        this.contextManager = contextManager;
+        this.ec2Facade = ec2Facade;
+        this.keypairs = keypairs;
+        this.profiles = profiles;
+        this.artifactsToPreload = artifactsToPreload;
     }
-
+    
     /**
      * Release resources used by the instance manager.
      */
     void close() {
-        try {
-            ComputeServiceContext context = contextFuture.get();
-            logger.debug("Closing context...");
-            context.close();
-            logger.debug("Context Closed.");
-        } catch (Exception ex) {
-            //do nothing, instance manager is in corrupt state and 
-            //context could not be created.
-            logger.warn("Failed to close {}", getClass().getSimpleName());
-        }
+        //TODO: release resources?
     }
 
-    /**
-     * Performs an Amazon API call to retrieve all AWS EC2 instances.
-     *
-     * @return A set containing all registered AWS EC2 instances regardless
-     * of state.
-     */
-    public Set<? extends ComputeMetadata> getInstances() {
-        return valueOrNotReady(contextFuture).getComputeService().listNodes();
-    }
-    
-    /**
-     * Performs an Amazon API call to retrieve all AWS EC2 Locations 
-     * (Zones and Regions).
-     *
-     * @return A set containing all registered AWS EC2 locations.
-     */
-    public Set<? extends Location> getLocations() {
-        return valueOrNotReady(contextFuture).getComputeService().listAssignableLocations();
-    }
-
-    /**
-     * Get meta data for a given instance.
-     *
-     * @param id	The jClouds node ID.
-     * @return	jClouds node meta data object.
-     */
-    public NodeMetadata getInstanceMetadata(String id) {
-        return valueOrNotReady(contextFuture).getComputeService().getNodeMetadata(id);
-    }
-    
     public Set<String> getConfiguredKeypairNames() {
-        return Collections.unmodifiableSet(keypairs.keySet());
+        return ImmutableSet.copyOf(keypairs.keySet());
     }
     
     public Credentials getConfiguredCredentials(String keypairName) {
@@ -159,7 +116,7 @@ public class AmazonInstanceManager {
     }
     
     public Collection<AWSInstanceProfile> getConfiguredProfiles() {
-        return profiles.values();
+        return ImmutableSet.copyOf(profiles.values());
     }
     
     public AWSInstanceProfile getConfiguredProfile(String profileName) {
@@ -177,9 +134,9 @@ public class AmazonInstanceManager {
     NodeMetadata createInstance(AmazonNodeConfiguration nodeConfiguration, 
             Optional<Map<String, String>> userMetaData) throws RunNodesException {
         logger.info("Creating a new instance...");
-        ComputeServiceContext context = valueOrNotReady(contextFuture);
-        Template template = nodeConfiguration.getTemplate(
-                context.getComputeService().templateBuilder());
+        ComputeService computeService = 
+                contextManager.getEagerContext().getComputeService();
+        Template template = nodeConfiguration.getTemplate(computeService.templateBuilder());
 
         if (userMetaData.isPresent()) {
             template.getOptions().userMetadata(userMetaData.get());
@@ -194,7 +151,7 @@ public class AmazonInstanceManager {
         
         setLoginCredentials(template, nodeConfiguration);
         
-        Set<? extends NodeMetadata> instances = context.getComputeService().
+        Set<? extends NodeMetadata> instances = computeService.
                 createNodesInGroup(GROUP_NAME, 1, template);
 
         NodeMetadata metadata = Iterables.getOnlyElement(instances);
@@ -211,6 +168,36 @@ public class AmazonInstanceManager {
         logger.info("Instance {} created.", metadata.getId());
         return metadata;
     }
+    
+    /**
+     * Suspend (stop) an instance.
+     *
+     * Shuts down the instance but the instance stays available for resuming.
+     *
+     * @param instanceId	jClouds node ID.
+     */
+    void suspendInstance(String instanceId) {
+        ec2Facade.suspendInstance(instanceId);
+        decrementAndManagePortCounter(instanceId);
+        removeSocksTunnel(instanceId);
+        AmazonEC2JPPFDeployer.removeDriverMonitor(instanceId);
+        AmazonEC2JPPFDeployer.removeNodeMonitor(instanceId);
+    }
+
+    /**
+     * Terminate (destroy) an instance.
+     *
+     * Shuts down and discards the instance.
+     *
+     * @param instanceId	jClouds node ID.
+     */
+    void terminateInstance(String instanceId) {
+        ec2Facade.terminateInstance(instanceId);
+        decrementAndManagePortCounter(instanceId);
+        removeSocksTunnel(instanceId);
+        AmazonEC2JPPFDeployer.removeDriverMonitor(instanceId);
+        AmazonEC2JPPFDeployer.removeNodeMonitor(instanceId);
+    }
 
     /**
      * Deploy JPPF node (or driver) on an instance.
@@ -224,7 +211,7 @@ public class AmazonInstanceManager {
     AmazonNode deploy(final NodeMetadata instanceMetadata, final AmazonNodeConfiguration nodeConfig)
             throws TimeoutException {
 
-        ComputeServiceContext context = valueOrNotReady(contextFuture);
+        ComputeServiceContext context = contextManager.getEagerContext();
 
         nodeConfig.setArtifactsToPreload(artifactsToPreload);
         
@@ -346,51 +333,6 @@ public class AmazonInstanceManager {
         }
     }
 
-    /**
-     * Suspend (stop) an instance.
-     *
-     * Shuts down the instance but the instance stays available for resuming.
-     *
-     * @param instanceId	jClouds node ID.
-     */
-    void suspendInstance(String instanceId) {
-        logger.info("Suspending instance {}.", instanceId);
-        valueOrNotReady(contextFuture).getComputeService().suspendNode(instanceId);
-        decrementAndManagePortCounter(instanceId);
-        removeSocksTunnel(instanceId);
-        AmazonEC2JPPFDeployer.removeDriverMonitor(instanceId);
-        AmazonEC2JPPFDeployer.removeNodeMonitor(instanceId);
-        logger.info("Instance {} suspended.", instanceId);
-    }
-
-    /**
-     * Terminate (destroy) an instance.
-     *
-     * Shuts down and discards the instance.
-     *
-     * @param instanceId	jClouds node ID.
-     */
-    void terminateInstance(String instanceId) {
-        logger.info("Terminating instance {}.", instanceId);
-        valueOrNotReady(contextFuture).getComputeService().destroyNode(instanceId);
-        decrementAndManagePortCounter(instanceId);
-        removeSocksTunnel(instanceId);
-        AmazonEC2JPPFDeployer.removeDriverMonitor(instanceId);
-        AmazonEC2JPPFDeployer.removeNodeMonitor(instanceId);
-        logger.info("Instance {} terminated.", instanceId);
-    }
-
-    /**
-     * Resume (start) an instance.
-     *
-     * @param instanceId	jClouds node ID.
-     */
-    void resumeInstance(String instanceId) {
-        logger.info("Resuming instance {}.", instanceId);
-        valueOrNotReady(contextFuture).getComputeService().resumeNode(instanceId);
-        logger.info("Instance {} resumed.", instanceId);
-    }
-    
     private void setLoginCredentials(Template template, AmazonNodeConfiguration nodeConfiguration) {
         final EC2TemplateOptions awsOptions = 
                 template.getOptions().as(EC2TemplateOptions.class);
@@ -435,49 +377,6 @@ public class AmazonInstanceManager {
             return new LoginCredentials(credentials.getUser(), password, null, true);
         } else {
             throw new IllegalStateException("Unsupported credentials.");
-        }
-    }
-
-    private ListenableFuture<ComputeServiceContext> createContext() {
-        logger.debug("Creating Context...");
-
-        //TODO: how to enable lazy image fetching? --> Idea: create lazy and normal context and choose based on need of template
-        //TODO: can properties be changed at runtime?
-        //Optimization: lazy image fetching
-//        //set AMI queries to nothing
-//        Properties properties = new Properties();
-//        properties.setProperty(AWSEC2Constants.PROPERTY_EC2_AMI_QUERY, "");
-//        properties.setProperty(AWSEC2Constants.PROPERTY_EC2_CC_AMI_QUERY, "");
-        return executorService.submit(
-                new AmazonContextBuilder(accessKeyId, secretKey, 
-                Optional.<Properties>absent()));
-
-    }
-
-    private void loadConfiguration(Configuration configuration) {
-        logger.debug("Loading Configuration...");
-        AmazonConfigurationLoader configurationLoader = 
-                new AmazonConfigurationLoader(configuration);
-        accessKeyId = configurationLoader.getAccessKeyId();
-        secretKey = configurationLoader.getSecretKey();
-        
-        keypairs = Collections.synchronizedMap(configurationLoader.getConfiguredCredentials());
-        profiles = Collections.synchronizedMap(configurationLoader.getConfiguredProfiles());
-        
-        artifactsToPreload = DependencyConfigurationUtil.getConfiguredDependencies(configuration);
-    }
-    
-    /**
-     * Retrieves future value or throws IllegalStateException if the future
-     * value can not be retrieved anymore.
-     *
-     * @return
-     */
-    private <T> T valueOrNotReady(Future<T> future) {
-        try {
-            return future.get();
-        } catch (Exception ex) {
-            throw new IllegalStateException("InstanceManager is not ready.", ex);
         }
     }
 }

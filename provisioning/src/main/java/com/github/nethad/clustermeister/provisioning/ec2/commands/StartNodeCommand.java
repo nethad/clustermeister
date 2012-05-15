@@ -26,6 +26,7 @@ import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvalua
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
+import com.github.nethad.clustermeister.provisioning.ec2.AwsEc2Facade;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.Scanner;
@@ -54,6 +55,7 @@ public class StartNodeCommand extends AbstractAmazonExecutableCommand {
         CommandLineHandle handle = getCommandLineHandle();
         AmazonNodeManager nodeManager = getNodeManager();
         AmazonInstanceManager instanceManager = nodeManager.getInstanceManager();
+        AwsEc2Facade ec2Facade = nodeManager.getEc2Facade();
         
         
         if (this.isArgumentsCountFalse(arguments)) {
@@ -75,7 +77,7 @@ public class StartNodeCommand extends AbstractAmazonExecutableCommand {
         }
         
         final NodeMetadata instanceMetadata = 
-                instanceManager.getInstanceMetadata(instanceId);
+                ec2Facade.getInstanceMetadata(instanceId);
         
         NodeState state = instanceMetadata.getState();
         if(state == NodeState.RUNNING || state == NodeState.SUSPENDED) {

@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Observable;
 import java.util.Properties;
+import java.util.regex.Matcher;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.domain.ExecResponse;
 import org.jclouds.compute.domain.NodeMetadata;
@@ -339,8 +340,10 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
         String output = getStringResult(execute("cat " + getDirectoryName() + 
                 jppfFolder + INIT_LOG + " | grep " + UUID_PREFIX));
         checkNotNull(output);
-        checkState(output.startsWith(UUID_PREFIX));
-        String uuid = output.substring(UUID_PREFIX.length());
+        checkState(output.contains(UUID_PREFIX));
+        int beginIndex = output.indexOf(UUID_PREFIX) + UUID_PREFIX.length();
+        int endIndex = beginIndex + 32;
+        String uuid = output.substring(beginIndex, endIndex);
         logger.debug("Got UUID {}.", uuid);
         
         return uuid;

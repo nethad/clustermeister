@@ -18,7 +18,6 @@ package com.github.nethad.clustermeister.provisioning.ec2.commands;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceShutdownState;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNode;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;

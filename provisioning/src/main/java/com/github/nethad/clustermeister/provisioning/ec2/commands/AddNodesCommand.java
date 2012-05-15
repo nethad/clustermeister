@@ -52,12 +52,12 @@ public class AddNodesCommand extends AbstractAmazonExecutableCommand {
 
     @Override
     public void execute(CommandLineArguments arguments) {
-        AmazonNodeManager nodeManager = getNodeManager();
-        AmazonInstanceManager instanceManager = nodeManager.getInstanceManager();
-        
         if (isArgumentsCountFalse(arguments)) {
             return;
         }
+        
+        AmazonNodeManager nodeManager = getNodeManager();
+        AmazonInstanceManager instanceManager = nodeManager.getInstanceManager();
         
         Scanner scanner = arguments.asScanner();
         
