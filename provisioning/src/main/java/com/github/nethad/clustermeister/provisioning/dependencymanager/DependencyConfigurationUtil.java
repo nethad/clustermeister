@@ -235,7 +235,7 @@ public class DependencyConfigurationUtil {
         rs.addGlobalExclusion("com.github.nethad.clustermeister:driver");
         rs.addGlobalExclusion("org.jvnet.opendmk:jmxremote_optional");
         rs.addGlobalExclusion("log4j");
-        rs.addGlobalExclusion("slf4j");
+        rs.addGlobalExclusion("org.slf4j");
     }
     
     static void processMavenRepositories(Configuration configuration, 
