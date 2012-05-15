@@ -18,7 +18,7 @@ package com.github.nethad.clustermeister.provisioning.jppf;
 import java.util.Observer;
 
 /**
- *
+ * 
  * @author thomas
  */
 public interface PublicIpNotifier {

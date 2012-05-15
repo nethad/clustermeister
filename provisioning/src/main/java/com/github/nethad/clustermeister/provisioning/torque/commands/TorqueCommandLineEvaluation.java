@@ -15,17 +15,15 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque.commands;
 
-import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
-import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.AbstractExecutableCommand;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
+import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
+import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiServerForApi;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.google.common.annotations.VisibleForTesting;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.Scanner;
-import java.util.StringTokenizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,7 +38,6 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
     private final TorqueNodeManager nodeManager;
     private final CommandLineHandle handle;
     @VisibleForTesting
-//    Map<String, String> commandHelp = new HashMap<String, String>();
     private final RmiServerForApi rmiServerForApi;
     
     private Collection<AbstractExecutableCommand> commands = new LinkedList<AbstractExecutableCommand>();

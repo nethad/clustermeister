@@ -17,16 +17,24 @@ package com.github.nethad.clustermeister.provisioning.rmi;
 
 import com.github.nethad.clustermeister.api.NodeInformation;
 import com.github.nethad.clustermeister.api.rmi.IRmiServerForApi;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
 
 /**
  *
+ * An RMI server/service for the Clustermeister API to query for currently running nodes.
+ * 
  * @author thomas
  */
 public class RmiServerForApi implements IRmiServerForApi {
     
     private NodeManager nodeManager;
 
+    /**
+     * Returns a collection of currently running nodes.
+     * @return 
+     */
     @Override
     public Collection<NodeInformation> getAllNodes() {
         // this is apparently necessary, because values() has HashMap.Values in it, and those are not serializable

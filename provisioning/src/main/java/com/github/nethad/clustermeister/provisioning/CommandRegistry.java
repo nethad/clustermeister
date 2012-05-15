@@ -16,7 +16,7 @@
 package com.github.nethad.clustermeister.provisioning;
 
 /**
- *
+ * Register commands for a command line interface.
  * @author thomas
  */
 public interface CommandRegistry {

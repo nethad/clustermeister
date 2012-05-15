@@ -26,9 +26,6 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
-import java.security.AccessController;
-import java.security.Policy;
-import java.security.PrivilegedAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -50,6 +47,9 @@ public class RmiInfrastructure {
     private IRmiServerForApi serverForApiStub;
     private IRmiServerForDriver serverForDriverStub;
 
+    /**
+     * Starts the RMI registry and registers services.
+     */
     public void initialize() {
         final String policyUrl = RmiInfrastructure.class.getResource("/cm.policy").toString();
         logger.info("Policy file URL: {}", policyUrl);
@@ -73,6 +73,10 @@ public class RmiInfrastructure {
         }
     }
     
+    /**
+     * The RMI registry port.
+     * @return 
+     */
     public int getRegistryPort() {
         return registryPort;
     }

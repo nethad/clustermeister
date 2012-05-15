@@ -16,7 +16,6 @@
 package com.github.nethad.clustermeister.provisioning.rmi;
 
 import com.github.nethad.clustermeister.api.impl.NodeInformationImpl;
-import com.github.nethad.clustermeister.api.NodeInformation;
 import com.github.nethad.clustermeister.driver.rmi.IRmiServerForDriver;
 import java.rmi.RemoteException;
 import java.util.ArrayList;
@@ -27,7 +26,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
+ * An RMI server/service for the JPPF driver to call on node (dis)connects.
  * @author thomas
  */
 public class RmiServerForDriver implements IRmiServerForDriver {
@@ -37,6 +36,11 @@ public class RmiServerForDriver implements IRmiServerForDriver {
     
     private List<NodeConnectionListener> listeners = new ArrayList<NodeConnectionListener>();
 
+    /**
+     * To be called when a node connects.
+     * @param managementInfo
+     * @param systemInformation 
+     */
     @Override
     public void onNodeConnected(JPPFManagementInfo managementInfo, JPPFSystemInformation systemInformation) {
         logger.info("Node connected "+managementInfo.getId());
@@ -45,6 +49,11 @@ public class RmiServerForDriver implements IRmiServerForDriver {
         notifyListenersConnected(managementInfo, systemInformation);
     }
     
+    /**
+     * To be called when a node disconnects.
+     * @param managementInfo
+     * @throws RemoteException 
+     */
     @Override
     public void onNodeDisconnected(JPPFManagementInfo managementInfo) throws RemoteException {
         logger.info("Node disconnected "+managementInfo.getId());

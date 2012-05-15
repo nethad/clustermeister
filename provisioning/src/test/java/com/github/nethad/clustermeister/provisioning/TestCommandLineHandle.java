@@ -13,10 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.torque.commands;
-
-import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
-import com.github.nethad.clustermeister.provisioning.CommandRegistry;
+package com.github.nethad.clustermeister.provisioning;
 
 /**
  *

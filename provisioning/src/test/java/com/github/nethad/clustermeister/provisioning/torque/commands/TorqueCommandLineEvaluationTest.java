@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque.commands;
 
+import com.github.nethad.clustermeister.provisioning.TestCommandLineHandle;
 import com.github.nethad.clustermeister.api.NodeInformation;
 import com.github.nethad.clustermeister.api.impl.NodeInformationImpl;
 import com.github.nethad.clustermeister.provisioning.Command;

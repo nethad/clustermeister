@@ -35,13 +35,6 @@ public interface CommandLineEvaluation {
     public static final String COMMAND_EXIT = "exit";
     public static final String COMMAND_QUIT = "quit";
     
-//    /**
-//     * Add nodes to the infrastructure.
-//     * @param tokenizer Additional parameters
-//     * @param driverHost the host or IP address for the driver
-//     */
-//    public void addNodes(StringTokenizer tokenizer, String driverHost);
-    
     /**
      * Print the current state for this backend.
      * @param tokenizer Additional parameters
@@ -54,26 +47,12 @@ public interface CommandLineEvaluation {
      */
     public void shutdown(CommandLineArguments arguments);
     
-//    /**
-//     * Print a help text.
-//     * @param tokenizer Additional parameters
-//     */
-//    public void help(StringTokenizer tokenizer);
-    
     /**
      * Handle commands which are not shared by other backends.
      * @param command the first argument (=command) provided by the user
      * @param tokenizer Additional parameters entered by the user
      */
     public void handleCommand(String command, CommandLineArguments arguments);
-    
-//    /**
-//     * Returns a help text for the given command. This is only needed for commands handled by {@link #handleCommand(java.lang.String, java.util.StringTokenizer) }
-//     * or built-in commands that take arguments.
-//     * @param command
-//     * @return 
-//     */
-//    public String helpText(String command);
     
     public CommandLineHandle getCommandLineHandle();
     

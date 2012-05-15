@@ -15,10 +15,10 @@
  */
 package com.github.nethad.clustermeister.provisioning;
 
-import java.util.StringTokenizer;
-
 /**
  *
+ * An object to encapsulate command line output.
+ * 
  * @author thomas
  */
 public class CommandLineHandle {

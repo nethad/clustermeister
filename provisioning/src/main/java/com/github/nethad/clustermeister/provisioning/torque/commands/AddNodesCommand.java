@@ -15,7 +15,6 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque.commands;
 
-import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.dependencymanager.DependencyConfigurationUtil;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeConfiguration;
@@ -28,7 +27,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- *
  * @author thomas
  */
 public class AddNodesCommand extends AbstractTorqueExecutableCommand {
