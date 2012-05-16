@@ -22,7 +22,7 @@ import java.util.Collection;
  *
  * @author daniel
  */
-public interface CompositeCommand extends Command {
+public interface CompositeCommand extends ExecutableCommand {
     
     /**
      * Register a sub command to this composite command.
