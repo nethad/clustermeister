@@ -49,6 +49,7 @@ public class RemoteResourceManagerTest {
     private static final long DUMMY_RESOURCE_CHECKSUM = 123456789l;
     private static final String DUMMY_RESOURCE_DEPLOYMENT_DIR = "remote~directory";
     private static final String DUMMY_RESOURCE_NAME = "dummyResource.txt";
+    private static final String NO_CRC_RESOURCE_NAME = "noCrc.txt";
     private static final String RESOURCE_DIR_NAME = "resources";
     private static final String RESOURCE_DIR_PATH = "path~to~resources";
     private static final String SEPARATOR = "~";
@@ -66,6 +67,9 @@ public class RemoteResourceManagerTest {
     
     @Mock
     private Resource dummyResource3;
+    
+    @Mock
+    private Resource noCrcFileResource;
     
     @Mock
     private Resource uploadedUndeployedResource;
@@ -90,6 +94,11 @@ public class RemoteResourceManagerTest {
         when(dummyResource3.getResourceChecksum()).thenReturn(DUMMY_RESOURCE_CHECKSUM);
         when(dummyResource3.getResourceData()).thenReturn(DUMMY_RESOURCE_DATA);
         
+        when(noCrcFileResource.getName()).thenReturn(NO_CRC_RESOURCE_NAME);
+        when(noCrcFileResource.getRemoteDeploymentDirectory()).thenReturn(DUMMY_RESOURCE_DEPLOYMENT_DIR);
+        when(noCrcFileResource.getResourceChecksum()).thenReturn(DUMMY_RESOURCE_CHECKSUM);
+        when(noCrcFileResource.getResourceData()).thenReturn(DUMMY_RESOURCE_DATA);
+        
         when(uploadedUndeployedResource.getName()).thenReturn(UPLOADED_UNDEPLOYED_RESOURCE_NAME);
         when(uploadedUndeployedResource.getRemoteDeploymentDirectory()).thenReturn(DUMMY_RESOURCE_DEPLOYMENT_DIR);
         when(uploadedUndeployedResource.getResourceChecksum()).thenReturn(DUMMY_RESOURCE_CHECKSUM);
@@ -99,11 +108,20 @@ public class RemoteResourceManagerTest {
             public String answer(InvocationOnMock invocation) throws Throwable {
                 String arg = (String) invocation.getArguments()[0];
                 if(arg.contains("then echo true; else echo false")) {
+                    if(arg.contains(NO_CRC_RESOURCE_NAME)) {
+                        if(arg.contains(NO_CRC_RESOURCE_NAME + RemoteResourceManager.CRC_FILE_EXTENSION)) {
+                            return "false";
+                        } else {
+                            return "true";
+                        }
+                    }
                     if(arg.contains(DUMMY_RESOURCE_NAME)) {
                         return "false";
                     } else {
                         return "true";
                     }
+                } else if(arg.contains("cat") && arg.contains(NO_CRC_RESOURCE_NAME + RemoteResourceManager.CRC_FILE_EXTENSION)) {
+                    return "";
                 } else {
                     return String.valueOf(DUMMY_RESOURCE_CHECKSUM);
                 }
@@ -159,6 +177,21 @@ public class RemoteResourceManagerTest {
         
         //additional 2 calls, 1 file, 1 crc file
         verify(sshClient, times(6)).sftpUpload(
+                Matchers.any(InputStream.class), anyString());
+    }
+    
+    /**
+     * @see <a href=https://github.com/nethad/clustermeister/issues/35>
+     *      Issue #35: RemoteResourceHandler fails if CRC file is not found</a>
+     * 
+     * @throws SSHClientException 
+     */
+    @Test
+    public void testUploadUploadedResourceWithoutCrcFile() throws SSHClientException {
+        resourceManager.addResource(noCrcFileResource);
+        resourceManager.uploadResources();
+        
+        verify(sshClient, times(2)).sftpUpload(
                 Matchers.any(InputStream.class), anyString());
     }
 
