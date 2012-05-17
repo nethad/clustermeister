@@ -23,6 +23,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Maps;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.TreeMap;
 
 /**
  *
@@ -41,7 +42,7 @@ public class UserInputEvaluation implements CommandRegistry {
     
     private Provisioning provisioning;
     
-    private Map<String, Command> commands = Maps.newHashMap();
+    private TreeMap<String, Command> commands = Maps.newTreeMap();
 
     public UserInputEvaluation() {
         buildCommandHelpMap();
