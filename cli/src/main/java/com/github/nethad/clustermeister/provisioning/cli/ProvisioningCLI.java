@@ -22,9 +22,17 @@ import com.google.inject.Guice;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import com.google.inject.name.Named;
+import com.github.nethad.clustermeister.provisioning.Command;
+import com.github.nethad.clustermeister.provisioning.CompositeCommand;
+import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Joiner;
+import com.google.common.collect.Lists;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.List;
 import java.util.logging.LogManager;
+import jline.ArgumentCompletor;
+import jline.Completor;
 import jline.ConsoleReader;
 import jline.SimpleCompletor;
 import org.apache.commons.cli.*;
@@ -104,7 +112,7 @@ public class ProvisioningCLI {
         try {
             ConsoleReader reader = new ConsoleReader();
             reader.setBellEnabled(false);
-            reader.addCompletor(new SimpleCompletor(userInputEvaluation.commands()));
+            registerCompletors(reader);
 
             PrintWriter out = new PrintWriter(System.out);
             String line;
@@ -117,6 +125,31 @@ public class ProvisioningCLI {
             }
         } catch (Exception ex) {
             logger.warn("Exception", ex);
+        }
+    }
+    
+    private void registerCompletors(ConsoleReader reader) {
+        List<String> completionTerms = Lists.newArrayList();
+        Joiner joiner = Joiner.on(' ');
+        for(String commandName : userInputEvaluation.commands()) {
+            Command command = userInputEvaluation.getCommand(commandName);
+            completionTerms.add(commandName);
+            recursivelyExpandTerms(command, completionTerms, joiner);
+        }
+        reader.addCompletor(new SimpleCompletor(
+                completionTerms.toArray(new String[0])));
+        
+    }
+    
+    private void recursivelyExpandTerms(Command command, List<String> completionTerms, Joiner joiner) {
+        if(command != null && command instanceof CompositeCommand) {
+            CompositeCommand composite = command.as(CompositeCommand.class);
+            for(Command subCommand : composite.getSubCommands()) {
+                String expandedCommand = joiner.join(command.getCommandName(), 
+                        subCommand.getCommandName());
+                completionTerms.add(expandedCommand);
+                recursivelyExpandTerms(subCommand, completionTerms, joiner);
+            }
         }
     }
 

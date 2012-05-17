@@ -15,7 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.cli;
 
-import com.github.nethad.clustermeister.provisioning.Command;
+import com.github.nethad.clustermeister.provisioning.CommandImpl;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
@@ -47,15 +47,15 @@ public class UserInputEvaluationTest {
     @Test
     public void registerCommand() {
         assertThat(userInputEvaluation.commands(), not(hasItemInArray("mycommand")));
-        userInputEvaluation.registerCommand(new Command("mycommand", null, ""));
+        userInputEvaluation.registerCommand(new CommandImpl("mycommand", null, ""));
         assertThat(userInputEvaluation.commands(), hasItemInArray("mycommand"));
     }
     
     @Test
     public void unregisterCommand() {
-        userInputEvaluation.registerCommand(new Command("mycommand", null, ""));
+        userInputEvaluation.registerCommand(new CommandImpl("mycommand", null, ""));
         int numberOfCommands = userInputEvaluation.commands().length;
-        userInputEvaluation.unregisterCommand(new Command("mycommand", null, ""));
+        userInputEvaluation.unregisterCommand(new CommandImpl("mycommand", null, ""));
         assertThat(userInputEvaluation.commands(), not(hasItemInArray("mycommand")));
         assertThat(userInputEvaluation.commands().length, is(numberOfCommands-1));
     }
@@ -76,7 +76,7 @@ public class UserInputEvaluationTest {
     
     @Test
     public void handleCommand() {
-        userInputEvaluation.registerCommand(new Command("newcommand", new String[]{"arg1", "arg2"}, null));
+        userInputEvaluation.registerCommand(new CommandImpl("newcommand", new String[]{"arg1", "arg2"}, null));
         userInputEvaluation.evaluate("newcommand arg1 arg2");
         assertThat(commandLineEvaluation.getLastCommand(), is("newcommand"));
         Scanner scanner = commandLineEvaluation.getLastArguments().asScanner();

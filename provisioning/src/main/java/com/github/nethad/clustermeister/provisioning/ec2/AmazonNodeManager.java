@@ -15,10 +15,12 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
+import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
+import com.github.nethad.clustermeister.provisioning.dependencymanager.DependencyConfigurationUtil;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
 import com.google.common.base.Optional;
@@ -29,6 +31,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.Monitor;
 import com.google.common.util.concurrent.MoreExecutors;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -58,7 +61,9 @@ public class AmazonNodeManager {
     private final static Logger logger =
             LoggerFactory.getLogger(AmazonNodeManager.class);
     
+    //TODO: move these managers to out of here to a class holding all managers
     final AmazonInstanceManager amazonInstanceManager;
+    final AwsEc2Facade ec2Facade;
     
     final Configuration configuration;
     
@@ -74,14 +79,24 @@ public class AmazonNodeManager {
     
     private final Monitor managedNodesMonitor = new Monitor(false);
     
+    private final ComputeContextManager contextManager;
     private final ListeningExecutorService executorService;
+    private String accessKeyId;
+    private String secretKey;
+    private Map<String, Credentials> keypairs;
+    private Map<String, AWSInstanceProfile> profiles;
+    private Collection<File> artifactsToPreload;
 
     public AmazonNodeManager(Configuration configuration) {
         this.configuration = configuration;
-        executorService = MoreExecutors.listeningDecorator(
+        loadConfiguration(configuration);
+        
+        this.executorService = MoreExecutors.listeningDecorator(
                 Executors.newCachedThreadPool());
-        this.amazonInstanceManager =
-                new AmazonInstanceManager(configuration, executorService);
+        this.contextManager = new ComputeContextManager(accessKeyId, secretKey, executorService);
+        this.ec2Facade = new AwsEc2Facade(contextManager);
+        this.amazonInstanceManager = new AmazonInstanceManager(contextManager, 
+                ec2Facade, keypairs, profiles, artifactsToPreload);
     }
     
     public static CommandLineEvaluation commandLineEvaluation(Configuration configuration, 
@@ -115,6 +130,10 @@ public class AmazonNodeManager {
         return amazonInstanceManager;
     }
 
+    public AwsEc2Facade getEc2Facade() {
+        return ec2Facade;
+    }
+
     public ListenableFuture<? extends Node> addNode(AmazonNodeConfiguration nodeConfiguration,
             Optional<String> instanceId) {
         return executorService.submit(new AmazonNodeManager.AddNodeTask(nodeConfiguration, instanceId));
@@ -126,7 +145,7 @@ public class AmazonNodeManager {
      * @param shutdownState 
      * @return	The future returns null upon successful completion.
      */
-    public ListenableFuture<Void> removeNode(AmazonNode node, 
+    public ListenableFuture<Boolean> removeNode(AmazonNode node, 
             AmazonInstanceShutdownState shutdownState) {
         return executorService.submit(
                 new AmazonNodeManager.RemoveNodeTask(node, shutdownState, 
@@ -139,7 +158,7 @@ public class AmazonNodeManager {
      * @param node
      * @return	The future returns null upon successful completion.
      */
-    public ListenableFuture<Void> removeNode(AmazonNode node) {
+    public ListenableFuture<Boolean> removeNode(AmazonNode node) {
         return executorService.submit(
                 new AmazonNodeManager.RemoveNodeTask(node, 
                 node.getInstanceShutdownState(), amazonInstanceManager));
@@ -180,16 +199,15 @@ public class AmazonNodeManager {
 //    }
     
     public void close() {
-        if (amazonInstanceManager != null) {
-            managedNodesMonitor.enter();
-            try {
-                drivers.clear();
-                nodes.clear();
-            } finally {
-                managedNodesMonitor.leave();
-            }
-            amazonInstanceManager.close();
+        managedNodesMonitor.enter();
+        try {
+            drivers.clear();
+            nodes.clear();
+        } finally {
+            managedNodesMonitor.leave();
         }
+        amazonInstanceManager.close();
+        contextManager.close();
     }
 
     private void addManagedNode(AmazonNode node) {
@@ -252,6 +270,19 @@ public class AmazonNodeManager {
             managedNodesMonitor.leave();
         }
     }
+    
+    private void loadConfiguration(Configuration configuration) {
+        logger.debug("Loading Configuration...");
+        AmazonConfigurationLoader configurationLoader = 
+                new AmazonConfigurationLoader(configuration);
+        accessKeyId = configurationLoader.getAccessKeyId();
+        secretKey = configurationLoader.getSecretKey();
+        
+        keypairs = Collections.synchronizedMap(configurationLoader.getConfiguredCredentials());
+        profiles = Collections.synchronizedMap(configurationLoader.getConfiguredProfiles());
+        
+        artifactsToPreload = DependencyConfigurationUtil.getConfiguredDependencies(configuration);
+    }
 
     private class AddNodeTask implements Callable<AmazonNode> {
 
@@ -276,10 +307,10 @@ public class AmazonNodeManager {
                     return null;
                 }
             } else {
-                instanceMetadata = amazonInstanceManager.getInstanceMetadata(instanceId.get());
+                instanceMetadata = ec2Facade.getInstanceMetadata(instanceId.get());
                 if(instanceMetadata.getState() == NodeState.SUSPENDED) {
-                    amazonInstanceManager.resumeInstance(instanceMetadata.getId());
-                    instanceMetadata = amazonInstanceManager.getInstanceMetadata(instanceId.get());
+                    ec2Facade.resumeInstance(instanceMetadata.getId());
+                    instanceMetadata = ec2Facade.getInstanceMetadata(instanceId.get());
                 }
             }
             AmazonNode node;
@@ -306,7 +337,7 @@ public class AmazonNodeManager {
         }
     }
 
-    private class RemoveNodeTask implements Callable<Void> {
+    private class RemoveNodeTask implements Callable<Boolean> {
 
         private final AmazonNode node;
         private final AmazonInstanceShutdownState shutdownState;
@@ -320,7 +351,7 @@ public class AmazonNodeManager {
         }
 
         @Override
-        public Void call() throws Exception {
+        public Boolean call() throws Exception {
             String publicIp = Iterables.getFirst(node.getPublicAddresses(), null);
             checkNotNull(publicIp, "Can not get public IP of node " + node + ".");
             switch (node.getType()) {
@@ -363,7 +394,7 @@ public class AmazonNodeManager {
 
             removeManagedNode(node);
 
-            return null;
+            return Boolean.TRUE;
         }
 
         private void driverShutdown(String publicIp) throws TimeoutException, Exception {

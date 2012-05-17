@@ -17,22 +17,45 @@ package com.github.nethad.clustermeister.provisioning;
 
 /**
  * A base class for executable commands.
+ * Classes that implement {@link ExecutableCommand} should extend this class.
  * @author daniel
  */
-public abstract class AbstractExecutableCommand extends Command {
+public abstract class AbstractExecutableCommand extends CommandImpl implements ExecutableCommand {
     
-    public AbstractExecutableCommand(String commandName, String[] arguments, 
-            String helpText) {
+    /**
+     * Creates a new executable command.
+     * 
+     * @param commandName   
+     *      The name of this command (how to trigger this command on the CLI).
+     * @param arguments 
+     *      The specification of the expected arguments. {@code null} means none.
+     * @param helpText 
+     *      The help text that describes this command for a user.
+     */
+    public AbstractExecutableCommand(String commandName, String[] arguments, String helpText) {
         super(commandName, arguments, helpText);
     }
     
+    /**
+     * The command line handle can be used to interact with the command line client.
+     * 
+     * @return the command line context.
+     */
     protected abstract CommandLineHandle getCommandLineHandle();
     
     /**
-     * Checks whether the provided arguments conform to the number specified. It further prints a help text to the user
-     * explaining what arguments are expected.
-     * @param arguments
-     * @return <code>true</code> if the number of arguments is false, <code>false</code> otherwise.
+     * Check if the provided arguments match exactly the number of expected 
+     * arguments as configured in the constructor.
+     * 
+     * <p>
+     * Prints the expected argument specification to the command line if this 
+     * test fails.
+     * </p>
+     * 
+     * @param arguments The arguments from the command line.
+     * @return 
+     *      {@code true} if the provided arguments match exactly the number of 
+     *      expected arguments, {@code false} otherwise.
      */
     protected boolean isArgumentsCountFalse(CommandLineArguments arguments) {
         if (arguments.argumentCount() != getArgumentCount()) {
@@ -48,6 +71,7 @@ public abstract class AbstractExecutableCommand extends Command {
      * 
      * @param tokenizer The command line arguments.
      */
+    @Override
     public abstract void execute(CommandLineArguments arguments);
     
 }

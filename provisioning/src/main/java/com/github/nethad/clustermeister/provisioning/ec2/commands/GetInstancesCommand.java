@@ -18,7 +18,7 @@ package com.github.nethad.clustermeister.provisioning.ec2.commands;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
+import com.github.nethad.clustermeister.provisioning.ec2.AwsEc2Facade;
 import java.util.*;
 import org.jclouds.compute.domain.ComputeMetadata;
 import org.jclouds.compute.domain.Hardware;
@@ -29,6 +29,7 @@ import org.jclouds.domain.Location;
 import org.jclouds.domain.LocationScope;
 
 /**
+ * Get configured instances and their state from the configured AWS Account.
  *
  * @author daniel
  */
@@ -37,18 +38,23 @@ public class GetInstancesCommand extends AbstractAmazonExecutableCommand {
 
     private static final String[] ARGUMENTS = new String[]{"-v   print instance details (verbose)"};
     
-    private static final String HELP_TEXT = "Get configured instances and their state from the configure AWS Account.";
+    private static final String HELP_TEXT = "Get configured instances and their state from the configured AWS Account.";
     
-    private static final String NAME = "getinstances";
+    private static final String NAME = "instances";
     
+    /**
+     * Creates a new command with a command line evaluation reference for access 
+     * to the Clustermeister provisioning infrastructure.
+     * 
+     * @param commandLineEvaluation the command line evaluation instance reference.
+     */
     public GetInstancesCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
         super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
     }
     
     @Override
     public void execute(CommandLineArguments arguments) {
-        AmazonInstanceManager instanceManager = 
-                getNodeManager().getInstanceManager();
+        AwsEc2Facade ec2Facade = getNodeManager().getEc2Facade();
         CommandLineHandle handle = getCommandLineHandle();
         
         boolean verbose = false;
@@ -64,9 +70,11 @@ public class GetInstancesCommand extends AbstractAmazonExecutableCommand {
             }
         }
         
+        handle.print("Retrieving instances from the configured AWS Account...");
+        Set<? extends ComputeMetadata> instances = ec2Facade.getInstances();
+        
         StringBuilder output = new StringBuilder("AWS EC2 Instances for this account:\n");
         output.append(SEPARATOR_LINE).append("\n");
-        Set<? extends ComputeMetadata> instances = instanceManager.getInstances();
         if(instances.isEmpty()) {
             output.append("No instances found.\n");
         } else {
@@ -118,7 +126,14 @@ public class GetInstancesCommand extends AbstractAmazonExecutableCommand {
 
                 output.append("\n\t\t}\n");
             } else {
-                output.append("\t\t").append(computeMetadata.getId()).append("\n");
+                output.append("\t\t").append(computeMetadata.getId());
+                if (computeMetadata instanceof NodeMetadata) {
+                    NodeMetadata nodeMetadata = (NodeMetadata) computeMetadata;
+                    output.append(" (").
+                    append(nodeMetadata.getState()).
+                    append(") ");
+                }
+                output.append("\n");
             }
         }
     }

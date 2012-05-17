@@ -19,51 +19,51 @@ package com.github.nethad.clustermeister.provisioning;
  * Represtens a command line command with its arguments and help text.
  * @author thomas
  */
-public class Command {
-    
-    private String commandName;
-    private String[] arguments;
-    private String formattedArguments;
-    private final String helpText;
-    
-    public Command(String commandName, String[] arguments, String helpText) {
-        this.commandName = commandName;
-        this.arguments = arguments;
-        if (arguments == null) {
-            formattedArguments = "";
-        }
-        this.helpText = helpText;
-    }
-    
-    public String getCommandName() {
-        return commandName;
-    }
-    
-    public String getFormattedArguments() {
-        if (formattedArguments == null) {
-            buildFormattedArguments();
-        }
-        return formattedArguments;
-    }
-    
-    public String[] getArguments() {
-        return arguments;
-    }
-    
-    public int getArgumentCount() {
-        return arguments.length;
-    }
+public interface Command {
 
-    private void buildFormattedArguments() {
-        StringBuilder sb = new StringBuilder();
-        for (String arg : arguments) {
-            sb.append("[").append(arg).append("] ");
-        }
-        formattedArguments = sb.toString();
-    }
+    /**
+     * Get the expected argument count.
+     * 
+     * @return the expected number of arguments of this command.
+     */
+    int getArgumentCount();
+
+    /**
+     * The argument names.
+     * 
+     * @return the names of the arguments to this command. May be null.
+     */
+    String[] getArguments();
+
+    /**
+     * The name of this command.
+     * 
+     * The name triggers this command when entered on the CLI.
+     * 
+     * @return the command's name.
+     */
+    String getCommandName();
+
+    /**
+     * The arguments of this command for printing.
+     * 
+     * This is intended to be presented to a human user.
+     * 
+     * @return the formatted arguments.
+     */
+    String getFormattedArguments();
+
+    /**
+     * A text describing this command.
+     * 
+     * Intended to be presented to a human user.
+     * 
+     * @return the help text for this command.
+     */
+    String getHelpText();
     
-    public String getHelpText() {
-        return helpText;
-    }
-    
+    /**
+     * Casts this instance to {@code clazz}.
+     */
+    <T extends Command> T as(Class<T> clazz);
 }

@@ -297,7 +297,13 @@ public class RemoteResourceManager {
                 remoteResourcesDir, remoteSeparator, localResource.getName()));
         if (fileExistsOnRemote) {
             String remoteCrcFile = getRemoteCrcFile(localResource);
-            long remoteCrc = Long.parseLong(execute(String.format("cat %s", remoteCrcFile)));
+            String output = execute(String.format("cat %s", remoteCrcFile)).trim();
+            long remoteCrc;
+            try {
+                remoteCrc = Long.parseLong(output);
+            } catch(NumberFormatException ex) {
+                return false;
+            }
             
             return localChecksum == remoteCrc;
         } else {

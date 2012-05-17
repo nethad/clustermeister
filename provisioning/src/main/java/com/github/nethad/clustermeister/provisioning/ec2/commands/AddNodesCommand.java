@@ -33,7 +33,8 @@ import java.util.List;
 import java.util.Scanner;
 
 /**
- *
+ * Creates new EC2 instances and deploys JPPF-Nodes on them.
+ * 
  * @author daniel
  */
 public class AddNodesCommand extends AbstractAmazonExecutableCommand {
@@ -41,23 +42,28 @@ public class AddNodesCommand extends AbstractAmazonExecutableCommand {
     private static final String[] ARGUMENTS = 
             new String[]{"number of nodes", "profile"};
 
-    private static final String HELP_TEXT = "Add nodes to the cluster.";
+    private static final String HELP_TEXT = "Create new EC2 instances and deploys JPPF-Nodes on them.";
     
     private static final String NAME = "addnodes";
     
-    
+    /**
+     * Creates a new command with a command line evaluation reference for access 
+     * to the Clustermeister provisioning infrastructure.
+     * 
+     * @param commandLineEvaluation the command line evaluation instance reference.
+     */
     public AddNodesCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
         super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
     }
 
     @Override
     public void execute(CommandLineArguments arguments) {
-        AmazonNodeManager nodeManager = getNodeManager();
-        AmazonInstanceManager instanceManager = nodeManager.getInstanceManager();
-        
         if (isArgumentsCountFalse(arguments)) {
             return;
         }
+        
+        AmazonNodeManager nodeManager = getNodeManager();
+        AmazonInstanceManager instanceManager = nodeManager.getInstanceManager();
         
         Scanner scanner = arguments.asScanner();
         
@@ -81,12 +87,14 @@ public class AddNodesCommand extends AbstractAmazonExecutableCommand {
                         instanceManager.getConfiguredCredentials(keyPairName);
                 nodeConfiguration.setCredentials(credentials);
             } else {
-                logger.error("Keypair {} configured in profile but not found in keypairs configuration.", keyPairName);
+                logger.error(
+                        "Keypair {} configured in profile but not found in keypairs configuration.", 
+                        keyPairName);
                 return;
             }
         }
         
-        logger.info("Starting {} nodes.", numberOfNodes);
+        getCommandLineHandle().print("Starting %d nodes.", numberOfNodes);
         List<ListenableFuture<? extends Object>> futures = 
                 new ArrayList<ListenableFuture<? extends Object>>(numberOfNodes);
         for (int i = 0; i < numberOfNodes; i++) {

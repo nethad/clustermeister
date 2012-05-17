@@ -37,7 +37,7 @@ public class CommandLineHandle {
         for (String argument : argumentNames) {
             arguments.append("[").append(argument).append("] ");
         }
-        print(String.format("Expected {} arguments: {}", argumentNames.length, arguments.toString()));
+        print(String.format("Expected %d arguments: %s", argumentNames.length, arguments.toString()));
     }
     
     public void print(String line) {

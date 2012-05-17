@@ -23,16 +23,23 @@ import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
 import java.util.Collection;
 
 /**
+ * Get all configured profiles names.
  *
  * @author daniel
  */
 public class GetProfilesCommand extends AbstractAmazonExecutableCommand {
-    private static final String NAME = "getprofiles";
+    private static final String NAME = "profiles";
     
     private static final String[] ARGUMENTS = null;
     
     private static final String HELP_TEXT = "Get all configured profiles names.";
 
+    /**
+     * Creates a new command with a command line evaluation reference for access 
+     * to the Clustermeister provisioning infrastructure.
+     * 
+     * @param commandLineEvaluation the command line evaluation instance reference.
+     */
     public GetProfilesCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
         super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
     }

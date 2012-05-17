@@ -15,29 +15,18 @@
  */
 package com.github.nethad.clustermeister.provisioning;
 
-import org.junit.AfterClass;
-import org.junit.Test;
-import static org.junit.Assert.*;
-import org.junit.Before;
-import static org.hamcrest.Matchers.is;
-
 /**
+ * A command that can be executed.
  *
- * @author thomas
+ * @author daniel
  */
-public class CommandTest {
-    private Command command;
-    
-    @Before
-    public void setup() {
-        command = new CommandImpl("command", new String[]{"arg1", "arg2"}, "help text");
-    }
+public interface ExecutableCommand extends Command {
 
-    @Test
-    public void initialization() {
-        assertThat(command.getCommandName(), is("command"));
-        assertThat(command.getArgumentCount(), is(2));
-        assertThat(command.getFormattedArguments().trim(), is("[arg1] [arg2]"));
-        assertThat(command.getHelpText(), is("help text"));
-    }
+    /**
+     * Execute this command.
+     *
+     * @param arguments  The command line arguments.
+     */
+    void execute(CommandLineArguments arguments);
+    
 }

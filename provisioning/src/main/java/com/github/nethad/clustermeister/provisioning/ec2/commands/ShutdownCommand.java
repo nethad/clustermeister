@@ -18,7 +18,6 @@ package com.github.nethad.clustermeister.provisioning.ec2.commands;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceShutdownState;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNode;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
@@ -26,6 +25,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import java.util.*;
 
 /**
+ * Shutdown all nodes and the CLI infrastructure.
  *
  * @author daniel
  */
@@ -33,21 +33,26 @@ public class ShutdownCommand extends AbstractAmazonExecutableCommand {
 
     private static final String[] ARGUMENTS = null;
     
-    private static final String HELP_TEXT = "";
+    private static final String HELP_TEXT = "Shutdown all nodes and the CLI infrastructure.";
     
     private static final String NAME = "shutdown";
 
+    /**
+     * Creates a new command with a command line evaluation reference for access 
+     * to the Clustermeister provisioning infrastructure.
+     * 
+     * @param commandLineEvaluation the command line evaluation instance reference.
+     */
     public ShutdownCommand(AmazonCommandLineEvaluation commandLineEvaluation) {
         super(NAME, ARGUMENTS, HELP_TEXT, commandLineEvaluation);
     }
 
     @Override
     public void execute(CommandLineArguments arguments) {
-        AmazonNodeManager nodeManager = commandLineEvaluation.getNodeManager();
-        JPPFManagementByJobsClient amazonManagementClient = 
-                commandLineEvaluation.getAmazonManagementClient();
+        AmazonNodeManager nodeManager = getNodeManager();
+        JPPFManagementByJobsClient amazonManagementClient = getManagementClient();
         
-        logger.info("Shutting down all nodes.");
+        getCommandLineHandle().print("Shutting down all nodes.");
         Collection<? extends Node> nodes = nodeManager.getNodes();
         List<ListenableFuture<? extends Object>> futures = 
                 new ArrayList<ListenableFuture<? extends Object>>(nodes.size());
