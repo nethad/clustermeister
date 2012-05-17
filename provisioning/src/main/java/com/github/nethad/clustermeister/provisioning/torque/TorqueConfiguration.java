@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
+import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
@@ -34,7 +35,7 @@ public class TorqueConfiguration {
     public static final String TORQUE_QUEUE_NAME = "torque.queue_name";
     public static final String DEFAULT_TORQUE_QUEUE_NAME = "superfast";
     
-    private static final Logger logger = LoggerFactory.getLogger(TorqueConfiguration.class);
+    private static final Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
     
     private String sshUser;
     private String privateKeyPath;

@@ -15,9 +15,12 @@
  */
 package com.github.nethad.clustermeister.provisioning.rmi;
 
+import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.api.rmi.IRmiServerForApi;
 import com.github.nethad.clustermeister.driver.rmi.IRmiServerForDriver;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
@@ -38,7 +41,9 @@ public class RmiInfrastructure {
     private static final int MIN_PORT = 1024;
     private static final int MAX_PORT = 65536;
     
-    private final Logger logger = LoggerFactory.getLogger(RmiInfrastructure.class);
+    private final Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
+//    @Inject
+//    @Named(Loggers.PROVISIONING)
 //    private Logger logger;
     
     private Registry registry;

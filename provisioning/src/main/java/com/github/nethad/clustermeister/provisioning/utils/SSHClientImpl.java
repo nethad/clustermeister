@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.utils;
 
+import com.github.nethad.clustermeister.api.Loggers;
 import com.jcraft.jsch.*;
 import java.io.*;
 import org.slf4j.Logger;
@@ -28,7 +29,7 @@ import org.slf4j.LoggerFactory;
 public class SSHClientImpl implements SSHClient {
 
     private final static Logger logger =
-            LoggerFactory.getLogger(SSHClientImpl.class);
+            LoggerFactory.getLogger(Loggers.PROVISIONING);
     
     /**
      * JSch Instance.

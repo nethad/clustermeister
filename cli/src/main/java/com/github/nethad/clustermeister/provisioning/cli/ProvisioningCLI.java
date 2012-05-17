@@ -37,6 +37,7 @@ import jline.ConsoleReader;
 import jline.SimpleCompletor;
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -44,10 +45,10 @@ import org.slf4j.Logger;
  */
 public class ProvisioningCLI {
 
-//    private static final Logger logger = LoggerFactory.getLogger(ProvisioningCLI.class);
-    @Inject
-    @Named(Loggers.CLI)
-    private Logger logger;
+    private static final Logger logger = LoggerFactory.getLogger(Loggers.CLI);
+//    @Inject
+//    @Named(Loggers.CLI)
+//    private Logger logger;
 
     private static final String OPTION_HELP = "help";
     private static final String OPTION_CONFIG_FILE = "config";
@@ -58,9 +59,9 @@ public class ProvisioningCLI {
 
     public static void main(String... args) {
         loadJDKLoggingConfiguration();
-        Injector injector = Guice.createInjector(new LoggerModule());
-        ProvisioningCLI provisioningCLI = injector.getInstance(ProvisioningCLI.class);
-        provisioningCLI.startCLI(args);
+//        Injector injector = Guice.createInjector(new LoggerModule());
+//        ProvisioningCLI provisioningCLI = injector.getInstance(ProvisioningCLI.class);
+        new ProvisioningCLI().startCLI(args);
     }
     private String configFilePath;
     private Options options;

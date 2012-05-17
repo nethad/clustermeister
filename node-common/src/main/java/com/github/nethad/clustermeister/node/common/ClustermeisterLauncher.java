@@ -47,7 +47,7 @@ public abstract class ClustermeisterLauncher extends Observable {
     private static final String JPPF_THREAD_NAME = "CMLauncherThread";
     
     protected final static Logger logger =
-            LoggerFactory.getLogger(ClustermeisterLauncher.class);
+            LoggerFactory.getLogger("COMMON-NODE");
     
     /**
      * Custom Process Launcher.

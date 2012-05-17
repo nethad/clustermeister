@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.cli;
 
+import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.provisioning.CommandRegistry;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.api.impl.YamlConfiguration;
@@ -29,6 +30,8 @@ import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsCl
 import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Scanner;
@@ -43,18 +46,22 @@ import org.slf4j.LoggerFactory;
  * @author thomas
  */
 public class Provisioning {
-    private CommandLineEvaluation commandLineEvaluation;
+    private Logger logger = LoggerFactory.getLogger(Loggers.CLI);
+//    @Inject
+//    @Named(Loggers.CLI)
+//    private Logger logger;
     
+    private CommandLineEvaluation commandLineEvaluation;
     private String configFilePath;
 //    private String driverHost;
     private Provider provider;
     private Configuration configuration;
     private RmiInfrastructure rmiInfrastructure;
-    private Logger logger = LoggerFactory.getLogger(Provisioning.class);
     private JPPFLocalDriver jppfLocalDriver;
     private CommandLineHandle commandLineHandle;
 
     public Provisioning(String configFilePath, Provider provider, CommandRegistry commandRegistry) {
+        logger.info("Provisioning.");
         this.configFilePath = configFilePath;
         this.provider = provider;
         rmiInfrastructure = new RmiInfrastructure();

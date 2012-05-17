@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
+import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.provisioning.jppf.PublicIpNotifier;
 import com.github.nethad.clustermeister.provisioning.utils.PublicIp;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
@@ -36,7 +37,7 @@ import org.slf4j.LoggerFactory;
  */
 public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNotifier {
     
-    Logger logger = LoggerFactory.getLogger(TorqueJPPFNodeDeployer.class);
+    Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
             
     private String host;
     private int port;
