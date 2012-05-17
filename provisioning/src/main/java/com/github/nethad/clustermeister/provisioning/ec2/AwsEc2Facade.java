@@ -31,9 +31,9 @@ public class AwsEc2Facade {
     private final static Logger logger =
             LoggerFactory.getLogger(AmazonNodeManager.class);
     
-    private final ComputeContextManager contextManager;
+    private final ContextManager contextManager;
 
-    public AwsEc2Facade(ComputeContextManager contextManager) {
+    public AwsEc2Facade(ContextManager contextManager) {
         this.contextManager = contextManager;
     }
     

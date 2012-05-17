@@ -15,14 +15,20 @@
  */
 package com.github.nethad.clustermeister.api;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import com.google.common.collect.ComparisonChain;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 /**
  * Credentials.
  *
  * @author daniel
  */
-public abstract class Credentials {
+public abstract class Credentials implements Comparable<Credentials> {
     
     /**
      * A user name.
@@ -47,6 +53,11 @@ public abstract class Credentials {
     public String getUser() {
         return user;
     }
+
+    @Override
+    public int compareTo(Credentials o) {
+        return ComparisonChain.start().compare(user, o.user).result();
+    }
     
     /**
      * Casts this instance to the type represented by {@code clazz}.
@@ -56,5 +67,23 @@ public abstract class Credentials {
      */
     public <T> T as(Class<T> clazz) {
         return clazz.cast(this);
+    }
+
+    protected Supplier<String> getSha1DigestSupplier(final String string) {
+        return Suppliers.memoize(new Supplier<String>() {
+
+            @Override
+            public String get() {
+                MessageDigest md;
+                try {
+                    md = MessageDigest.getInstance("SHA-1");
+                } catch (NoSuchAlgorithmException ex) {
+                    return "";
+                }
+                byte[] passwordBytes = string.getBytes(Charsets.UTF_8);
+                byte[] digest = md.digest(passwordBytes);
+                return new String(digest, Charsets.UTF_8);
+            }
+        });
     }
 }

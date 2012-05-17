@@ -20,6 +20,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
@@ -40,7 +41,7 @@ public class KeyPairCredentials extends Credentials {
     /**
      * A source to read the public key from.
      */
-    protected final Optional<File> publickeySource;
+    protected final Optional<File> publicKeySource;
     
     private Charset charset;
     
@@ -98,18 +99,16 @@ public class KeyPairCredentials extends Credentials {
     protected KeyPairCredentials(String user, File privateKeySource, 
             Optional<File> publicKeySource) {
         super(user);
-        checkArgument(privateKeySource != null && 
-                privateKeySource.canRead(), "Can not read from private key source.");
         this.privatekeySource = privateKeySource;
-        this.publickeySource = publicKeySource;
+        this.publicKeySource = publicKeySource;
         this.charset = Charsets.UTF_8;
     }
     
     /**
-     * Set the {@link Charset} the private key is encoded in.
+     * Set the {@link Charset} the key sources are encoded in.
      * 
      * @param charset 
-     *      the {@link Charset} the private key is encoded in. Default is UTF-8.
+     *      the {@link Charset} the key sources are encoded in. Default is UTF-8.
      */
     public void setKeySourceCharset(Charset charset) {
         checkArgument(charset != null, "Invalid charset.");
@@ -136,8 +135,8 @@ public class KeyPairCredentials extends Credentials {
      */
     public Optional<String> getPublicKey() throws IOException {
         Optional<String> publicKey;
-        if(publickeySource.isPresent()) {
-            publicKey = Optional.of(Files.toString(publickeySource.get(), charset));
+        if(publicKeySource.isPresent()) {
+            publicKey = Optional.of(Files.toString(publicKeySource.get(), charset));
         } else {
             publicKey = Optional.absent();
         }
@@ -159,14 +158,14 @@ public class KeyPairCredentials extends Credentials {
         KeyPairCredentials other = (KeyPairCredentials) obj;
         boolean same = Objects.equal(user, other.user) && 
                 Objects.equal(privatekeySource, other.privatekeySource) && 
-                Objects.equal(publickeySource, other.publickeySource);
+                Objects.equal(publicKeySource, other.publicKeySource);
         
         return same;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(user, privatekeySource, publickeySource);
+        return Objects.hashCode(user, privatekeySource, publicKeySource);
     }
 
     @Override
@@ -174,6 +173,25 @@ public class KeyPairCredentials extends Credentials {
         return Objects.toStringHelper(this).
                 addValue(user).
                 add("privateKey", privatekeySource.getPath()).
-                add("publicKey", publickeySource.toString()).toString();
+                add("publicKey", publicKeySource.toString()).toString();
+    }
+
+    @Override
+    public int compareTo(Credentials o) {
+        if(this.equals(o)) {
+            return 0;
+        }
+        if(o.getClass() != getClass() && 
+                !(o instanceof KeyPairCredentials)) {
+            //o is sperclass
+            return super.compareTo(o);
+        }
+        //o is same or subclass
+        KeyPairCredentials other = o.as(KeyPairCredentials.class);
+        return ComparisonChain.start().
+                compare(user, other.user).
+                compare(privatekeySource, other.privatekeySource).
+                compare((File) publicKeySource.orNull(), (File) other.publicKeySource.orNull()).
+                result();
     }
 }

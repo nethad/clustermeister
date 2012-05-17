@@ -15,7 +15,6 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
-import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
@@ -64,6 +63,7 @@ public class AmazonNodeManager {
     //TODO: move these managers to out of here to a class holding all managers
     final AmazonInstanceManager amazonInstanceManager;
     final AwsEc2Facade ec2Facade;
+    final CredentialsManager credentialsManager;
     
     final Configuration configuration;
     
@@ -79,11 +79,10 @@ public class AmazonNodeManager {
     
     private final Monitor managedNodesMonitor = new Monitor(false);
     
-    private final ComputeContextManager contextManager;
+    private final ContextManager contextManager;
     private final ListeningExecutorService executorService;
     private String accessKeyId;
     private String secretKey;
-    private Map<String, Credentials> keypairs;
     private Map<String, AWSInstanceProfile> profiles;
     private Collection<File> artifactsToPreload;
 
@@ -93,10 +92,11 @@ public class AmazonNodeManager {
         
         this.executorService = MoreExecutors.listeningDecorator(
                 Executors.newCachedThreadPool());
-        this.contextManager = new ComputeContextManager(accessKeyId, secretKey, executorService);
+        this.contextManager = new ContextManager(accessKeyId, secretKey, executorService);
         this.ec2Facade = new AwsEc2Facade(contextManager);
+        this.credentialsManager = new CredentialsManager(configuration, contextManager);
         this.amazonInstanceManager = new AmazonInstanceManager(contextManager, 
-                ec2Facade, keypairs, profiles, artifactsToPreload);
+                ec2Facade, profiles, artifactsToPreload);
     }
     
     public static CommandLineEvaluation commandLineEvaluation(Configuration configuration, 
@@ -129,9 +129,13 @@ public class AmazonNodeManager {
     public AmazonInstanceManager getInstanceManager() {
         return amazonInstanceManager;
     }
-
+    
     public AwsEc2Facade getEc2Facade() {
         return ec2Facade;
+    }
+
+    public CredentialsManager getCredentialsManager() {
+        return credentialsManager;
     }
 
     public ListenableFuture<? extends Node> addNode(AmazonNodeConfiguration nodeConfiguration,
@@ -272,13 +276,11 @@ public class AmazonNodeManager {
     }
     
     private void loadConfiguration(Configuration configuration) {
-        logger.debug("Loading Configuration...");
         AmazonConfigurationLoader configurationLoader = 
                 new AmazonConfigurationLoader(configuration);
         accessKeyId = configurationLoader.getAccessKeyId();
         secretKey = configurationLoader.getSecretKey();
         
-        keypairs = Collections.synchronizedMap(configurationLoader.getConfiguredCredentials());
         profiles = Collections.synchronizedMap(configurationLoader.getConfiguredProfiles());
         
         artifactsToPreload = DependencyConfigurationUtil.getConfiguredDependencies(configuration);

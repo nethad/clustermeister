@@ -23,10 +23,10 @@ import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AWSInstanceProfile;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
 import com.github.nethad.clustermeister.provisioning.ec2.AwsEc2Facade;
+import com.github.nethad.clustermeister.provisioning.ec2.CredentialsManager;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.Scanner;
@@ -61,7 +61,7 @@ public class StartNodeCommand extends AbstractAmazonExecutableCommand {
     public void execute(CommandLineArguments arguments) {
         CommandLineHandle handle = getCommandLineHandle();
         AmazonNodeManager nodeManager = getNodeManager();
-        AmazonInstanceManager instanceManager = nodeManager.getInstanceManager();
+        CredentialsManager credentialsManager = nodeManager.getCredentialsManager();
         AwsEc2Facade ec2Facade = nodeManager.getEc2Facade();
         
         
@@ -74,7 +74,7 @@ public class StartNodeCommand extends AbstractAmazonExecutableCommand {
         String instanceId = scanner.next();
         String keypairName = scanner.next();
         Credentials configuredCredentials = 
-                instanceManager.getConfiguredCredentials(keypairName);
+                credentialsManager.getConfiguredCredentials(keypairName);
         if(configuredCredentials == null || 
                 !(configuredCredentials instanceof KeyPairCredentials)) {
             handle.print(String.format(

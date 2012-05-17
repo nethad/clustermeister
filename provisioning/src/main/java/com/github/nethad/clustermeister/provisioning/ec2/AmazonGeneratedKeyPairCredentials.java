@@ -15,8 +15,11 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
+import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import com.google.common.base.Objects;
+import com.google.common.base.Supplier;
+import com.google.common.collect.ComparisonChain;
 import java.io.File;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 
@@ -30,22 +33,69 @@ class AmazonGeneratedKeyPairCredentials extends KeyPairCredentials {
     /**
      * The private key.
      */
-    final String privateKey;
+    final String privateKeyData;
+    
+    /**
+     * The SHA-1 digest of the private key.
+     */
+    final Supplier<String> privateKeyDigest;
 
     /**
      * Creates a credential with user name and key pair.
      * 
      * @param user  the user name.
-     * @param privateKey    the private key.
+     * @param privateKeyData    the private key.
      */
-    AmazonGeneratedKeyPairCredentials(String user, String privateKey) {
+    AmazonGeneratedKeyPairCredentials(String user, String privateKeyData) {
         super(user, new DummyFile("dummypath"));
-        this.privateKey = privateKey;
+        this.privateKeyData = privateKeyData;
+        this.privateKeyDigest = getSha1DigestSupplier(privateKeyData);
     }
 
     @Override
     public String getPrivateKey() {
-        return privateKey;
+        return privateKeyData;
+    }
+    
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (obj == this) {
+            return true;
+        }
+        if (obj.getClass() != (getClass())) {
+            return false;
+        }
+        AmazonGeneratedKeyPairCredentials otherNode = 
+                (AmazonGeneratedKeyPairCredentials) obj;
+        return new EqualsBuilder().
+                append(user, otherNode.user).
+                append(privateKeyData, otherNode.privateKeyData).
+                isEquals();
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hashCode(user, privateKeyData);
+    }
+
+    @Override
+    public String toString() {
+        return Objects.toStringHelper(this).
+                addValue(user).
+                add("privateKey", String.format("(sha-1:%s)", privateKeyDigest.get())).
+                toString();
+    }
+
+    @Override
+    public int compareTo(Credentials o) {
+        ComparisonChain chain = ComparisonChain.start().compare(user, o.getUser());
+        if(o instanceof AmazonGeneratedKeyPairCredentials) {
+            chain.compare(privateKeyData, o.as(AmazonGeneratedKeyPairCredentials.class).privateKeyData);
+        }
+        return chain.result();
     }
     
     private static class DummyFile extends File {
@@ -62,37 +112,5 @@ class AmazonGeneratedKeyPairCredentials extends KeyPairCredentials {
         public boolean exists() {
             return true;
         }
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (obj == this) {
-            return true;
-        }
-        if (obj.getClass() != (getClass())) {
-            return false;
-        }
-        AmazonGeneratedKeyPairCredentials otherNode = 
-                (AmazonGeneratedKeyPairCredentials) obj;
-        return new EqualsBuilder().
-                append(user, otherNode.user).
-                append(privateKey, otherNode.privateKey).
-                isEquals();
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(user, privateKey);
-    }
-
-    @Override
-    public String toString() {
-        return Objects.toStringHelper(this).
-                addValue(user).
-                add("privateKey", "<secret>").
-                toString();
     }
 }

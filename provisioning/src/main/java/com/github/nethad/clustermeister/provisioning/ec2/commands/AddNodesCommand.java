@@ -24,6 +24,7 @@ import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvalua
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
+import com.github.nethad.clustermeister.provisioning.ec2.CredentialsManager;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
@@ -64,6 +65,7 @@ public class AddNodesCommand extends AbstractAmazonExecutableCommand {
         
         AmazonNodeManager nodeManager = getNodeManager();
         AmazonInstanceManager instanceManager = nodeManager.getInstanceManager();
+        CredentialsManager credentialsManager = nodeManager.getCredentialsManager();
         
         Scanner scanner = arguments.asScanner();
         
@@ -82,9 +84,9 @@ public class AddNodesCommand extends AbstractAmazonExecutableCommand {
         
         if(profile.getKeyPairName().isPresent()) {
             String keyPairName = profile.getKeyPairName().get();
-            if(instanceManager.getConfiguredKeypairNames().contains(keyPairName)) {
+            if(credentialsManager.getConfiguredKeypairNames().contains(keyPairName)) {
                 Credentials credentials = 
-                        instanceManager.getConfiguredCredentials(keyPairName);
+                        credentialsManager.getConfiguredCredentials(keyPairName);
                 nodeConfiguration.setCredentials(credentials);
             } else {
                 logger.error(

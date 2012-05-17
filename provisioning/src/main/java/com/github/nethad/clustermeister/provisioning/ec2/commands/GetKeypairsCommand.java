@@ -18,7 +18,7 @@ package com.github.nethad.clustermeister.provisioning.ec2.commands;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
+import com.github.nethad.clustermeister.provisioning.ec2.CredentialsManager;
 import java.util.Set;
 
 /**
@@ -46,14 +46,14 @@ public class GetKeypairsCommand extends AbstractAmazonExecutableCommand {
     
     @Override
     public void execute(CommandLineArguments arguments) {
-        AmazonInstanceManager amazonInstanceManager = 
-                getNodeManager().getInstanceManager();
+        CredentialsManager credentialsManager = 
+                getNodeManager().getCredentialsManager();
         CommandLineHandle handle = getCommandLineHandle();
         
         handle.print("Configured keypair names:");
         handle.print(SEPARATOR_LINE);
         Set<String> configuredKeypairNames = 
-                amazonInstanceManager.getConfiguredKeypairNames();
+                credentialsManager.getConfiguredKeypairNames();
         
         if(configuredKeypairNames.isEmpty()) {
             handle.print("No keypairs configured.");

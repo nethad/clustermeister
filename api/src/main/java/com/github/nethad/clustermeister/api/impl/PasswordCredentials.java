@@ -17,6 +17,8 @@ package com.github.nethad.clustermeister.api.impl;
 
 import com.github.nethad.clustermeister.api.Credentials;
 import com.google.common.base.Objects;
+import com.google.common.base.Supplier;
+import com.google.common.collect.ComparisonChain;
 
 /**
  * A class representing user name and password credentials.
@@ -30,15 +32,22 @@ public class PasswordCredentials extends Credentials {
     protected final String password;
     
     /**
+     * SHA-1 digest of the password.
+     */
+    protected final Supplier<String> passwordDigest;
+    
+    /**
      * Creates Credentials with a user name and a password.
      * 
      * @param user  The user name.
      * @param password  The password.
      */
-    public PasswordCredentials(String user, String password) {
+    public PasswordCredentials(String user, final String password) {
         super(user);
         this.password = password;
+        this.passwordDigest = getSha1DigestSupplier(password);
     }
+
 
     /**
      * Get the password.
@@ -74,7 +83,17 @@ public class PasswordCredentials extends Credentials {
     public String toString() {
         return Objects.toStringHelper(this).
                 addValue(user).
-                add("password", password == null ? "null" : "<secret>").
+                add("password", password == null ? "null" : 
+                    String.format("(sha-1:%s)", passwordDigest.get())).
                 toString();
+    }
+
+    @Override
+    public int compareTo(Credentials o) {
+        ComparisonChain chain = ComparisonChain.start().compare(user, o.getUser());
+        if(o instanceof PasswordCredentials) {
+            chain.compare(password, o.as(PasswordCredentials.class).password);
+        }
+        return chain.result();
     }
 }

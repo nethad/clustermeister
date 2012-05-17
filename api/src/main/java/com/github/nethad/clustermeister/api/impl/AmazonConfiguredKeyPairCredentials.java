@@ -15,8 +15,10 @@
  */
 package com.github.nethad.clustermeister.api.impl;
 
+import com.github.nethad.clustermeister.api.Credentials;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
+import com.google.common.collect.ComparisonChain;
 import java.io.File;
 
 /**
@@ -99,21 +101,43 @@ public class AmazonConfiguredKeyPairCredentials extends KeyPairCredentials {
         }
         AmazonConfiguredKeyPairCredentials other = 
                 (AmazonConfiguredKeyPairCredentials) obj;
-        return amazonKeyPairName.equals(other.amazonKeyPairName) && 
-                super.equals(obj);
+        return Objects.equal(amazonKeyPairName, other.amazonKeyPairName) && 
+                Objects.equal(user, other.user) &&
+                Objects.equal(privatekeySource, other.privatekeySource) &&
+                Objects.equal(publicKeySource.orNull(), other.publicKeySource.orNull());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(user, privatekeySource, publickeySource, 
+        return Objects.hashCode(user, privatekeySource, publicKeySource, 
                 amazonKeyPairName);
     }
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this).
+        return Objects.toStringHelper(amazonKeyPairName).
                 addValue(user).
-                add("privateKey", privatekeySource).
-                add("Key Pair", amazonKeyPairName).toString();
+                add("privateKey", privatekeySource).toString();
+    }
+
+    @Override
+    public int compareTo(Credentials o) {
+        if(this.equals(o)) {
+            return 0;
+        }
+        if(o.getClass() != getClass() && 
+                !(o instanceof AmazonConfiguredKeyPairCredentials)) {
+            //o is sperclass
+            return super.compareTo(o);
+        }
+        //o is same or subclass
+        AmazonConfiguredKeyPairCredentials other = 
+                o.as(AmazonConfiguredKeyPairCredentials.class);
+        return ComparisonChain.start().
+                compare(amazonKeyPairName, other.amazonKeyPairName).
+                compare(user, other.user).
+                compare(privatekeySource, other.privatekeySource).
+                compare((File) publicKeySource.orNull(), (File) other.publicKeySource.orNull()).
+                result();
     }
 }
