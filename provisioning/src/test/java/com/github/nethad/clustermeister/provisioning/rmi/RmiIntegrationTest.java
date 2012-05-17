@@ -42,7 +42,7 @@ public class RmiIntegrationTest {
 
     @BeforeClass
     public static void setupClass() throws Exception {
-        rmiInfrastructure = new RmiInfrastructure();
+        rmiInfrastructure = new RmiInfrastructure(65032);
         rmiInfrastructure.initialize();
         rmiServerForApi = rmiInfrastructure.getRmiServerForApi();
         rmiServerForDriver = rmiInfrastructure.getRmiServerForDriver();

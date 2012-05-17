@@ -19,8 +19,7 @@ import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.api.rmi.IRmiServerForApi;
 import com.github.nethad.clustermeister.driver.rmi.IRmiServerForDriver;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
+import com.google.common.collect.Ranges;
 import java.io.IOException;
 import java.net.DatagramSocket;
 import java.net.ServerSocket;
@@ -40,6 +39,7 @@ public class RmiInfrastructure {
     
     private static final int MIN_PORT = 1024;
     private static final int MAX_PORT = 65536;
+    private static final int STANDARD_PORT = 61111;
     
     private final Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
 //    @Inject
@@ -53,6 +53,26 @@ public class RmiInfrastructure {
     private IRmiServerForApi serverForApiStub;
     private IRmiServerForDriver serverForDriverStub;
 
+    public RmiInfrastructure() {
+        this.registryPort = STANDARD_PORT;
+    }
+    
+    /**
+     * 
+     * @param port has to be a port between 1024 and 65535
+     */
+    public RmiInfrastructure(int port) {
+        if (isValidPort(port)) {
+            this.registryPort = port;
+        } else {
+            throw new IllegalArgumentException("Port " + port + " is not between " + MIN_PORT + " and " + MAX_PORT + ".");
+        }
+    }
+
+    private boolean isValidPort(int port) {
+        return Ranges.closed(MIN_PORT, MAX_PORT).apply(port);
+    }
+
     /**
      * Starts the RMI registry and registers services.
      */
@@ -65,7 +85,7 @@ public class RmiInfrastructure {
         }
         registryPort = findAvailablePort();
         try {
-            registry = LocateRegistry.createRegistry(61111);
+            registry = LocateRegistry.createRegistry(registryPort);
             createRmiServerForDriver();
             logger.info("RmiServerForDriver bound");
             createRmiServerForApi();
@@ -121,7 +141,7 @@ public class RmiInfrastructure {
     }
 
     private int findAvailablePort() {
-        int port = 61111;
+        int port = this.registryPort;
         while (!isAvailable(port)) {
             port++;
         }
@@ -129,7 +149,7 @@ public class RmiInfrastructure {
     }
     
     public boolean isAvailable(int port) {
-        if (port < MIN_PORT || port > MAX_PORT) {
+        if (!isValidPort(port)) {
             throw new IllegalArgumentException("Invalid start port: " + port);
         }
 
