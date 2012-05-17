@@ -15,7 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque.commands;
 
-import com.github.nethad.clustermeister.provisioning.TestCommandLineHandle;
+import com.github.nethad.clustermeister.provisioning.CommandLineHandleMock;
 import com.github.nethad.clustermeister.api.NodeInformation;
 import com.github.nethad.clustermeister.api.impl.NodeInformationImpl;
 import com.github.nethad.clustermeister.provisioning.Command;
@@ -52,7 +52,7 @@ import org.mockito.ArgumentCaptor;
  */
 public class TorqueCommandLineEvaluationTest {
     private TorqueCommandLineEvaluation commandLineEvaluation;
-    private TestCommandLineHandle commandLineHandle;
+    private CommandLineHandleMock commandLineHandle;
     private JPPFSystemInformation jppfSystemInformation;
     private RmiServerForApi rmiServerForApi;
     private TorqueNodeManager torqueNodeManager;
@@ -62,7 +62,7 @@ public class TorqueCommandLineEvaluationTest {
         torqueNodeManager = mock(TorqueNodeManager.class);
         when(torqueNodeManager.getConfiguration())
                 .thenReturn(new ConfigurationForTesting(new HashMap<String, Object>()));
-        commandLineHandle = new TestCommandLineHandle(new CommandRegistry() {
+        commandLineHandle = new CommandLineHandleMock(new CommandRegistry() {
             @Override
             public void registerCommand(Command command) {}
             @Override

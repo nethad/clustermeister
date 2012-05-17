@@ -15,8 +15,13 @@
  */
 package com.github.nethad.clustermeister.provisioning.cli;
 
+import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.inject.Guice;
+import com.google.inject.Inject;
+import com.google.inject.Injector;
+import com.google.inject.name.Named;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.logging.LogManager;
@@ -24,7 +29,6 @@ import jline.ConsoleReader;
 import jline.SimpleCompletor;
 import org.apache.commons.cli.*;
 import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
@@ -32,7 +36,10 @@ import org.slf4j.LoggerFactory;
  */
 public class ProvisioningCLI {
 
-    private static final Logger logger = LoggerFactory.getLogger(ProvisioningCLI.class);
+//    private static final Logger logger = LoggerFactory.getLogger(ProvisioningCLI.class);
+    @Inject
+    @Named(Loggers.CLI)
+    private Logger logger;
 
     private static final String OPTION_HELP = "help";
     private static final String OPTION_CONFIG_FILE = "config";
@@ -43,7 +50,9 @@ public class ProvisioningCLI {
 
     public static void main(String... args) {
         loadJDKLoggingConfiguration();
-        new ProvisioningCLI().startCLI(args);
+        Injector injector = Guice.createInjector(new LoggerModule());
+        ProvisioningCLI provisioningCLI = injector.getInstance(ProvisioningCLI.class);
+        provisioningCLI.startCLI(args);
     }
     private String configFilePath;
     private Options options;

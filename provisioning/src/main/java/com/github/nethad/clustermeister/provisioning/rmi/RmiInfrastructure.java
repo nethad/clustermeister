@@ -38,7 +38,8 @@ public class RmiInfrastructure {
     private static final int MIN_PORT = 1024;
     private static final int MAX_PORT = 65536;
     
-    private final Logger logger = LoggerFactory.getLogger(RmiInfrastructure.class);
+//    private final Logger logger = LoggerFactory.getLogger(RmiInfrastructure.class);
+    private Logger logger;
     
     private Registry registry;
     private int registryPort;

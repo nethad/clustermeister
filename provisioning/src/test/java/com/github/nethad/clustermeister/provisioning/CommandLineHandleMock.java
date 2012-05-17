@@ -19,11 +19,11 @@ package com.github.nethad.clustermeister.provisioning;
  *
  * @author thomas
  */
-public class TestCommandLineHandle extends CommandLineHandle {
+public class CommandLineHandleMock extends CommandLineHandle {
     
     StringBuilder printed = new StringBuilder();
 
-    public TestCommandLineHandle(CommandRegistry commandRegistry) {
+    public CommandLineHandleMock(CommandRegistry commandRegistry) {
         super(commandRegistry);
     }
     
