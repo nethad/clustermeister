@@ -15,14 +15,11 @@
  */
 package com.github.nethad.clustermeister.provisioning.dependencymanager;
 
+import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.api.impl.ConfigurationUtil;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.File;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -144,7 +141,7 @@ public class DependencyConfigurationUtil {
     public static final String PRELOAD_POMS = "preload.poms";
     
     private final static Logger logger =
-            LoggerFactory.getLogger(DependencyConfigurationUtil.class);
+            LoggerFactory.getLogger(Loggers.PROVISIONING);
     
     /**
      * The repository system instance to use.

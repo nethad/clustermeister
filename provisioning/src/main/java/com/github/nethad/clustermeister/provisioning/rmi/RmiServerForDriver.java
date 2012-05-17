@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.rmi;
 
+import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.api.impl.NodeInformationImpl;
 import com.github.nethad.clustermeister.driver.rmi.IRmiServerForDriver;
 import java.rmi.RemoteException;
@@ -30,7 +31,7 @@ import org.slf4j.LoggerFactory;
  * @author thomas
  */
 public class RmiServerForDriver implements IRmiServerForDriver {
-    private final Logger logger = LoggerFactory.getLogger(RmiServerForDriver.class);
+    private final Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
     
     private NodeManager nodeManager;
     

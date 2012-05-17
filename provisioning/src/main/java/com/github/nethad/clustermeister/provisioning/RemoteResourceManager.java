@@ -15,11 +15,12 @@
  */
 package com.github.nethad.clustermeister.provisioning;
 
+import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.provisioning.utils.FileUtils;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import com.google.common.base.Charsets;
-import static com.google.common.base.Preconditions.*;
+import static com.google.common.base.Preconditions.checkNotNull;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -47,7 +48,7 @@ import org.slf4j.LoggerFactory;
  */
 public class RemoteResourceManager {
     
-    private static final Logger logger = LoggerFactory.getLogger(RemoteResourceManager.class);
+    private static final Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
     
     /**
      * Default name of the remote resource directory.

@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
+import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.injection.SSHModule;
@@ -50,7 +51,7 @@ import org.slf4j.LoggerFactory;
 public class TorqueNodeManager {
 
 	public static final int THREAD_POOL_SIZE = 2;
-	private Logger logger = LoggerFactory.getLogger(TorqueNodeManager.class);
+	private Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
 	
 
 

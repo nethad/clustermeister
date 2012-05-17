@@ -15,9 +15,9 @@
  */
 package com.github.nethad.clustermeister.provisioning.jppf;
 
+import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import com.github.nethad.clustermeister.node.common.ClustermeisterLauncher;
-import com.github.nethad.clustermeister.provisioning.utils.*;
 import com.google.common.util.concurrent.SettableFuture;
 import java.util.Observable;
 import java.util.Observer;
@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 public class JPPFLocalDriver implements Observer {
     private ClustermeisterLauncher launcher = null;
     
-    private final org.slf4j.Logger logger = LoggerFactory.getLogger(JPPFLocalDriver.class);
+    private final org.slf4j.Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
 
     public static final int SERVER_PORT = 11111;
     public static final int MANAGEMENT_PORT = 11198;

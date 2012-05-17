@@ -16,16 +16,13 @@
 package com.github.nethad.clustermeister.provisioning.jppf;
 
 import com.github.nethad.clustermeister.api.JPPFConstants;
+import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.node.common.Constants;
 import com.github.nethad.clustermeister.provisioning.jppf.managementtasks.JPPFConfigReaderTask;
 import com.github.nethad.clustermeister.provisioning.jppf.managementtasks.NopTask;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Properties;
+import java.util.*;
 import org.jppf.JPPFException;
 import org.jppf.client.JPPFClient;
 import org.jppf.client.JPPFJob;
@@ -40,7 +37,7 @@ import org.slf4j.LoggerFactory;
  */
 public class JPPFManagementByJobsClient {
     private final static org.slf4j.Logger logger =
-            LoggerFactory.getLogger(JPPFManagementByJobsClient.class);
+            LoggerFactory.getLogger(Loggers.PROVISIONING);
     
     private JPPFClient jPPFClient;
 

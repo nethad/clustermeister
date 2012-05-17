@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.api.JPPFConstants;
+import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
@@ -35,7 +36,7 @@ import org.slf4j.LoggerFactory;
  */
 class NodeDeployTask {
 	
-	private static final Logger logger = LoggerFactory.getLogger(NodeDeployTask.class);
+	private static final Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
 	private int managementPort;
 	private int nodeNumber;
 	private int serverPort;
