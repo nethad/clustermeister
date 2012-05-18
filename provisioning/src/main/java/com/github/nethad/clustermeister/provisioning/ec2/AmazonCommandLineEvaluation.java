@@ -24,6 +24,7 @@ import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.AddNodesCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.GetCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.InstanceCommand;
+import com.github.nethad.clustermeister.provisioning.ec2.commands.RemoveNodeCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.ShutdownCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.StartNodeCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.StateCommand;
@@ -119,5 +120,6 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
         handle.getCommandRegistry().registerCommand(new GetCommand(this));
         handle.getCommandRegistry().registerCommand(new StartNodeCommand(this));
         handle.getCommandRegistry().registerCommand(new InstanceCommand(this));
+        handle.getCommandRegistry().registerCommand(new RemoveNodeCommand(this));
     }
 }
