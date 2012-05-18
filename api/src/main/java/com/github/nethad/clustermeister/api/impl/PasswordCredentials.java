@@ -16,9 +16,8 @@
 package com.github.nethad.clustermeister.api.impl;
 
 import com.github.nethad.clustermeister.api.Credentials;
-import com.google.common.base.Objects;
+import static com.google.common.base.Objects.*;
 import com.google.common.base.Supplier;
-import com.google.common.collect.ComparisonChain;
 
 /**
  * A class representing user name and password credentials.
@@ -43,7 +42,20 @@ public class PasswordCredentials extends Credentials {
      * @param password  The password.
      */
     public PasswordCredentials(String user, final String password) {
-        super(user);
+        super(PasswordCredentials.class.getSimpleName(), user);
+        this.password = password;
+        this.passwordDigest = getSha1DigestSupplier(password);
+    }
+    
+    /**
+     * Creates Credentials with a name, a user name and a password.
+     * 
+     * @param name A name for these credentials.
+     * @param user  The user name.
+     * @param password  The password.
+     */
+    public PasswordCredentials(String name, String user, final String password) {
+        super(name, user);
         this.password = password;
         this.passwordDigest = getSha1DigestSupplier(password);
     }
@@ -70,30 +82,31 @@ public class PasswordCredentials extends Credentials {
             return false;
         }
         PasswordCredentials other = (PasswordCredentials) obj;
-        return Objects.equal(user, other.user) && 
-                Objects.equal(password, other.password);
+        return super.equals(obj) && 
+                equal(passwordDigest.get(), other.passwordDigest.get());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(user, password);
+        return hashCode(name, user, passwordDigest.get());
     }
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this).
-                addValue(user).
-                add("password", password == null ? "null" : 
-                    String.format("(sha-1:%s)", passwordDigest.get())).
+        return toStringHelper(name).
+                add("user", user).
+                add("password", String.format("(sha-1:%s)", passwordDigest.get())).
                 toString();
     }
 
     @Override
     public int compareTo(Credentials o) {
-        ComparisonChain chain = ComparisonChain.start().compare(user, o.getUser());
-        if(o instanceof PasswordCredentials) {
-            chain.compare(password, o.as(PasswordCredentials.class).password);
+        int result = super.compareTo(o);
+        if(result == 0 && o instanceof PasswordCredentials) {
+            result = passwordDigest.get().compareTo(
+                    o.as(PasswordCredentials.class).passwordDigest.get());
         }
-        return chain.result();
+        
+        return result;
     }
 }

@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.api;
 
 import com.google.common.base.Charsets;
+import static com.google.common.base.Objects.*;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -36,12 +37,29 @@ public abstract class Credentials implements Comparable<Credentials> {
     protected final String user;
     
     /**
+     * A name for these credentials.
+     */
+    protected final String name;
+    
+    /**
      * Creates a Credential with a user name.
      * 
      * @param user the user name.
      */
     public Credentials(String user) {
+        this(Credentials.class.getSimpleName(), user);
+    }
+    
+    /**
+     * Creates a Credential with a user defined name and a user name.
+     * 
+     * @param name a name for these credentials.
+     * @param user the user name.
+     */
+    public Credentials(String name, String user) {
+        Preconditions.checkArgument(name != null && !name.isEmpty(), "Invalid name.");
         Preconditions.checkArgument(user != null && !user.isEmpty(), "Invalid user.");
+        this.name = name;
         this.user = user;
     }
 
@@ -54,9 +72,48 @@ public abstract class Credentials implements Comparable<Credentials> {
         return user;
     }
 
+    /**
+     * Returns the name for these Credentials.
+     * @return 
+     */
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String toString() {
+        return toStringHelper(name).
+                add("user", user).
+                toString();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == null) {
+            return false;
+        }
+        if (obj == this) {
+            return true;
+        }
+        if (obj.getClass() != (getClass())) {
+            return false;
+        }
+        Credentials otherCreds = (Credentials) obj;
+        
+        return equal(name, otherCreds.name) && equal(user, otherCreds.user);
+    }
+
+    @Override
+    public int hashCode() {
+        return hashCode(name, user);
+    }
+
     @Override
     public int compareTo(Credentials o) {
-        return ComparisonChain.start().compare(user, o.user).result();
+        return ComparisonChain.start().
+                compare(name, o.name).
+                compare(user, o.user).
+                result();
     }
     
     /**
@@ -74,11 +131,14 @@ public abstract class Credentials implements Comparable<Credentials> {
 
             @Override
             public String get() {
+                if(string == null || string.isEmpty()) {
+                    return string;
+                }
                 MessageDigest md;
                 try {
                     md = MessageDigest.getInstance("SHA-1");
                 } catch (NoSuchAlgorithmException ex) {
-                    return "";
+                    return null;
                 }
                 byte[] passwordBytes = string.getBytes(Charsets.UTF_8);
                 byte[] digest = md.digest(passwordBytes);

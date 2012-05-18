@@ -164,8 +164,7 @@ public class AmazonConfigurationLoader {
                         new KeyPairCredentials(user, privateKey, publicKey));
             } else {
                 credentials.put(keyPairName, 
-                        new AmazonConfiguredKeyPairCredentials(user, privateKey, 
-                        keyPairName));
+                        new AmazonConfiguredKeyPairCredentials(keyPairName, user, privateKey));
             }
         }
         
