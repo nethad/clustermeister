@@ -84,9 +84,8 @@ public class AddNodesCommand extends AbstractAmazonExecutableCommand {
         
         if(profile.getKeyPairName().isPresent()) {
             String keyPairName = profile.getKeyPairName().get();
-            if(credentialsManager.getConfiguredKeypairNames().contains(keyPairName)) {
-                Credentials credentials = 
-                        credentialsManager.getConfiguredCredentials(keyPairName);
+            Credentials credentials;
+            if((credentials = credentialsManager.getCredentials(keyPairName)) != null) {
                 nodeConfiguration.setCredentials(credentials);
             } else {
                 logger.error(

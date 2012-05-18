@@ -18,15 +18,14 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.Loggers;
 import com.google.common.base.Charsets;
+import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Maps;
+import com.google.common.collect.Iterables;
 import com.google.common.collect.Sets;
 import com.google.common.collect.Sets.SetView;
 import com.google.common.io.ByteStreams;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import org.apache.commons.configuration.Configuration;
@@ -40,43 +39,72 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Manages credentials for the Amazon Provisioning provider.
+ * 
+ * Manages credentials configured in the Clustermeister Configuration file as 
+ * well as Credentials that are generated at runtime or generated Credentials 
+ * that have been persisted by the Amazon provisioning provider.
  *
  * @author daniel
  */
 public class CredentialsManager {
     private final static Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
     
-    private final Map<String, Credentials> configuredCredentials;
+    private final Set<Credentials> configuredCredentials;
     
     private final ContextManager contextManager;
 
+    /**
+     * Initializes the Credentials Manager.
+     * 
+     * @param configuration 
+     *      The Clustermeister configuration containing keypair configurations.
+     * @param contextManager 
+     *      The {@link ContextManager} for this provisioning context.
+     */
     public CredentialsManager(Configuration configuration, ContextManager contextManager) {
-        this.configuredCredentials = Collections.synchronizedMap(
-                new AmazonConfigurationLoader(configuration).getConfiguredCredentials());
+        this.configuredCredentials = new AmazonConfigurationLoader(configuration).
+                getConfiguredCredentials();
         this.contextManager = contextManager;
     }
     
-    @Deprecated
-    public Set<String> getConfiguredKeypairNames() {
-        SortedSet<String> sortedSet = Sets.newTreeSet();
-        SetView<String> union = Sets.union(configuredCredentials.keySet(), 
-                getNodeKeyPairs().keySet());
-        return ImmutableSet.copyOf(union.copyInto(sortedSet));
+    /**
+     * Returns a sorted set with all configured, persisted and runtime credentials.
+     * 
+     * Note: When calling this method for the first time there may be a slight delay.
+     * 
+     * @return a newly created sorted set containing all currently known keypairs.
+     */
+    public SortedSet<Credentials> getAllCredentials() {
+        SortedSet<Credentials> sortedSet = Sets.newTreeSet();
+        sortedSet.addAll(ImmutableSet.copyOf(configuredCredentials));
+        sortedSet.addAll(ImmutableSet.copyOf(getNodeKeyPairs()));
+        
+        return sortedSet;
     }
     
-    @Deprecated
-    public Credentials getConfiguredCredentials(String keypairName) {
-        Credentials result = configuredCredentials.get(keypairName);
-        if(result == null) {
-            result = getNodeKeyPairs().get(keypairName);
-        }
+    /**
+     * Get {@link Credentials} by name.
+     * 
+     * @param name  the name of the credentials (e.g. the configured name).
+     * @return the credentials with the corresponding name or null if none is found.
+     */
+    public Credentials getCredentials(final String name) {
+        SetView<Credentials> union = Sets.union(configuredCredentials, getNodeKeyPairs());
+        Credentials result = Iterables.find(union, new Predicate<Credentials>() {
+            @Override
+            public boolean apply(Credentials input) {
+                return input.getName().equals(name);
+            }
+        }, null);
+        
         return result;
     }
     
-    private Map<String, Credentials> getNodeKeyPairs() {
+    private Set<Credentials> getNodeKeyPairs() {
         String container = CredentialsBlobStoreContextBuilder.CREDENTIALS_STORE;
         BlobStore credentialsStore = contextManager.getCredentialsContext().getBlobStore();
-        Map<String, Credentials> nodeCredentials = Maps.newHashMap();
+        Set<Credentials> nodeCredentials = Sets.newHashSet();
         Json json = contextManager.getCredentialsContext().utils().getJson();
         
         PageSet<? extends StorageMetadata> list = credentialsStore.list(container, recursive());
@@ -91,9 +119,9 @@ public class CredentialsManager {
                 continue;
             }
             if(credentialsBlob != null && credentialsBlob.isComplete()) {
-                nodeCredentials.put(storageMetadata.getName(), 
-                        new AmazonGeneratedKeyPairCredentials(storageMetadata.getName(),
-                        credentialsBlob.user, credentialsBlob.privateKey));
+                nodeCredentials.add(new AmazonGeneratedKeyPairCredentials(
+                        storageMetadata.getName(), credentialsBlob.user, 
+                        credentialsBlob.privateKey));
             }
         }
         
@@ -121,6 +149,11 @@ public class CredentialsManager {
          */
         CredentialsBlob() {}
         
+        /**
+         * Check if both, {@code user} and {@code privateKey} are set.
+         * 
+         * @return true if all checked 
+         */
         boolean isComplete() {
             return user != null && !user.isEmpty() && privateKey != null && !privateKey.isEmpty();
         }

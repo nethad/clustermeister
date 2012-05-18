@@ -24,6 +24,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStreamReader;
 import java.util.Map;
+import java.util.Set;
 import org.apache.commons.configuration.ConfigurationException;
 import org.hamcrest.Matchers;
 import static org.hamcrest.Matchers.*;
@@ -157,12 +158,12 @@ public class AmazonConfigurationLoaderTest {
     @Test
     public void testGetConfiguredCredentials() throws ConfigurationException {
         goodConfigSetup();
-        Map<String, Credentials> result = configLoader.getConfiguredCredentials();
+        Set<Credentials> result = configLoader.getConfiguredCredentials();
         Credentials c1 = new AmazonConfiguredKeyPairCredentials(KEYPAIR1, USER1, new File(privateKeyPath));
         Credentials c2 = new KeyPairCredentials(KEYPAIR2, USER2, new File(privateKeyPath), new File(publicKeyPath));
         assertThat(result, allOf(
-                hasEntry(KEYPAIR1, c1),
-                hasEntry(KEYPAIR2, c2)
+                hasItem(c1),
+                hasItem(c2)
         ));
     }
     

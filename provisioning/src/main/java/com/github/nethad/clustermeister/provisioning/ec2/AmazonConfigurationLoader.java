@@ -21,10 +21,12 @@ import com.github.nethad.clustermeister.api.impl.ConfigurationUtil;
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.SortedMap;
 import org.apache.commons.configuration.Configuration;
 
@@ -134,18 +136,17 @@ public class AmazonConfigurationLoader {
     }
     
     /**
-     * Returns a map containing a mapping of configured credentials names to 
-     * {@link Credentials} instances..
+     * Returns a set of configured {@link Credentials}.
      * 
      * @return the configured credentials.
      */
-    public Map<String, Credentials> getConfiguredCredentials() {
+    public Set<Credentials> getConfiguredCredentials() {
         List<Object> keypairList = configuration.getList(KEYPAIRS, Collections.EMPTY_LIST);
         Map<String, Map<String, String>> keypairSpecifications = 
                 ConfigurationUtil.reduceObjectList(keypairList, 
                 "Keypairs must be specified as a list of objects.");
-        Map<String, Credentials> credentials = 
-                Maps.newHashMapWithExpectedSize(keypairSpecifications.size());
+        Set<Credentials> credentials = 
+                Sets.newHashSetWithExpectedSize(keypairSpecifications.size());
         for (Map.Entry<String, Map<String, String>> entry : keypairSpecifications.entrySet()) {
             String keyPairName = entry.getKey();
             Map<String, String> keyPairValues = entry.getValue();
@@ -160,11 +161,11 @@ public class AmazonConfigurationLoader {
             if(publicKeyPath != null) {
                 File publicKey = ConfigurationUtil.getCheckedFile(
                         publicKeyPath, PUBLIC_KEY, "keypair", keyPairName);
-                credentials.put(keyPairName,
-                        new KeyPairCredentials(keyPairName, user, privateKey, publicKey));
+                credentials.add(new KeyPairCredentials(
+                        keyPairName, user, privateKey, publicKey));
             } else {
-                credentials.put(keyPairName, 
-                        new AmazonConfiguredKeyPairCredentials(keyPairName, user, privateKey));
+                credentials.add(new AmazonConfiguredKeyPairCredentials(
+                        keyPairName, user, privateKey));
             }
         }
         
