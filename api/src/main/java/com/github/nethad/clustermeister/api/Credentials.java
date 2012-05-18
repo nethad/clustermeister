@@ -16,7 +16,7 @@
 package com.github.nethad.clustermeister.api;
 
 import com.google.common.base.Charsets;
-import static com.google.common.base.Objects.*;
+import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
@@ -82,7 +82,7 @@ public abstract class Credentials implements Comparable<Credentials> {
 
     @Override
     public String toString() {
-        return toStringHelper(name).
+        return Objects.toStringHelper(name).
                 add("user", user).
                 toString();
     }
@@ -100,12 +100,12 @@ public abstract class Credentials implements Comparable<Credentials> {
         }
         Credentials otherCreds = (Credentials) obj;
         
-        return equal(name, otherCreds.name) && equal(user, otherCreds.user);
+        return Objects.equal(name, otherCreds.name) && Objects.equal(user, otherCreds.user);
     }
 
     @Override
     public int hashCode() {
-        return hashCode(name, user);
+        return Objects.hashCode(name, user);
     }
 
     @Override

@@ -17,7 +17,7 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
-import static com.google.common.base.Objects.*;
+import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 import com.google.common.collect.ComparisonChain;
 import java.io.File;
@@ -80,18 +80,18 @@ class AmazonGeneratedKeyPairCredentials extends KeyPairCredentials {
         }
         AmazonGeneratedKeyPairCredentials other = 
                 (AmazonGeneratedKeyPairCredentials) obj;
-        return equal(name, other.name) && equal(user, other.user) && 
-                equal(privateKeyDigest.get(), other.privateKeyDigest.get());
+        return Objects.equal(name, other.name) && Objects.equal(user, other.user) && 
+                Objects.equal(privateKeyDigest.get(), other.privateKeyDigest.get());
     }
 
     @Override
     public int hashCode() {
-        return hashCode(name, user, privateKeyDigest.get());
+        return Objects.hashCode(name, user, privateKeyDigest.get());
     }
 
     @Override
     public String toString() {
-        return toStringHelper(name).
+        return Objects.toStringHelper(name).
                 add("user", user).
                 add("privateKey", String.format("(sha-1:%s)", privateKeyDigest.get())).
                 toString();

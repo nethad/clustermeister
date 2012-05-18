@@ -16,7 +16,7 @@
 package com.github.nethad.clustermeister.api.impl;
 
 import com.github.nethad.clustermeister.api.Credentials;
-import static com.google.common.base.Objects.*;
+import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 
 /**
@@ -83,17 +83,17 @@ public class PasswordCredentials extends Credentials {
         }
         PasswordCredentials other = (PasswordCredentials) obj;
         return super.equals(obj) && 
-                equal(passwordDigest.get(), other.passwordDigest.get());
+                Objects.equal(passwordDigest.get(), other.passwordDigest.get());
     }
 
     @Override
     public int hashCode() {
-        return hashCode(name, user, passwordDigest.get());
+        return Objects.hashCode(name, user, passwordDigest.get());
     }
 
     @Override
     public String toString() {
-        return toStringHelper(name).
+        return Objects.toStringHelper(name).
                 add("user", user).
                 add("password", String.format("(sha-1:%s)", passwordDigest.get())).
                 toString();

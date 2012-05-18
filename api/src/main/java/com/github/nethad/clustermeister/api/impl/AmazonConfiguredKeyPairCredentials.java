@@ -15,7 +15,7 @@
  */
 package com.github.nethad.clustermeister.api.impl;
 
-import static com.google.common.base.Objects.*;
+import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import java.io.File;
 
@@ -80,7 +80,7 @@ public class AmazonConfiguredKeyPairCredentials extends KeyPairCredentials {
 
     @Override
     public String toString() {
-        return toStringHelper(getAmazonKeyPairName()).
+        return Objects.toStringHelper(getAmazonKeyPairName()).
                 add("user", user).
                 add("privateKey", privatekeySource.getPath()).toString();
     }

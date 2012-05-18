@@ -17,7 +17,7 @@ package com.github.nethad.clustermeister.api.impl;
 
 import com.github.nethad.clustermeister.api.Credentials;
 import com.google.common.base.Charsets;
-import static com.google.common.base.Objects.*;
+import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ComparisonChain;
@@ -202,22 +202,22 @@ public class KeyPairCredentials extends Credentials {
         }
         KeyPairCredentials other = (KeyPairCredentials) obj;
         return super.equals(obj) && 
-                equal(privatekeySource, other.privatekeySource) && 
-                equal(publicKeySource, other.publicKeySource);
+                Objects.equal(privatekeySource, other.privatekeySource) && 
+                Objects.equal(publicKeySource, other.publicKeySource);
         
     }
 
     @Override
     public int hashCode() {
-        return hashCode(name, user, privatekeySource, publicKeySource);
+        return Objects.hashCode(name, user, privatekeySource, publicKeySource.orNull());
     }
 
     @Override
     public String toString() {
-        return toStringHelper(name).
+        return Objects.toStringHelper(name).
                 add("user", user).
                 add("privateKey", privatekeySource.getPath()).
-                add("publicKey", publicKeySource.toString()).toString();
+                add("publicKey", publicKeySource.orNull()).toString();
     }
 
     @Override
