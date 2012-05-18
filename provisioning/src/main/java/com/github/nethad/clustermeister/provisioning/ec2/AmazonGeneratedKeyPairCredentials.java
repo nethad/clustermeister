@@ -59,7 +59,7 @@ class AmazonGeneratedKeyPairCredentials extends KeyPairCredentials {
     AmazonGeneratedKeyPairCredentials(String name, String user, String privateKeyData) {
         super(name, user, new DummyFile("dummypath"));
         this.privateKeyData = privateKeyData;
-        this.privateKeyDigest = getSha1DigestSupplier(privateKeyData);
+        this.privateKeyDigest = getSha256DigestSupplier(privateKeyData, charset);
     }
 
     @Override
@@ -93,7 +93,7 @@ class AmazonGeneratedKeyPairCredentials extends KeyPairCredentials {
     public String toString() {
         return Objects.toStringHelper(name).
                 add("user", user).
-                add("privateKey", String.format("(sha-1:%s)", privateKeyDigest.get())).
+                add("privateKey", String.format("(sha-256:%s)", privateKeyDigest.get())).
                 toString();
     }
 

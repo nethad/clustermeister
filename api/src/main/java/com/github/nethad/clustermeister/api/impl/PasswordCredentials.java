@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.api.impl;
 
 import com.github.nethad.clustermeister.api.Credentials;
+import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.base.Supplier;
 
@@ -42,9 +43,7 @@ public class PasswordCredentials extends Credentials {
      * @param password  The password.
      */
     public PasswordCredentials(String user, final String password) {
-        super(PasswordCredentials.class.getSimpleName(), user);
-        this.password = password;
-        this.passwordDigest = getSha1DigestSupplier(password);
+        this(PasswordCredentials.class.getSimpleName(), user, password);
     }
     
     /**
@@ -57,7 +56,7 @@ public class PasswordCredentials extends Credentials {
     public PasswordCredentials(String name, String user, final String password) {
         super(name, user);
         this.password = password;
-        this.passwordDigest = getSha1DigestSupplier(password);
+        this.passwordDigest = getSha256DigestSupplier(password, Charsets.UTF_8);
     }
 
 
@@ -95,7 +94,7 @@ public class PasswordCredentials extends Credentials {
     public String toString() {
         return Objects.toStringHelper(name).
                 add("user", user).
-                add("password", String.format("(sha-1:%s)", passwordDigest.get())).
+                add("password", String.format("(sha-256:%s)", passwordDigest.get())).
                 toString();
     }
 

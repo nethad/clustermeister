@@ -15,14 +15,15 @@
  */
 package com.github.nethad.clustermeister.api;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import com.google.common.collect.ComparisonChain;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
+import com.google.common.hash.HashCode;
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
+import java.nio.charset.Charset;
 
 /**
  * Credentials.
@@ -126,7 +127,19 @@ public abstract class Credentials implements Comparable<Credentials> {
         return clazz.cast(this);
     }
 
-    protected Supplier<String> getSha1DigestSupplier(final String string) {
+    /**
+     * Get a {@link Supplier} that returns the hex-string representation of the 
+     * input's SHA-256 hash.
+     * 
+     * The hash is only computed once and cached for further requests.
+     * 
+     * @param string the input.
+     * @param charset   the charset of the input.
+     * @return the hexadecimal string  representation of the {@code input}s hash code.
+     */
+    protected Supplier<String> getSha256DigestSupplier(final String string, 
+            final Charset charset) {
+        
         return Suppliers.memoize(new Supplier<String>() {
 
             @Override
@@ -134,15 +147,11 @@ public abstract class Credentials implements Comparable<Credentials> {
                 if(string == null || string.isEmpty()) {
                     return string;
                 }
-                MessageDigest md;
-                try {
-                    md = MessageDigest.getInstance("SHA-1");
-                } catch (NoSuchAlgorithmException ex) {
-                    return null;
-                }
-                byte[] passwordBytes = string.getBytes(Charsets.UTF_8);
-                byte[] digest = md.digest(passwordBytes);
-                return new String(digest, Charsets.UTF_8);
+                HashFunction hf = Hashing.sha256();
+                HashCode hc = hf.newHasher(string.length()).
+                        putString(string, charset).
+                        hash();
+                return hc.toString();
             }
         });
     }
