@@ -23,7 +23,6 @@ import com.github.nethad.clustermeister.api.impl.PasswordCredentials;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonEC2JPPFDeployer.Event;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientImpl;
 import com.github.nethad.clustermeister.provisioning.utils.SocksTunnel;
-import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableSet;
@@ -147,6 +146,7 @@ public class AmazonInstanceManager {
         if(!nodeConfiguration.getCredentials().isPresent()) {
             AmazonGeneratedKeyPairCredentials credentials = 
                     new AmazonGeneratedKeyPairCredentials(
+                        String.format("node#%s", metadata.getId()), 
                         metadata.getCredentials().getUser(), 
                         metadata.getCredentials().getPrivateKey());
             nodeConfiguration.setCredentials(credentials);
@@ -251,9 +251,10 @@ public class AmazonInstanceManager {
                 Credentials credentials = nodeConfig.getCredentials().get();
                 try {
                     if(credentials instanceof KeyPairCredentials) {
+                        KeyPairCredentials keypair = credentials.as(KeyPairCredentials.class);
                         sshClientForReversePort.addIdentity(instanceMetadata.getId(), 
-                                credentials.as(KeyPairCredentials.class).getPrivateKey().
-                                getBytes(Charsets.UTF_8));
+                                keypair.getPrivateKey().
+                                getBytes(keypair.getKeySourceCharset()));
                         String publicIp = Iterables.getFirst(instanceMetadata.getPublicAddresses(), null);
                         sshClientForReversePort.connect(credentials.getUser(), publicIp, 
                                 instanceMetadata.getLoginPort());
@@ -264,7 +265,8 @@ public class AmazonInstanceManager {
                                 JPPFConstants.DEFAULT_SERVER_PORT);
                     } else {
                         //TODO: add support for password credentials
-                        throw new IllegalStateException("Unsupported Credentials.");
+                        throw new IllegalStateException(
+                                String.format("Unsupported Credentials: %s.", credentials));
                     }
                 } catch (Exception ex) {
                     logger.warn("Could not open reverse channel.", ex);

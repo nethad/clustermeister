@@ -79,7 +79,7 @@ public class StartNodeCommand extends AbstractAmazonExecutableCommand {
                 !(configuredCredentials instanceof KeyPairCredentials)) {
             handle.print(String.format(
                     "No configured keypair credentials found for keypair '%s'.", 
-                    keypairName));
+                    configuredCredentials));
             return;
         }
         

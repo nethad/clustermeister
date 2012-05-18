@@ -161,7 +161,7 @@ public class AmazonConfigurationLoader {
                 File publicKey = ConfigurationUtil.getCheckedFile(
                         publicKeyPath, PUBLIC_KEY, "keypair", keyPairName);
                 credentials.put(keyPairName,
-                        new KeyPairCredentials(user, privateKey, publicKey));
+                        new KeyPairCredentials(keyPairName, user, privateKey, publicKey));
             } else {
                 credentials.put(keyPairName, 
                         new AmazonConfiguredKeyPairCredentials(keyPairName, user, privateKey));
