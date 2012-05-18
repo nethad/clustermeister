@@ -159,7 +159,7 @@ public class AmazonConfigurationLoaderTest {
         goodConfigSetup();
         Map<String, Credentials> result = configLoader.getConfiguredCredentials();
         Credentials c1 = new AmazonConfiguredKeyPairCredentials(KEYPAIR1, USER1, new File(privateKeyPath));
-        Credentials c2 = new KeyPairCredentials(USER2, new File(privateKeyPath), new File(publicKeyPath));
+        Credentials c2 = new KeyPairCredentials(KEYPAIR2, USER2, new File(privateKeyPath), new File(publicKeyPath));
         assertThat(result, allOf(
                 hasEntry(KEYPAIR1, c1),
                 hasEntry(KEYPAIR2, c2)

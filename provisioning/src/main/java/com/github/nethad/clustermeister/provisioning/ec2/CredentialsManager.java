@@ -56,6 +56,7 @@ public class CredentialsManager {
         this.contextManager = contextManager;
     }
     
+    @Deprecated
     public Set<String> getConfiguredKeypairNames() {
         SortedSet<String> sortedSet = Sets.newTreeSet();
         SetView<String> union = Sets.union(configuredCredentials.keySet(), 
@@ -63,6 +64,7 @@ public class CredentialsManager {
         return ImmutableSet.copyOf(union.copyInto(sortedSet));
     }
     
+    @Deprecated
     public Credentials getConfiguredCredentials(String keypairName) {
         Credentials result = configuredCredentials.get(keypairName);
         if(result == null) {
@@ -90,7 +92,7 @@ public class CredentialsManager {
             }
             if(credentialsBlob != null && credentialsBlob.isComplete()) {
                 nodeCredentials.put(storageMetadata.getName(), 
-                        new AmazonGeneratedKeyPairCredentials(
+                        new AmazonGeneratedKeyPairCredentials(storageMetadata.getName(),
                         credentialsBlob.user, credentialsBlob.privateKey));
             }
         }

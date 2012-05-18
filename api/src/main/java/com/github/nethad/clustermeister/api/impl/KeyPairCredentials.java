@@ -161,6 +161,15 @@ public class KeyPairCredentials extends Credentials {
     }
     
     /**
+     * Get the {@link Charset} the key sources are encoded in.
+     * 
+     * @return the charset.
+     */
+    public Charset getKeySourceCharset() {
+        return this.charset;
+    }
+    
+    /**
      * Get the private key.
      * 
      * @return  the private key as a String.
