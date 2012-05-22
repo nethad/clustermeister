@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.api;
 
+import com.google.common.base.Optional;
 import java.io.File;
 import java.util.Collection;
 
@@ -30,4 +31,6 @@ public interface NodeConfiguration {
 	public boolean isDriverDeployedLocally();
         
 	public Collection<File> getArtifactsToPreload();
+        
+        public Optional<String> getJvmOptions();
 }
