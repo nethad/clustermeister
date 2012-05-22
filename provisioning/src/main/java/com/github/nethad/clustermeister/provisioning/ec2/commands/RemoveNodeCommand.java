@@ -25,6 +25,8 @@ import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
 import com.google.common.base.Predicate;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.common.util.concurrent.FutureCallback;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.ArrayList;
 import java.util.List;
@@ -87,8 +89,9 @@ public class RemoveNodeCommand extends AbstractAmazonExecutableCommand {
         List<ListenableFuture<? extends Object>> futures = 
                 new ArrayList<ListenableFuture<? extends Object>>(nodesToShutdown.size());
         for (AmazonNode amazonNode : nodesToShutdown) {
-            ListenableFuture<Boolean> removeNode = nodeManager.removeNode(amazonNode, shutdownState);
-            futures.add(removeNode);
+            ListenableFuture<Boolean> future = nodeManager.removeNode(amazonNode, shutdownState);
+            addFailureLogger(future);
+            futures.add(future);
         }
         
         waitForFuturesToComplete(futures, 
@@ -98,4 +101,17 @@ public class RemoveNodeCommand extends AbstractAmazonExecutableCommand {
         
     }
     
+    private void addFailureLogger(ListenableFuture<Boolean> future) {
+        Futures.addCallback(future, new FutureCallback<Boolean>() {
+            @Override
+            public void onSuccess(Boolean result) {
+                //nop
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                logger.warn("Node shutdown failure.", t);
+            }
+        });
+    }
 }
