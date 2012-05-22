@@ -23,6 +23,7 @@ import java.util.Observable;
 import java.util.Observer;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import org.apache.commons.configuration.Configuration;
 import org.jppf.management.JMXDriverConnectionWrapper;
 import org.slf4j.LoggerFactory;
 
@@ -39,14 +40,19 @@ public class JPPFLocalDriver implements Observer {
     public static final int MANAGEMENT_PORT = 11198;
 //    private String publicIp;
     private SettableFuture<String> publicIpFuture = SettableFuture.create();
+    private final Configuration configuration;
 
+    public JPPFLocalDriver(Configuration configuration) {
+        this.configuration = configuration;
+    }
+    
     public void execute() {
         localSetupAndRun();
     }
 
     private void localSetupAndRun() {
         launcher = JPPFConfiguratedComponentFactory.getInstance().
-                createLocalDriver(SERVER_PORT, MANAGEMENT_PORT);
+                createLocalDriver(SERVER_PORT, MANAGEMENT_PORT, configuration);
     }
 
     public String getIpAddress() {

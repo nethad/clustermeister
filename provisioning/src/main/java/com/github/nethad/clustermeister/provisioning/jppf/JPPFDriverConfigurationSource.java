@@ -28,9 +28,12 @@ import org.jppf.utils.JPPFConfiguration;
  * @author thomas
  */
 public class JPPFDriverConfigurationSource implements JPPFConfiguration.ConfigurationSource {
+    
+    private static final String DEFAULT_JVM_OPTIONS = "-Xmx256m";
 
 	public static int serverPort = 11111;
 	public static int managementPort = 11198;
+    public static String jvmOptions = "";
 	
     public static String host = "localhost";
     Properties properties = new Properties();
@@ -77,14 +80,19 @@ public class JPPFDriverConfigurationSource implements JPPFConfiguration.Configur
         properties.setProperty("strategy.test.maxActionRange", "10");
         properties.setProperty("strategy.test.multiplicator", "1");
 
-        StringBuilder jvmOptions = new StringBuilder("-Xmx256m ");
-        jvmOptions.append("-Dlog4j.configuration=log4j-driver.properties ")
+        StringBuilder configuredJvmOptions = new StringBuilder();
+        if (jvmOptions.isEmpty()) {
+            configuredJvmOptions.append(DEFAULT_JVM_OPTIONS);
+        } else {
+            configuredJvmOptions.append(jvmOptions);
+        }
+        configuredJvmOptions.append(" ").append("-Dlog4j.configuration=log4j-driver.properties ")
                 .append("-Djava.util.logging.config.file=config/logging-driver.properties ")
                 .append("-Dsun.io.serialization.extendedDebugInfo=true ")
                 .append("-D").append(JPPFConstants.CONFIG_PLUGIN).append("=")
                 .append(JPPFDriverConfigurationSource.class.getCanonicalName());
         
-        properties.setProperty(JPPFConstants.JVM_OPTIONS, jvmOptions.toString());
+        properties.setProperty(JPPFConstants.JVM_OPTIONS, configuredJvmOptions.toString());
 
     }
 
