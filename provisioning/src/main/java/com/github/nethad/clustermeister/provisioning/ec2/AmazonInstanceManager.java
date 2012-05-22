@@ -23,7 +23,6 @@ import com.github.nethad.clustermeister.api.impl.PasswordCredentials;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonEC2JPPFDeployer.Event;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientImpl;
 import com.github.nethad.clustermeister.provisioning.utils.SocksTunnel;
-import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableSet;
@@ -66,7 +65,7 @@ public class AmazonInstanceManager {
     static final String GROUP_NAME = "clustermeister";
     private final static Logger logger =
             LoggerFactory.getLogger(AmazonInstanceManager.class);
-    private final ComputeContextManager contextManager;
+    private final ContextManager contextManager;
     private final AwsEc2Facade ec2Facade;
     private final Monitor portCounterMonitor = new Monitor(false);
     private final Map<String, Integer> instanceToPortCounter =
@@ -77,7 +76,6 @@ public class AmazonInstanceManager {
     private final Map<String, SocksTunnel> instanceToReverseTunnel =
             new HashMap<String, SocksTunnel>();
     private final Collection<File> artifactsToPreload;
-    private final Map<String, Credentials> keypairs;
     private final Map<String, AWSInstanceProfile> profiles;
 
     
@@ -88,14 +86,12 @@ public class AmazonInstanceManager {
       * AmazonNodeManager should use only a single instance.
       *
       */
-    AmazonInstanceManager(ComputeContextManager contextManager, 
+    AmazonInstanceManager(ContextManager contextManager, 
             AwsEc2Facade ec2Facade, 
-            Map<String, Credentials> keypairs, 
             Map<String, AWSInstanceProfile> profiles, 
             Collection<File> artifactsToPreload) {
         this.contextManager = contextManager;
         this.ec2Facade = ec2Facade;
-        this.keypairs = keypairs;
         this.profiles = profiles;
         this.artifactsToPreload = artifactsToPreload;
     }
@@ -107,14 +103,6 @@ public class AmazonInstanceManager {
         //TODO: release resources?
     }
 
-    public Set<String> getConfiguredKeypairNames() {
-        return ImmutableSet.copyOf(keypairs.keySet());
-    }
-    
-    public Credentials getConfiguredCredentials(String keypairName) {
-        return keypairs.get(keypairName);
-    }
-    
     public Collection<AWSInstanceProfile> getConfiguredProfiles() {
         return ImmutableSet.copyOf(profiles.values());
     }
@@ -158,11 +146,9 @@ public class AmazonInstanceManager {
         if(!nodeConfiguration.getCredentials().isPresent()) {
             AmazonGeneratedKeyPairCredentials credentials = 
                     new AmazonGeneratedKeyPairCredentials(
+                        String.format("node#%s", metadata.getId()), 
                         metadata.getCredentials().getUser(), 
                         metadata.getCredentials().getPrivateKey());
-            //TODO: generated credentials need to be persited somehow for re-use
-            String credentialsName = String.format("Keypair for %s", metadata.getId());
-            keypairs.put(credentialsName, credentials);
             nodeConfiguration.setCredentials(credentials);
         }
         logger.info("Instance {} created.", metadata.getId());
@@ -265,9 +251,10 @@ public class AmazonInstanceManager {
                 Credentials credentials = nodeConfig.getCredentials().get();
                 try {
                     if(credentials instanceof KeyPairCredentials) {
+                        KeyPairCredentials keypair = credentials.as(KeyPairCredentials.class);
                         sshClientForReversePort.addIdentity(instanceMetadata.getId(), 
-                                credentials.as(KeyPairCredentials.class).getPrivateKey().
-                                getBytes(Charsets.UTF_8));
+                                keypair.getPrivateKey().
+                                getBytes(keypair.getKeySourceCharset()));
                         String publicIp = Iterables.getFirst(instanceMetadata.getPublicAddresses(), null);
                         sshClientForReversePort.connect(credentials.getUser(), publicIp, 
                                 instanceMetadata.getLoginPort());
@@ -278,7 +265,8 @@ public class AmazonInstanceManager {
                                 JPPFConstants.DEFAULT_SERVER_PORT);
                     } else {
                         //TODO: add support for password credentials
-                        throw new IllegalStateException("Unsupported Credentials.");
+                        throw new IllegalStateException(
+                                String.format("Unsupported Credentials: %s.", credentials));
                     }
                 } catch (Exception ex) {
                     logger.warn("Could not open reverse channel.", ex);

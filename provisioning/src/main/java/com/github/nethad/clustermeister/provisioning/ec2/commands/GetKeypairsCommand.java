@@ -15,10 +15,11 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2.commands;
 
+import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
+import com.github.nethad.clustermeister.provisioning.ec2.CredentialsManager;
 import java.util.Set;
 
 /**
@@ -46,22 +47,21 @@ public class GetKeypairsCommand extends AbstractAmazonExecutableCommand {
     
     @Override
     public void execute(CommandLineArguments arguments) {
-        AmazonInstanceManager amazonInstanceManager = 
-                getNodeManager().getInstanceManager();
-        CommandLineHandle handle = getCommandLineHandle();
+        CredentialsManager credentialsManager = 
+                getNodeManager().getCredentialsManager();
+        CommandLineHandle console = getCommandLineHandle();
         
-        handle.print("Configured keypair names:");
-        handle.print(SEPARATOR_LINE);
-        Set<String> configuredKeypairNames = 
-                amazonInstanceManager.getConfiguredKeypairNames();
+        console.print("Currently known keypairs:");
+        console.print(SEPARATOR_LINE);
+        Set<Credentials> credentials = credentialsManager.getAllCredentials();
         
-        if(configuredKeypairNames.isEmpty()) {
-            handle.print("No keypairs configured.");
+        if(credentials.isEmpty()) {
+            console.print("No keypairs configured.");
         } else {
-            for(String keypairName : configuredKeypairNames) {
-                handle.print(keypairName);
+            for(Credentials cred : credentials) {
+                console.print(cred.toString());
             }
         }
-        handle.print(SEPARATOR_LINE);
+        console.print(SEPARATOR_LINE);
     }
 }

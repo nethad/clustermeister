@@ -16,7 +16,9 @@
 package com.github.nethad.clustermeister.api.impl;
 
 import com.github.nethad.clustermeister.api.Credentials;
+import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
+import com.google.common.base.Supplier;
 
 /**
  * A class representing user name and password credentials.
@@ -30,15 +32,33 @@ public class PasswordCredentials extends Credentials {
     protected final String password;
     
     /**
+     * SHA-1 digest of the password.
+     */
+    protected final Supplier<String> passwordDigest;
+    
+    /**
      * Creates Credentials with a user name and a password.
      * 
      * @param user  The user name.
      * @param password  The password.
      */
-    public PasswordCredentials(String user, String password) {
-        super(user);
-        this.password = password;
+    public PasswordCredentials(String user, final String password) {
+        this(PasswordCredentials.class.getSimpleName(), user, password);
     }
+    
+    /**
+     * Creates Credentials with a name, a user name and a password.
+     * 
+     * @param name A name for these credentials.
+     * @param user  The user name.
+     * @param password  The password.
+     */
+    public PasswordCredentials(String name, String user, final String password) {
+        super(name, user);
+        this.password = password;
+        this.passwordDigest = getSha256DigestSupplier(password, Charsets.UTF_8);
+    }
+
 
     /**
      * Get the password.
@@ -61,20 +81,31 @@ public class PasswordCredentials extends Credentials {
             return false;
         }
         PasswordCredentials other = (PasswordCredentials) obj;
-        return Objects.equal(user, other.user) && 
-                Objects.equal(password, other.password);
+        return super.equals(obj) && 
+                Objects.equal(passwordDigest.get(), other.passwordDigest.get());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(user, password);
+        return Objects.hashCode(name, user, passwordDigest.get());
     }
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this).
-                addValue(user).
-                add("password", password == null ? "null" : "<secret>").
+        return Objects.toStringHelper(name).
+                add("user", user).
+                add("password", String.format("(sha-256:%s)", passwordDigest.get())).
                 toString();
+    }
+
+    @Override
+    public int compareTo(Credentials o) {
+        int result = super.compareTo(o);
+        if(result == 0 && o instanceof PasswordCredentials) {
+            result = passwordDigest.get().compareTo(
+                    o.as(PasswordCredentials.class).passwordDigest.get());
+        }
+        
+        return result;
     }
 }

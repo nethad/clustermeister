@@ -17,26 +17,31 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.ImmutableSet.Builder;
+import com.google.inject.Module;
 import java.util.Properties;
 import java.util.concurrent.Callable;
+import org.jclouds.blobstore.InputStreamMap;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.ComputeServiceContextFactory;
 import org.jclouds.enterprise.config.EnterpriseConfigurationModule;
 import org.jclouds.logging.slf4j.config.SLF4JLoggingModule;
+import org.jclouds.rest.config.CredentialStoreModule;
 import org.jclouds.ssh.jsch.config.JschSshClientModule;
 
 /**
  *
  * @author daniel
  */
-public class AmazonContextBuilder implements Callable<ComputeServiceContext> {
-
+public class AmazonComputeContextBuilder implements Callable<ComputeServiceContext> {
+    
     private final String accessKeyId;
+    private final Builder<Module> modulesBuilder = ImmutableSet.builder();
     private final String secretKey;
     private final Properties overrides;
 
-    public AmazonContextBuilder(String accessKeyId, String secretKey,
-            Optional<Properties> overrides) {
+    public AmazonComputeContextBuilder(String accessKeyId, String secretKey,
+            Optional<Properties> overrides, Optional<InputStreamMap> credentialsMap) {
         this.accessKeyId = accessKeyId;
         this.secretKey = secretKey;
         if (overrides.isPresent()) {
@@ -44,13 +49,17 @@ public class AmazonContextBuilder implements Callable<ComputeServiceContext> {
         } else {
             this.overrides = new Properties();
         }
+        modulesBuilder.add(new JschSshClientModule()).
+                add(new SLF4JLoggingModule()).
+                add(new EnterpriseConfigurationModule());
+        if(credentialsMap.isPresent()) {
+            modulesBuilder.add(new CredentialStoreModule(credentialsMap.get()));
+        }
     }
 
     @Override
     public ComputeServiceContext call() throws Exception {
-        return new ComputeServiceContextFactory().createContext("aws-ec2", accessKeyId, secretKey,
-                ImmutableSet.of(new JschSshClientModule(),
-                new SLF4JLoggingModule(), new EnterpriseConfigurationModule()),
-                overrides);
+        return new ComputeServiceContextFactory().createContext("aws-ec2", 
+                accessKeyId, secretKey, modulesBuilder.build(), overrides);
     }
 }

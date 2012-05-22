@@ -24,6 +24,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.jclouds.aws.ec2.reference.AWSEC2Constants;
+import org.jclouds.blobstore.BlobStoreContext;
+import org.jclouds.blobstore.InputStreamMap;
 import org.jclouds.compute.ComputeServiceContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -32,24 +34,41 @@ import org.slf4j.LoggerFactory;
  *
  * @author daniel
  */
-public class ComputeContextManager implements Closeable {
+public class ContextManager implements Closeable {
     private final static Logger logger =
-            LoggerFactory.getLogger(ComputeContextManager.class);
+            LoggerFactory.getLogger(ContextManager.class);
     
     private ListenableFuture<ComputeServiceContext> eagerContext = null;
     private final Lock eagerLock = new ReentrantLock();
     private ListenableFuture<ComputeServiceContext> lazyContext = null;
     private final Lock lazyLock = new ReentrantLock();
+    private ListenableFuture<BlobStoreContext> credentialsContext = null;
+    private final Lock credentialsLock = new ReentrantLock();
     
     private final ListeningExecutorService executorService;
     private final String accessKeyId;
     private final String secretKey;
     
-    public ComputeContextManager(String accessKeyId, String secretKey, 
+    public ContextManager(String accessKeyId, String secretKey, 
             ListeningExecutorService executorService) {
         this.accessKeyId = accessKeyId;
         this.secretKey = secretKey;
         this.executorService = executorService;
+    }
+    
+    public BlobStoreContext getCredentialsContext() {
+        credentialsLock.lock();
+        try {
+            if(credentialsContext == null) {
+                credentialsContext = executorService.submit(
+                        new CredentialsBlobStoreContextBuilder(
+                        Optional.<Properties>absent()));
+            }
+            return valueOrNotReady(credentialsContext);
+        } finally {
+            credentialsLock.unlock();
+        }
+        
     }
     
     public ComputeServiceContext getEagerContext() {
@@ -57,8 +76,9 @@ public class ComputeContextManager implements Closeable {
         try {
             if(eagerContext == null) {
                 eagerContext = executorService.submit(
-                        new AmazonContextBuilder(accessKeyId, secretKey,
-                        Optional.<Properties>absent()));
+                        new AmazonComputeContextBuilder(accessKeyId, secretKey,
+                        Optional.<Properties>absent(), 
+                        Optional.of(getCredentialsMap(getCredentialsContext()))));
             }
             return valueOrNotReady(eagerContext);
         } finally {
@@ -76,8 +96,9 @@ public class ComputeContextManager implements Closeable {
         try {
             if(lazyContext == null) {
                 lazyContext = executorService.submit(
-                        new AmazonContextBuilder(accessKeyId, secretKey,
-                        Optional.fromNullable(properties)));
+                        new AmazonComputeContextBuilder(accessKeyId, secretKey,
+                        Optional.fromNullable(properties), 
+                        Optional.of(getCredentialsMap(getCredentialsContext()))));
             }
             return valueOrNotReady(lazyContext);
         } finally {
@@ -97,6 +118,19 @@ public class ComputeContextManager implements Closeable {
         } catch(Throwable ex) {
             logger.error("Can not close lazy context.", ex);
         }
+        credentialsLock.lock();
+        try {
+            if(credentialsContext != null) {
+                valueOrNotReady(credentialsContext).close();
+            }
+        } finally {
+            credentialsLock.unlock();
+        }
+    }
+    
+    private InputStreamMap getCredentialsMap(BlobStoreContext context) {
+        return context.createInputStreamMap(
+                CredentialsBlobStoreContextBuilder.CREDENTIALS_STORE);
     }
     
     private void closeContext(ListenableFuture<ComputeServiceContext> context, Lock lock) {

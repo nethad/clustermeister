@@ -23,10 +23,10 @@ import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.ec2.AWSInstanceProfile;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonCommandLineEvaluation;
-import com.github.nethad.clustermeister.provisioning.ec2.AmazonInstanceManager;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
 import com.github.nethad.clustermeister.provisioning.ec2.AwsEc2Facade;
+import com.github.nethad.clustermeister.provisioning.ec2.CredentialsManager;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.Scanner;
@@ -59,9 +59,9 @@ public class StartNodeCommand extends AbstractAmazonExecutableCommand {
 
     @Override
     public void execute(CommandLineArguments arguments) {
-        CommandLineHandle handle = getCommandLineHandle();
+        CommandLineHandle console = getCommandLineHandle();
         AmazonNodeManager nodeManager = getNodeManager();
-        AmazonInstanceManager instanceManager = nodeManager.getInstanceManager();
+        CredentialsManager credentialsManager = nodeManager.getCredentialsManager();
         AwsEc2Facade ec2Facade = nodeManager.getEc2Facade();
         
         
@@ -73,13 +73,11 @@ public class StartNodeCommand extends AbstractAmazonExecutableCommand {
         
         String instanceId = scanner.next();
         String keypairName = scanner.next();
-        Credentials configuredCredentials = 
-                instanceManager.getConfiguredCredentials(keypairName);
-        if(configuredCredentials == null || 
-                !(configuredCredentials instanceof KeyPairCredentials)) {
-            handle.print(String.format(
-                    "No configured keypair credentials found for keypair '%s'.", 
-                    keypairName));
+        Credentials credentials = 
+                credentialsManager.getCredentials(keypairName);
+        if(credentials == null || !(credentials instanceof KeyPairCredentials)) {
+            console.print(String.format("No keypair credentials found for credentials '%s'.", 
+                    credentials));
             return;
         }
         
@@ -94,18 +92,18 @@ public class StartNodeCommand extends AbstractAmazonExecutableCommand {
             
             amazonNodeConfiguration.setDriverAddress("localhost");
             amazonNodeConfiguration.setNodeType(NodeType.NODE);
-            amazonNodeConfiguration.setCredentials(configuredCredentials);
+            amazonNodeConfiguration.setCredentials(credentials);
 
-            handle.print("Starting node on %s", instanceId);
+            console.print("Starting node on %s", instanceId);
             ListenableFuture<? extends Node> future =
                     nodeManager.addNode(amazonNodeConfiguration,
                     Optional.of(instanceId));
             try {
                 Node node = future.get();
                 if(node != null) {
-                    handle.print("Node started on %s", instanceId);
+                    console.print("Node started on %s", instanceId);
                 } else {
-                    handle.print("Failed to start node on %s.", instanceId);
+                    console.print("Failed to start node on %s.", instanceId);
                 }
             } catch (InterruptedException ex) {
                 logger.warn("Interrupted while waiting for node to start.", ex);
@@ -113,7 +111,7 @@ public class StartNodeCommand extends AbstractAmazonExecutableCommand {
                 logger.warn("Could not wait for node to start.", ex);
             }
         } else {
-            handle.print(String.format(
+            console.print(String.format(
                     "Can not start node on %s because the instance is in state '%s'.", 
                     instanceId, state));
         }

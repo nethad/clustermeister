@@ -34,33 +34,29 @@ public class AmazonConfiguredKeyPairCredentials extends KeyPairCredentials {
     public static final String DEFAULT_USER = "ec2-user";
     
     /**
-     * AWS key pair name
-     */
-    protected final String amazonKeyPairName;
-
-    /**
      * Creates Credentials with the default EC2 user name and a 
      * pre-configured AWS key pair.
      * 
+     * @param amazonKeyPairName 
+     *      The key pair name in AWS.
      * @param privateKeySource 
      *      A source for the private key. This source is read when 
      *      {@link #getPrivateKey()} is called. The source is expected to be 
      *      encoded in UTF-8. This can be changed with 
      *      {@link #setKeySourceCharset(java.nio.charset.Charset)}.
      *      The private key must not have a pass phrase.
-     * @param amazonKeyPairName 
-     *      The key pair name in AWS.
      * 
      * @see #DEFAULT_USER
      */
-    public AmazonConfiguredKeyPairCredentials(File privateKeySource, 
-            String amazonKeyPairName) {
-        this(DEFAULT_USER, privateKeySource, amazonKeyPairName);
+    public AmazonConfiguredKeyPairCredentials(String amazonKeyPairName, File privateKeySource) {
+        this(amazonKeyPairName, DEFAULT_USER, privateKeySource);
     }
     
     /**
      * Creates Credentials with a user name and a pre-configured AWS key pair.
      * 
+     * @param amazonKeyPairName 
+     *      The key pair name in AWS.
      * @param user  The user name.
      * @param privateKeySource 
      *      A source for the private key. This source is read when 
@@ -68,13 +64,9 @@ public class AmazonConfiguredKeyPairCredentials extends KeyPairCredentials {
      *      encoded in UTF-8. This can be changed with 
      *      {@link #setKeySourceCharset(java.nio.charset.Charset)}.
      *      The private key must not have a pass phrase.
-     * @param amazonKeyPairName 
-     *      The key pair name in AWS.
      */
-    public AmazonConfiguredKeyPairCredentials(String user, File privateKeySource, 
-            String amazonKeyPairName) {
-        super(user, privateKeySource, Optional.<File>absent());
-        this.amazonKeyPairName = amazonKeyPairName;
+    public AmazonConfiguredKeyPairCredentials(String amazonKeyPairName, String user, File privateKeySource) {
+        super(amazonKeyPairName, user, privateKeySource, Optional.<File>absent());
     }
 
     /**
@@ -83,37 +75,13 @@ public class AmazonConfiguredKeyPairCredentials extends KeyPairCredentials {
      * @return the name of the key pair.
      */
     public String getAmazonKeyPairName() {
-        return amazonKeyPairName;
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        if (obj == null) {
-            return false;
-        }
-        if (obj == this) {
-            return true;
-        }
-        if (obj.getClass() != (getClass())) {
-            return false;
-        }
-        AmazonConfiguredKeyPairCredentials other = 
-                (AmazonConfiguredKeyPairCredentials) obj;
-        return amazonKeyPairName.equals(other.amazonKeyPairName) && 
-                super.equals(obj);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hashCode(user, privatekeySource, publickeySource, 
-                amazonKeyPairName);
+        return getName();
     }
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this).
-                addValue(user).
-                add("privateKey", privatekeySource).
-                add("Key Pair", amazonKeyPairName).toString();
+        return Objects.toStringHelper(getAmazonKeyPairName()).
+                add("user", user).
+                add("privateKey", privatekeySource.getPath()).toString();
     }
 }

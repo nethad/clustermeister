@@ -20,6 +20,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Objects;
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
+import com.google.common.collect.ComparisonChain;
 import com.google.common.io.Files;
 import java.io.File;
 import java.io.IOException;
@@ -40,9 +41,12 @@ public class KeyPairCredentials extends Credentials {
     /**
      * A source to read the public key from.
      */
-    protected final Optional<File> publickeySource;
+    protected final Optional<File> publicKeySource;
     
-    private Charset charset;
+    /**
+     * Charset used to interpret private and public key bytes.
+     */
+    protected Charset charset;
     
     /**
      * Creates Credentials with private key and user name.
@@ -56,7 +60,25 @@ public class KeyPairCredentials extends Credentials {
      *      The private key must not have a pass phrase.
      */
     public KeyPairCredentials(String user, File privateKeySource) {
-        this(user, privateKeySource, Optional.<File>absent());
+        this(null, user, privateKeySource);
+    }
+    
+    /**
+     * Creates Credentials with a name, a private key and a user name.
+     * 
+     * @param name A name for these credentials.
+     * @param user  The user name.
+     * @param privateKeySource 
+     *      A source for the private key. This source is read when 
+     *      {@link #getPrivateKey()} is called. The source is expected to be 
+     *      encoded in UTF-8. This can be changed with 
+     *      {@link #setKeySourceCharset(java.nio.charset.Charset)}.
+     *      The private key must not have a pass phrase.
+     */
+    public KeyPairCredentials(String name, String user, File privateKeySource) {
+        this((name == null || name.isEmpty()) ? 
+                KeyPairCredentials.class.getSimpleName() : name, 
+                user, privateKeySource, Optional.<File>absent());
     }
     
     /**
@@ -76,12 +98,13 @@ public class KeyPairCredentials extends Credentials {
      *      {@link #setKeySourceCharset(java.nio.charset.Charset)}.
      */
     public KeyPairCredentials(String user, File privateKeySource, File publicKeySource) {
-        this(user, privateKeySource, Optional.fromNullable(publicKeySource));
+        this(null, user, privateKeySource, publicKeySource);
     }
     
     /**
-     * Creates Credentials with private key, public key and user name.
+     * Creates Credentials with a name, a private key, a public key and a user name.
      * 
+     * @param name A name for these credentials.
      * @param user  The user name.
      * @param privateKeySource 
      *      A source for the private key. This source is read when 
@@ -95,25 +118,55 @@ public class KeyPairCredentials extends Credentials {
      *      encoded in UTF-8. This can be changed with 
      *      {@link #setKeySourceCharset(java.nio.charset.Charset)}.
      */
-    protected KeyPairCredentials(String user, File privateKeySource, 
+    public KeyPairCredentials(String name, String user, File privateKeySource, File publicKeySource) {
+        this((name == null || name.isEmpty()) ? 
+                KeyPairCredentials.class.getSimpleName() : name, user, 
+                privateKeySource, Optional.fromNullable(publicKeySource));
+    }
+    
+    /**
+     * Creates Credentials with private key, public key and user name.
+     * 
+     * @param name A name for these credentials.
+     * @param user  The user name.
+     * @param privateKeySource 
+     *      A source for the private key. This source is read when 
+     *      {@link #getPrivateKey()} is called. The source is expected to be 
+     *      encoded in UTF-8. This can be changed with 
+     *      {@link #setKeySourceCharset(java.nio.charset.Charset)}.
+     *      The private key must not have a pass phrase.
+     * @param publicKeySource (optional) 
+     *      A source for the public key. This source is read when 
+     *      {@link #getPublicKey()} is called. The source is expected to be 
+     *      encoded in UTF-8. This can be changed with 
+     *      {@link #setKeySourceCharset(java.nio.charset.Charset)}.
+     */
+    protected KeyPairCredentials(String name, String user, File privateKeySource, 
             Optional<File> publicKeySource) {
-        super(user);
-        checkArgument(privateKeySource != null && 
-                privateKeySource.canRead(), "Can not read from private key source.");
+        super(name, user);
         this.privatekeySource = privateKeySource;
-        this.publickeySource = publicKeySource;
+        this.publicKeySource = publicKeySource;
         this.charset = Charsets.UTF_8;
     }
     
     /**
-     * Set the {@link Charset} the private key is encoded in.
+     * Set the {@link Charset} the key sources are encoded in.
      * 
      * @param charset 
-     *      the {@link Charset} the private key is encoded in. Default is UTF-8.
+     *      the {@link Charset} the key sources are encoded in. Default is UTF-8.
      */
     public void setKeySourceCharset(Charset charset) {
         checkArgument(charset != null, "Invalid charset.");
         this.charset = charset;
+    }
+    
+    /**
+     * Get the {@link Charset} the key sources are encoded in.
+     * 
+     * @return the charset.
+     */
+    public Charset getKeySourceCharset() {
+        return this.charset;
     }
     
     /**
@@ -136,8 +189,8 @@ public class KeyPairCredentials extends Credentials {
      */
     public Optional<String> getPublicKey() throws IOException {
         Optional<String> publicKey;
-        if(publickeySource.isPresent()) {
-            publicKey = Optional.of(Files.toString(publickeySource.get(), charset));
+        if(publicKeySource.isPresent()) {
+            publicKey = Optional.of(Files.toString(publicKeySource.get(), charset));
         } else {
             publicKey = Optional.absent();
         }
@@ -157,23 +210,36 @@ public class KeyPairCredentials extends Credentials {
             return false;
         }
         KeyPairCredentials other = (KeyPairCredentials) obj;
-        boolean same = Objects.equal(user, other.user) && 
+        return super.equals(obj) && 
                 Objects.equal(privatekeySource, other.privatekeySource) && 
-                Objects.equal(publickeySource, other.publickeySource);
+                Objects.equal(publicKeySource, other.publicKeySource);
         
-        return same;
     }
 
     @Override
     public int hashCode() {
-        return Objects.hashCode(user, privatekeySource, publickeySource);
+        return Objects.hashCode(name, user, privatekeySource, publicKeySource.orNull());
     }
 
     @Override
     public String toString() {
-        return Objects.toStringHelper(this).
-                addValue(user).
+        return Objects.toStringHelper(name).
+                add("user", user).
                 add("privateKey", privatekeySource.getPath()).
-                add("publicKey", publickeySource.toString()).toString();
+                add("publicKey", publicKeySource.orNull()).toString();
+    }
+
+    @Override
+    public int compareTo(Credentials o) {
+        int result = super.compareTo(o);
+        if(result == 0 && o instanceof KeyPairCredentials) {
+            KeyPairCredentials other = o.as(KeyPairCredentials.class);
+            result = ComparisonChain.start().
+                    compare(privatekeySource, other.privatekeySource).
+                    compare(publicKeySource.orNull(), other.publicKeySource.orNull()).
+                    result();
+        }
+        
+        return result;
     }
 }
