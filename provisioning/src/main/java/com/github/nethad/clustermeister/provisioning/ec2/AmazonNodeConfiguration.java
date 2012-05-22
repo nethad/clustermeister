@@ -41,6 +41,7 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
     private boolean driverDeployedLocally = false;
     private int managementPort = JPPFConstants.DEFAULT_MANAGEMENT_PORT;
     private Collection<File> artifactsToPreload = Collections.EMPTY_LIST;
+    private Optional<String> jvmOptions = Optional.<String>absent();
 
     public static AmazonNodeConfiguration fromInstanceProfile(
             AWSInstanceProfile instanceProfile) {
@@ -128,5 +129,14 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
     @Override
     public Collection<File> getArtifactsToPreload() {
         return artifactsToPreload;
+    }
+
+    public void setJvmOptions(String jvmOptions) {
+        this.jvmOptions = Optional.fromNullable(jvmOptions);
+    }
+
+    @Override
+    public Optional<String> getJvmOptions() {
+        return jvmOptions;
     }
 }

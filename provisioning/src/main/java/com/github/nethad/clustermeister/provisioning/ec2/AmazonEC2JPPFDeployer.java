@@ -319,6 +319,9 @@ public abstract class AmazonEC2JPPFDeployer extends Observable {
                 append(startScript);
         if(startScriptArguments != null && !startScriptArguments.isEmpty()) {
             script.append(" ").append(startScriptArguments);
+            if(nodeConfiguration.getJvmOptions().isPresent()) {
+                script.append(nodeConfiguration.getJvmOptions().get());
+            }
         }
         script.append(" > ").
                 append(INIT_LOG).
