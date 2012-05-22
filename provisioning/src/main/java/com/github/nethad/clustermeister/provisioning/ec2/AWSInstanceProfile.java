@@ -20,7 +20,11 @@ import com.google.common.base.Objects.ToStringHelper;
 import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ComparisonChain;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import org.apache.commons.lang3.builder.EqualsBuilder;
+import org.jclouds.aws.ec2.domain.SpotInstanceRequest;
 import org.jclouds.compute.domain.NodeMetadata;
 import org.jclouds.domain.LocationScope;
 
@@ -32,6 +36,12 @@ import org.jclouds.domain.LocationScope;
  * @author daniel
  */
 public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
+    
+    /**
+     * Pattern for interpreting configured dates.
+     */
+    public static final String DATE_PATTERN = "yyyy-MM-dd HH:mm";
+    
     private String profileName;
     private String region;
     private String type;
@@ -39,6 +49,11 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
     private Optional<String> amiId = Optional.<String>absent();
     private Optional<String> keypairName = Optional.<String>absent();
     private Optional<String> shutdownState = Optional.<String>absent();
+    private Optional<String> group = Optional.<String>absent();
+    private Optional<Float> spotPrice = Optional.<Float>absent();
+    private Optional<String> spotRequestType = Optional.<String>absent();
+    private Optional<Date> spotRequestValidFrom = Optional.<Date>absent();
+    private Optional<Date> spotRequestValidTo = Optional.<Date>absent();
     
     /**
      * Create a new {@link AWSInstanceProfile} from AWS EC2 instance meta data.
@@ -164,6 +179,103 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
         return shutdownState;
     }
     
+    /**
+     * Returns the group configured for this profile.
+     * 
+     * The group serves to apply commands (e.g. launch, shut-down) to several 
+     * instances together.
+     * 
+     * @return 
+     *      the group (default: clustermeister). 
+     */
+    public Optional<String> getGroup() {
+        return group;
+    }
+    
+    /**
+     * Returns the spot price configured for this profile.
+     * 
+     * NOTE: if a spot price is set the instance is started as a spot instance.
+     * 
+     * @return 
+     *      the spot price in US Dollar (a float value considering cents). 
+     * 
+     * @see <a href="http://aws.amazon.com/ec2/spot-instances/">Amazon EC2 Spot Instances</a>
+     */
+    public Optional<Float> getSpotPrice() {
+        return spotPrice;
+    }
+    
+    /**
+     * Returns the spot request type configured for this profile.
+     * 
+     * <p>
+     * Spot instances can get terminated, for example when the spot price goes 
+     * beyond the configured spot price. If a request duration is configured, 
+     * this option determines if the spot instances are restarted again provided 
+     * the circumstances allow for it (e.g. spot price is below max spot price).
+     * </p>
+     * 
+     * <p>
+     * Valid values are:
+     * </p>
+     * <ul>
+     * <li>one_time (default) - when instances get terminated, don't restart them anymore.</li>
+     * <li>persistent - restart terminated instances for the duration of the request.</li>
+     * </ul>
+     * 
+     * @return 
+     *      the spot request type (persistent|one_time).
+     * 
+     */
+    public Optional<String> getSpotRequestType() {
+        return spotRequestType;
+    }
+    
+    /**
+     * Returns from which point in time the spot request configured in this 
+     * profile is valid.
+     * 
+     * <p>
+     * This is a formatted date according to following pattern: yyyy-MM-dd HH:mm
+     * </p>
+     * <p>
+     * The pattern is interpreted as defined by {@link SimpleDateFormat}.
+     * </p>
+     * <p>
+     * No value means 'any time'.
+     * </p>
+     * 
+     * @return 
+     *      the point in time from which the spot request is valid.
+     * 
+     */
+    public Optional<Date> getSpotRequestValidFrom() {
+        return spotRequestValidFrom;
+    }
+    
+    /**
+     * Returns until which point in time the spot request configured in this 
+     * profile is valid.
+     * 
+     * <p>
+     * This is a formatted date according to following pattern: yyyy-MM-dd HH:mm
+     * </p>
+     * <p>
+     * The pattern is interpreted as defined by {@link SimpleDateFormat}.
+     * </p>
+     * <p>
+     * No value means 'any time'.
+     * </p>
+     * 
+     * @return 
+     *      the point in time until which the spot request is valid.
+     * 
+     */
+    public Optional<Date> getSpotRequestValidTo() {
+        return spotRequestValidTo;
+    }
+    
     @Override
     public String toString() {
         ToStringHelper helper = Objects.toStringHelper(profileName).
@@ -182,6 +294,26 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
         
         if(shutdownState.isPresent()) {
             helper.add("Shutdown State", shutdownState.get());
+        }
+        
+        if(group.isPresent()) {
+            helper.add("Group", group.get());
+        }
+        
+        if(spotPrice.isPresent()) {
+            helper.add("Spot Price", spotPrice.get());
+        }
+        
+        if(spotRequestType.isPresent()) {
+            helper.add("Spot Request Type", spotRequestType.get());
+        }
+        
+        if(spotRequestValidFrom.isPresent()) {
+            helper.add("Spot Request Valid From", spotRequestValidFrom.get());
+        }
+        
+        if(spotRequestValidTo.isPresent()) {
+            helper.add("Spot Request Valid To", spotRequestValidTo.get());
         }
         
         return helper.toString();
@@ -240,6 +372,10 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
          */
         protected AWSInstanceProfile profile = new AWSInstanceProfile();
         
+        private Optional<String> spotPriceString = Optional.<String>absent();
+        private Optional<String> spotRequestValidFromString = Optional.<String>absent();
+        private Optional<String> spotRequestValidToString = Optional.<String>absent();
+        
         /**
          * Build a new {@link AWSInstanceProfile} from the previously set values.
          * 
@@ -280,20 +416,60 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
                 this.profile.shutdownState = Optional.of(checkString(
                         this.profile.shutdownState.get(), KEY_VALUE_MESSAGE, 
                         AmazonConfigurationLoader.SHUTDOWN_STATE, this.profile.profileName));
-                try {
-                    String shutdownStateStr = this.profile.shutdownState.get().toUpperCase();
-                    AmazonInstanceShutdownState.valueOf(shutdownStateStr);
-                } catch(IllegalArgumentException ex) {
-                    throw new IllegalArgumentException(
-                            String.format(KEY_VALUE_MESSAGE, 
-                            AmazonConfigurationLoader.SHUTDOWN_STATE, 
-                            this.profile.profileName), ex);
-                }
+                checkEnumType(this.profile.shutdownState.get(), 
+                        AmazonInstanceShutdownState.class, KEY_VALUE_MESSAGE, 
+                        AmazonConfigurationLoader.SHUTDOWN_STATE, this.profile.profileName);
+            }
+            
+            if(this.profile.group.isPresent()) {
+                this.profile.group = Optional.of(checkString(
+                        this.profile.group.get(), KEY_VALUE_MESSAGE, 
+                        AmazonConfigurationLoader.GROUP, this.profile.profileName));
+            }
+            
+            if(this.spotPriceString.isPresent()) {
+                this.spotPriceString = Optional.of(checkString(
+                        this.spotPriceString.get(), KEY_VALUE_MESSAGE, 
+                        AmazonConfigurationLoader.SPOT_PRICE, this.profile.profileName));
+                float floatValue = Float.parseFloat(this.spotPriceString.get());
+                checkArgument(floatValue >= 0.0f, KEY_VALUE_MESSAGE, this.profile.profileName);
+                this.profile.spotPrice = Optional.of(floatValue);
+            }
+            
+            if(this.profile.spotRequestType.isPresent()) {
+                this.profile.spotRequestType = Optional.of(checkString(
+                        this.profile.spotRequestType.get(), KEY_VALUE_MESSAGE, 
+                        AmazonConfigurationLoader.SPOT_REQUEST_TYPE, this.profile.profileName));
+                checkEnumType(this.profile.spotRequestType.get(), 
+                        SpotInstanceRequest.Type.class, KEY_VALUE_MESSAGE, 
+                        AmazonConfigurationLoader.SPOT_REQUEST_TYPE, this.profile.profileName);
+            }
+            
+            SimpleDateFormat dateFormat = new SimpleDateFormat(DATE_PATTERN);
+            
+            if(this.spotRequestValidFromString.isPresent()) {
+                this.spotRequestValidFromString = Optional.of(checkString(
+                        this.spotRequestValidFromString.get(), KEY_VALUE_MESSAGE, 
+                        AmazonConfigurationLoader.SPOT_REQUEST_VALID_FROM, this.profile.profileName));
+                Date date = checkDate(dateFormat,
+                        this.spotRequestValidFromString.get(), KEY_VALUE_MESSAGE,
+                        AmazonConfigurationLoader.SPOT_REQUEST_VALID_FROM, this.profile.profileName);
+                    this.profile.spotRequestValidFrom = Optional.fromNullable(date); 
+            }
+            
+            if(this.spotRequestValidToString.isPresent()) {
+                this.spotRequestValidToString = Optional.of(checkString(
+                        this.spotRequestValidToString.get(), KEY_VALUE_MESSAGE, 
+                        AmazonConfigurationLoader.SPOT_REQUEST_VALID_TO, this.profile.profileName));
+                Date date = checkDate(dateFormat,
+                        this.spotRequestValidToString.get(), KEY_VALUE_MESSAGE,
+                        AmazonConfigurationLoader.SPOT_REQUEST_VALID_FROM, this.profile.profileName);
+                    this.profile.spotRequestValidTo = Optional.fromNullable(date); 
             }
             
             return profile;
         }
-        
+
         /**
          * Set a profile name.
          * 
@@ -366,13 +542,75 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
         /**
          * Sets a shutdown state.
          * 
-         * @param keypairName 
+         * @param shutdownState  
          *      the state to put the instance in when it is shut down 
          *      (terminated|suspended|running).
          * @return this instance for chaining.
          */
         public Builder shutdownState(String shutdownState) {
             this.profile.shutdownState = Optional.fromNullable(shutdownState);
+            return this;
+        }
+        
+        /**
+         * Sets a group.
+         * 
+         * @param groupName 
+         *      the group name for this instance (default: clustermeister).
+         * @return this instance for chaining.
+         */
+        public Builder group(String groupName) {
+            this.profile.group = Optional.fromNullable(groupName);
+            return this;
+        }
+        
+        /**
+         * Sets a spot price.
+         * 
+         * @param spotPrice 
+         *      the spot price value in US Dollar as a float (considering cents).
+         * @return this instance for chaining.
+         */
+        public Builder spotPrice(String spotPrice) {
+            this.spotPriceString = Optional.fromNullable(spotPrice);
+            return this;
+        }
+        
+        /**
+         * Sets a spot request type.
+         * 
+         * @param spotRequestType 
+         *      the spot request type (one_time|persistent).
+         * @return this instance for chaining.
+         */
+        public Builder spotRequestType(String spotRequestType) {
+            this.profile.spotRequestType = Optional.fromNullable(spotRequestType);
+            return this;
+        }
+        
+        /**
+         * Sets the point in time from which a spot request is valid.
+         * 
+         * @param spotRequestValidFrom 
+         *      a date in format yyyy-MM-dd HH:mm interpreted according to the 
+         *      default locale.
+         * @return this instance for chaining.
+         */
+        public Builder spotRequestValidFrom(String spotRequestValidFrom) {
+            this.spotRequestValidFromString = Optional.fromNullable(spotRequestValidFrom);
+            return this;
+        }
+        
+        /**
+         * Sets the point in time until which a spot request is valid.
+         * 
+         * @param spotRequestValidTo 
+         *      a date in format yyyy-MM-dd HH:mm interpreted according to the 
+         *      default locale.
+         * @return this instance for chaining.
+         */
+        public Builder spotRequestValidTo(String spotRequestValidTo) {
+            this.spotRequestValidToString = Optional.fromNullable(spotRequestValidTo);
             return this;
         }
         
@@ -394,6 +632,24 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
             checkArgument(!trimmed.isEmpty(), message, messageArgs);
             
             return trimmed;
+        }
+        
+        private void checkEnumType(String value, Class<? extends Enum> enumType, 
+                String message, Object... messageArgs) {
+            try {
+                Enum.valueOf(enumType, value.toUpperCase());
+            } catch(IllegalArgumentException ex) {
+                throw new IllegalArgumentException(String.format(message, messageArgs), ex);
+            }
+        }
+        
+        private Date checkDate(SimpleDateFormat dateFormat, String value, 
+                String message, Object... messageArgs) {
+            try {
+                return dateFormat.parse(value);
+            } catch (ParseException ex) {
+                throw new IllegalArgumentException(String.format(message, messageArgs), ex);
+            }
         }
     }
 }

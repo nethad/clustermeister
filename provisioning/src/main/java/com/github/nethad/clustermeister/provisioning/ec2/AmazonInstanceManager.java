@@ -27,11 +27,15 @@ import com.google.common.base.Optional;
 import static com.google.common.base.Preconditions.*;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import com.google.common.collect.Maps;
 import com.google.common.util.concurrent.Monitor;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
+import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions;
+import org.jclouds.aws.ec2.domain.SpotInstanceRequest;
+import org.jclouds.aws.ec2.options.RequestSpotInstancesOptions;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.ComputeServiceContext;
 import org.jclouds.compute.RunNodesException;
@@ -59,10 +63,10 @@ public class AmazonInstanceManager {
     /**
      * jClouds group name.
      *
-     * AWS EC2 instances will be named GROUP_NAME-xxxxxxxx (e.g.
+     * AWS EC2 instances will be named DEFAULT_GROUP_NAME-xxxxxxxx (e.g.
      * clustermeister-1c045955)
      */
-    static final String GROUP_NAME = "clustermeister";
+    static final String DEFAULT_GROUP_NAME = "clustermeister";
     private final static Logger logger =
             LoggerFactory.getLogger(AmazonInstanceManager.class);
     private final ContextManager contextManager;
@@ -114,6 +118,8 @@ public class AmazonInstanceManager {
     /**
      * Create a new instance.
      *
+     * TODO: enable to launch more than one instace
+     * 
      * @param userMetaData A map containing optional user-defined tags.
      * @return	Meta data object for the created instance.
      *
@@ -126,21 +132,13 @@ public class AmazonInstanceManager {
                 contextManager.getEagerContext().getComputeService();
         Template template = nodeConfiguration.getTemplate(computeService.templateBuilder());
 
-        if (userMetaData.isPresent()) {
-            template.getOptions().userMetadata(userMetaData.get());
-        }
-        template.getOptions().
-                inboundPorts(
-                AmazonNodeManager.DEFAULT_SSH_PORT, 
-                JPPFConstants.DEFAULT_SERVER_PORT, 
-                JPPFConstants.DEFAULT_MANAGEMENT_PORT,
-                JPPFConstants.DEFAULT_MANAGEMENT_PORT + 1,
-                JPPFConstants.DEFAULT_MANAGEMENT_RMI_PORT);
+        Optional<String> group = nodeConfiguration.getProfile().getGroup();
+        String groupName = group.or(DEFAULT_GROUP_NAME);
         
-        setLoginCredentials(template, nodeConfiguration);
+        setTemplateOptions(template, nodeConfiguration, userMetaData);
         
         Set<? extends NodeMetadata> instances = computeService.
-                createNodesInGroup(GROUP_NAME, 1, template);
+                createNodesInGroup(groupName, 1, template);
 
         NodeMetadata metadata = Iterables.getOnlyElement(instances);
         if(!nodeConfiguration.getCredentials().isPresent()) {
@@ -154,7 +152,7 @@ public class AmazonInstanceManager {
         logger.info("Instance {} created.", metadata.getId());
         return metadata;
     }
-    
+
     /**
      * Suspend (stop) an instance.
      *
@@ -319,6 +317,50 @@ public class AmazonInstanceManager {
         } finally {
             reverseTunnelMonitor.leave();
         }
+    }
+    
+    private void setTemplateOptions(Template template, AmazonNodeConfiguration nodeConfiguration, 
+            Optional<Map<String, String>> userMetadata) {
+        //TODO: ports may not be correct
+        template.getOptions().inboundPorts(
+                    AmazonNodeManager.DEFAULT_SSH_PORT, 
+                    JPPFConstants.DEFAULT_SERVER_PORT, 
+                    JPPFConstants.DEFAULT_MANAGEMENT_PORT,
+                    JPPFConstants.DEFAULT_MANAGEMENT_PORT + 1,
+                    JPPFConstants.DEFAULT_MANAGEMENT_RMI_PORT);
+        
+        Optional<Float> spotPrice = nodeConfiguration.getProfile().getSpotPrice();
+        Optional<String> spotRequestType = nodeConfiguration.getProfile().getSpotRequestType();
+        Optional<Date> validFrom = nodeConfiguration.getProfile().getSpotRequestValidFrom();
+        Optional<Date> validTo = nodeConfiguration.getProfile().getSpotRequestValidTo();
+        AWSEC2TemplateOptions awsEC2Options = template.getOptions().as(AWSEC2TemplateOptions.class);
+        Map<String, String> metadataMap = userMetadata.or(Maps.<String,String>newHashMap());
+        if(spotPrice.isPresent()) {
+            awsEC2Options.spotPrice(spotPrice.get());
+            metadataMap.put(AmazonConfigurationLoader.SPOT_PRICE, String.valueOf(spotPrice.get()));
+            
+            RequestSpotInstancesOptions spotOptions = awsEC2Options.getSpotOptions();
+            SpotInstanceRequest.Type type;
+            if(spotRequestType.isPresent()) {
+                type = SpotInstanceRequest.Type.valueOf(spotRequestType.get().trim().toUpperCase());
+            } else {
+                type = SpotInstanceRequest.Type.ONE_TIME;
+            }
+            spotOptions.type(type);
+            metadataMap.put(AmazonConfigurationLoader.SPOT_REQUEST_TYPE, spotRequestType.get());
+            if(validFrom.isPresent()) {
+                spotOptions.validFrom(validFrom.get());
+                metadataMap.put(AmazonConfigurationLoader.SPOT_REQUEST_VALID_FROM, validFrom.get().toString());
+            }
+            if(validTo.isPresent()) {
+                spotOptions.validUntil(validTo.get());
+                metadataMap.put(AmazonConfigurationLoader.SPOT_REQUEST_VALID_TO, validTo.get().toString());
+            }
+        }
+        
+        template.getOptions().userMetadata(metadataMap);
+        
+        setLoginCredentials(template, nodeConfiguration);
     }
 
     private void setLoginCredentials(Template template, AmazonNodeConfiguration nodeConfiguration) {

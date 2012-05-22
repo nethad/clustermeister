@@ -352,10 +352,15 @@ public class AmazonNodeManager {
         private final AmazonInstanceShutdownState shutdownState;
         private final AmazonInstanceManager instanceManager;
 
-        public RemoveNodeTask(AmazonNode node, AmazonInstanceShutdownState shutdownMethod,
+        public RemoveNodeTask(AmazonNode node, AmazonInstanceShutdownState shutdownState,
                 AmazonInstanceManager instanceManager) {
             this.node = node;
-            this.shutdownState = shutdownMethod;
+            if(node.nodeConfiguration.getProfile().getSpotPrice().isPresent() && 
+                    shutdownState == AmazonInstanceShutdownState.SUSPENDED) {
+                this.shutdownState = AmazonInstanceShutdownState.TERMINATED;
+            } else {
+                this.shutdownState = shutdownState;
+            }
             this.instanceManager = instanceManager;
         }
 

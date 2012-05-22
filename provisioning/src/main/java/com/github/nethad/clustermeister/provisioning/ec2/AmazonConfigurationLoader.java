@@ -102,6 +102,31 @@ public class AmazonConfigurationLoader {
     public static final String SHUTDOWN_STATE = "shutdown_state";
     
     /**
+     * Group configuration property.
+     */
+    public static final String GROUP = "group";
+    
+    /**
+     * Spot price configuration property.
+     */
+    public static final String SPOT_PRICE = "spot_price";
+    
+    /**
+     * Spot request type configuration property.
+     */
+    public static final String SPOT_REQUEST_TYPE = "spot_request_type";
+    
+    /**
+     * Spot request valid from configuration property.
+     */
+    public static final String SPOT_REQUEST_VALID_FROM = "spot_request_valid_from";
+    
+    /**
+     * Spot request valid to configuration property.
+     */
+    public static final String SPOT_REQUEST_VALID_TO = "spot_request_valid_to";
+    
+    /**
      * The configuration.
      */
     final Configuration configuration;
@@ -189,6 +214,11 @@ public class AmazonConfigurationLoader {
                     amiId(profileValues.get(AMI_ID)).
                     keypairName(profileValues.get(KEYPAIR)).
                     shutdownState(profileValues.get(SHUTDOWN_STATE)).
+                    group(profileValues.get(GROUP)).
+                    spotPrice(profileValues.get(SPOT_PRICE)).
+                    spotRequestType(profileValues.get(SPOT_REQUEST_TYPE)).
+                    spotRequestValidFrom(profileValues.get(SPOT_REQUEST_VALID_FROM)).
+                    spotRequestValidTo(profileValues.get(SPOT_REQUEST_VALID_TO)).
                     build();
             profiles.put(profileName, profile);
         }

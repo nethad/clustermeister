@@ -23,6 +23,8 @@ import com.google.common.base.Charsets;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.Map;
 import java.util.Set;
 import org.apache.commons.configuration.ConfigurationException;
@@ -50,12 +52,19 @@ public class AmazonConfigurationLoaderTest {
     private static final String REGION2 = "us-east-1";
     private static final String ZONE1 = "eu-west-1a";
     private static final String SHUTDOWN_STATE1 = "suspended";
+    private static final String SPOT_PRICE = "0.03";
+    private static final String SPOT_REQUEST_TYPE = "one_time";
+    private static final String SPOT_REQUEST_VALID_FROM = "2012-01-01 00:00";
+    private static final String SPOT_REQUEST_VALID_TO = "2012-12-31 23:59";
+    private static final String GROUP = "testGroup";
     private static final String TYPE1 = "type1";
     private static final String TYPE2 = "type2";
     private static final String USER1 = "user1";
     private static final String USER2 = "user2";
     private ByteArrayInputStream configBytes;
     private ByteArrayInputStream badConfigBytes;
+    private SimpleDateFormat simpleDateFormat = 
+            new SimpleDateFormat(AWSInstanceProfile.DATE_PATTERN);
 
     private AmazonConfigurationLoader configLoader;
     private String privateKeyPath;
@@ -87,6 +96,11 @@ public class AmazonConfigurationLoaderTest {
         config.append("        type: ").append(TYPE1).append("\n");
         config.append("        keypair: ").append(KEYPAIR1).append("\n");
         config.append("        shutdown_state: ").append(SHUTDOWN_STATE1).append("\n");
+        config.append("        spot_price: ").append(SPOT_PRICE).append("\n");
+        config.append("        spot_request_type: ").append(SPOT_REQUEST_TYPE).append("\n");
+        config.append("        group: ").append(GROUP).append("\n");
+        config.append("        spot_request_valid_from: ").append(SPOT_REQUEST_VALID_FROM).append("\n");
+        config.append("        spot_request_valid_to: ").append(SPOT_REQUEST_VALID_TO).append("\n");
         config.append("    - ").append(PROFILE2).append(":").append("\n");
         config.append("        ami_id: ").append(AMI_ID2).append("\n");
         config.append("        region: ").append(REGION2).append("\n");
@@ -174,7 +188,7 @@ public class AmazonConfigurationLoaderTest {
     }
     
     @Test
-    public void testGetConfiguredProfiles() throws ConfigurationException {
+    public void testGetConfiguredProfiles() throws ConfigurationException, ParseException {
         goodConfigSetup();
         Map<String, AWSInstanceProfile> result = configLoader.getConfiguredProfiles();
         assertThat(result, allOf(
@@ -187,12 +201,22 @@ public class AmazonConfigurationLoaderTest {
         assertThat(result.get(PROFILE1).getZone().get(), is(equalTo(ZONE1)));
         assertThat(result.get(PROFILE1).getKeyPairName().get(), is(equalTo(KEYPAIR1)));
         assertThat(result.get(PROFILE1).getShutdownState().get(), is(equalTo(SHUTDOWN_STATE1)));
+        assertThat(result.get(PROFILE1).getSpotPrice().get(), is(equalTo(Float.parseFloat(SPOT_PRICE))));
+        assertThat(result.get(PROFILE1).getSpotRequestType().get(), is(equalTo(SPOT_REQUEST_TYPE)));
+        assertThat(result.get(PROFILE1).getGroup().get(), is(equalTo(GROUP)));
+        assertThat(result.get(PROFILE1).getSpotRequestValidFrom().get(), 
+                is(equalTo(simpleDateFormat.parse(SPOT_REQUEST_VALID_FROM))));
+        assertThat(result.get(PROFILE1).getSpotRequestValidTo().get(), 
+                is(equalTo(simpleDateFormat.parse(SPOT_REQUEST_VALID_TO))));
         assertThat(result.get(PROFILE2).getAmiId().get(), is(equalTo(AMI_ID2)));
         assertThat(result.get(PROFILE2).getRegion(), is(equalTo(REGION2)));
         assertThat(result.get(PROFILE2).getType(), is(equalTo(TYPE2)));
         assertThat(result.get(PROFILE2).getZone().isPresent(), is(equalTo(false)));
         assertThat(result.get(PROFILE2).getKeyPairName().isPresent(), is(equalTo(false)));
         assertThat(result.get(PROFILE2).getShutdownState().isPresent(), is(equalTo(false)));
+        assertThat(result.get(PROFILE2).getSpotPrice().isPresent(), is(equalTo(false)));
+        assertThat(result.get(PROFILE2).getSpotRequestType().isPresent(), is(equalTo(false)));
+        assertThat(result.get(PROFILE2).getGroup().isPresent(), is(equalTo(false)));
     }
     
     @Test(expected=NullPointerException.class)
