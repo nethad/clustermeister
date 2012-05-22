@@ -20,6 +20,7 @@ import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.node.common.ClustermeisterDriverLauncher;
 import com.github.nethad.clustermeister.node.common.ClustermeisterLauncher;
 import com.github.nethad.clustermeister.node.common.ClustermeisterProcessLauncher.StreamSink;
+import com.github.nethad.clustermeister.provisioning.ConfigurationKeys;
 import com.google.common.util.concurrent.Monitor;
 import java.util.Map;
 import java.util.Observable;
@@ -44,7 +45,7 @@ import org.slf4j.LoggerFactory;
  */
 public class JPPFConfiguratedComponentFactory {
     private static final String DRIVER_THREAD_NAME = "CMLocalDriverThread";
-    private static final String JVM_OPTIONS_CONFIG_KEY = "jvm_options.local_driver";
+//    private static final String JVM_OPTIONS_CONFIG_KEY = "jvm_options.local_driver";
 
     private final static Logger logger = 
 			LoggerFactory.getLogger(Loggers.PROVISIONING);
@@ -128,7 +129,7 @@ public class JPPFConfiguratedComponentFactory {
         try {
             JPPFDriverConfigurationSource.serverPort = serverPort;
             JPPFDriverConfigurationSource.managementPort = managementPort;
-            JPPFDriverConfigurationSource.jvmOptions = configuration.getString(JVM_OPTIONS_CONFIG_KEY, "");
+            JPPFDriverConfigurationSource.jvmOptions = configuration.getString(ConfigurationKeys.JVM_OPTIONS_LOCAL_DRIVER, "");
             setConfigProperty(JPPFDriverConfigurationSource.class.getCanonicalName());
             final ClustermeisterLauncher launcher = new ClustermeisterDriverLauncher(true);
             final AtomicBoolean initialized = new AtomicBoolean(false);

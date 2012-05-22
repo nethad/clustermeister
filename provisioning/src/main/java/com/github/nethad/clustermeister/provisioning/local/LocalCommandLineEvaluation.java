@@ -13,55 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.torque.commands;
+package com.github.nethad.clustermeister.provisioning.local;
 
-import com.github.nethad.clustermeister.provisioning.AbstractExecutableCommand;
-import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
-import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
-import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
+import com.github.nethad.clustermeister.api.NodeInformation;
+import com.github.nethad.clustermeister.provisioning.*;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiServerForApi;
-import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
-import com.google.common.annotations.VisibleForTesting;
 import java.util.Collection;
 import java.util.LinkedList;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  *
  * @author thomas
  */
-public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
-    
-    private static final Logger logger = LoggerFactory.getLogger(TorqueCommandLineEvaluation.class);
-    
-    private final TorqueNodeManager nodeManager;
-    private final CommandLineHandle handle;
-    @VisibleForTesting
+public class LocalCommandLineEvaluation implements CommandLineEvaluation {
+    private final LocalNodeManager nodeManager;
+    private final CommandLineHandle commandLineHandle;
     private final RmiServerForApi rmiServerForApi;
     
     private Collection<AbstractExecutableCommand> commands = new LinkedList<AbstractExecutableCommand>();
 
-    public TorqueCommandLineEvaluation(TorqueNodeManager nodeManager, CommandLineHandle handle, RmiServerForApi rmiServerForApi) {
+    LocalCommandLineEvaluation(LocalNodeManager nodeManager, CommandLineHandle commandLineHandle, RmiServerForApi rmiServerForApi) {
         this.nodeManager = nodeManager;
-        this.handle = handle;
+        this.commandLineHandle = commandLineHandle;
         this.rmiServerForApi = rmiServerForApi;
         registerCommands();
     }
-    
-    private void registerCommands() {
-        addAndRegisterCommand(new AddNodesCommand(this));
-        addAndRegisterCommand(new RemoveNodeCommand(this));
-    }
-    
-    private void addAndRegisterCommand(AbstractExecutableCommand command) {
-        handle.getCommandRegistry().registerCommand(command);
-        commands.add(command);
-    }
-    
+
     @Override
     public void state(CommandLineArguments arguments) {
-        new StateCommand(this).execute(arguments);
+        Collection<NodeInformation> allNodes = rmiServerForApi.getAllNodes();
+        System.out.println("number of nodes: "+allNodes.size());
     }
 
     @Override
@@ -81,15 +62,20 @@ public class TorqueCommandLineEvaluation implements CommandLineEvaluation {
 
     @Override
     public CommandLineHandle getCommandLineHandle() {
-        return handle;
+        return commandLineHandle;
     }
-    
-    public TorqueNodeManager getNodeManager() {
+
+    LocalNodeManager getNodeManager() {
         return nodeManager;
     }
+
+    private void registerCommands() {
+        addAndRegisterCommand(new AddNodesCommand(this));
+    }
     
-    public RmiServerForApi getRmiServerForApi() {
-        return rmiServerForApi;
+    private void addAndRegisterCommand(AbstractExecutableCommand command) {
+        commandLineHandle.getCommandRegistry().registerCommand(command);
+        commands.add(command);
     }
     
 }

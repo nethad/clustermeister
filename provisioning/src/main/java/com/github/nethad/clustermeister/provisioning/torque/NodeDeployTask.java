@@ -17,6 +17,7 @@ package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.api.Loggers;
+import com.github.nethad.clustermeister.provisioning.ConfigurationKeys;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
@@ -37,7 +38,7 @@ import org.slf4j.LoggerFactory;
  */
 class NodeDeployTask {
     
-    private static final String DEFAULT_JVM_OPTIONS = "-Xmx32m";
+//    private static final String DEFAULT_JVM_OPTIONS = "-Xmx32m";
 	
 	private static final Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
 	private int managementPort;
@@ -61,7 +62,7 @@ class NodeDeployTask {
         if (configuredJvmOptions.isPresent()) {
             this.jvmOptions = configuredJvmOptions.get();
         } else {
-            this.jvmOptions = DEFAULT_JVM_OPTIONS;
+            this.jvmOptions = ConfigurationKeys.DEFAULT_JVM_OPTIONS_NODE;
         }
 	}
 
