@@ -51,6 +51,7 @@ import org.slf4j.LoggerFactory;
 public class TorqueNodeManager {
 
 	public static final int THREAD_POOL_SIZE = 2;
+    private static final String JVM_OPTIONS_NODE_KEY = "jvm_options.node";
 	private Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
 	
 
@@ -144,6 +145,9 @@ public class TorqueNodeManager {
     }
 
 	public ListenableFuture<Void> addNode(TorqueNodeConfiguration nodeConfiguration) {
+        if (!nodeConfiguration.getJvmOptions().isPresent()) {
+            nodeConfiguration.setJvmOptions(configuration.getString(JVM_OPTIONS_NODE_KEY, null));
+        }
         return executorService.submit(new AddNodeTask(nodeConfiguration));
 	}
     

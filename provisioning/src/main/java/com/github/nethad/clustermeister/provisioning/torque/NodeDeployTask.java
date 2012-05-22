@@ -22,6 +22,7 @@ import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Optional;
 import java.io.IOException;
 import java.io.InputStream;
 import javax.xml.bind.DatatypeConverter;
@@ -35,6 +36,8 @@ import org.slf4j.LoggerFactory;
  * @author thomas
  */
 class NodeDeployTask {
+    
+    private static final String DEFAULT_JVM_OPTIONS = "-Xmx32m";
 	
 	private static final Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
 	private int managementPort;
@@ -44,6 +47,7 @@ class NodeDeployTask {
 	private final TorqueNodeConfiguration nodeConfiguration;
     private final String email;
     private final String queueName;
+    private final String jvmOptions;
 
 	public NodeDeployTask(TorqueNodeDeployment torqueNodeDeployment, int nodeNumber, 
             TorqueNodeConfiguration nodeConfiguration, TorqueConfiguration torqueConfiguration) {
@@ -53,6 +57,12 @@ class NodeDeployTask {
 		this.managementPort = TorqueNodeDeployment.DEFAULT_MANAGEMENT_PORT + nodeNumber;
         this.email = torqueConfiguration.getEmailNotify();
         this.queueName = torqueConfiguration.getQueueName();
+        Optional<String> configuredJvmOptions = nodeConfiguration.getJvmOptions();
+        if (configuredJvmOptions.isPresent()) {
+            this.jvmOptions = configuredJvmOptions.get();
+        } else {
+            this.jvmOptions = DEFAULT_JVM_OPTIONS;
+        }
 	}
 
     /**
@@ -152,7 +162,10 @@ class NodeDeployTask {
             .append("cp -r ~/jppf-node $workingDir/jppf-node\n")
             .append("cd $workingDir/jppf-node\n")
             .append("chmod +x startNode.sh\n")
-            .append("./startNode.sh ").append(nodeConfigFileName).append("\n");
+            .append("./startNode.sh ")
+                    .append(nodeConfigFileName)
+                    .append(" true false ")
+                    .append("\"").append(jvmOptions).append("\"").append("\n");
         return sb.toString();
     }
 

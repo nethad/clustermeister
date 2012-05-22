@@ -17,6 +17,7 @@ package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
+import com.google.common.base.Optional;
 import java.io.File;
 import java.util.Collection;
 
@@ -30,6 +31,7 @@ public class TorqueNodeConfiguration implements NodeConfiguration {
 	private final String driverAddress;
     private final int numberOfCpus;
     private final Collection<File> artifactsToPreload;
+    private Optional<String> jvmOptions = Optional.<String>absent();
 
 	public TorqueNodeConfiguration(String driverAddress, int numberOfCpus, Collection<File> artifactsToPreload) {
 		this.driverAddress = driverAddress;
@@ -67,6 +69,15 @@ public class TorqueNodeConfiguration implements NodeConfiguration {
     @Override
     public Collection<File> getArtifactsToPreload() {
         return artifactsToPreload;
+    }
+
+    public void setJvmOptions(String jvmOptions) {
+        this.jvmOptions = Optional.fromNullable(jvmOptions);
+    }
+    
+    @Override
+    public Optional<String> getJvmOptions() {
+        return jvmOptions;
     }
 	
 }
