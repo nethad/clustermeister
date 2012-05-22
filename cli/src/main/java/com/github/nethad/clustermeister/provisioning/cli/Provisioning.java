@@ -23,6 +23,7 @@ import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.CommandRegistry;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
+import com.github.nethad.clustermeister.provisioning.local.LocalNodeManager;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.google.common.annotations.VisibleForTesting;
@@ -70,6 +71,9 @@ public class Provisioning {
                 break;
             case TEST:
                 startTestSetup();
+                break;
+            case LOCAL:
+                startLocalSetup();
                 break;
             default:
                 throw new RuntimeException("Unknown provider");
@@ -136,6 +140,13 @@ public class Provisioning {
             @Override
             public CommandLineHandle getCommandLineHandle() { return null; }
         };
+        startLocalDriver();
+        jppfLocalDriver.update(null, "127.0.0.1");
+    }
+    
+    private void startLocalSetup() {
+        logger.info("start local setup.");
+        commandLineEvaluation = LocalNodeManager.commandLineEvaluation(configuration, commandLineHandle, rmiInfrastructure.getRmiServerForApiObject());
         startLocalDriver();
         jppfLocalDriver.update(null, "127.0.0.1");
     }

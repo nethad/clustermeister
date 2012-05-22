@@ -48,7 +48,7 @@ public class ProvisioningCLI {
 //    private static final String CONFIG_FILE_NAME = "configuration.yml";
 //    private static final String DEFAULT_CONFIG_FILE = System.getProperty("user.home") + "/.clustermeister/" + CONFIG_FILE_NAME;
     private static final String OPTION_PROVIDER = "provider";
-    private static final String DEFAULT_PROVIDER = "torque";
+    private static final String DEFAULT_PROVIDER = "local";
 
     public static void main(String... args) {
         loadJDKLoggingConfiguration();

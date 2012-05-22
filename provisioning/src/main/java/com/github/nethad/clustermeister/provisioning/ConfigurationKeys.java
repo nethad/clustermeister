@@ -13,33 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.cli;
+package com.github.nethad.clustermeister.provisioning;
 
 /**
  *
  * @author thomas
  */
-public enum Provider {
-    TORQUE("torque"), AMAZON("amazon"), TEST("test"), LOCAL("local");
-    private String provider;
-
-    Provider(String providerName) {
-        this.provider = providerName;
-    }
-
-    public String getProvider() {
-        return this.provider;
-    }
-
-    public static Provider fromString(String provider) {
-        if (provider != null) {
-            for (Provider p : Provider.values()) {
-                if (provider.equalsIgnoreCase(p.provider)) {
-                    return p;
-                }
-            }
-        }
-        return null;
-    }
+public class ConfigurationKeys {
+    
+    public static final String JVM_OPTIONS_LOCAL_DRIVER = "jvm_options.local_driver";
+    
+    public static final String JVM_OPTIONS_NODE = "jvm_options.node";
+    public static final String DEFAULT_JVM_OPTIONS_NODE = "-Xmx32m";
     
 }
