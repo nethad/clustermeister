@@ -54,7 +54,7 @@ public class TorqueJPPFTestSetup {
         } catch (ConfigurationException ex) {
             throw new RuntimeException(ex);
         }
-        jppfLocalDriver = new JPPFLocalDriver();
+        jppfLocalDriver = new JPPFLocalDriver(configuration);
         torqueNodeManager.addPublicIpListener(jppfLocalDriver);
         
         setupRmi();

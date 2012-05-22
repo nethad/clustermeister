@@ -16,26 +16,17 @@
 package com.github.nethad.clustermeister.provisioning.cli;
 
 import com.github.nethad.clustermeister.api.Loggers;
-import com.github.nethad.clustermeister.provisioning.CommandRegistry;
-import com.github.nethad.clustermeister.api.impl.FileConfiguration;
 import com.github.nethad.clustermeister.api.impl.YamlConfiguration;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.CommandRegistry;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.inject.Inject;
-import com.google.inject.name.Named;
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.util.Scanner;
-import java.util.StringTokenizer;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.slf4j.Logger;
@@ -61,7 +52,6 @@ public class Provisioning {
     private CommandLineHandle commandLineHandle;
 
     public Provisioning(String configFilePath, Provider provider, CommandRegistry commandRegistry) {
-        logger.info("Provisioning.");
         this.configFilePath = configFilePath;
         this.provider = provider;
         rmiInfrastructure = new RmiInfrastructure();
@@ -90,18 +80,6 @@ public class Provisioning {
         commandLineEvaluation.shutdown(arguments);
         shutdownDriver();
     }   
-    
-//    public String helpText(String command) {
-//        return commandLineEvaluation.helpText(command);
-//    }
-    
-//    public void commandAddnodes(StringTokenizer tokenizer) {
-//        commandLineEvaluation.addNodes(tokenizer, driverHost);
-//    }
-    
-//    public void commandHelp(StringTokenizer tokenizer) {
-//        commandLineEvaluation.help(tokenizer);
-//    }
     
     public void commandUnknownFallback(String command, CommandLineArguments arguments) {
         commandLineEvaluation.handleCommand(command, arguments);
@@ -133,12 +111,16 @@ public class Provisioning {
 
     private void startAmazon() {
         commandLineEvaluation = AmazonNodeManager.commandLineEvaluation(configuration, commandLineHandle, rmiInfrastructure);
-        jppfLocalDriver = new JPPFLocalDriver();
+        startLocalDriver();
+    }
+
+    private void startLocalDriver() {
+        jppfLocalDriver = new JPPFLocalDriver(configuration);
         jppfLocalDriver.execute();
     }
 
     private void startTorque() {
-        jppfLocalDriver = new JPPFLocalDriver();
+        jppfLocalDriver = new JPPFLocalDriver(configuration);
         commandLineEvaluation = TorqueNodeManager.commandLineEvaluation(configuration, commandLineHandle, jppfLocalDriver, rmiInfrastructure.getRmiServerForApiObject());
         jppfLocalDriver.execute();
     }
@@ -154,8 +136,7 @@ public class Provisioning {
             @Override
             public CommandLineHandle getCommandLineHandle() { return null; }
         };
-        jppfLocalDriver = new JPPFLocalDriver();
-        jppfLocalDriver.execute();
+        startLocalDriver();
         jppfLocalDriver.update(null, "127.0.0.1");
     }
 

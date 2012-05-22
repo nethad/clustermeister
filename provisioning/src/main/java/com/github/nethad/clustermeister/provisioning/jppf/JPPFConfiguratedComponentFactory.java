@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.jppf;
 
 import com.github.nethad.clustermeister.api.JPPFConstants;
+import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.node.common.ClustermeisterDriverLauncher;
 import com.github.nethad.clustermeister.node.common.ClustermeisterLauncher;
 import com.github.nethad.clustermeister.node.common.ClustermeisterProcessLauncher.StreamSink;
@@ -28,6 +29,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import javassist.ClassPool;
 import javassist.CtClass;
 import javassist.CtMethod;
+import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -42,9 +44,10 @@ import org.slf4j.LoggerFactory;
  */
 public class JPPFConfiguratedComponentFactory {
     private static final String DRIVER_THREAD_NAME = "CMLocalDriverThread";
+    private static final String JVM_OPTIONS_CONFIG_KEY = "jvm_options.local_driver";
 
     private final static Logger logger = 
-			LoggerFactory.getLogger(JPPFConfiguratedComponentFactory.class);
+			LoggerFactory.getLogger(Loggers.PROVISIONING);
 
     private static int configClassId = 1;
     
@@ -120,11 +123,12 @@ public class JPPFConfiguratedComponentFactory {
         }
     }
 	
-    public ClustermeisterLauncher createLocalDriver(int serverPort, int managementPort) {
+    public ClustermeisterLauncher createLocalDriver(int serverPort, int managementPort, Configuration configuration) {
         configPropertyMonitor.enter();
         try {
             JPPFDriverConfigurationSource.serverPort = serverPort;
             JPPFDriverConfigurationSource.managementPort = managementPort;
+            JPPFDriverConfigurationSource.jvmOptions = configuration.getString(JVM_OPTIONS_CONFIG_KEY, "");
             setConfigProperty(JPPFDriverConfigurationSource.class.getCanonicalName());
             final ClustermeisterLauncher launcher = new ClustermeisterDriverLauncher(true);
             final AtomicBoolean initialized = new AtomicBoolean(false);

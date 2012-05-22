@@ -61,7 +61,7 @@ public class PublicIpIntegrationTest {
         final Lock lock = new ReentrantLock();
         final Condition condition = lock.newCondition();
         final AtomicBoolean isBlocking = new AtomicBoolean(false);
-        final JPPFLocalDriver driver = new JPPFLocalDriver();
+        final JPPFLocalDriver driver = new JPPFLocalDriver(null);
         new Thread(new Runnable() {
             @Override
             public void run() {
