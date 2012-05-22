@@ -83,6 +83,7 @@ public class AmazonNodeManager {
     private final ListeningExecutorService executorService;
     private String accessKeyId;
     private String secretKey;
+    private String nodeJvmOptions;
     private Map<String, AWSInstanceProfile> profiles;
     private Collection<File> artifactsToPreload;
 
@@ -140,6 +141,9 @@ public class AmazonNodeManager {
 
     public ListenableFuture<? extends Node> addNode(AmazonNodeConfiguration nodeConfiguration,
             Optional<String> instanceId) {
+        if(!nodeConfiguration.getJvmOptions().isPresent()) {
+            nodeConfiguration.setJvmOptions(nodeJvmOptions);
+        }
         return executorService.submit(new AmazonNodeManager.AddNodeTask(nodeConfiguration, instanceId));
     }
     
@@ -280,6 +284,9 @@ public class AmazonNodeManager {
                 new AmazonConfigurationLoader(configuration);
         accessKeyId = configurationLoader.getAccessKeyId();
         secretKey = configurationLoader.getSecretKey();
+        
+        //TODO: move logic to AmazonConfigurationLoader
+        nodeJvmOptions = configuration.getString("jvm_options.node", "-Xmx32m");
         
         profiles = Collections.synchronizedMap(configurationLoader.getConfiguredProfiles());
         
