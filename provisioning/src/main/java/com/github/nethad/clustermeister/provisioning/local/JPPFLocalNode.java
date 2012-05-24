@@ -19,7 +19,6 @@ import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
-import com.google.common.base.Optional;
 import com.google.common.io.Files;
 import java.io.*;
 import java.util.Collection;
@@ -152,17 +151,14 @@ public class JPPFLocalNode {
         return logFile;
     }
     
-    public void shutdown() {
-        JPPFManagementByJobsClient client = JPPFConfiguratedComponentFactory.getInstance().createManagementByJobsClient("localhost", 11111);
+    public void cleanupAfterShutdown() {
         try {
-            client.shutdownAllNodes();
             nodeProcessOutputterStdOutToFile.close();
             nodeProcessOutputterStdErrToFile.close();
             FileUtils.deleteDirectory(targetDir);
         } catch (Exception ex) {
             ex.printStackTrace();
         } finally {
-            client.close();
         }
     }
     

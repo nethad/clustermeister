@@ -23,6 +23,8 @@ import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedCompon
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiServerForApi;
+import java.util.Collection;
+import java.util.LinkedList;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -36,10 +38,12 @@ public class LocalNodeManager {
     private static final Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
     
     private final Configuration configuration;
-    private JPPFLocalNode node;
+    private Collection<JPPFLocalNode> localNodes;
+//    private JPPFLocalNode node;
     
     private LocalNodeManager(Configuration configuration) {
         this.configuration = configuration;
+        localNodes = new LinkedList<JPPFLocalNode>();
     }
     
     public static CommandLineEvaluation commandLineEvaluation(Configuration configuration, 
@@ -80,17 +84,18 @@ public class LocalNodeManager {
     }
 
     public void shutdown() {
-        node.shutdown();
+        for (JPPFLocalNode node : localNodes) {
+            node.cleanupAfterShutdown();
+        }
     }
 
     public void addNode(LocalNodeConfiguration nodeConfiguration) {
-        if (node == null) {
-            node = new JPPFLocalNode();
-            node.prepare(nodeConfiguration.getArtifactsToPreload());
-        }
+        JPPFLocalNode node = new JPPFLocalNode();
+        node.prepare(nodeConfiguration.getArtifactsToPreload());
         int numberOfProcessingThreads = nodeConfiguration.getNumberOfProcessingThreads();
         logger.info("Adding node with {} processing threads", numberOfProcessingThreads);
         node.startNewNode(nodeConfiguration);
+        localNodes.add(node);
     }
     
 }
