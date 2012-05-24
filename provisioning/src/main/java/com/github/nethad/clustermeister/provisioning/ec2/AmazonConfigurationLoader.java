@@ -127,6 +127,11 @@ public class AmazonConfigurationLoader {
     public static final String SPOT_REQUEST_VALID_TO = "spot_request_valid_to";
     
     /**
+     * Placement group configuration property.
+     */
+    public static final String PLACEMENT_GROUP = "placement_group";
+    
+    /**
      * The configuration.
      */
     final Configuration configuration;
@@ -219,6 +224,7 @@ public class AmazonConfigurationLoader {
                     spotRequestType(profileValues.get(SPOT_REQUEST_TYPE)).
                     spotRequestValidFrom(profileValues.get(SPOT_REQUEST_VALID_FROM)).
                     spotRequestValidTo(profileValues.get(SPOT_REQUEST_VALID_TO)).
+                    placementGroup(profileValues.get(PLACEMENT_GROUP)).
                     build();
             profiles.put(profileName, profile);
         }

@@ -57,6 +57,7 @@ public class AmazonConfigurationLoaderTest {
     private static final String SPOT_REQUEST_VALID_FROM = "2012-01-01 00:00";
     private static final String SPOT_REQUEST_VALID_TO = "2012-12-31 23:59";
     private static final String GROUP = "testGroup";
+    private static final String PLACEMENT_GROUP = "testPlacementGroup";
     private static final String TYPE1 = "type1";
     private static final String TYPE2 = "type2";
     private static final String USER1 = "user1";
@@ -101,6 +102,7 @@ public class AmazonConfigurationLoaderTest {
         config.append("        group: ").append(GROUP).append("\n");
         config.append("        spot_request_valid_from: ").append(SPOT_REQUEST_VALID_FROM).append("\n");
         config.append("        spot_request_valid_to: ").append(SPOT_REQUEST_VALID_TO).append("\n");
+        config.append("        placement_group: ").append(PLACEMENT_GROUP).append("\n");
         config.append("    - ").append(PROFILE2).append(":").append("\n");
         config.append("        ami_id: ").append(AMI_ID2).append("\n");
         config.append("        region: ").append(REGION2).append("\n");
@@ -204,6 +206,7 @@ public class AmazonConfigurationLoaderTest {
         assertThat(result.get(PROFILE1).getSpotPrice().get(), is(equalTo(Float.parseFloat(SPOT_PRICE))));
         assertThat(result.get(PROFILE1).getSpotRequestType().get(), is(equalTo(SPOT_REQUEST_TYPE)));
         assertThat(result.get(PROFILE1).getGroup().get(), is(equalTo(GROUP)));
+        assertThat(result.get(PROFILE1).getPlacementGroup().get(), is(equalTo(PLACEMENT_GROUP)));
         assertThat(result.get(PROFILE1).getSpotRequestValidFrom().get(), 
                 is(equalTo(simpleDateFormat.parse(SPOT_REQUEST_VALID_FROM))));
         assertThat(result.get(PROFILE1).getSpotRequestValidTo().get(), 
@@ -217,6 +220,7 @@ public class AmazonConfigurationLoaderTest {
         assertThat(result.get(PROFILE2).getSpotPrice().isPresent(), is(equalTo(false)));
         assertThat(result.get(PROFILE2).getSpotRequestType().isPresent(), is(equalTo(false)));
         assertThat(result.get(PROFILE2).getGroup().isPresent(), is(equalTo(false)));
+        assertThat(result.get(PROFILE2).getPlacementGroup().isPresent(), is(equalTo(false)));
     }
     
     @Test(expected=NullPointerException.class)
