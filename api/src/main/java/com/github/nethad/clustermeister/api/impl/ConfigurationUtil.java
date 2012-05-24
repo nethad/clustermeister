@@ -86,6 +86,10 @@ public class ConfigurationUtil {
                 for (Map.Entry<String, Map<String, String>> entry : map.entrySet()) {
                     String key = entry.getKey();
                     Map<String, String> value = entry.getValue();
+                    for (Map.Entry<String, String> valueEntry : value.entrySet()) {
+                        Object valueValue = valueEntry.getValue();
+                        valueEntry.setValue(String.valueOf(valueValue));
+                    }
                     result.put(key, value);
                 }
             }

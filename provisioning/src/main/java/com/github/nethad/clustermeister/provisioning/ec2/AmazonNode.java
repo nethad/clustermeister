@@ -53,13 +53,24 @@ public class AmazonNode implements Node {
     
     public AmazonInstanceShutdownState getInstanceShutdownState() {
         AmazonInstanceShutdownState shutdownState;
+        
+        
         Optional<String> configuredState = nodeConfiguration.getProfile().getShutdownState();
         if(configuredState.isPresent()) {
             shutdownState = AmazonInstanceShutdownState.valueOf(
                     configuredState.get().toUpperCase());
+            if(nodeConfiguration.getProfile().getSpotPrice().isPresent() && 
+                    shutdownState == AmazonInstanceShutdownState.SUSPENDED) {
+                shutdownState = AmazonInstanceShutdownState.TERMINATED;
+            }
         } else {
-            shutdownState = AmazonInstanceShutdownState.SUSPENDED;
+            if(nodeConfiguration.getProfile().getSpotPrice().isPresent()) {
+                shutdownState = AmazonInstanceShutdownState.TERMINATED;
+            } else {
+                shutdownState = AmazonInstanceShutdownState.SUSPENDED;
+            }
         }
+        
         return shutdownState;
     }
 

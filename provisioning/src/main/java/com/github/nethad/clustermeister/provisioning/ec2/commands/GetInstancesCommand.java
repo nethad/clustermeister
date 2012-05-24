@@ -161,6 +161,8 @@ public class GetInstancesCommand extends AbstractAmazonExecutableCommand {
     }
 
     private void createNodeMetadataOutput(StringBuilder output, NodeMetadata nodeMetadata) {
+        output.append("\n\t\t\tGroup=").
+                append(nodeMetadata.getGroup());
         output.append("\n\t\t\tState=").
                 append(nodeMetadata.getState());
         output.append("\n\t\t\tAMI=").

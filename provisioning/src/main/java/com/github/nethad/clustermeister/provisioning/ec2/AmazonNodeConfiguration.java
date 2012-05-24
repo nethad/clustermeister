@@ -102,12 +102,7 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
 
     Template getTemplate(TemplateBuilder templateBuilder) {
         templateBuilder.hardwareId(profile.getType());
-        
-        if(profile.getZone().isPresent()) {
-            templateBuilder.locationId(profile.getZone().get());
-        } else {
-            templateBuilder.locationId(profile.getRegion());
-        }
+        templateBuilder.locationId(profile.getZone().or(profile.getRegion()));
         
         if(profile.getAmiId().isPresent()) {
             String jCloudsImageId = Joiner.on('/').join(profile.getRegion(), 
