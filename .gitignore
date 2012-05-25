@@ -1,37 +1,24 @@
 /provisioning/target/
 /api/target/
-/ext/org.jppf.common/target/
-/org.jppf.common/target/
-/org.jppf.client/target/
-/org.jppf.node/target/
-/org.jppf.common-node/target/
-/org.jppf.server/target/
-
-/provisioning/nbactions.xml
-
-#ignore backup files
-*~
 /node/target/
 /driver/target/
 /cli/target/
-/driver (copy)/target/
 /node-common/target/
 /integration-tests/target/
+
+#ignore backup files
+*~
 
 #ignore logs
 *.log
 
-integration-tests/.cache
+#ignore netbeans files
+nbactions.xml
 
-integration-tests/.classpath
-
-integration-tests/.project
-
-integration-tests/.settings/org.eclipse.core.resources.prefs
-
-integration-tests/.settings/org.eclipse.jdt.core.prefs
-
-integration-tests/.settings/org.eclipse.m2e.core.prefs
+#ignore eclipse files
+*.cache
+*.classpath
+*.project
+*.settings
 
 .gitignore
-/integration-tests/.settings/
