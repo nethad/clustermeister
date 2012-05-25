@@ -1,0 +1,3 @@
+jvm_options:
+  local_driver: "-Xmx256m"
+  node: "-Xmx32m"
