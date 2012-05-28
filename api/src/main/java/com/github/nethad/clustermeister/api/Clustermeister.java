@@ -15,7 +15,9 @@
  */
 package com.github.nethad.clustermeister.api;
 
+import com.github.nethad.clustermeister.api.impl.Task;
 import java.util.Collection;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import org.jppf.client.JPPFClient;
 
@@ -54,5 +56,7 @@ public interface Clustermeister {
      * This method is commonly called in a finally-block after all code has been executed on the nodes.
      */
     public void shutdown();
+    
+    public <T> List<T> executeJob(Job<T> job) throws Exception;
     
 }

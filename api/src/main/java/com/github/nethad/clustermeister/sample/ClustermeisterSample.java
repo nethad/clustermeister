@@ -17,13 +17,13 @@ package com.github.nethad.clustermeister.sample;
 
 import com.github.nethad.clustermeister.api.Clustermeister;
 import com.github.nethad.clustermeister.api.ExecutorNode;
+import com.github.nethad.clustermeister.api.Job;
 import com.github.nethad.clustermeister.api.impl.ClustermeisterFactory;
+import com.github.nethad.clustermeister.api.impl.JobFactory;
+import com.github.nethad.clustermeister.api.impl.Task;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.io.Serializable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import org.jppf.JPPFException;
 import org.jppf.client.JPPFClient;
@@ -45,7 +45,8 @@ public class ClustermeisterSample implements Serializable {
 //        executorServiceApi();
 //        jppfApi();
 //        custom();
-        gatherNodeInfo();
+//        gatherNodeInfo();
+        jobAndTaskWrapperExample();
     }
 
     private void executorServiceApi() {
@@ -128,8 +129,29 @@ public class ClustermeisterSample implements Serializable {
         }
     }
     
-    private void readmeExample() {
-
+    private void jobAndTaskWrapperExample() {
+        Clustermeister clustermeister = null;
+        try {
+            clustermeister = ClustermeisterFactory.create();
+            Map<String, Object> jobData = new HashMap<String, Object>();
+            jobData.put("key", "");
+            Job<String> job = JobFactory.create("My Job", jobData);
+            job.addTask(new CMTask());
+            job.addTask(new CMTask());
+            job.addTask(new CMTask());
+            job.addTask(new CMTask());
+            List<String> results = clustermeister.executeJob(job);
+            for (String result : results) {
+                System.out.println("Result: "+result.toString());
+            }
+        } catch (Exception ex) {
+            System.err.println("Exception: "+ex);
+            ex.printStackTrace();
+        } finally {
+            if (clustermeister != null) {
+                clustermeister.shutdown();
+            }
+        }
     }
 
     private void custom() {
@@ -176,6 +198,15 @@ public class ClustermeisterSample implements Serializable {
         @Override
         public String call() throws Exception {
             return "Hello world!";
+        }
+        
+    }
+    
+    public class CMTask extends Task<String> implements Serializable {
+
+        @Override
+        public String execute() throws Exception {
+            return "I found the key to be " + getValue("key");
         }
         
     }

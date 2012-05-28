@@ -13,16 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.api;
+package com.github.nethad.clustermeister.api.impl;
+
+import com.github.nethad.clustermeister.api.Job;
+import java.util.Map;
 
 /**
  *
  * @author thomas
  */
-public class Loggers {
+public class JobFactory {
+    public static final String DEFAULT_JOB_NAME = "Clustermeister Job";
     
-    public static final String CLI = "CLI";
-    public static final String PROVISIONING = "PROVISIONING";
-    public static final String API = "API";
+    public static <T> Job<T> create(Map<String, Object> jobData) {
+        return new JobImpl(DEFAULT_JOB_NAME, jobData);
+    }
+    
+    public static <T> Job<T> create(String name, Map<String, Object> jobData) {
+        return new JobImpl(name, jobData);
+    }
     
 }

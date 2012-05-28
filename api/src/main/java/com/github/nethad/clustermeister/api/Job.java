@@ -15,14 +15,17 @@
  */
 package com.github.nethad.clustermeister.api;
 
+import com.github.nethad.clustermeister.api.impl.Task;
+import org.jppf.client.JPPFJob;
+
 /**
  *
  * @author thomas
  */
-public class Loggers {
+public interface Job<T> {
     
-    public static final String CLI = "CLI";
-    public static final String PROVISIONING = "PROVISIONING";
-    public static final String API = "API";
+    public void addTask(Task<T> task) throws Exception;
+    
+    public JPPFJob getJppfJob();
     
 }

@@ -15,12 +15,12 @@
  */
 package com.github.nethad.clustermeister.api.impl;
 
-import com.github.nethad.clustermeister.api.Clustermeister;
-import com.github.nethad.clustermeister.api.ExecutorNode;
-import com.github.nethad.clustermeister.api.NodeCapabilities;
-import com.github.nethad.clustermeister.api.NodeInformation;
+import com.github.nethad.clustermeister.api.*;
 import com.github.nethad.clustermeister.api.rmi.IRmiServerForApi;
 import com.github.nethad.clustermeister.api.utils.JPPFProperties;
+import com.google.common.base.Function;
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Iterators;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import org.jppf.client.JPPFClient;
 import org.jppf.client.concurrent.JPPFExecutorService;
+import org.jppf.server.protocol.JPPFTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -122,6 +123,33 @@ public class ClustermeisterImpl implements Clustermeister {
     @Override
     public Collection<ExecutorNode> getAllNodes() {
         return this.nodes;
+    }
+
+    @Override
+    public <T> List<T> executeJob(Job<T> job) throws Exception {
+        List<T> resultObjects = new LinkedList<T>();
+        List<JPPFTask> results = jppfClient.submit(job.getJppfJob());
+        for (JPPFTask jppfTask : results) {
+            Exception exception = jppfTask.getException();
+            if (exception == null) {
+                Object result = jppfTask.getResult();
+                if (result != null) {
+                    resultObjects.add((T)result);
+                } else {
+                    System.out.println("Result was null");
+                }
+            } else {
+                System.out.println("Exception: "+exception.getMessage());
+                exception.printStackTrace();
+            }
+        }
+//        Collections2.transform(results, new Function<JPPFTask, Object>() {
+//            @Override
+//            public Object apply(JPPFTask input) {
+//                return input.getResult();
+//            }
+//        });
+        return resultObjects;
     }
 
 }
