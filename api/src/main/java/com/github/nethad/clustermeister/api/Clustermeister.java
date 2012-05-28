@@ -15,7 +15,9 @@
  */
 package com.github.nethad.clustermeister.api;
 
+import com.github.nethad.clustermeister.api.impl.JobFactory;
 import com.github.nethad.clustermeister.api.impl.Task;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -57,6 +59,19 @@ public interface Clustermeister {
      */
     public void shutdown();
     
+    /**
+     * Execute a job (a list of tasks) on the nodes provisioned.
+     * This method is blocking, see {@link #executeJobAsync(com.github.nethad.clustermeister.api.Job) } for a non-blocking 
+     * implementation.
+     * @param <T>
+     * @param job
+     * @return
+     * @throws Exception 
+     */
     public <T> List<T> executeJob(Job<T> job) throws Exception;
+    
+    public <T> ListenableFuture<List<T>> executeJobAsync(Job<T> job) throws Exception;
+    
+    public <T> List<ListenableFuture<T>> executeJobAsyncTasks(final Job<T> job) throws Exception;
     
 }

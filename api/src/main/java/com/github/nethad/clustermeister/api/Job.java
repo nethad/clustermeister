@@ -15,11 +15,14 @@
  */
 package com.github.nethad.clustermeister.api;
 
+import com.github.nethad.clustermeister.api.impl.JobImpl;
 import com.github.nethad.clustermeister.api.impl.Task;
 import org.jppf.client.JPPFJob;
+import org.jppf.client.JPPFResultCollector;
 
 /**
- *
+ * A Job is a collection of {@link Task}s.
+ * Jobs are usually created with {@link JobFactory#create(java.lang.String, java.util.Map) }.
  * @author thomas
  */
 public interface Job<T> {
@@ -27,5 +30,9 @@ public interface Job<T> {
     public void addTask(Task<T> task) throws Exception;
     
     public JPPFJob getJppfJob();
+
+    public void setBlocking(boolean blocking);
+    
+    public JobImpl.FutureResultCollector resultCollector();
     
 }

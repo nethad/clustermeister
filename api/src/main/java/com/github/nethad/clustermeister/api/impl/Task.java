@@ -22,7 +22,7 @@ import org.jppf.server.protocol.JPPFTask;
  *
  * @author thomas
  */
-public abstract class Task<T> implements Serializable{
+public abstract class Task<T> implements Serializable {
     private JPPFTask jppfTask;
 
     public Task() {

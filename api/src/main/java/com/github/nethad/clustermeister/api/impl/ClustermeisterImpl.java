@@ -18,20 +18,26 @@ package com.github.nethad.clustermeister.api.impl;
 import com.github.nethad.clustermeister.api.*;
 import com.github.nethad.clustermeister.api.rmi.IRmiServerForApi;
 import com.github.nethad.clustermeister.api.utils.JPPFProperties;
-import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Iterators;
+import com.google.common.util.concurrent.ListenableFuture;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import org.jppf.client.JPPFClient;
+import org.jppf.client.JPPFResultCollector;
 import org.jppf.client.concurrent.JPPFExecutorService;
+import org.jppf.client.concurrent.JPPFTaskFuture;
+import org.jppf.client.event.SubmissionStatusEvent;
+import org.jppf.client.event.SubmissionStatusListener;
+import org.jppf.client.event.TaskResultEvent;
 import org.jppf.server.protocol.JPPFTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -79,7 +85,6 @@ public class ClustermeisterImpl implements Clustermeister {
     }
 
     protected void gatherNodeInformation() {
-        //        nodes = new GatherNodeInformation(jppfClient, threadsExecutorService).getNodes();
         try {
             nodeInformationCollection = rmiServerForApi.getAllNodes();
             logger.info("Provisioning returned {} nodes.", nodeInformationCollection.size());
@@ -133,23 +138,33 @@ public class ClustermeisterImpl implements Clustermeister {
             Exception exception = jppfTask.getException();
             if (exception == null) {
                 Object result = jppfTask.getResult();
-                if (result != null) {
-                    resultObjects.add((T)result);
-                } else {
-                    System.out.println("Result was null");
+                if (result == null) {
+                    logger.warn("Received null result.");
                 }
+                resultObjects.add((T)result);
             } else {
-                System.out.println("Exception: "+exception.getMessage());
-                exception.printStackTrace();
+                throw new Exception(exception);
             }
         }
-//        Collections2.transform(results, new Function<JPPFTask, Object>() {
-//            @Override
-//            public Object apply(JPPFTask input) {
-//                return input.getResult();
-//            }
-//        });
         return resultObjects;
+    }
+
+    @Override
+    public <T> ListenableFuture<List<T>> executeJobAsync(final Job<T> job) throws Exception {
+        return threadsExecutorService.submit(new Callable<List<T>>() {
+            @Override
+            public List<T> call() throws Exception {
+                return executeJob(job);
+            }
+        });
+    }
+    
+    @Override
+    public <T> List<ListenableFuture<T>> executeJobAsyncTasks(final Job<T> job) throws Exception {
+        job.setBlocking(false);
+        JobImpl.FutureResultCollector collector = job.resultCollector();
+        jppfClient.submit(job.getJppfJob());
+        return collector.getFutureList();
     }
 
 }

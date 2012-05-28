@@ -17,9 +17,18 @@ package com.github.nethad.clustermeister.api.impl;
 
 import com.github.nethad.clustermeister.api.Job;
 import com.github.nethad.clustermeister.api.Loggers;
+import com.google.common.base.Optional;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.SettableFuture;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Future;
 import org.jppf.JPPFException;
 import org.jppf.client.JPPFJob;
+import org.jppf.client.JPPFResultCollector;
+import org.jppf.client.event.TaskResultEvent;
+import org.jppf.server.protocol.JPPFTask;
 import org.jppf.task.storage.DataProvider;
 import org.jppf.task.storage.MemoryMapDataProvider;
 import org.slf4j.Logger;
@@ -35,9 +44,13 @@ public class JobImpl<T> implements Job<T> {
     
     private JPPFJob jppfJob;
 
-    JobImpl(String name, Map<String, Object> jobData) {
-        DataProvider dataProvider = dataProviderWith(jobData);
-        jppfJob = new JPPFJob(dataProvider);
+    JobImpl(String name, Optional<Map<String, Object>> jobData) {
+        if (jobData.isPresent()) {
+            DataProvider dataProvider = dataProviderWith(jobData.get());
+            jppfJob = new JPPFJob(dataProvider);
+        } else {
+            jppfJob = new JPPFJob();
+        }
         jppfJob.setName(name);
     }
     
@@ -66,7 +79,43 @@ public class JobImpl<T> implements Job<T> {
     public JPPFJob getJppfJob() {
         return jppfJob;
     }
+
+    @Override
+    public void setBlocking(boolean blocking) {
+        jppfJob.setBlocking(blocking);
+    }
     
+    @Override
+    public FutureResultCollector resultCollector() {
+        FutureResultCollector collector = new FutureResultCollector(jppfJob);
+        jppfJob.setResultListener(collector);
+        return collector;
+    }
+
+    public class FutureResultCollector extends JPPFResultCollector {
+        
+        List<SettableFuture<T>> futureResults = new ArrayList<SettableFuture<T>>();
+
+        public FutureResultCollector(JPPFJob job) {
+            super(job);
+            for(int i=0; i<job.getTasks().size(); i++) {
+                futureResults.add(SettableFuture.<T>create());
+            }
+        }
+        
+        @Override
+        public synchronized void resultsReceived(TaskResultEvent event) {
+            super.resultsReceived(event);
+            //System.out.println("Received result, task list size = " + event.getTaskList().size());
+            for (JPPFTask task : event.getTaskList()) {
+                futureResults.get(task.getPosition()).set((T)task.getResult());
+            }
+        }
+
+        public List<SettableFuture<T>> getFutureList() {
+            return futureResults;
+        }
+    }
     
     
 }

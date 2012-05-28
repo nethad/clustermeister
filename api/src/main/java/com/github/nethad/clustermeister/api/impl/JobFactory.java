@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.api.impl;
 
 import com.github.nethad.clustermeister.api.Job;
+import com.google.common.base.Optional;
 import java.util.Map;
 
 /**
@@ -26,11 +27,11 @@ public class JobFactory {
     public static final String DEFAULT_JOB_NAME = "Clustermeister Job";
     
     public static <T> Job<T> create(Map<String, Object> jobData) {
-        return new JobImpl(DEFAULT_JOB_NAME, jobData);
+        return new JobImpl(DEFAULT_JOB_NAME, Optional.fromNullable(jobData));
     }
     
     public static <T> Job<T> create(String name, Map<String, Object> jobData) {
-        return new JobImpl(name, jobData);
+        return new JobImpl(name, Optional.fromNullable(jobData));
     }
     
 }
