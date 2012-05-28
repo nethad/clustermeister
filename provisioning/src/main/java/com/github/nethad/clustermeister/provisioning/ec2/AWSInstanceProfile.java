@@ -54,6 +54,7 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
     private Optional<String> spotRequestType = Optional.<String>absent();
     private Optional<Date> spotRequestValidFrom = Optional.<Date>absent();
     private Optional<Date> spotRequestValidTo = Optional.<Date>absent();
+    private Optional<String> placementGroup = Optional.<String>absent();
     
     /**
      * Create a new {@link AWSInstanceProfile} from AWS EC2 instance meta data.
@@ -275,6 +276,20 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
     public Optional<Date> getSpotRequestValidTo() {
         return spotRequestValidTo;
     }
+
+    /**
+     * Returns the placement group configured for this profile.
+     * 
+     * @return 
+     *      a account-unique string identifying the placement group.
+     * 
+     * @see <a href="http://aws.amazon.com/ec2/faqs/#What_is_a_cluster_placement_group">
+     * What is a cluster placement group?</a>
+     * 
+     */
+    public Optional<String> getPlacementGroup() {
+        return placementGroup;
+    }
     
     @Override
     public String toString() {
@@ -314,6 +329,10 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
         
         if(spotRequestValidTo.isPresent()) {
             helper.add("Spot Request Valid To", spotRequestValidTo.get());
+        }
+        
+        if(placementGroup.isPresent()) {
+            helper.add("Placement Group", placementGroup.get());
         }
         
         return helper.toString();
@@ -467,6 +486,12 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
                     this.profile.spotRequestValidTo = Optional.fromNullable(date); 
             }
             
+            if(this.profile.placementGroup.isPresent()) {
+                this.profile.placementGroup = Optional.of(checkString(
+                        this.profile.placementGroup.get(), KEY_VALUE_MESSAGE, 
+                        AmazonConfigurationLoader.PLACEMENT_GROUP, this.profile.profileName));
+            }
+            
             return profile;
         }
 
@@ -615,6 +640,18 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
         }
         
         /**
+         * Sets a placement group name.
+         * 
+         * @param placementGroup 
+         *      the placement group.
+         * @return this instance for chaining.
+         */
+        public Builder placementGroup(String placementGroup) {
+            this.profile.placementGroup = Optional.fromNullable(placementGroup);
+            return this;
+        }
+        
+        /**
          * Check a string reference for being non-null and not empty.
          * 
          * Throws {@link IllegalArgumentException} or {@link NullPointerException} 
@@ -625,6 +662,9 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
          * @param messageArgs arguments to fill into the message patterns (replacing %s).
          * 
          * @return the trimmed String.
+         * 
+         * @throws NullPointerException when the provided String is null.
+         * @throws IllegalArgumentException when the trimmed String is empty.
          */
         protected String checkString(String string, String message, Object... messageArgs) {
             checkNotNull(string, message, messageArgs);
@@ -634,7 +674,19 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
             return trimmed;
         }
         
-        private void checkEnumType(String value, Class<? extends Enum> enumType, 
+        /**
+         * Check whether a string corresponds to an Enum value of specified type.
+         * 
+         * @param value the string to check.
+         * @param enumType the Enum type.
+         * @param message Message pattern for error reporting.
+         * @param messageArgs Arguments for the error message pattern.
+         * 
+         * @throws IllegalArgumentException 
+         *      when the provided value can not be parsed as an Enum value of 
+         *      specified type.
+         */
+        protected void checkEnumType(String value, Class<? extends Enum> enumType, 
                 String message, Object... messageArgs) {
             try {
                 Enum.valueOf(enumType, value.toUpperCase());
@@ -643,7 +695,22 @@ public class AWSInstanceProfile implements Comparable<AWSInstanceProfile> {
             }
         }
         
-        private Date checkDate(SimpleDateFormat dateFormat, String value, 
+        /**
+         * Check whether a String can be parsed to a {@link Date} and 
+         * return that date.
+         * 
+         * @param dateFormat Date pattern specification.
+         * @param value Date value as a String.
+         * @param message Message pattern for error reporting.
+         * @param messageArgs Arguments for the error message pattern.
+         * 
+         * @return the parsed {@link Date}.
+         * 
+         * @throws IllegalArgumentException 
+         *      when the date does not correspond to the date pattern specified 
+         *      by the provided {@code dateFormat}.
+         */
+        protected Date checkDate(SimpleDateFormat dateFormat, String value, 
                 String message, Object... messageArgs) {
             try {
                 return dateFormat.parse(value);

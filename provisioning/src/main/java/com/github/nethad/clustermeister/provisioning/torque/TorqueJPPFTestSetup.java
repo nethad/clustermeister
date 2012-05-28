@@ -47,7 +47,7 @@ public class TorqueJPPFTestSetup {
     private Configuration configuration;
 
     private void execute() {
-        final String configurationFilePath = System.getProperty("user.home") + "/.clustermeister/configuration.properties";
+        final String configurationFilePath = System.getProperty("user.home") + "/.clustermeister/configuration.yml";
         try {
             this.configuration = new FileConfiguration(configurationFilePath);
             torqueNodeManager = new TorqueNodeManager(configuration);

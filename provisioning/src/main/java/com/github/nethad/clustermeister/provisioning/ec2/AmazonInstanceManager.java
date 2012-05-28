@@ -34,6 +34,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.TimeoutException;
 import org.jclouds.aws.ec2.compute.AWSEC2TemplateOptions;
+import org.jclouds.aws.ec2.domain.PlacementGroup;
 import org.jclouds.aws.ec2.domain.SpotInstanceRequest;
 import org.jclouds.aws.ec2.options.RequestSpotInstancesOptions;
 import org.jclouds.compute.ComputeService;
@@ -329,11 +330,22 @@ public class AmazonInstanceManager {
                     JPPFConstants.DEFAULT_MANAGEMENT_PORT + 1,
                     JPPFConstants.DEFAULT_MANAGEMENT_RMI_PORT);
         
-        Optional<Float> spotPrice = nodeConfiguration.getProfile().getSpotPrice();
-        Optional<String> spotRequestType = nodeConfiguration.getProfile().getSpotRequestType();
-        Optional<Date> validFrom = nodeConfiguration.getProfile().getSpotRequestValidFrom();
-        Optional<Date> validTo = nodeConfiguration.getProfile().getSpotRequestValidTo();
+        AWSInstanceProfile nodeProfile = nodeConfiguration.getProfile();
+        Optional<Float> spotPrice = nodeProfile.getSpotPrice();
+        Optional<String> spotRequestType = nodeProfile.getSpotRequestType();
+        Optional<Date> validFrom = nodeProfile.getSpotRequestValidFrom();
+        Optional<Date> validTo = nodeProfile.getSpotRequestValidTo();
+        Optional<String> placementGroup = nodeProfile.getPlacementGroup();
         AWSEC2TemplateOptions awsEC2Options = template.getOptions().as(AWSEC2TemplateOptions.class);
+        if(placementGroup.isPresent()) {
+            PlacementGroup placementGroupDesc = ec2Facade.
+                    getPlacementGroupDescription(nodeProfile.getRegion(), placementGroup.get());
+            if(placementGroupDesc == null || (placementGroupDesc.getState() != PlacementGroup.State.AVAILABLE && 
+                    placementGroupDesc.getState() != PlacementGroup.State.PENDING)) {
+                ec2Facade.createPlavementGroupInRegion(nodeProfile.getRegion(), placementGroup.get());
+            }
+            awsEC2Options.placementGroup(placementGroup.get());
+        }
         Map<String, String> metadataMap = userMetadata.or(Maps.<String,String>newHashMap());
         if(spotPrice.isPresent()) {
             awsEC2Options.spotPrice(spotPrice.get());

@@ -47,7 +47,8 @@ public class JPPFTestDriver {
         
         @Override
         public void run() {
-            provisioning = new Provisioning(null, Provider.TEST, null);
+            provisioning = new Provisioning(getClass().getResource("/testConfiguration.yml").getPath(), 
+            		Provider.TEST, null);
             RmiInfrastructure rmiInfrastructure = provisioning.getRmiInfrastructure();
             RmiServerForDriver rmiServerForDriver = rmiInfrastructure.getRmiServerForDriverObject();
             rmiServerForDriver.addNodeConnectionListener(nodeConnectionListener);
