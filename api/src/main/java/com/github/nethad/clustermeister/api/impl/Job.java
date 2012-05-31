@@ -13,26 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.api;
+package com.github.nethad.clustermeister.api.impl;
 
-import com.github.nethad.clustermeister.api.impl.JobImpl;
-import com.github.nethad.clustermeister.api.impl.Task;
+import java.util.concurrent.Callable;
 import org.jppf.client.JPPFJob;
-import org.jppf.client.JPPFResultCollector;
 
 /**
  * A Job is a collection of {@link Task}s.
  * Jobs are usually created with {@link JobFactory#create(java.lang.String, java.util.Map) }.
+ * It is generally a good idea to conflate tasks in a job, as it often leads to a significant execution speed-up
+ * compared to executing them as single {@link Callable}s.
  * @author thomas
  */
-public interface Job<T> {
+public abstract class Job<T> {
+        
+    /**
+     * Adds a task to the job.
+     * @param task the task to add
+     * @throws Exception 
+     */
+    public abstract void addTask(Task<T> task) throws Exception;
     
-    public void addTask(Task<T> task) throws Exception;
-    
-    public JPPFJob getJppfJob();
+    /**
+     * Exposes the underlying JPPF Job. Any direct modification of the JPPF Job is discouraged.
+     * @return the native JPPF Job.
+     */
+    protected abstract JPPFJob getJppfJob();
 
-    public void setBlocking(boolean blocking);
+    protected abstract void setBlocking(boolean blocking);
     
-    public JobImpl.FutureResultCollector resultCollector();
+    protected abstract FutureResultCollector resultCollector();
     
 }

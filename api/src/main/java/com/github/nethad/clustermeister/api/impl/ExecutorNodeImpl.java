@@ -28,6 +28,7 @@ import org.jppf.JPPFException;
 import org.jppf.client.JPPFClient;
 import org.jppf.client.JPPFJob;
 import org.jppf.client.JPPFResultCollector;
+import org.jppf.client.concurrent.JPPFExecutorService;
 import org.jppf.node.policy.Equal;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -71,7 +72,7 @@ public class ExecutorNodeImpl implements ExecutorNode {
             job.addTask(task);
             job.setBlocking(false);
 //            job.getSLA().setCancelUponClientDisconnect(true);
-            job.getSLA().setMaxNodes(1);
+//            job.getSLA().setMaxNodes(1);
             job.getSLA().setExecutionPolicy(new Equal(JPPFProperties.UUID, true, getID()));
 
             JPPFResultCollector collector = new JPPFResultCollector(job);

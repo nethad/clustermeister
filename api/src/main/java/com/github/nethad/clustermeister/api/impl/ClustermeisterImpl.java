@@ -18,7 +18,6 @@ package com.github.nethad.clustermeister.api.impl;
 import com.github.nethad.clustermeister.api.*;
 import com.github.nethad.clustermeister.api.rmi.IRmiServerForApi;
 import com.github.nethad.clustermeister.api.utils.JPPFProperties;
-import com.google.common.collect.Collections2;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.rmi.AccessException;
 import java.rmi.NotBoundException;
@@ -26,18 +25,12 @@ import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import org.jppf.client.JPPFClient;
-import org.jppf.client.JPPFResultCollector;
 import org.jppf.client.concurrent.JPPFExecutorService;
-import org.jppf.client.concurrent.JPPFTaskFuture;
-import org.jppf.client.event.SubmissionStatusEvent;
-import org.jppf.client.event.SubmissionStatusListener;
-import org.jppf.client.event.TaskResultEvent;
 import org.jppf.server.protocol.JPPFTask;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -47,8 +40,9 @@ import org.slf4j.LoggerFactory;
  * @author thomas
  */
 public class ClustermeisterImpl implements Clustermeister {
+    private Collection<JPPFExecutorService> executorServices;
 
-    private JPPFExecutorService executorService;
+//    private JPPFExecutorService executorService;
     private JPPFClient jppfClient;
     private static final Logger logger = LoggerFactory.getLogger(Loggers.API);
     private Collection<ExecutorNode> nodes;
@@ -59,9 +53,10 @@ public class ClustermeisterImpl implements Clustermeister {
 
     public ClustermeisterImpl() {
         jppfClient = new JPPFClient("clustermeister_" + System.currentTimeMillis());
-        executorService = new JPPFExecutorService(jppfClient);
+//        executorService = new JPPFExecutorService(jppfClient);
 //        nodes = new LinkedList<ExecutorNode>();
         threadsExecutorService = new ThreadsExecutorService();
+        executorServices = new LinkedList<JPPFExecutorService>();
         setupRmi();
     }
 
@@ -105,7 +100,14 @@ public class ClustermeisterImpl implements Clustermeister {
     }
 
     @Override
-    public ExecutorService getExecutorService() {
+    public ExecutorService getExecutorService(ExecutorServiceMode executorServiceMode) {
+        JPPFExecutorService executorService = new JPPFExecutorService(jppfClient);
+        if (executorServiceMode != null) {
+            executorServiceMode.configureJppfExecutorService(executorService);
+        } else {
+            ExecutorServiceMode.standard().configureJppfExecutorService(executorService);
+        }
+        executorServices.add(executorService);
         return executorService;
     }
 
@@ -116,10 +118,12 @@ public class ClustermeisterImpl implements Clustermeister {
 
     @Override
     public void shutdown() {
-        executorService.shutdown();
-        List<Runnable> runnables = executorService.shutdownNow();
-        if (runnables != null) {
-            System.out.println("Runnables, size = " + runnables.size());
+        for (JPPFExecutorService executorService : executorServices) {
+            executorService.shutdown();
+            List<Runnable> runnables = executorService.shutdownNow();
+            if (runnables != null) {
+                logger.warn("{} tasks are still running.", runnables.size());
+            }
         }
         threadsExecutorService.shutdown();
         jppfClient.close();
@@ -162,7 +166,7 @@ public class ClustermeisterImpl implements Clustermeister {
     @Override
     public <T> List<ListenableFuture<T>> executeJobAsyncTasks(final Job<T> job) throws Exception {
         job.setBlocking(false);
-        JobImpl.FutureResultCollector collector = job.resultCollector();
+        FutureResultCollector collector = job.resultCollector();
         jppfClient.submit(job.getJppfJob());
         return collector.getFutureList();
     }
