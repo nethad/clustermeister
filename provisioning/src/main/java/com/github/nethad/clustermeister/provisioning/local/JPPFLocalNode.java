@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.local;
 
 import com.github.nethad.clustermeister.api.JPPFConstants;
+import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.node.common.NodeConfigurationUtils;
 import com.github.nethad.clustermeister.provisioning.utils.FileUtils;
 import com.google.common.io.Files;
@@ -39,6 +40,7 @@ import org.slf4j.LoggerFactory;
  * @author thomas, daniel
  */
 public class JPPFLocalNode {
+
     /**
      * Filename of the JPPF Configuration file.
      */
@@ -49,8 +51,7 @@ public class JPPFLocalNode {
      */
     protected static final String log4jConfigFileName = "log4j-node.properties";
     
-    private static final Logger logger = 
-            LoggerFactory.getLogger(JPPFLocalNode.class);
+    private static final Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
 
     /**
      * The specification of this node.
