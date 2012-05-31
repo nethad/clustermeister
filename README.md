@@ -41,12 +41,12 @@ Clustermeister consist of
 and 
 * an API to either access those nodes individually or via an _ExecutorService_.
 
-### Usage
+## Usage
 
 This is just a quick-start guide to provide you with an overview on how Clustermeister works. 
 For a more in-depth explanation, check out the [tutorial](https://github.com/nethad/clustermeister/wiki/Tutorial).
 
-#### Start CLI and start up nodes (TORQUE example)
+### Start CLI and start up nodes (TORQUE example)
 
 To set up the infrastructure (start nodes, etc.) we need to start the command line client.
 
@@ -96,7 +96,7 @@ nodes are started up (it takes a few seconds), they will connect to a driver on 
 
 Now, the nodes are started up and we're ready to execute code.
 
-#### Execute code via the API
+### Execute code via the API
 
 After we have started up the nodes, we can execute code on the nodes via the Clustermeister API. Because 
 there is no Clustermeister release yet, we need to add the api.jar manually. The jar file is located at 
