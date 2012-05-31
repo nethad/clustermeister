@@ -36,7 +36,7 @@ public class JPPFNodeConfiguration {
         properties.setProperty(JPPFConstants.RECONNECT_MAX_TIME, "60");
         properties.setProperty(JPPFConstants.RECONNECT_INTERVAL, "10");
         
-        properties.setProperty(JPPFConstants.JVM_OPTIONS, "-Xms64m -Xmx512m -Djava.util.logging.config.file=config/logging-driver.properties");
+        properties.setProperty(JPPFConstants.JVM_OPTIONS, "-Xms64m -Xmx512m -Djava.util.logging.config.file=config/logging-node.properties");
         properties.setProperty(JPPFConstants.CLASSLOADER_DELEGATION, "parent");
     }
     
