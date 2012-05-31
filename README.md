@@ -39,7 +39,8 @@ and
 
 ### Usage
 
-This is just a quick-start guide to provide you with an overview on how Clustermeister works. For a more in-depth explanation, check out the [[Tutorial]].
+This is just a quick-start guide to provide you with an overview on how Clustermeister works. 
+For a more in-depth explanation, check out the [tutorial](https://github.com/nethad/clustermeister/wiki/Tutorial).
 
 #### Start CLI and start up nodes (TORQUE example)
 
@@ -167,4 +168,5 @@ and exit the command line:
 `cm$ exit`
 
 And that's it. In this quick example, we saw how to set up Clustermeister to add nodes to our TORQUE 
-infrastructure and run code on them via the Clustermeister API. As mentioned above, for a more in-depth explanation, check out the [[Tutorial]].
+infrastructure and run code on them via the Clustermeister API. As mentioned above, for a more in-depth 
+explanation, check out the [tutorial](https://github.com/nethad/clustermeister/wiki/Tutorial).
