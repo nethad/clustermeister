@@ -81,7 +81,7 @@ public class ProvisioningCLI {
                     usage();
                     return;
                 }
-                logger.info("Using configuration in "+configFilePath);
+                logger.info("Using configuration in "+configFilePath +" or create file if it does not exist.");
                 logger.info("Using provider "+provider);
                 userInputEvaluation = new UserInputEvaluation();
                 provisioning = new Provisioning(configFilePath, provider, userInputEvaluation);

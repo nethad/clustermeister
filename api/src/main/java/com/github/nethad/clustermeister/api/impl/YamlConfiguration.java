@@ -35,7 +35,7 @@ import org.yaml.snakeyaml.Yaml;
  */
 public class YamlConfiguration extends HierarchicalConfiguration {
 //    private Map<String, Object> document;
-
+    
     public YamlConfiguration() {
         this.setExpressionEngine(new DefaultExpressionEngine());
     }
@@ -53,6 +53,51 @@ public class YamlConfiguration extends HierarchicalConfiguration {
         Yaml yaml = new Yaml();
         Map<String, Object> document = (Map<String, Object>)yaml.load(reader);
         this.setRootNode(new YamlConfigurationNode("", document));
+    }
+    
+    public static String defaultConfiguration() {
+        StringBuilder sb = new StringBuilder("# clustermeister default configuration\n");
+        sb.append("# for more information on how to configure clustermeister, see https://github.com/nethad/clustermeister/wiki/Configuration\n")
+            .append("\n")
+            .append("# amazon:\n")
+            .append("#   access_key_id: 00accesskey00\n")
+            .append("#   secret_key: 00secretkey00\n")
+            .append("#   keypairs:\n")
+            .append("#     - my-keypair:\n")
+            .append("#         user: ec2-user\n")
+            .append("#         private_key: /home/user/path/to/key_private.pem\n")
+            .append("#         public_key: /home/user/path/to/key_public.pub\n")
+            .append("#   profiles:\n")
+            .append("#     - micro-eu:\n")
+            .append("#         type: t1.micro\n")
+            .append("#         region: eu-west-1\n")
+            .append("#         keypair: my-keypair\n")
+            .append("#\n")
+            .append("# torque:\n")
+            .append("#   ssh_user: user\n")
+            .append("#   ssh_privatekey: /home/user/.ssh/id_dsa\n")
+            .append("#   ssh_host: host.example.org\n")
+            .append("#   ssh_port: 22\n")
+            .append("#   email_notify: user@example.org\n")
+            .append("#   queue_name: queuename\n")
+            .append("#\n")
+            .append("# preload:\n")
+            .append("#   poms:\n")
+            .append("#     - /home/user/path/to/my/pom.xml\n")
+            .append("#   excludes:\n")
+            .append("#     - \"org.example.groupids.to.exclude:artifactid\"\n")
+            .append("#   maven_repositories:\n")
+            .append("#     - typesafe:\n")
+            .append("#         layout: default\n")
+            .append("#         url: http://repo.typesafe.com/typesafe/releases/\n")
+            .append("#   artifacts:\n")
+            .append("#     - \"com.groupid:artifactid:1.0\"\n")
+            .append("#\n")
+            .append("# jvm_options:\n")
+            .append("#   local_driver: \"-Xmx500m\"\n")
+            .append("#   node: \"-Xmx300m\"\n")
+            .append("#\n");
+        return sb.toString();
     }
     
     public class YamlConfigurationNode implements ConfigurationNode {

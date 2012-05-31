@@ -27,7 +27,13 @@ import com.github.nethad.clustermeister.provisioning.local.LocalNodeManager;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiInfrastructure;
 import com.github.nethad.clustermeister.provisioning.torque.TorqueNodeManager;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
+import com.google.common.io.Files;
+import com.google.common.io.OutputSupplier;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.slf4j.Logger;
@@ -99,14 +105,15 @@ public class Provisioning {
     
     private void readConfigFile() {
         if (configFilePath == null || !(new File(configFilePath).exists())) {
-            logger.warn("Configuration file \""+configFilePath+"\" does not exist.");
-        } else {
-            try {
-                configuration = new YamlConfiguration(configFilePath);
-            } catch (ConfigurationException ex) {
-                throw new RuntimeException(ex);
-            }
+            logger.warn("Configuration file \""+configFilePath+"\" does not exist, create default configuration.");
+            createDefaultConfiguration(configFilePath);
         }
+        try {
+            configuration = new YamlConfiguration(configFilePath);
+        } catch (ConfigurationException ex) {
+            throw new RuntimeException(ex);
+        }
+        
     }
 
     private void shutdownDriver() {
@@ -159,6 +166,33 @@ public class Provisioning {
     @VisibleForTesting
     void setCommandLineEvaluation(CommandLineEvaluation evaluation) {
         this.commandLineEvaluation = evaluation;
+    }
+
+    private void createDefaultConfiguration(String configFilePath) {
+        final File configFile = new File(configFilePath);
+        if (configFile.exists()) {
+            return;
+        }
+        configFile.getParentFile().mkdirs();
+        
+        OutputSupplier<OutputStreamWriter> writer = Files.newWriterSupplier(configFile, Charsets.UTF_8);
+        OutputStreamWriter output = null;
+        try {
+            output = writer.getOutput();
+            output.append(YamlConfiguration.defaultConfiguration());
+            output.flush();
+            output.close();
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
+        } finally {
+            if (output != null) {
+                try {
+                    output.close();
+                } catch (IOException ex) {
+                    // ignore
+                }
+            }
+        }
     }
 
     

@@ -50,7 +50,7 @@ public class ClustermeisterImpl implements Clustermeister {
 
     private JPPFExecutorService executorService;
     private JPPFClient jppfClient;
-    private Logger logger = LoggerFactory.getLogger(ClustermeisterImpl.class);
+    private static final Logger logger = LoggerFactory.getLogger(Loggers.API);
     private Collection<ExecutorNode> nodes;
     private Collection<NodeInformation> nodeInformationCollection;
     private IRmiServerForApi rmiServerForApi;

@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.github.nethad.clustermeister.api.JPPFConstants;
+import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
 import com.google.common.io.Files;
 
@@ -38,7 +39,7 @@ import com.google.common.io.Files;
  * @author thomas
  */
 public class JPPFLocalNode {
-    private final Logger logger = LoggerFactory.getLogger(JPPFLocalNode.class);
+    private static final Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
     
     private File targetDir;
     
