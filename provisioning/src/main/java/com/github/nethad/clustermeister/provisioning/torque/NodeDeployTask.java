@@ -17,45 +17,45 @@ package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.api.Loggers;
+import com.github.nethad.clustermeister.node.common.NodeConfigurationUtils;
 import com.github.nethad.clustermeister.provisioning.ConfigurationKeys;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClientException;
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Charsets;
 import com.google.common.base.Optional;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.io.InputStream;
+import java.io.StringWriter;
+import java.util.Properties;
 import javax.xml.bind.DatatypeConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
  *
- * Deploys a new node to Torque, assuming that all artifacts are deployed beforehand.
- * 
- * @author thomas
+ * Deploys a new node to Torque, assuming that all artifacts are deployed
+ * beforehand.
+ *
+ * @author thomas, daniel
  */
 class NodeDeployTask {
-    
-//    private static final String DEFAULT_JVM_OPTIONS = "-Xmx32m";
-	
-	private static final Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
-	private int managementPort;
-	private int nodeNumber;
-	private int serverPort;
-	private final TorqueNodeDeployment torqueNodeDeployment;
-	private final TorqueNodeConfiguration nodeConfiguration;
+
+    private static final Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
+    private int managementPort;
+    private int nodeNumber;
+    private final TorqueNodeDeployment torqueNodeDeployment;
+    private final TorqueNodeConfiguration nodeConfiguration;
     private final String email;
     private final String queueName;
     private final String jvmOptions;
 
-	public NodeDeployTask(TorqueNodeDeployment torqueNodeDeployment, int nodeNumber, 
+    public NodeDeployTask(TorqueNodeDeployment torqueNodeDeployment, int nodeNumber,
             TorqueNodeConfiguration nodeConfiguration, TorqueConfiguration torqueConfiguration) {
-		this.torqueNodeDeployment = torqueNodeDeployment;
-		this.nodeNumber = nodeNumber;
-		this.nodeConfiguration = nodeConfiguration;
-		this.managementPort = TorqueNodeDeployment.DEFAULT_MANAGEMENT_PORT + nodeNumber;
+        this.torqueNodeDeployment = torqueNodeDeployment;
+        this.nodeNumber = nodeNumber;
+        this.nodeConfiguration = nodeConfiguration;
+        this.managementPort = TorqueNodeDeployment.DEFAULT_MANAGEMENT_PORT + nodeNumber;
         this.email = torqueConfiguration.getEmailNotify();
         this.queueName = torqueConfiguration.getQueueName();
         Optional<String> configuredJvmOptions = nodeConfiguration.getJvmOptions();
@@ -64,77 +64,108 @@ class NodeDeployTask {
         } else {
             this.jvmOptions = ConfigurationKeys.DEFAULT_JVM_OPTIONS_NODE;
         }
-	}
+    }
 
     /**
-     * Deploys a new node with its configuration and starts a Torque job (with qsub).
-     * @throws SSHClientException 
+     * Deploys a new node with its configuration and starts a Torque job (with
+     * qsub).
+     *
+     * @throws SSHClientException
      */
-	public void execute() throws SSHClientException {
-		String nodeNameBase = "CMNode" + torqueNodeDeployment.getSessionId();
-		String nodeName = nodeNameBase + "_" + nodeNumber;
-		String nodeConfigFileName = configFileName();
-		uploadNodeConfiguration(nodeConfigFileName, driverAddress());
-        
-        final String qsubScript = qsubScript(nodeName, nodeConfigFileName, 
+    public void execute() throws SSHClientException {
+        String nodeNameBase = "CMNode" + torqueNodeDeployment.getSessionId();
+        String nodeName = nodeNameBase + "_" + nodeNumber;
+        String nodeConfigFileName = configFileName();
+        uploadNodeConfiguration(nodeConfigFileName, driverAddress());
+
+        final String qsubScript = qsubScript(nodeName, nodeConfigFileName,
                 nodeConfiguration.getNumberOfCpus());
         final String base64EncodedQsubScript = base64Encode(qsubScript);
-        String submitJobToQsub = "echo \""+base64EncodedQsubScript+"\"| base64 -d | qsub";
-		String response = sshClient().executeWithResult(submitJobToQsub);
+        String submitJobToQsub = "echo \"" + base64EncodedQsubScript + "\"| base64 -d | qsub";
+        String response = sshClient().executeWithResult(submitJobToQsub);
         logger.info("Started node, response: {}", response);
 //		TorqueNode torqueNode = new TorqueNode(response, null, null, serverPort, managementPort);
 //		return torqueNode;
-	}
-	
-    @VisibleForTesting
-	void uploadNodeConfiguration(String nodeConfigFileName, String driverIpAddress) throws SSHClientException {
-		try {
-			JPPFNodeConfiguration configuration = createNodeConfiguration(driverIpAddress);
-			final String configServerPort = configuration.getProperty(JPPFConstants.SERVER_PORT);
-			if (configServerPort == null) {
-				serverPort = JPPFLocalDriver.SERVER_PORT;
-			} else {
-				serverPort = Integer.valueOf(configServerPort);
-			}
-			InputStream propertyStream = configuration.getPropertyStream();
-			sshClient().sftpUpload(propertyStream, TorqueNodeDeployment.DEPLOY_BASE_NAME + "/config/" + nodeConfigFileName);
-		} catch (IOException ex) {
-			logger.error(null, ex);
-		}
-	}
-
-    JPPFNodeConfiguration createNodeConfiguration(String driverIpAddress) {
-        JPPFNodeConfiguration configuration = new JPPFNodeConfiguration()
-                .setProperty(JPPFConstants.SERVER_HOST, driverIpAddress)
-                .setProperty(JPPFConstants.MANAGEMENT_PORT, String.valueOf(managementPort))
-                .setProperty(JPPFConstants.RESOURCE_CACHE_DIR, "/tmp/.jppf/node-" + torqueNodeDeployment.getSessionId() + "_" + nodeNumber)
-                .setProperty(JPPFConstants.PROCESSING_THREADS, String.valueOf(nodeConfiguration.getNumberOfCpus()));
-        return configuration;
     }
-		
-	private String configFileName() {
-		return TorqueNodeDeployment.DEPLOY_BASE_NAME + "-" + nodeNumber + TorqueNodeDeployment.DEPLOY_CONFIG_SUFFIX;
-	}
-	
-	private SSHClient sshClient() {
-		return torqueNodeDeployment.sshClient();
-	}
-	
-	private String driverAddress() {
-		String nodeConfigurationAddress = nodeConfiguration.getDriverAddress();
-		String torqueNodeDeploymentAddress = this.torqueNodeDeployment.getDriverAddress();
-		if (nodeConfigurationAddress != null) {
+
+    @VisibleForTesting
+    void uploadNodeConfiguration(String nodeConfigFileName, String driverIpAddress) throws SSHClientException {
+        Properties configuration = getJppfNodeConfiguration(driverIpAddress);
+        uploadPropertiesFile("JPPF-node configuration generated by Clustermeister.", 
+                String.format("%s/config/%s", 
+                TorqueNodeDeployment.DEPLOY_BASE_NAME, nodeConfigFileName), 
+                configuration);
+
+        configuration = NodeConfigurationUtils.getLog4JConfiguration();
+        uploadPropertiesFile("LOG4J configuration generated by Clustermeister.", 
+                String.format("%s/config/log4j-node.properties", 
+                TorqueNodeDeployment.DEPLOY_BASE_NAME), configuration);
+    }
+    
+    private void uploadPropertiesFile(String comment, String destination, 
+            Properties properties) throws SSHClientException {
+        try {
+            StringWriter writer = new StringWriter();
+            properties.store(writer, comment);
+            sshClient().sftpUpload(new ByteArrayInputStream(
+                    writer.toString().getBytes(Charsets.UTF_8)), destination);
+        } catch (IOException ex) {
+            logger.error("Could not upload configuration.", ex);
+        }
+    }
+    
+    /**
+     * Returns JPPF node configuration properties.
+     * 
+     * @param driverIpAddress the driver IP (or hostname)
+     * 
+     * @return the JPPF node configuration.
+     */
+    protected Properties getJppfNodeConfiguration(String driverIpAddress) {
+        Properties properties = new Properties();
+        properties.setProperty(JPPFConstants.MANAGEMENT_ENABLED, "true");
+        properties.setProperty(JPPFConstants.DISCOVERY_ENABLED, "false");
+        properties.setProperty(JPPFConstants.RECONNECT_MAX_TIME, "60");
+        properties.setProperty(JPPFConstants.RECONNECT_INTERVAL, "10");
+        if(nodeConfiguration.getJvmOptions().isPresent()) {
+            properties.setProperty(JPPFConstants.JVM_OPTIONS, 
+                    nodeConfiguration.getJvmOptions().get());
+        }
+        properties.setProperty(JPPFConstants.CLASSLOADER_DELEGATION, "parent");
+        properties.setProperty(JPPFConstants.SERVER_HOST, driverIpAddress);
+        properties.setProperty(JPPFConstants.MANAGEMENT_PORT, 
+                String.valueOf(managementPort));
+        properties.setProperty(JPPFConstants.RESOURCE_CACHE_DIR, 
+                String.format("/tmp/.jppf/node-%s_%d", 
+                torqueNodeDeployment.getSessionId(), nodeNumber));
+        properties.setProperty(JPPFConstants.PROCESSING_THREADS, 
+                String.valueOf(nodeConfiguration.getNumberOfCpus()));
+        return properties;
+    }
+    
+    private String configFileName() {
+        return TorqueNodeDeployment.DEPLOY_BASE_NAME + "-" + nodeNumber + TorqueNodeDeployment.DEPLOY_CONFIG_SUFFIX;
+    }
+
+    private SSHClient sshClient() {
+        return torqueNodeDeployment.sshClient();
+    }
+
+    private String driverAddress() {
+        String nodeConfigurationAddress = nodeConfiguration.getDriverAddress();
+        String torqueNodeDeploymentAddress = this.torqueNodeDeployment.getDriverAddress();
+        if (nodeConfigurationAddress != null) {
             logger.info("Using driver address found in node configuration.");
-			return nodeConfigurationAddress;
-		} else if (torqueNodeDeploymentAddress != null) {
+            return nodeConfigurationAddress;
+        } else if (torqueNodeDeploymentAddress != null) {
             logger.info("Using driver address found in torque node deployer.");
-			return torqueNodeDeploymentAddress;
-		} else {
+            return torqueNodeDeploymentAddress;
+        } else {
             logger.info("Using driver address fallback 'localhost'.");
-			logger.warn("Could not find driver IP address, using localhost");
-			return "localhost";
-		}
-	}
+            logger.warn("Could not find driver IP address, using localhost");
+            return "localhost";
+        }
+    }
 
     public String base64Encode(String toEncode) {
         return DatatypeConverter.printBase64Binary(toEncode.getBytes());
@@ -144,29 +175,21 @@ class NodeDeployTask {
     String qsubScript(String nodeName, String nodeConfigFileName, int numberOfCpus) {
         StringBuilder sb = new StringBuilder();
         sb.append("#PBS -N ").append(nodeName).append("\n") // node name
-            .append("#PBS -l nodes=1:ppn=").append(numberOfCpus).append("\n") // number of nodes, processors per node
-            .append("#PBS -q ").append(queueName).append("\n") // queue name
-            .append("#PBS -p 0\n") // priority, default: 0
-            .append("#PBS -j oe\n") // join (o)output and (e)rror stream
-            .append("#PBS -m b\n") // mail option: mail is sent when the job begins execution.
-            .append("#PBS -m e\n") // mail option: mail is sent when the job terminates.
-            .append("#PBS -m a\n") // mail option: mail is sent when the job is aborted by the batch system.
-            .append("#PBS -V\n") // export environment variables to batch job
-            .append("#PBS -o out/").append(nodeName).append(".out\n") // path to STDOUT file log
-            .append("#PBS -e err/").append(nodeName).append(".err\n"); // path to STDERR file log
+                .append("#PBS -l nodes=1:ppn=").append(numberOfCpus).append("\n") // number of nodes, processors per node
+                .append("#PBS -q ").append(queueName).append("\n") // queue name
+                .append("#PBS -p 0\n") // priority, default: 0
+                .append("#PBS -j oe\n") // join (o)output and (e)rror stream
+                .append("#PBS -m b\n") // mail option: mail is sent when the job begins execution.
+                .append("#PBS -m e\n") // mail option: mail is sent when the job terminates.
+                .append("#PBS -m a\n") // mail option: mail is sent when the job is aborted by the batch system.
+                .append("#PBS -V\n") // export environment variables to batch job
+                .append("#PBS -o out/").append(nodeName).append(".out\n") // path to STDOUT file log
+                .append("#PBS -e err/").append(nodeName).append(".err\n"); // path to STDERR file log
         if (isValidEmail(email)) {
             sb.append("#PBS -M ").append(email).append("\n"); // email address
         }
         // start script
-            sb.append("\n")
-            .append("workingDir=/home/torque/tmp/${USER}.${PBS_JOBID}\n")
-            .append("cp -r ~/jppf-node $workingDir/jppf-node\n")
-            .append("cd $workingDir/jppf-node\n")
-            .append("chmod +x startNode.sh\n")
-            .append("./startNode.sh ")
-                    .append(nodeConfigFileName)
-                    .append(" true false ")
-                    .append("\"").append(jvmOptions).append("\"").append("\n");
+        sb.append("\n").append("workingDir=/home/torque/tmp/${USER}.${PBS_JOBID}\n").append("cp -r ~/jppf-node $workingDir/jppf-node\n").append("cd $workingDir/jppf-node\n").append("chmod +x startNode.sh\n").append("./startNode.sh ").append(nodeConfigFileName).append(" true false ").append("\"").append(jvmOptions).append("\"").append("\n");
         return sb.toString();
     }
 
@@ -174,5 +197,4 @@ class NodeDeployTask {
     boolean isValidEmail(String email) {
         return (email != null && email.matches(".*@.*\\..*"));
     }
-	
 }

@@ -23,6 +23,7 @@ import java.io.InputStream;
 import java.util.Properties;
 
 /**
+ * @deprecated configurations should be dynamically generated.
  *
  * @author thomas
  */

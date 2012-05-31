@@ -33,8 +33,10 @@ public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
     private static final String ZIP_FILE = "jppf-node.zip";
     private static final String CRC32_FILE = CLUSTERMEISTER_BIN + "/jppf-node-crc-32";
     private static final String JPPF_FOLDER = "/jppf-node/";
-    private static final String PROPERTY_FILE_NAME = "jppf-node.properties";
-    private static final String PROPERTY_FILE_SUBPATH = JPPF_FOLDER + "config/" + PROPERTY_FILE_NAME;
+    private static final String JPPF_CONFIG_FILE_NAME = "jppf-node.properties";
+    private static final String JPPF_CONFIG_FILE_SUBPATH = JPPF_FOLDER + "config/" + JPPF_CONFIG_FILE_NAME;
+    private static final String LOG4J_CONFIG_FILE_NAME = "log4j-node.properties";
+    private static final String LOG4J_CONFIG_FILE_SUBPATH = JPPF_FOLDER + "config/" + LOG4J_CONFIG_FILE_NAME;
     private static final String START_SCRIPT = "startNode.sh";
     private static final String START_SCRIPT_ARGUMENTS = "jppf-node.properties false true";
     
@@ -42,8 +44,8 @@ public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
             NodeMetadata metadata, LoginCredentials credentials,
             AmazonNodeConfiguration nodeConfiguration) {
         super(credentials, context, metadata, nodeConfiguration, ZIP_FILE, 
-                CRC32_FILE, PROPERTY_FILE_SUBPATH, START_SCRIPT, 
-                START_SCRIPT_ARGUMENTS, JPPF_FOLDER);
+                CRC32_FILE, JPPF_CONFIG_FILE_SUBPATH, LOG4J_CONFIG_FILE_SUBPATH,
+                START_SCRIPT, START_SCRIPT_ARGUMENTS, JPPF_FOLDER);
     }
 
     @Override
@@ -59,21 +61,21 @@ public class AmazonEC2JPPFNodeDeployer extends AmazonEC2JPPFDeployer {
 
     @Override
     protected Properties getSettings() {
-        final InputStream in = this.getClass().getResourceAsStream(PROPERTY_FILE_NAME);
-        try {
-            Properties nodeProperties = getPropertiesFromStream(in);
-            nodeProperties.setProperty(JPPFConstants.RECONNECT_MAX_TIME, "5");
-            nodeProperties.setProperty(JPPFConstants.DISCOVERY_ENABLED, "false");
-            nodeProperties.setProperty(JPPFConstants.SERVER_HOST, nodeConfiguration.getDriverAddress());
-            nodeProperties.setProperty(JPPFConstants.MANAGEMENT_HOST, getPrivateIp());
-            nodeProperties.setProperty(JPPFConstants.MANAGEMENT_PORT, 
-                    String.valueOf(nodeConfiguration.getManagementPort()));
-            
-            nodeProperties.setProperty(JPPFConstants.PROCESSING_THREADS, 
-                    String.valueOf(getNumberOfProcessingThreads()));
-            return nodeProperties;
-        } finally {
-            closeInputstream(in);
+        Properties nodeProperties = new Properties();
+        nodeProperties.setProperty(JPPFConstants.RECONNECT_MAX_TIME, "5");
+        nodeProperties.setProperty(JPPFConstants.DISCOVERY_ENABLED, "false");
+        nodeProperties.setProperty(JPPFConstants.SERVER_HOST, nodeConfiguration.getDriverAddress());
+        nodeProperties.setProperty(JPPFConstants.MANAGEMENT_HOST, getPrivateIp());
+        nodeProperties.setProperty(JPPFConstants.MANAGEMENT_PORT, 
+                String.valueOf(nodeConfiguration.getManagementPort()));
+        if(nodeConfiguration.getJvmOptions().isPresent()) {
+            nodeProperties.setProperty(JPPFConstants.JVM_OPTIONS, 
+                    nodeConfiguration.getJvmOptions().get());
         }
+        nodeProperties.setProperty(JPPFConstants.CLASSLOADER_DELEGATION, "parent"); 
+
+        nodeProperties.setProperty(JPPFConstants.PROCESSING_THREADS, 
+                String.valueOf(getNumberOfProcessingThreads()));
+        return nodeProperties;
     }
 }
