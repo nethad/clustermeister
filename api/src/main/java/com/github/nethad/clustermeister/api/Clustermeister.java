@@ -61,17 +61,34 @@ public interface Clustermeister {
     
     /**
      * Execute a job (a list of tasks) on the nodes provisioned.
-     * This method is blocking, see {@link #executeJobAsync(com.github.nethad.clustermeister.api.Job) } for a non-blocking 
+     * This method is blocking, see {@link #executeJobAsync(Job) } for a non-blocking 
      * implementation.
      * @param <T>
-     * @param job
-     * @return
+     * @param job the job to be executed.
+     * @return a list of results from the task beloging to the job.
      * @throws Exception 
      */
     public <T> List<T> executeJob(Job<T> job) throws Exception;
     
+    /**
+     * Execute a job asynchronously. After all tasks are executed, this Future is complete. 
+     * If task-results need to be retrieved independently and not as a whole, 
+     * see {@link #executeJobAsyncTasks(Job) }.
+     * @param <T>
+     * @param job the job to be executed.
+     * @return a Future which contains a list of results from task belonging to the job.
+     * @throws Exception 
+     */
     public <T> ListenableFuture<List<T>> executeJobAsync(Job<T> job) throws Exception;
     
+    /**
+     * Execute a job asynchronously and retrieve task results independently. Every task belonging to a job
+     * has its own Future which completes as soon as the task result is retrieved.
+     * @param <T>
+     * @param job the job to be executed.
+     * @return a list of Futures, where every Future is a task result.
+     * @throws Exception 
+     */
     public <T> List<ListenableFuture<T>> executeJobAsyncTasks(final Job<T> job) throws Exception;
     
 }
