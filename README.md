@@ -46,7 +46,7 @@ and
 This is just a quick-start guide to provide you with an overview on how Clustermeister works. 
 For a more in-depth explanation, check out the [tutorial](https://github.com/nethad/clustermeister/wiki/Tutorial).
 
-### Start CLI and start up nodes (TORQUE example)
+### Start CLI and start up nodes
 
 To set up the infrastructure (start nodes, etc.) we need to start the command line client.
 
