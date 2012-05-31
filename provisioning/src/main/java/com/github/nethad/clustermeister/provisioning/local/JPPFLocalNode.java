@@ -15,6 +15,9 @@
  */
 package com.github.nethad.clustermeister.provisioning.local;
 
+import com.github.nethad.clustermeister.api.JPPFConstants;
+import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
+import com.google.common.io.Files;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -24,21 +27,24 @@ import java.io.OutputStream;
 import java.util.Collection;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
-
 import org.apache.commons.io.FileUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.github.nethad.clustermeister.api.JPPFConstants;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
-import com.google.common.io.Files;
-
 /**
+ * Represents and deploys a Clustermeister node running on the local machine (same machine as 
+ * the CLI) and connects to a JPPF Driver on localhost.
  *
- * @author thomas
+ * @author thomas, daniel
  */
 public class JPPFLocalNode {
-    private final Logger logger = LoggerFactory.getLogger(JPPFLocalNode.class);
+    private static final Logger logger = 
+            LoggerFactory.getLogger(JPPFLocalNode.class);
+
+    /**
+     * The specification of this node.
+     */
+    protected final LocalNodeConfiguration nodeConfiguration;
     
     private File targetDir;
     
@@ -47,39 +53,83 @@ public class JPPFLocalNode {
     private String currentNodeConfig;
     private File libDir;
 
-    public JPPFLocalNode() {
+    /**
+     * Create a new local node with a node configuration.
+     * 
+     * @param nodeConfiguration the node configuration.
+     */
+    public JPPFLocalNode(LocalNodeConfiguration nodeConfiguration) {
+        this.nodeConfiguration = nodeConfiguration;
     }
     
-    public void prepare(Collection<File> artifactsToPreload) {
+    /**
+     * Deploy a new local node.
+     */
+    public void deploy() {
+        prepare();
+        startNewNode();
+    }
+    
+    /**
+     * Delete the node's directory after shutdown.
+     */
+    public void cleanupAfterShutdown() {
+        try {
+            FileUtils.deleteDirectory(targetDir);
+        } catch (Exception ex) {
+            logger.warn("Could not delete the node's directory.", ex);
+        }
+    }
+    
+    /**
+     * Unpack the JPPF node to its auto-generated directory 
+     * and deploy preload artifacts.
+     */
+    protected void prepare() {
         unpackNodeZip();
         libDir = new File(targetDir, "jppf-node/lib/");
-        preloadLibraries(artifactsToPreload);
+        preloadLibraries(nodeConfiguration.getArtifactsToPreload());
     }
     
-    private void preloadLibraries(Collection<File> artifactsToPreload) {
+    /**
+     * Deploy specified files to the node's lib directory.
+     * 
+     * @param artifactsToPreload the artifacts to deploy.
+     */
+    protected void preloadLibraries(Collection<File> artifactsToPreload) {
         for (File artifact : artifactsToPreload) {
             File destinationFile = new File(libDir, artifact.getName());
             try {
-                logger.info("Copy {} to {}", artifact.getName(), destinationFile.getAbsolutePath());
+                logger.info("Copy {} to {}", artifact.getName(), 
+                        destinationFile.getAbsolutePath());
                 Files.copy(artifact, destinationFile);
             } catch (IOException ex) {
-                logger.warn("Could not copy artifact {} to {}", artifact.getAbsolutePath(), destinationFile.getAbsolutePath());
-                logger.warn("Exception: ", ex);
+                logger.warn("Could not copy artifact {} to {}", 
+                        new Object[]{artifact.getAbsolutePath(), 
+                        destinationFile.getAbsolutePath(), ex});
             }
         }
     }
     
-    public void startNewNode(LocalNodeConfiguration nodeConfiguration) {
-        prepareNodeConfiguration(nodeConfiguration);
-        startNode(nodeConfiguration);
+    /**
+     * Generate and deploy configuration files and start the node process.
+     */
+    protected void startNewNode() {
+        prepareNodeConfiguration();
+        startNode();
     }
 
-    private void prepareNodeConfiguration(LocalNodeConfiguration localNodeConfiguration) throws RuntimeException {
+    /**
+     * Generate and deploy configuration files.
+     * 
+     * @throws RuntimeException when there's an IOException.
+     */
+    protected void prepareNodeConfiguration() throws RuntimeException {
         JPPFNodeConfiguration nodeConfiguration = new JPPFNodeConfiguration();
         nodeConfiguration.setProperty(JPPFConstants.SERVER_HOST, "localhost")
                 .setProperty(JPPFConstants.MANAGEMENT_PORT, String.valueOf(managementPort++))
                 .setProperty(JPPFConstants.RESOURCE_CACHE_DIR, "/tmp/.jppf/node-" + System.currentTimeMillis())
-                .setProperty(JPPFConstants.PROCESSING_THREADS, String.valueOf(localNodeConfiguration.getNumberOfProcessingThreads()));
+                .setProperty(JPPFConstants.PROCESSING_THREADS, String.valueOf(this.nodeConfiguration.getNumberOfProcessingThreads()));
         
         currentNodeConfig = "jppf-node-"+(currentNodeNumber++)+".properties";
         File configDir = new File(targetDir, "/jppf-node/config/");
@@ -92,23 +142,17 @@ public class JPPFLocalNode {
         }
     }
 
-    private void unpackNodeZip() throws RuntimeException {
-//        String currentDirPath = System.getProperty("user.dir");
-        targetDir = Files.createTempDir();
-        logger.info("Created temp dir {}", targetDir.getAbsolutePath());
-        InputStream jppfNodeZipStream = JPPFLocalNode.class.getResourceAsStream("/jppf-node.zip");
-        if (jppfNodeZipStream == null) {
-            throw new RuntimeException("Could not find jppf-node.zip.");
-        }
-        unzipNode(jppfNodeZipStream, targetDir);
-    }
-
-    private void startNode(LocalNodeConfiguration localNodeConfiguration) throws RuntimeException {
+    /**
+     * Start the node in a new independent process.
+     * 
+     * @throws RuntimeException when there's an IOException.
+     */
+    protected void startNode() throws RuntimeException {
         File startNodeScript = new File(targetDir, "jppf-node/startNode.sh");
         startNodeScript.setExecutable(true);
         try {
             //            String jppfNodePath = startNodeScript.getParentFile().getAbsolutePath();
-            String jvmOptions = localNodeConfiguration.getJvmOptions().or("").replaceAll("\\s", "\\ ");
+            String jvmOptions = nodeConfiguration.getJvmOptions().or("").replaceAll("\\s", "\\ ");
             System.out.println("jvmOptions = "+jvmOptions);
             
             final String command = String.format("%s %s %s %s %s",
@@ -122,17 +166,18 @@ public class JPPFLocalNode {
         }
     }
     
-    public void cleanupAfterShutdown() {
-        try {
-            FileUtils.deleteDirectory(targetDir);
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        } finally {
+    private void unpackNodeZip() throws RuntimeException {
+        targetDir = Files.createTempDir();
+        logger.info("Created temp dir {}", targetDir.getAbsolutePath());
+        InputStream jppfNodeZipStream = JPPFLocalNode.class.getResourceAsStream("/jppf-node.zip");
+        if (jppfNodeZipStream == null) {
+            throw new RuntimeException("Could not find jppf-node.zip.");
         }
+        unzipNode(jppfNodeZipStream, targetDir);
     }
     
+    //TODO: probabaly worthy to use truezip here but beware of license (EPL)
     private void unzipNode(InputStream fileToUnzip, File targetDir) {
-//        Enumeration entries;
         ZipInputStream zipFile;
         try {
             zipFile = new ZipInputStream(fileToUnzip);
