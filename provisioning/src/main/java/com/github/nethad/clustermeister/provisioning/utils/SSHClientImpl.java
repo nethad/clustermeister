@@ -47,8 +47,6 @@ public class SSHClientImpl implements SSHClient {
      */
     protected int port = 22;
 
-    private SocksTunnel reverseTunnel = null;
-    
     /**
      * Creates a new SSHClient.
      */
@@ -475,11 +473,8 @@ public class SSHClientImpl implements SSHClient {
      * 
      * @return an unopened SocksTunnel.
      */
-    public SocksTunnel getSocksReverseTunnel() {
-        if(isNull(reverseTunnel)) {
-          reverseTunnel = new SocksTunnel(this);  
-        } 
-        return reverseTunnel;
+    public SocksTunnel getNewSocksReverseTunnel() {
+        return new SocksTunnel(this);  
     }
 
     @Override

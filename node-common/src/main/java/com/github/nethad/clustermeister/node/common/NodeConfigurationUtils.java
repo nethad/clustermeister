@@ -36,11 +36,11 @@ public class NodeConfigurationUtils {
         properties.setProperty("log4j.appender.JPPF.File", "jppf-node.log");
         properties.setProperty("log4j.appender.JPPF.Append", "false");
         properties.setProperty("log4j.appender.JPPF.layout", "org.apache.log4j.PatternLayout");
-        properties.setProperty("log4j.appender.JPPF.layout.ConversionPattern", "%d [%-5p][%c.%M(%L)]: %m\n");
+        properties.setProperty("log4j.appender.JPPF.layout.ConversionPattern", "%d [%-5p][%c.%M(%L)]: %m%n");
         
         properties.setProperty("log4j.appender.stdout", "org.apache.log4j.ConsoleAppender");
         properties.setProperty("log4j.appender.stdout.layout", "org.apache.log4j.PatternLayout");
-        properties.setProperty("log4j.appender.stdout.layout.ConversionPattern", "%d [%-5p][%c.%M(%L)]: %m\n");
+        properties.setProperty("log4j.appender.stdout.layout.ConversionPattern", "%d [%-5p][%c.%M(%L)]: %m%n");
         
         properties.setProperty("log4j.appender.socket", "org.apache.log4j.net.SocketAppender");
         properties.setProperty("log4j.appender.socket.port", String.valueOf(remoteloggingPort));

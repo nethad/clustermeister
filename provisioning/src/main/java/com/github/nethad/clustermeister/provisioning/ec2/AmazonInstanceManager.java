@@ -78,7 +78,9 @@ public class AmazonInstanceManager {
     
     //TODO: make sure this does not cause memory leak
     private final Monitor reverseTunnelMonitor = new Monitor(false);
-    private final Map<String, SocksTunnel> instanceToReverseTunnel =
+    private final Map<String, SocksTunnel> instanceToJPPFReverseTunnel =
+            new HashMap<String, SocksTunnel>();
+    private final Map<String, SocksTunnel> instanceToLoggingReverseTunnel =
             new HashMap<String, SocksTunnel>();
     private final Collection<File> artifactsToPreload;
     private final Map<String, AWSInstanceProfile> profiles;
@@ -245,23 +247,36 @@ public class AmazonInstanceManager {
     private void openReverseChannel(NodeMetadata instanceMetadata, AmazonNodeConfiguration nodeConfig) {
         reverseTunnelMonitor.enter();
         try {
-            if(!instanceToReverseTunnel.containsKey(instanceMetadata.getId())) {
-                SSHClientImpl sshClientForReversePort = new SSHClientImpl();
+            if(!instanceToJPPFReverseTunnel.containsKey(instanceMetadata.getId())) {
+                SSHClientImpl sshClientForReverseTunnel = new SSHClientImpl();
                 Credentials credentials = nodeConfig.getCredentials().get();
                 try {
                     if(credentials instanceof KeyPairCredentials) {
                         KeyPairCredentials keypair = credentials.as(KeyPairCredentials.class);
-                        sshClientForReversePort.addIdentity(instanceMetadata.getId(), 
+                        sshClientForReverseTunnel.addIdentity(instanceMetadata.getId(), 
                                 keypair.getPrivateKey().
                                 getBytes(keypair.getKeySourceCharset()));
                         String publicIp = Iterables.getFirst(instanceMetadata.getPublicAddresses(), null);
-                        sshClientForReversePort.connect(credentials.getUser(), publicIp, 
+                        sshClientForReverseTunnel.connect(credentials.getUser(), publicIp, 
                                 instanceMetadata.getLoginPort());
-                        SocksTunnel socksReverseTunnel = sshClientForReversePort.getSocksReverseTunnel();
-                        instanceToReverseTunnel.put(instanceMetadata.getId(), socksReverseTunnel);
-                        socksReverseTunnel.openTunnel(
+                        SocksTunnel socksJPPFReverseTunnel = sshClientForReverseTunnel.getNewSocksReverseTunnel();
+                        instanceToJPPFReverseTunnel.put(instanceMetadata.getId(), socksJPPFReverseTunnel);
+                        socksJPPFReverseTunnel.openTunnel(
                                 JPPFConstants.DEFAULT_SERVER_PORT, "localhost", 
                                 JPPFConstants.DEFAULT_SERVER_PORT);
+                        //TODO: make port configurable
+                        //for remote logging
+                        Optional<Boolean> remoteLoggingActivataed = 
+                                nodeConfig.isRemoteLoggingActivataed();
+                        if(remoteLoggingActivataed.or(Boolean.FALSE)) {
+                            SocksTunnel socksLoggingReverseTunnel = 
+                                    sshClientForReverseTunnel.getNewSocksReverseTunnel();
+                            instanceToLoggingReverseTunnel.put(
+                                    instanceMetadata.getId(), socksLoggingReverseTunnel);
+                            socksLoggingReverseTunnel.openTunnel(
+                                    54321, "localhost", 
+                                    54321);
+                        }
                     } else {
                         //TODO: add support for password credentials
                         throw new IllegalStateException(
@@ -310,9 +325,16 @@ public class AmazonInstanceManager {
     private void removeSocksTunnel(String instanceId) {
         reverseTunnelMonitor.enter();
         try {
-            SocksTunnel tunnel = instanceToReverseTunnel.remove(instanceId);
+            SocksTunnel tunnel = instanceToJPPFReverseTunnel.remove(instanceId);
             if(tunnel != null) {
                 tunnel.closeTunnel();
+            }
+            SocksTunnel loggingTunnel = instanceToLoggingReverseTunnel.remove(instanceId);
+            if(loggingTunnel != null) {
+                loggingTunnel.closeTunnel();
+            }
+            tunnel = (loggingTunnel == null) ? tunnel : loggingTunnel;
+            if(tunnel != null) {
                 tunnel.getSshClient().disconnect();
             }
         } finally {
