@@ -19,7 +19,6 @@ import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.ConfigurationKeys;
 import com.github.nethad.clustermeister.provisioning.dependencymanager.DependencyConfigurationUtil;
-import com.google.common.collect.Iterators;
 import java.io.File;
 import java.util.Collection;
 import java.util.Scanner;
@@ -32,7 +31,6 @@ import org.slf4j.LoggerFactory;
  * @author thomas
  */
 public class AddNodesCommand extends AbstractLocalExecutableCommand {
-//    public static final String JVM_OPTIONS_NODE = "jvm_options.node";
     private static final Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
     
     private static final String COMMAND_NAME = "addnodes";
@@ -60,10 +58,18 @@ public class AddNodesCommand extends AbstractLocalExecutableCommand {
         
         Collection<File> artifactsToPreload = DependencyConfigurationUtil.getConfiguredDependencies(configuration);
         
-        String jvmOptions = configuration.getString(ConfigurationKeys.JVM_OPTIONS_NODE, ConfigurationKeys.DEFAULT_JVM_OPTIONS_NODE);
+        String jvmOptions = configuration.getString(ConfigurationKeys.JVM_OPTIONS_NODE, 
+                ConfigurationKeys.DEFAULT_JVM_OPTIONS_NODE);
+        
+        String nodeLogLevel = configuration.getString(ConfigurationKeys.LOGGING_NODE_LEVEL, 
+                ConfigurationKeys.DEFAULT_LOGGING_NODE_LEVEL);
+        
+        boolean nodeRemoteLogging = configuration.getBoolean(ConfigurationKeys.LOGGING_NODE_REMOTE, 
+                ConfigurationKeys.DEFAULT_LOGGING_NODE_REMOTE);
         
         final LocalNodeConfiguration nodeConfiguration = LocalNodeConfiguration.configurationFor(
-                artifactsToPreload, jvmOptions, numberOfCpusPerNode);
+                artifactsToPreload, jvmOptions, nodeLogLevel, nodeRemoteLogging, 
+                numberOfCpusPerNode);
         
         for (int i=0; i<numberOfNodes; i++) {
             getNodeManager().addNode(nodeConfiguration);

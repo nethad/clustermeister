@@ -17,6 +17,7 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Credentials;
 import com.github.nethad.clustermeister.api.JPPFConstants;
+import com.github.nethad.clustermeister.api.LogLevel;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.google.common.base.Joiner;
@@ -41,7 +42,9 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
     private boolean driverDeployedLocally = false;
     private int managementPort = JPPFConstants.DEFAULT_MANAGEMENT_PORT;
     private Collection<File> artifactsToPreload = Collections.EMPTY_LIST;
-    private Optional<String> jvmOptions = Optional.<String>absent();
+    private Optional<String> jvmOptions = Optional.absent();
+    private Optional<LogLevel> logLevel = Optional.absent();
+    private Optional<Boolean> remoteLoggingActivated = Optional.absent();
 
     public static AmazonNodeConfiguration fromInstanceProfile(
             AWSInstanceProfile instanceProfile) {
@@ -133,5 +136,23 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
     @Override
     public Optional<String> getJvmOptions() {
         return jvmOptions;
+    }
+
+    public void setLogLevel(LogLevel logLevel) {
+        this.logLevel = Optional.fromNullable(logLevel);
+    }
+
+    @Override
+    public Optional<LogLevel> getLogLevel() {
+        return logLevel;
+    }
+
+    public void setRemoteLoggingActivated(Boolean remoteLoggingActivated) {
+        this.remoteLoggingActivated = Optional.fromNullable(remoteLoggingActivated);
+    }
+    
+    @Override
+    public Optional<Boolean> isRemoteLoggingActivataed() {
+        return remoteLoggingActivated;
     }
 }

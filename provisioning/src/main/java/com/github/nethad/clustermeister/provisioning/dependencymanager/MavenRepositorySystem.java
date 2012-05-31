@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.dependencymanager;
 
+import com.github.nethad.clustermeister.api.LogLevel;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;

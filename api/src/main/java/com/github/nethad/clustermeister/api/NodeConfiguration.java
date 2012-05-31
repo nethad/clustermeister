@@ -33,4 +33,18 @@ public interface NodeConfiguration {
 	public Collection<File> getArtifactsToPreload();
         
         public Optional<String> getJvmOptions();
+        
+        /**
+         * Specifies the SLF4J log level for logging output on this Node.
+         * 
+         * @return the log level.
+         */
+        public Optional<LogLevel> getLogLevel();
+        
+        /**
+         * Whether to use remote logging.
+         * 
+         * @return true means to use remote logging for this node, false means not to use it.
+         */
+        public Optional<Boolean> isRemoteLoggingActivataed();
 }

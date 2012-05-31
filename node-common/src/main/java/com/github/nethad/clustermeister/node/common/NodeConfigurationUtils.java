@@ -18,6 +18,7 @@ package com.github.nethad.clustermeister.node.common;
 import java.util.Properties;
 
 /**
+ * Utilities to configure JPPF nodes.
  *
  * @author daniel
  */
@@ -28,7 +29,8 @@ public class NodeConfigurationUtils {
      * 
      * @return the log4j configuration.
      */
-    public static Properties getLog4JConfiguration() {
+    public static Properties getLog4JConfiguration(String logLevel, boolean activateRemoteLogging, 
+            String remoteLoggingHost, int remoteloggingPort) {
         Properties properties = new Properties();
         properties.setProperty("log4j.appender.JPPF", "org.apache.log4j.FileAppender");
         properties.setProperty("log4j.appender.JPPF.File", "jppf-node.log");
@@ -40,9 +42,15 @@ public class NodeConfigurationUtils {
         properties.setProperty("log4j.appender.stdout.layout", "org.apache.log4j.PatternLayout");
         properties.setProperty("log4j.appender.stdout.layout.ConversionPattern", "%d [%-5p][%c.%M(%L)]: %m\n");
         
-        //TODO: make node log level configurable
-        properties.setProperty("log4j.rootLogger", "INFO, JPPF, stdout");
-//        properties.setProperty("log4j.rootLogger", "INFO, JPPF");
+        properties.setProperty("log4j.appender.socket", "org.apache.log4j.net.SocketAppender");
+        properties.setProperty("log4j.appender.socket.port", String.valueOf(remoteloggingPort));
+        properties.setProperty("log4j.appender.socket.remoteHost", remoteLoggingHost);
+        
+        if(activateRemoteLogging) {
+            properties.setProperty("log4j.rootLogger", String.format("%s, JPPF, stdout, socket", logLevel));
+        } else {
+            properties.setProperty("log4j.rootLogger", String.format("%s, JPPF, stdout", logLevel));
+        }
         
         return properties;
     }

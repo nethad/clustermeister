@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.Credentials;
+import com.github.nethad.clustermeister.api.LogLevel;
 import com.github.nethad.clustermeister.api.impl.AmazonConfiguredKeyPairCredentials;
 import com.github.nethad.clustermeister.api.impl.ConfigurationUtil;
 import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
@@ -31,7 +32,8 @@ import java.util.SortedMap;
 import org.apache.commons.configuration.Configuration;
 
 /**
- * A utility to help parse Amazon specific configuration values.
+ * A utility to help parse configuration values for the AWS EC2 (Amazon) 
+ * Provisioning Provider.
  *
  * @author daniel
  */
@@ -132,6 +134,21 @@ public class AmazonConfigurationLoader {
     public static final String PLACEMENT_GROUP = "placement_group";
     
     /**
+     * JVM options configuration property.
+     */
+    public static final String NODE_JVM_OPTIONS = "jvm_options.node";
+    
+    /**
+     * Node log level configuration property.
+     */
+    public static final String NODE_LOG_LEVEL = "logging.node.level";
+    
+    /**
+     * Node remote logging configuration property.
+     */
+    public static final String NODE_LOG_REMOTE = "logging.node.remote";
+    
+    /**
      * The configuration.
      */
     final Configuration configuration;
@@ -163,6 +180,37 @@ public class AmazonConfigurationLoader {
     public String getSecretKey() {
         return checkNotNull(configuration.getString(SECRET_KEY, null), 
                 "No AWS secret key configured.").trim();
+    }
+    
+    //TODO: tests for these
+    
+    /**
+     * Returns the configured node JVM options
+     * 
+     * @return the JVM options.
+     */
+    public String getNodeJvmOptions() {
+        return configuration.getString(NODE_JVM_OPTIONS, "-Xmx32m");
+    }
+    
+    /**
+     * Returns the configured node log level.
+     * 
+     * @return the SLF4J log level.
+     */
+    public LogLevel getNodeLogLevel() {
+        String level = configuration.getString(NODE_LOG_LEVEL);
+        try {
+            return LogLevel.valueOf(level.toUpperCase());
+        } catch(IllegalArgumentException ex) {
+            return LogLevel.INFO;
+        }
+    }
+    /**
+     * Returns whether to activate remote logging for nodes or not.
+     */
+    public Boolean getNodeRemoteLogging() {
+        return configuration.getBoolean(NODE_LOG_REMOTE, Boolean.FALSE);
     }
     
     /**

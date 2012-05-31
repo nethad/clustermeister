@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.dependencymanager;
 
+import com.github.nethad.clustermeister.api.LogLevel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.sonatype.aether.AbstractRepositoryListener;
