@@ -17,11 +17,11 @@ package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.api.JPPFConstants;
 import com.github.nethad.clustermeister.api.NodeType;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFNodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.utils.SSHClient;
 import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import org.apache.commons.configuration.Configuration;
 import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.is;
@@ -93,7 +93,7 @@ public class NodeDeployTaskTest {
     
     @Test
     public void createNodeConfiguration() {
-        JPPFNodeConfiguration nodeConfiguration = nodeDeployTask.createNodeConfiguration("driverIp");
+        Properties nodeConfiguration = nodeDeployTask.getJppfNodeConfiguration("driverIp");
         assertThat(nodeConfiguration.getProperty(JPPFConstants.SERVER_HOST), is("driverIp"));
         assertThat(nodeConfiguration.getProperty(JPPFConstants.MANAGEMENT_PORT), is(String.valueOf(TorqueNodeDeployment.DEFAULT_MANAGEMENT_PORT+10)));
         assertThat(nodeConfiguration.getProperty(JPPFConstants.PROCESSING_THREADS), is(String.valueOf(NUMBER_OF_CPUS)));

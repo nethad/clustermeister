@@ -15,13 +15,17 @@
  */
 package com.github.nethad.clustermeister.provisioning.utils;
 
+import com.google.common.base.Charsets;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.security.MessageDigest;
+import java.util.Properties;
 import java.util.zip.CRC32;
 
 /**
@@ -88,6 +92,27 @@ public class FileUtils {
     public static String getDirectoryExistsShellCommand(String dirPath) {
         StringBuilder sb = new StringBuilder("if  [ -d ");
         return appendIfElseBoolean(sb, dirPath);
+    }
+    
+    /**
+     * Write a {@link Properties} to a file.
+     * 
+     * @param comment   A comment to add at the top of the file.
+     * @param propertiesFile    the properties file to write to.
+     * @param properties    the properties to write.
+     * @throws FileNotFoundException when propertiesFile is not found or can not be created.
+     * @throws IOException when propertiesFile can not be written to.
+     */
+    public static void writePropertiesToFile(String comment, final File propertiesFile, 
+            Properties properties) throws FileNotFoundException, IOException {
+        BufferedWriter fileWriter = Files.newWriter(propertiesFile, Charsets.UTF_8);
+        try {
+            properties.store(fileWriter, comment);
+        } finally {
+            if(fileWriter != null) {
+                fileWriter.close();
+            }
+        }
     }
     
     private static String appendIfElseBoolean(StringBuilder sb, String path) {

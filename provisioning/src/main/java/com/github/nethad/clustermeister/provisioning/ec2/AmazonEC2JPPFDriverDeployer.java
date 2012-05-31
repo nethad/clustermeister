@@ -32,8 +32,10 @@ public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
     private static final String ZIP_FILE = "jppf-driver.zip";
     private static final String CRC32_FILE = CLUSTERMEISTER_BIN + "/jppf-driver-crc-32";
     private static final String JPPF_FOLDER = "/jppf-driver/";
-    private static final String PROPERTY_FILE_NAME = "jppf-driver.properties";
-    private static final String PROPERTY_FILE_SUBPATH = JPPF_FOLDER + "config/" + PROPERTY_FILE_NAME;
+    private static final String JPPF_CONFIG_FILE_NAME = "jppf-driver.properties";
+    private static final String JPPF_CONFIG_FILE_SUBPATH = JPPF_FOLDER + "config/" + JPPF_CONFIG_FILE_NAME;
+    private static final String LOG4J_CONFIG_FILE_NAME = "log4j-driver.properties";
+    private static final String LOG4J_CONFIG_FILE_SUBPATH = JPPF_FOLDER + "config/" + LOG4J_CONFIG_FILE_NAME;
     private static final String START_SCRIPT = "startDriver.sh";
     private static final String START_SCRIPT_ARGUMENTS = "false false true";
 
@@ -41,8 +43,8 @@ public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
             NodeMetadata metadata, LoginCredentials credentials,
             AmazonNodeConfiguration nodeConfiguration) {
         super(credentials, context, metadata, nodeConfiguration, ZIP_FILE, 
-                CRC32_FILE, PROPERTY_FILE_SUBPATH, START_SCRIPT, 
-                START_SCRIPT_ARGUMENTS, JPPF_FOLDER);
+                CRC32_FILE, JPPF_CONFIG_FILE_SUBPATH, LOG4J_CONFIG_FILE_SUBPATH, 
+                START_SCRIPT, START_SCRIPT_ARGUMENTS, JPPF_FOLDER);
     }
 
     @Override
@@ -57,7 +59,7 @@ public class AmazonEC2JPPFDriverDeployer extends AmazonEC2JPPFDeployer {
 
     @Override
     protected Properties getSettings() {
-        final InputStream in = this.getClass().getResourceAsStream(PROPERTY_FILE_NAME);
+        final InputStream in = this.getClass().getResourceAsStream(JPPF_CONFIG_FILE_NAME);
         try {
             Properties nodeProperties = getPropertiesFromStream(in);
             nodeProperties.setProperty(JPPFConstants.DISCOVERY_ENABLED, "false");

@@ -90,11 +90,10 @@ public class LocalNodeManager {
     }
 
     public void addNode(LocalNodeConfiguration nodeConfiguration) {
-        JPPFLocalNode node = new JPPFLocalNode();
-        node.prepare(nodeConfiguration.getArtifactsToPreload());
+        JPPFLocalNode node = new JPPFLocalNode(nodeConfiguration);
         int numberOfProcessingThreads = nodeConfiguration.getNumberOfProcessingThreads();
         logger.info("Adding node with {} processing threads", numberOfProcessingThreads);
-        node.startNewNode(nodeConfiguration);
+        node.deploy();
         localNodes.add(node);
     }
     
