@@ -3,11 +3,15 @@
 **DISCLAIMER: Clustermeister is still under heavy development.**
 **It is in a working state, but might not yet be ready to be used by externs.**
 
-## Introduction / What is Clustermeister?
+## Introduction
+
+### What is Clustermeister?
 
 Clustermeister provides a framework for easy code execution and testing on remote and distributed 
 Java Virtual Machines (JVM). Specifically it provides utilities to facilitate remote code deployment 
 scenarios and an API to execute code on remote JVMs.
+
+### Why would I use Clustermeister?
 
 Testing code on a dynamically provisioned cluster or in the cloud is in most cases a hassle for Java/Scala developers. 
 The code needs to be packaged, cluster nodes have to be allocated, the allocated nodes have to be found, the 
