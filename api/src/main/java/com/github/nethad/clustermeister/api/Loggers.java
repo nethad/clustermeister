@@ -16,7 +16,8 @@
 package com.github.nethad.clustermeister.api;
 
 /**
- *
+ * Offers string constants for all Clustermeister components to reduce the number of loggers.
+ * 
  * @author thomas
  */
 public class Loggers {

@@ -17,7 +17,7 @@ package com.github.nethad.clustermeister.sample;
 
 import com.github.nethad.clustermeister.api.Clustermeister;
 import com.github.nethad.clustermeister.api.ExecutorNode;
-import com.github.nethad.clustermeister.api.Job;
+import com.github.nethad.clustermeister.api.impl.Job;
 import com.github.nethad.clustermeister.api.impl.ClustermeisterFactory;
 import com.github.nethad.clustermeister.api.impl.JobFactory;
 import com.github.nethad.clustermeister.api.impl.Task;
@@ -51,7 +51,7 @@ public class ClustermeisterSample implements Serializable {
 
     private void executorServiceApi() {
         Clustermeister clustermeister = ClustermeisterFactory.create();
-        ExecutorService executorService = clustermeister.getExecutorService();
+        ExecutorService executorService = clustermeister.getExecutorService(null);
         List<Future<?>> results = new ArrayList<Future<?>>();
         for (int i = 0; i < 100; i++) {
             results.add(executorService.submit(new MyTask()));

@@ -15,7 +15,6 @@
  */
 package com.github.nethad.clustermeister.api.impl;
 
-import com.github.nethad.clustermeister.api.Job;
 import com.google.common.base.Optional;
 import java.util.Map;
 

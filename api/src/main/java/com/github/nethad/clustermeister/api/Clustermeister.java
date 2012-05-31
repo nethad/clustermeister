@@ -15,6 +15,8 @@
  */
 package com.github.nethad.clustermeister.api;
 
+import com.github.nethad.clustermeister.api.impl.ExecutorServiceMode;
+import com.github.nethad.clustermeister.api.impl.Job;
 import com.github.nethad.clustermeister.api.impl.JobFactory;
 import com.github.nethad.clustermeister.api.impl.Task;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -31,11 +33,12 @@ import org.jppf.client.JPPFClient;
 public interface Clustermeister {
 
     /**
-     * An {@link ExecutorService} executes code on any node. 
-     * The implementation behind this will take care of load balancing.
-     * @return an ExecutorService for all nodes provisioned.
+     * An {@link ExecutorService} executes code on any node. This method always returns a new {@link ExecutorService}.
+     * @param executorServiceMode the {@link ExecutorServiceMode} for this {@link ExecutorService}, which can influence
+     * task scheduling.
+     * @return an ExecutorService for all nodes currently provisioned.
      */
-    public ExecutorService getExecutorService();
+    public ExecutorService getExecutorService(ExecutorServiceMode executorServiceMode);
 
     /**
      * The Clustermeister implementation is based on <a href="http://www.jppf.org/">JPPF</a>.
