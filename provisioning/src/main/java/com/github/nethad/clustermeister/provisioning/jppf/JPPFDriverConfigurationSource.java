@@ -20,6 +20,8 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Collections;
+import java.util.Map;
 import java.util.Properties;
 import org.jppf.utils.JPPFConfiguration;
 
@@ -34,6 +36,7 @@ public class JPPFDriverConfigurationSource implements JPPFConfiguration.Configur
 	public static int serverPort = 11111;
 	public static int managementPort = 11198;
     public static String jvmOptions = "";
+    public static Map<String, String> loadBalancing = Collections.EMPTY_MAP;
 	
     public static String host = "localhost";
     Properties properties = new Properties();
@@ -47,6 +50,12 @@ public class JPPFDriverConfigurationSource implements JPPFConfiguration.Configur
         properties.setProperty(JPPFConstants.DISCOVERY_ENABLED, "false");
         properties.setProperty(JPPFConstants.PEER_DISCOVERY_ENABLED, "false");              
 
+        System.out.println("loadBalancing isEmpty = "+loadBalancing.isEmpty());
+        System.out.println("jvmOptions = "+jvmOptions);
+        for (Map.Entry<String, String> entry : loadBalancing.entrySet()) {
+            System.out.println(entry.getKey()+" => "+entry.getValue());
+            properties.setProperty(entry.getKey(), entry.getValue());
+        }
         properties.setProperty(JPPFConstants.LOAD_BALANCING_ALGORITHM, "proportional");
         properties.setProperty(JPPFConstants.LOAD_BALANCING_STRATEGY, "test");
         properties.setProperty("strategy.manual.size", "1");

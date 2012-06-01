@@ -130,6 +130,15 @@ public class JPPFConfiguratedComponentFactory {
             JPPFDriverConfigurationSource.serverPort = serverPort;
             JPPFDriverConfigurationSource.managementPort = managementPort;
             JPPFDriverConfigurationSource.jvmOptions = configuration.getString(ConfigurationKeys.JVM_OPTIONS_LOCAL_DRIVER, "");
+            Map<String, String> loadBalancingConfigValues = new DriverLoadBalancing(configuration).getLoadBalancingConfigValues();
+            if (loadBalancingConfigValues.isEmpty()) {
+//                logger.info("No load balancing settings set.");
+            } else {
+                for (Map.Entry<String, String> entry : loadBalancingConfigValues.entrySet()) {
+//                    logger.info("{} => {}", entry.getKey(), entry.getValue());
+                }
+            }
+            JPPFDriverConfigurationSource.loadBalancing = new DriverLoadBalancing(configuration).getLoadBalancingConfigValues();
             setConfigProperty(JPPFDriverConfigurationSource.class.getCanonicalName());
             final ClustermeisterLauncher launcher = new ClustermeisterDriverLauncher(true);
             final AtomicBoolean initialized = new AtomicBoolean(false);
