@@ -17,8 +17,6 @@ package com.github.nethad.clustermeister.api;
 
 import com.github.nethad.clustermeister.api.impl.ExecutorServiceMode;
 import com.github.nethad.clustermeister.api.impl.Job;
-import com.github.nethad.clustermeister.api.impl.JobFactory;
-import com.github.nethad.clustermeister.api.impl.Task;
 import com.google.common.util.concurrent.ListenableFuture;
 import java.util.Collection;
 import java.util.List;

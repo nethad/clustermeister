@@ -36,18 +36,39 @@ public abstract class ExecutorServiceMode {
     
     abstract protected void configureJppfExecutorService(JPPFExecutorService executorService);
     
+    /**
+     * Executes Callables/Runnables immediately.
+     * @return 
+     */
     public static ExecutorServiceMode standard() {
         return new GenericExecutorServiceMode(Optional.<Long>absent(), Optional.<Integer>absent());
     }
     
+    /**
+     * Bundles Callables/Runnables and executes them after the given timeout.
+     * @param timeout in milliseconds
+     * @return 
+     */
     public static ExecutorServiceMode timeConstraint(long timeout) {
         return new GenericExecutorServiceMode(Optional.fromNullable(timeout), Optional.<Integer>absent());
     }
     
+    /**
+     * Bundles Callables/Runnables and executes them after the given count.
+     * @param batchSize number of Callables/Runnables to bundle
+     * @return 
+     */
     public static ExecutorServiceMode batchSizeContraint(int batchSize) {
         return new GenericExecutorServiceMode(Optional.<Long>absent(), Optional.fromNullable(batchSize));
     }
     
+    /**
+     * Bundles Callables/Runnables and executes them if either a timeout occurs or the given count is reached, 
+     * depending on what happens first.
+     * @param timeout in milliseconds
+     * @param batchSize number of Callables/Runnables to bundle
+     * @return 
+     */
     public static ExecutorServiceMode timeoutAndBatchSizeContraint(long timeout, int batchSize) {
         return new GenericExecutorServiceMode(Optional.fromNullable(timeout), Optional.fromNullable(batchSize));
     }
