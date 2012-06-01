@@ -264,7 +264,6 @@ public class AmazonInstanceManager {
                         socksJPPFReverseTunnel.openTunnel(
                                 JPPFConstants.DEFAULT_SERVER_PORT, "localhost", 
                                 JPPFConstants.DEFAULT_SERVER_PORT);
-                        //TODO: make port configurable
                         //for remote logging
                         Optional<Boolean> remoteLoggingActivataed = 
                                 nodeConfig.isRemoteLoggingActivataed();
@@ -273,9 +272,9 @@ public class AmazonInstanceManager {
                                     sshClientForReverseTunnel.getNewSocksReverseTunnel();
                             instanceToLoggingReverseTunnel.put(
                                     instanceMetadata.getId(), socksLoggingReverseTunnel);
-                            socksLoggingReverseTunnel.openTunnel(
-                                    54321, "localhost", 
-                                    54321);
+                            Integer remoteLoggingPort = nodeConfig.getRemoteLoggingPort().or(52321);
+                            socksLoggingReverseTunnel.openTunnel(remoteLoggingPort, "localhost", 
+                                    remoteLoggingPort);
                         }
                     } else {
                         //TODO: add support for password credentials

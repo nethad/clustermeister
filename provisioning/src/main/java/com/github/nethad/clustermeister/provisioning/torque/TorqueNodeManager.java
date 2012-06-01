@@ -159,6 +159,11 @@ public class TorqueNodeManager {
                     ConfigurationKeys.LOGGING_NODE_REMOTE, 
                     ConfigurationKeys.DEFAULT_LOGGING_NODE_REMOTE));
         }
+        if (!nodeConfiguration.getRemoteLoggingPort().isPresent()) {
+            nodeConfiguration.setRemoteLoggingPort(configuration.getInt(
+                    ConfigurationKeys.LOGGING_NODE_REMOTE_PORT, 
+                    ConfigurationKeys.DEFAULT_LOGGING_NODE_REMOTE_PORT));
+        }
         return executorService.submit(new AddNodeTask(nodeConfiguration));
     }
     

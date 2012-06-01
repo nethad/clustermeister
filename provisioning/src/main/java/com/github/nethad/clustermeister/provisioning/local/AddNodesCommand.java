@@ -67,9 +67,12 @@ public class AddNodesCommand extends AbstractLocalExecutableCommand {
         boolean nodeRemoteLogging = configuration.getBoolean(ConfigurationKeys.LOGGING_NODE_REMOTE, 
                 ConfigurationKeys.DEFAULT_LOGGING_NODE_REMOTE);
         
+        int nodeRemoteLoggingPort = configuration.getInt(ConfigurationKeys.LOGGING_NODE_REMOTE_PORT, 
+                    ConfigurationKeys.DEFAULT_LOGGING_NODE_REMOTE_PORT); 
+        
         final LocalNodeConfiguration nodeConfiguration = LocalNodeConfiguration.configurationFor(
                 artifactsToPreload, jvmOptions, nodeLogLevel, nodeRemoteLogging, 
-                numberOfCpusPerNode);
+                nodeRemoteLoggingPort, numberOfCpusPerNode);
         
         for (int i=0; i<numberOfNodes; i++) {
             getNodeManager().addNode(nodeConfiguration);

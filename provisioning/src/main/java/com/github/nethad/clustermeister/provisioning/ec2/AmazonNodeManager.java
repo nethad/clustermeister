@@ -87,6 +87,7 @@ public class AmazonNodeManager {
     private String nodeJvmOptions;
     private LogLevel nodeLogLevel;
     private Boolean nodeRemoteLogging;
+    private Integer nodeRemoteLoggingPort;
     private Map<String, AWSInstanceProfile> profiles;
     private Collection<File> artifactsToPreload;
 
@@ -152,6 +153,9 @@ public class AmazonNodeManager {
         }
         if(!nodeConfiguration.isRemoteLoggingActivataed().isPresent()) {
             nodeConfiguration.setRemoteLoggingActivated(nodeRemoteLogging);
+        }
+        if(!nodeConfiguration.getRemoteLoggingPort().isPresent()) {
+            nodeConfiguration.setRemoteLoggingPort(nodeRemoteLoggingPort);
         }
         return executorService.submit(new AmazonNodeManager.AddNodeTask(nodeConfiguration, instanceId));
     }
@@ -297,6 +301,7 @@ public class AmazonNodeManager {
         nodeJvmOptions = configurationLoader.getNodeJvmOptions();
         nodeLogLevel = configurationLoader.getNodeLogLevel();
         nodeRemoteLogging = configurationLoader.getNodeRemoteLogging();
+        nodeRemoteLoggingPort = configurationLoader.getNodeRemoteLoggingPort();
         
         profiles = Collections.synchronizedMap(configurationLoader.getConfiguredProfiles());
         

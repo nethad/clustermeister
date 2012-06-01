@@ -32,25 +32,28 @@ public class LocalNodeConfiguration implements NodeConfiguration {
     private final Optional<String> jvmOptions;
     private final Optional<LogLevel> logLevel;
     private final Optional<Boolean> remoteLoggingActivated;
+    private final Optional<Integer> remoteLoggingPort;
     private final int numberOfProcessingThreads;
     
     public static LocalNodeConfiguration configurationFor(
             Collection<File> artifactsToPreload, String jvmOptions, 
-            String logLevel, boolean activateRemoteLogging, 
-            int numberOfProcessingThreads) {
+            String logLevel, Boolean activateRemoteLogging, 
+            Integer remoteLoggingPort, int numberOfProcessingThreads) {
         
         return new LocalNodeConfiguration(artifactsToPreload, jvmOptions, 
-                logLevel, activateRemoteLogging, numberOfProcessingThreads);
+                logLevel, activateRemoteLogging, remoteLoggingPort, 
+                numberOfProcessingThreads);
     }
 
     private LocalNodeConfiguration(Collection<File> artifactsToPreload, 
-            String jvmOptions, String logLevel, boolean activateRemoteLogging, 
-            int numberOfProcessingThreads) {
+            String jvmOptions, String logLevel, Boolean activateRemoteLogging, 
+            Integer remoteLoggingPort, int numberOfProcessingThreads) {
         
         this.artifactsToPreload = artifactsToPreload;
         this.jvmOptions = Optional.fromNullable(jvmOptions);
         this.logLevel = Optional.fromNullable(LogLevel.valueOf(logLevel.toUpperCase()));
         this.remoteLoggingActivated = Optional.fromNullable(activateRemoteLogging);
+        this.remoteLoggingPort = Optional.fromNullable(remoteLoggingPort);
         this.numberOfProcessingThreads = numberOfProcessingThreads;
     }
 
@@ -94,5 +97,10 @@ public class LocalNodeConfiguration implements NodeConfiguration {
     @Override
     public Optional<Boolean> isRemoteLoggingActivataed() {
         return remoteLoggingActivated;
+    }
+
+    @Override
+    public Optional<Integer> getRemoteLoggingPort() {
+        return remoteLoggingPort;
     }
 }

@@ -35,6 +35,7 @@ public class TorqueNodeConfiguration implements NodeConfiguration {
     private Optional<String> jvmOptions = Optional.absent();
     private Optional<LogLevel> logLevel = Optional.absent();
     private Optional<Boolean> remoteLoggingActivated = Optional.absent();
+    private Optional<Integer> remoteLoggingPort = Optional.absent();
 
     public TorqueNodeConfiguration(String driverAddress, int numberOfCpus, Collection<File> artifactsToPreload) {
         this.driverAddress = driverAddress;
@@ -107,5 +108,17 @@ public class TorqueNodeConfiguration implements NodeConfiguration {
     @Override
     public Optional<Boolean> isRemoteLoggingActivataed() {
         return remoteLoggingActivated;
+    }
+
+    /**
+     * Set the remote logging port.
+     */
+    public void setRemoteLoggingPort(Integer remoteLoggingPort) {
+        this.remoteLoggingPort = Optional.fromNullable(remoteLoggingPort);
+    }
+
+    @Override
+    public Optional<Integer> getRemoteLoggingPort() {
+        return remoteLoggingPort;
     }
 }

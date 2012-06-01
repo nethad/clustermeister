@@ -45,6 +45,7 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
     private Optional<String> jvmOptions = Optional.absent();
     private Optional<LogLevel> logLevel = Optional.absent();
     private Optional<Boolean> remoteLoggingActivated = Optional.absent();
+    private Optional<Integer> remoteLoggingPort = Optional.absent();
 
     public static AmazonNodeConfiguration fromInstanceProfile(
             AWSInstanceProfile instanceProfile) {
@@ -154,5 +155,14 @@ public class AmazonNodeConfiguration implements NodeConfiguration {
     @Override
     public Optional<Boolean> isRemoteLoggingActivataed() {
         return remoteLoggingActivated;
+    }
+
+    public void setRemoteLoggingPort(Integer remoteLoggingPort) {
+        this.remoteLoggingPort = Optional.fromNullable(remoteLoggingPort);
+    }
+
+    @Override
+    public Optional<Integer> getRemoteLoggingPort() {
+        return remoteLoggingPort;
     }
 }

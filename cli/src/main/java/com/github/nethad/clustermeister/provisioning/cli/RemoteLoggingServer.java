@@ -24,29 +24,49 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * This Server listens to Remote LOG4J Logging Events.
+ * 
+ * <p>
+ * In order to receive logging events a remote node needs to configure a SocketAppender.
+ * </p>
+ * 
+ * @see <a href="http://logging.apache.org/log4j/1.2/apidocs/org/apache/log4j/net/SocketAppender.html">
+ *  SocketAppender</a>
  *
  * @author daniel
  */
 public class RemoteLoggingServer extends Thread {
+    
     /**
-     * Port to listen on for logging events.
+     * TCP Port to listen on for logging events.
      */
-    public static final int PORT = 54321;
+    protected final int serverSocketPort;
     
     private static final Logger logger = LoggerFactory.getLogger(Loggers.CLI);
+
+    /**
+     * Create a new RemoteLOggingServer.
+     * 
+     * @param serverSocketPort the port to which the server will bind to to.
+     */
+    public RemoteLoggingServer(int serverSocketPort) {
+        this.serverSocketPort = serverSocketPort;
+        this.setName(String.format("%s-%d", getClass().getSimpleName(), getId()));
+    }
 
     @Override
     public void run() {
         try {
-            logger.info("Starting remote logging server on port {}.", PORT);
-            ServerSocket serverSocket = new ServerSocket(PORT);
+            logger.info("Starting remote logging server on port {}.", serverSocketPort);
+            ServerSocket serverSocket = new ServerSocket(serverSocketPort);
             while(true) {
-                logger.info("Waiting for a client to connect.");
+                logger.debug("Waiting for a client to connect.");
                 Socket clientConnection = serverSocket.accept();
-                logger.info("Client {} connected", clientConnection.getInetAddress());
-                new Thread(new SocketNode(clientConnection, LogManager.getLoggerRepository()), 
-                        String.format("[Remote: %s]", clientConnection.getRemoteSocketAddress(), 
-                        clientConnection.getRemoteSocketAddress())).start();
+                logger.debug("Client {} connected", clientConnection.getInetAddress());
+                String threadName = String.format("[RemoteLoggingClient: %s]", 
+                        clientConnection.getRemoteSocketAddress());
+                new Thread(new SocketNode(clientConnection, 
+                        LogManager.getLoggerRepository()), threadName).start();
             }
         } catch (Throwable t) {
             logger.error("Exception while waiting for client connections.", t);

@@ -47,4 +47,9 @@ public interface NodeConfiguration {
          * @return true means to use remote logging for this node, false means not to use it.
          */
         public Optional<Boolean> isRemoteLoggingActivataed();
+        
+        /**
+         * Returns the TCP port to send remote logging events to.
+         */
+        public Optional<Integer> getRemoteLoggingPort();
 }
