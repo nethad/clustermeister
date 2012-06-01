@@ -17,6 +17,7 @@ package com.github.nethad.clustermeister.provisioning.ec2;
 
 import com.github.nethad.clustermeister.api.LogLevel;
 import com.github.nethad.clustermeister.api.Node;
+import com.github.nethad.clustermeister.api.impl.PasswordCredentials;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
@@ -82,8 +83,7 @@ public class AmazonNodeManager {
     
     private final ContextManager contextManager;
     private final ListeningExecutorService executorService;
-    private String accessKeyId;
-    private String secretKey;
+    private PasswordCredentials awsWebApiCredentials;
     private String nodeJvmOptions;
     private LogLevel nodeLogLevel;
     private Boolean nodeRemoteLogging;
@@ -97,7 +97,7 @@ public class AmazonNodeManager {
         
         this.executorService = MoreExecutors.listeningDecorator(
                 Executors.newCachedThreadPool());
-        this.contextManager = new ContextManager(accessKeyId, secretKey, executorService);
+        this.contextManager = new ContextManager(awsWebApiCredentials, executorService);
         this.ec2Facade = new AwsEc2Facade(contextManager);
         this.credentialsManager = new CredentialsManager(configuration, contextManager);
         this.amazonInstanceManager = new AmazonInstanceManager(contextManager, 
@@ -295,9 +295,10 @@ public class AmazonNodeManager {
     private void loadConfiguration(Configuration configuration) {
         AmazonConfigurationLoader configurationLoader = 
                 new AmazonConfigurationLoader(configuration);
-        accessKeyId = configurationLoader.getAccessKeyId();
-        secretKey = configurationLoader.getSecretKey();
         
+        awsWebApiCredentials = new PasswordCredentials("AWS Web API Credentials", 
+                configurationLoader.getAccessKeyId(), 
+                configurationLoader.getSecretKey());
         nodeJvmOptions = configurationLoader.getNodeJvmOptions();
         nodeLogLevel = configurationLoader.getNodeLogLevel();
         nodeRemoteLogging = configurationLoader.getNodeRemoteLogging();

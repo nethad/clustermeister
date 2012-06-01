@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
+import com.github.nethad.clustermeister.api.impl.PasswordCredentials;
 import com.google.common.base.Optional;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.ImmutableSet.Builder;
@@ -35,15 +36,13 @@ import org.jclouds.ssh.jsch.config.JschSshClientModule;
  */
 public class AmazonComputeContextBuilder implements Callable<ComputeServiceContext> {
     
-    private final String accessKeyId;
+    private final PasswordCredentials awsWebApiCredentials;
     private final Builder<Module> modulesBuilder = ImmutableSet.builder();
-    private final String secretKey;
     private final Properties overrides;
 
-    public AmazonComputeContextBuilder(String accessKeyId, String secretKey,
+    public AmazonComputeContextBuilder(PasswordCredentials awsWebApiCredentials,
             Optional<Properties> overrides, Optional<InputStreamMap> credentialsMap) {
-        this.accessKeyId = accessKeyId;
-        this.secretKey = secretKey;
+        this.awsWebApiCredentials = awsWebApiCredentials;
         if (overrides.isPresent()) {
             this.overrides = overrides.get();
         } else {
@@ -60,6 +59,7 @@ public class AmazonComputeContextBuilder implements Callable<ComputeServiceConte
     @Override
     public ComputeServiceContext call() throws Exception {
         return new ComputeServiceContextFactory().createContext("aws-ec2", 
-                accessKeyId, secretKey, modulesBuilder.build(), overrides);
+                awsWebApiCredentials.getUser(), awsWebApiCredentials.getPassword(), 
+                modulesBuilder.build(), overrides);
     }
 }
