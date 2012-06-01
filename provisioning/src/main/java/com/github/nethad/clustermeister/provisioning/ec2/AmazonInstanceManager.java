@@ -253,18 +253,14 @@ public class AmazonInstanceManager {
                 try {
                     if(credentials instanceof KeyPairCredentials) {
                         KeyPairCredentials keypair = credentials.as(KeyPairCredentials.class);
-                        sshClientForReverseTunnel.addIdentity(instanceMetadata.getId(), 
-                                keypair.getPrivateKey().
-                                getBytes(keypair.getKeySourceCharset()));
+                        sshClientForReverseTunnel.setCredentials(keypair);
                         String publicIp = Iterables.getFirst(instanceMetadata.getPublicAddresses(), null);
-                        sshClientForReverseTunnel.connect(credentials.getUser(), publicIp, 
-                                instanceMetadata.getLoginPort());
+                        sshClientForReverseTunnel.connect(publicIp, instanceMetadata.getLoginPort());
                         SocksTunnel socksJPPFReverseTunnel = sshClientForReverseTunnel.getNewSocksReverseTunnel();
                         instanceToJPPFReverseTunnel.put(instanceMetadata.getId(), socksJPPFReverseTunnel);
                         socksJPPFReverseTunnel.openTunnel(
                                 JPPFConstants.DEFAULT_SERVER_PORT, "localhost", 
                                 JPPFConstants.DEFAULT_SERVER_PORT);
-                        //TODO: make port configurable
                         //for remote logging
                         Optional<Boolean> remoteLoggingActivataed = 
                                 nodeConfig.isRemoteLoggingActivataed();
@@ -273,9 +269,9 @@ public class AmazonInstanceManager {
                                     sshClientForReverseTunnel.getNewSocksReverseTunnel();
                             instanceToLoggingReverseTunnel.put(
                                     instanceMetadata.getId(), socksLoggingReverseTunnel);
-                            socksLoggingReverseTunnel.openTunnel(
-                                    54321, "localhost", 
-                                    54321);
+                            Integer remoteLoggingPort = nodeConfig.getRemoteLoggingPort().or(52321);
+                            socksLoggingReverseTunnel.openTunnel(remoteLoggingPort, "localhost", 
+                                    remoteLoggingPort);
                         }
                     } else {
                         //TODO: add support for password credentials

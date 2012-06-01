@@ -32,7 +32,6 @@ import com.google.common.base.Charsets;
 import com.google.common.io.Files;
 import com.google.common.io.OutputSupplier;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import org.apache.commons.configuration.Configuration;
@@ -69,10 +68,7 @@ public class Provisioning {
     
     public void execute() {
         readConfigFile();
-        if(configuration.getBoolean(ConfigurationKeys.LOGGING_NODE_REMOTE, 
-                Boolean.FALSE)) {
-            new RemoteLoggingServer().start();
-        }
+        startRemoteLogging();
         
         switch(provider) {
             case AMAZON:
@@ -91,7 +87,7 @@ public class Provisioning {
                 throw new RuntimeException("Unknown provider");
         }
     }
-    
+
     public void commandShutdown(CommandLineArguments arguments) {
         commandLineEvaluation.shutdown(arguments);
         shutdownDriver();
@@ -120,6 +116,16 @@ public class Provisioning {
             throw new RuntimeException(ex);
         }
         
+    }
+    
+    private void startRemoteLogging() {
+        Boolean remoteLoggingActivated = configuration.getBoolean(
+                ConfigurationKeys.LOGGING_NODE_REMOTE, Boolean.FALSE);
+        if(remoteLoggingActivated) {
+            int port = configuration.getInt(ConfigurationKeys.LOGGING_NODE_REMOTE_PORT, 
+                    ConfigurationKeys.DEFAULT_LOGGING_NODE_REMOTE_PORT);
+            new RemoteLoggingServer(port).start();
+        }
     }
 
     private void shutdownDriver() {

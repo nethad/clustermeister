@@ -28,7 +28,9 @@ public class ConfigurationKeys {
     
     public static final String LOGGING_NODE_LEVEL = "logging.node.level";
     public static final String LOGGING_NODE_REMOTE = "logging.node.remote";
+    public static final String LOGGING_NODE_REMOTE_PORT = "logging.node.remote_port";
     public static final String DEFAULT_LOGGING_NODE_LEVEL = "INFO";
     public static final Boolean DEFAULT_LOGGING_NODE_REMOTE = Boolean.FALSE;
+    public static final int DEFAULT_LOGGING_NODE_REMOTE_PORT = 52321;
     
 }

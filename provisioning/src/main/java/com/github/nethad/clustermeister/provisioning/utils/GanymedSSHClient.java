@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.utils;
 
 import ch.ethz.ssh2.*;
+import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import com.google.common.io.CharStreams;
 import com.jcraft.jsch.SftpException;
 import java.io.*;
@@ -32,11 +33,11 @@ public class GanymedSSHClient implements SSHClient {
 
     private Logger logger = LoggerFactory.getLogger(GanymedSSHClient.class);
     private Connection connection;
-    private String privateKeyFilePath;
+    private KeyPairCredentials credentials;
 
     @Deprecated
-    public GanymedSSHClient(String privateKeyFilePath) {
-        this.privateKeyFilePath = privateKeyFilePath;
+    public GanymedSSHClient(KeyPairCredentials credentials) {
+        this.credentials = credentials;
     }
     
     @Deprecated
@@ -46,17 +47,17 @@ public class GanymedSSHClient implements SSHClient {
 
     @Override
     @Deprecated
-    public void connect(String userName, String host) throws SSHClientException {
-        connect(userName, host, 22);
+    public void connect(String host) throws SSHClientException {
+        connect(host, 22);
     }
 
     @Override
     @Deprecated
-    public void connect(String userName, String host, int port) throws SSHClientException {
+    public void connect(String host, int port) throws SSHClientException {
         connection = new Connection(host, port);
         try {
             connection.connect();
-            connection.authenticateWithPublicKey(userName, new File(privateKeyFilePath), "");
+            connection.authenticateWithPublicKey(credentials.getUser(), credentials.getPrivateKey().toCharArray(), "");
             if (!connection.isAuthenticationComplete()) {
                 throw new SSHClientException("Could not complete authentication");
             }
@@ -67,7 +68,7 @@ public class GanymedSSHClient implements SSHClient {
         } catch (IOException ex) {
             throw new SSHClientException("Could not read private key", ex);
         }
-        logger.info("Connected to " + host + ":" + port + " as " + userName);
+        logger.info("Connected to " + host + ":" + port + " as " + credentials.getUser());
     }
 
     @Override
@@ -189,8 +190,8 @@ public class GanymedSSHClient implements SSHClient {
 
     @Override
     @Deprecated
-    public void setPrivateKey(String privateKeyPath) throws SSHClientException {
-        this.privateKeyFilePath = privateKeyPath;
+    public void setCredentials(KeyPairCredentials credentials) throws SSHClientException {
+        this.credentials = credentials;
     }
 
     @Override

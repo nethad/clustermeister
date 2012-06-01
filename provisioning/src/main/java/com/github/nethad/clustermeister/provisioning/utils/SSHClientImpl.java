@@ -16,8 +16,11 @@
 package com.github.nethad.clustermeister.provisioning.utils;
 
 import com.github.nethad.clustermeister.api.Loggers;
+import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
+import com.google.common.base.Optional;
 import com.jcraft.jsch.*;
 import java.io.*;
+import java.nio.charset.Charset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -27,7 +30,9 @@ import org.slf4j.LoggerFactory;
  * @author daniel, thomas
  */
 public class SSHClientImpl implements SSHClient {
-
+    
+    private KeyPairCredentials credentials;
+    
     private final static Logger logger =
             LoggerFactory.getLogger(Loggers.PROVISIONING);
     
@@ -64,7 +69,7 @@ public class SSHClientImpl implements SSHClient {
      * @throws SSHClientExcpetion If there is a problem processing the
      * credentials.
      */
-    public void addIdentity(String keyName, byte[] privateKey)
+    protected void addIdentity(String keyName, byte[] privateKey)
             throws SSHClientException {
         addIdentity(keyName, privateKey, null, null);
     }
@@ -80,7 +85,7 @@ public class SSHClientImpl implements SSHClient {
      * @throws SSHClientExcpetion If there is a problem processing the
      * credentials.
      */
-    public void addIdentity(String keyName, byte[] privateKey, byte[] passphrase)
+    protected void addIdentity(String keyName, byte[] privateKey, byte[] passphrase)
             throws SSHClientException {
         addIdentity(keyName, privateKey, null, passphrase);
     }
@@ -97,7 +102,7 @@ public class SSHClientImpl implements SSHClient {
      * @throws SSHClientExcpetion If there is a problem processing the
      * credentials.
      */
-    public void addIdentity(String keyName, byte[] privateKey, byte[] publicKey,
+    protected void addIdentity(String keyName, byte[] privateKey, byte[] publicKey,
             byte[] passphrase) throws SSHClientException {
         try {
             jsch.addIdentity(keyName, privateKey, publicKey, passphrase);
@@ -115,7 +120,7 @@ public class SSHClientImpl implements SSHClient {
      * @throws SSHClientExcpetion If there is a problem processing the
      * credentials.
      */
-    public void addIdentity(String privateKeyFilePath) throws SSHClientException {
+    protected void addIdentity(String privateKeyFilePath) throws SSHClientException {
         addIdentity(privateKeyFilePath, (String) null);
     }
 
@@ -129,7 +134,7 @@ public class SSHClientImpl implements SSHClient {
      * @throws SSHClientExcpetion If there is a problem processing the
      * credentials.
      */
-    public void addIdentity(String privateKeyFilePath, String passphrase)
+    protected void addIdentity(String privateKeyFilePath, String passphrase)
             throws SSHClientException {
         try {
             jsch.addIdentity(privateKeyFilePath, passphrase);
@@ -141,29 +146,30 @@ public class SSHClientImpl implements SSHClient {
     /**
      * Open a connection to the SSH Daemon/Server on default port (TCP 22).
      *
-     * @param userName The user name.
      * @param host The host or IP to connect to.
      * @throws SSHClientExcpetion If a new connection can not be established.
      */
     @Override
-    public void connect(String userName, String host)
-            throws SSHClientException {
-        connect(userName, host, port);
+    public void connect(String host) throws SSHClientException {
+        connect(host, port);
     }
 
     /**
      * Open a connection to the SSH Daemon/Server.
      *
-     * @param userName The user name.
      * @param host The host or IP to connect to.
      * @param port The TCP port to use for the connection.
      * @throws SSHClientExcpetion If a new connection can not be established.
      */
     @Override
-    public void connect(String userName, String host, int port)
+    public void connect(String host, int port)
             throws SSHClientException {
 
-        if (isNull(userName) || userName.isEmpty()) {
+        if(isNull(credentials)) {
+            throw new SSHClientException("Invalid credentials.");
+        }
+        if (isNull(credentials.getUser()) || 
+                credentials.getUser().isEmpty()) {
             throw new SSHClientException("Invalid user name.");
         }
         if (isNull(host) || host.isEmpty()) {
@@ -175,7 +181,7 @@ public class SSHClientImpl implements SSHClient {
         this.port = port;
         
         try {
-            session = jsch.getSession(userName, host, port);
+            session = jsch.getSession(credentials.getUser(), host, port);
             session.setConfig("StrictHostKeyChecking", "no");
             //TODO: deal with negotiation failure if server does not support compression
             session.setConfig("compression.c2s", "zlib@openssh.com");
@@ -464,8 +470,22 @@ public class SSHClientImpl implements SSHClient {
     }
 
     @Override
-    public void setPrivateKey(String privateKeyPath) throws SSHClientException {
-        this.addIdentity(privateKeyPath);
+    public void setCredentials(KeyPairCredentials credentials) throws SSHClientException {
+        this.credentials = credentials;
+        try {
+            Charset charset = credentials.getKeySourceCharset();
+            Optional<String> publicKeyOptional = credentials.getPublicKey();
+            byte[] publicKey;
+            if(publicKeyOptional.isPresent()) {
+                publicKey = publicKeyOptional.get().getBytes(charset);
+            } else {
+                publicKey = null;
+            }
+            this.addIdentity(credentials.getName(), credentials.getPrivateKey().
+                    getBytes(charset), publicKey, null);
+        } catch (IOException ex) {
+            throw new SSHClientException(ex);
+        }
     }
     
     /**

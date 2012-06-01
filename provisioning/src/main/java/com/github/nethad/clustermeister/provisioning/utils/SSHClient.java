@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.utils;
 
+import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import java.io.InputStream;
 
 /**
@@ -26,21 +27,19 @@ public interface SSHClient {
     /**
      * Connect to the SSH server.
      * 
-     * @param userName login user name
      * @param host host address for the SSH server
      * @throws SSHClientException 
      */
-    public void connect(String userName, String host) throws SSHClientException;
+    public void connect(String host) throws SSHClientException;
     
     /**
      * Connect to the SSH server.
      * 
-     * @param userName login user name
      * @param host host address for the SSH server
      * @param port port number for the SSH server
      * @throws SSHClientException 
      */
-    public void connect(String userName, String host, int port) throws SSHClientException;
+    public void connect(String host, int port) throws SSHClientException;
     
     /**
      * Execute the given command on the ssh shell.
@@ -91,11 +90,13 @@ public interface SSHClient {
     public void disconnect();
 
     /**
-     * Set the path to the private key used for the SSH connection.
-     * @param privateKeyPath path to the private key file
-     * @throws SSHClientException 
+     * Set the private key and user name used for the SSH connection.
+     * 
+     * @param credentials  the private key credentials.
+     * 
+     * @throws SSHClientException when the credentials can not be processed.
      */
-    public void setPrivateKey(String privateKeyPath) throws SSHClientException;
+    public void setCredentials(KeyPairCredentials credentials) throws SSHClientException;
     
     /**
      * Check SSH connection

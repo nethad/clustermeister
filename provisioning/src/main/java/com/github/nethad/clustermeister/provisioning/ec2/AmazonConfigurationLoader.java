@@ -149,6 +149,11 @@ public class AmazonConfigurationLoader {
     public static final String NODE_LOG_REMOTE = "logging.node.remote";
     
     /**
+     * Node remote logging configuration property.
+     */
+    public static final String NODE_LOG_REMOTE_PORT = "logging.node.remote_port";
+    
+    /**
      * The configuration.
      */
     final Configuration configuration;
@@ -199,18 +204,27 @@ public class AmazonConfigurationLoader {
      * @return the SLF4J log level.
      */
     public LogLevel getNodeLogLevel() {
-        String level = configuration.getString(NODE_LOG_LEVEL);
+        String level = configuration.getString(NODE_LOG_LEVEL, "INFO");
         try {
             return LogLevel.valueOf(level.toUpperCase());
         } catch(IllegalArgumentException ex) {
             return LogLevel.INFO;
         }
     }
+    
     /**
      * Returns whether to activate remote logging for nodes or not.
      */
     public Boolean getNodeRemoteLogging() {
         return configuration.getBoolean(NODE_LOG_REMOTE, Boolean.FALSE);
+    }
+    
+    /**
+     * Returns whether to activate remote logging for nodes or not.
+     */
+    public Integer getNodeRemoteLoggingPort() {
+        //TODO: how to get remote default port centrally?
+        return configuration.getInt(NODE_LOG_REMOTE_PORT, 52321);
     }
     
     /**

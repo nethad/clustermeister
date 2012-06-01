@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
+import com.github.nethad.clustermeister.api.impl.PasswordCredentials;
 import com.google.common.base.Optional;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
@@ -46,13 +47,11 @@ public class ContextManager implements Closeable {
     private final Lock credentialsLock = new ReentrantLock();
     
     private final ListeningExecutorService executorService;
-    private final String accessKeyId;
-    private final String secretKey;
+    private final PasswordCredentials awsWebApiCredentials;
     
-    public ContextManager(String accessKeyId, String secretKey, 
+    public ContextManager(PasswordCredentials awsWebApiCredentials, 
             ListeningExecutorService executorService) {
-        this.accessKeyId = accessKeyId;
-        this.secretKey = secretKey;
+        this.awsWebApiCredentials = awsWebApiCredentials;
         this.executorService = executorService;
     }
     
@@ -76,7 +75,7 @@ public class ContextManager implements Closeable {
         try {
             if(eagerContext == null) {
                 eagerContext = executorService.submit(
-                        new AmazonComputeContextBuilder(accessKeyId, secretKey,
+                        new AmazonComputeContextBuilder(awsWebApiCredentials,
                         Optional.<Properties>absent(), 
                         Optional.of(getCredentialsMap(getCredentialsContext()))));
             }
@@ -96,7 +95,7 @@ public class ContextManager implements Closeable {
         try {
             if(lazyContext == null) {
                 lazyContext = executorService.submit(
-                        new AmazonComputeContextBuilder(accessKeyId, secretKey,
+                        new AmazonComputeContextBuilder(awsWebApiCredentials,
                         Optional.fromNullable(properties), 
                         Optional.of(getCredentialsMap(getCredentialsContext()))));
             }

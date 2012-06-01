@@ -113,11 +113,9 @@ public class TorqueNodeManager {
         this.configuration = configuration;
         try {
             TorqueConfiguration torqueConfiguration = buildTorqueConfiguration();
-            String privateKeyPath = torqueConfiguration.getPrivateKeyPath();
             Injector injector = Guice.createInjector(new SSHModule());
             SSHClient sshClient = injector.getInstance(SSHClient.class);
-//            SSHClient sshClient = new SSHClientImpl(privateKeyPath);
-            sshClient.setPrivateKey(privateKeyPath);
+            sshClient.setCredentials(torqueConfiguration.getSshCredentials());
             nodeDeployer = new TorqueJPPFNodeDeployer(buildTorqueConfiguration(), sshClient);
             executorService = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(THREAD_POOL_SIZE));
         } catch (ConfigurationValueMissingException ex) {
@@ -158,6 +156,11 @@ public class TorqueNodeManager {
             nodeConfiguration.setRemoteLoggingActivated(configuration.getBoolean(
                     ConfigurationKeys.LOGGING_NODE_REMOTE, 
                     ConfigurationKeys.DEFAULT_LOGGING_NODE_REMOTE));
+        }
+        if (!nodeConfiguration.getRemoteLoggingPort().isPresent()) {
+            nodeConfiguration.setRemoteLoggingPort(configuration.getInt(
+                    ConfigurationKeys.LOGGING_NODE_REMOTE_PORT, 
+                    ConfigurationKeys.DEFAULT_LOGGING_NODE_REMOTE_PORT));
         }
         return executorService.submit(new AddNodeTask(nodeConfiguration));
     }
