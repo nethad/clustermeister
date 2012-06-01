@@ -171,7 +171,9 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
      * Disconnects SSH connection used for deployment.
      */
     public void disconnectSshConnection() {
-        sshClient.disconnect();
+        if(sshClient != null) {
+            sshClient.disconnect();
+        }
         sshClient = null;
     }
 

@@ -145,12 +145,22 @@ public class TorqueNodeManager {
         return commandLineEvaluation;
     }
 
-	public ListenableFuture<Void> addNode(TorqueNodeConfiguration nodeConfiguration) {
+    public ListenableFuture<Void> addNode(TorqueNodeConfiguration nodeConfiguration) {
         if (!nodeConfiguration.getJvmOptions().isPresent()) {
             nodeConfiguration.setJvmOptions(configuration.getString(ConfigurationKeys.JVM_OPTIONS_NODE, null));
         }
+        if (!nodeConfiguration.getLogLevel().isPresent()) {
+            nodeConfiguration.setLogLevel(configuration.getString(
+                    ConfigurationKeys.LOGGING_NODE_LEVEL, 
+                    ConfigurationKeys.DEFAULT_LOGGING_NODE_LEVEL));
+        }
+        if (!nodeConfiguration.isRemoteLoggingActivataed().isPresent()) {
+            nodeConfiguration.setRemoteLoggingActivated(configuration.getBoolean(
+                    ConfigurationKeys.LOGGING_NODE_REMOTE, 
+                    ConfigurationKeys.DEFAULT_LOGGING_NODE_REMOTE));
+        }
         return executorService.submit(new AddNodeTask(nodeConfiguration));
-	}
+    }
     
     public ListenableFuture<Void> removeNodes(Collection<String> nodeUuids) {
         Preconditions.checkNotNull(nodeUuids, "nodeUuids must not be null.");

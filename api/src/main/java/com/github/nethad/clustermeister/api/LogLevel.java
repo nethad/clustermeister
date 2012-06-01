@@ -13,13 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.dependencymanager;
+package com.github.nethad.clustermeister.api;
 
 /**
  * LogLevels representing the corresponding SLF4J log levels.
  *
  * @author daniel
  */
-enum LogLevel {
+public enum LogLevel {
     TRACE, DEBUG, INFO, WARN, ERROR
 }

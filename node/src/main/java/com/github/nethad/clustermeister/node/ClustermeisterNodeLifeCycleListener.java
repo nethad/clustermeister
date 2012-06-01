@@ -31,6 +31,7 @@ import org.jppf.node.event.NodeLifeCycleListener;
 import org.jppf.node.protocol.JPPFDistributedJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.MDC;
 
 /**
  * Custom Clustermeister JPPF Node Life Cycle Listener.
@@ -44,9 +45,11 @@ public class ClustermeisterNodeLifeCycleListener implements NodeLifeCycleListene
     
     @Override
     public void nodeStarting(NodeLifeCycleEvent event) {
+        String nodeUUID = NodeRunner.getUuid();
         //make sure the UUID is printed to standard out in a well defined format.
-        System.out.println(Constants.UUID_PREFIX + NodeRunner.getUuid());
+        System.out.println(Constants.UUID_PREFIX + nodeUUID);
         System.out.flush();
+        MDC.put("UUID", String.format(" Node: %s", nodeUUID));
         
         boolean divertStreamsToFile = Boolean.parseBoolean(System.getProperty(
                 Constants.CLUSTERMEISTER_DIVERT_STREAMS_TO_FILE));
@@ -62,6 +65,7 @@ public class ClustermeisterNodeLifeCycleListener implements NodeLifeCycleListene
 
     @Override
     public void nodeEnding(NodeLifeCycleEvent event) {
+        MDC.remove("UUID");
         //nop
     }
 

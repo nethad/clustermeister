@@ -26,4 +26,9 @@ public class ConfigurationKeys {
     public static final String JVM_OPTIONS_NODE = "jvm_options.node";
     public static final String DEFAULT_JVM_OPTIONS_NODE = "-Xmx32m";
     
+    public static final String LOGGING_NODE_LEVEL = "logging.node.level";
+    public static final String LOGGING_NODE_REMOTE = "logging.node.remote";
+    public static final String DEFAULT_LOGGING_NODE_LEVEL = "INFO";
+    public static final Boolean DEFAULT_LOGGING_NODE_REMOTE = Boolean.FALSE;
+    
 }

@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
+import com.github.nethad.clustermeister.api.LogLevel;
 import com.github.nethad.clustermeister.api.Node;
 import com.github.nethad.clustermeister.api.utils.NodeManagementConnector;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
@@ -84,6 +85,8 @@ public class AmazonNodeManager {
     private String accessKeyId;
     private String secretKey;
     private String nodeJvmOptions;
+    private LogLevel nodeLogLevel;
+    private Boolean nodeRemoteLogging;
     private Map<String, AWSInstanceProfile> profiles;
     private Collection<File> artifactsToPreload;
 
@@ -143,6 +146,12 @@ public class AmazonNodeManager {
             Optional<String> instanceId) {
         if(!nodeConfiguration.getJvmOptions().isPresent()) {
             nodeConfiguration.setJvmOptions(nodeJvmOptions);
+        }
+        if(!nodeConfiguration.getLogLevel().isPresent()) {
+            nodeConfiguration.setLogLevel(nodeLogLevel);
+        }
+        if(!nodeConfiguration.isRemoteLoggingActivataed().isPresent()) {
+            nodeConfiguration.setRemoteLoggingActivated(nodeRemoteLogging);
         }
         return executorService.submit(new AmazonNodeManager.AddNodeTask(nodeConfiguration, instanceId));
     }
@@ -285,8 +294,9 @@ public class AmazonNodeManager {
         accessKeyId = configurationLoader.getAccessKeyId();
         secretKey = configurationLoader.getSecretKey();
         
-        //TODO: move logic to AmazonConfigurationLoader
-        nodeJvmOptions = configuration.getString("jvm_options.node", "-Xmx32m");
+        nodeJvmOptions = configurationLoader.getNodeJvmOptions();
+        nodeLogLevel = configurationLoader.getNodeLogLevel();
+        nodeRemoteLogging = configurationLoader.getNodeRemoteLogging();
         
         profiles = Collections.synchronizedMap(configurationLoader.getConfiguredProfiles());
         

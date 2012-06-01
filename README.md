@@ -3,6 +3,8 @@
 **DISCLAIMER: Clustermeister is still under heavy development.**
 **It is in a working state, but might not yet be ready to be used by externs.**
 
+For detailed information, see [our wiki](https://github.com/nethad/clustermeister/wiki).
+
 ## Introduction
 
 ### What is Clustermeister?
@@ -174,3 +176,6 @@ and exit the command line:
 And that's it. In this quick example, we saw how to set up Clustermeister to add nodes to our TORQUE 
 infrastructure and run code on them via the Clustermeister API. As mentioned above, for a more in-depth 
 explanation, check out the [tutorial](https://github.com/nethad/clustermeister/wiki/Tutorial).
+
+For more information, see [our wiki](https://github.com/nethad/clustermeister/wiki).
+

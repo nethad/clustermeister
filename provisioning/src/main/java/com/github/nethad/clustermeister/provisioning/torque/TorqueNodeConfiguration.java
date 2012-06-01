@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.torque;
 
+import com.github.nethad.clustermeister.api.LogLevel;
 import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.api.NodeType;
 import com.google.common.base.Optional;
@@ -28,17 +29,19 @@ import java.util.Collection;
  */
 public class TorqueNodeConfiguration implements NodeConfiguration {
 	
-	private final String driverAddress;
+    private final String driverAddress;
     private final int numberOfCpus;
     private final Collection<File> artifactsToPreload;
-    private Optional<String> jvmOptions = Optional.<String>absent();
+    private Optional<String> jvmOptions = Optional.absent();
+    private Optional<LogLevel> logLevel = Optional.absent();
+    private Optional<Boolean> remoteLoggingActivated = Optional.absent();
 
-	public TorqueNodeConfiguration(String driverAddress, int numberOfCpus, Collection<File> artifactsToPreload) {
-		this.driverAddress = driverAddress;
+    public TorqueNodeConfiguration(String driverAddress, int numberOfCpus, Collection<File> artifactsToPreload) {
+        this.driverAddress = driverAddress;
         this.numberOfCpus = numberOfCpus;
         this.artifactsToPreload = artifactsToPreload;
-	}
-    
+    }
+
     public static TorqueNodeConfiguration configurationForNode(String driverAddress, int numberOfCpus, Collection<File> artifactsToPreload) {
         return new TorqueNodeConfiguration(driverAddress, numberOfCpus, artifactsToPreload);
     }
@@ -79,5 +82,30 @@ public class TorqueNodeConfiguration implements NodeConfiguration {
     public Optional<String> getJvmOptions() {
         return jvmOptions;
     }
-	
+
+    /**
+     * Set a SLF4J log level for this node.
+     * 
+     * @param logLevel the log level 
+     */
+    public void setLogLevel(String logLevel) {
+        this.logLevel = Optional.fromNullable(LogLevel.valueOf(logLevel.toUpperCase()));
+    }
+
+    @Override
+    public Optional<LogLevel> getLogLevel() {
+        return logLevel;
+    }
+
+    /**
+     * Set whether remote logging is activated for this node.
+     */
+    public void setRemoteLoggingActivated(Boolean remoteLoggingActivated) {
+        this.remoteLoggingActivated = Optional.fromNullable(remoteLoggingActivated);
+    }
+    
+    @Override
+    public Optional<Boolean> isRemoteLoggingActivataed() {
+        return remoteLoggingActivated;
+    }
 }

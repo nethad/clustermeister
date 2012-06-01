@@ -21,6 +21,7 @@ import com.github.nethad.clustermeister.provisioning.CommandLineArguments;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
 import com.github.nethad.clustermeister.provisioning.CommandRegistry;
+import com.github.nethad.clustermeister.provisioning.ConfigurationKeys;
 import com.github.nethad.clustermeister.provisioning.ec2.AmazonNodeManager;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
 import com.github.nethad.clustermeister.provisioning.local.LocalNodeManager;
@@ -68,6 +69,11 @@ public class Provisioning {
     
     public void execute() {
         readConfigFile();
+        if(configuration.getBoolean(ConfigurationKeys.LOGGING_NODE_REMOTE, 
+                Boolean.FALSE)) {
+            new RemoteLoggingServer().start();
+        }
+        
         switch(provider) {
             case AMAZON:
                 startAmazon();
