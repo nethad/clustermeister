@@ -204,7 +204,7 @@ public class AmazonConfigurationLoader {
      * @return the SLF4J log level.
      */
     public LogLevel getNodeLogLevel() {
-        String level = configuration.getString(NODE_LOG_LEVEL);
+        String level = configuration.getString(NODE_LOG_LEVEL, "INFO");
         try {
             return LogLevel.valueOf(level.toUpperCase());
         } catch(IllegalArgumentException ex) {
