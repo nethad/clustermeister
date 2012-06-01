@@ -86,7 +86,7 @@ public class TorqueJPPFNodeDeployerTest {
         
         torqueJPPFNodeDeployer.prepareAndDeployInfrastructure(new LinkedList<File>());
         
-        verify(sshClient).connect(eq("user"), eq("ssh.example.com"), eq(30));
+        verify(sshClient).connect(eq("ssh.example.com"), eq(30));
         assertThat(torqueJPPFNodeDeployer.isInfrastructureDeployed(), is(true));
     }
     

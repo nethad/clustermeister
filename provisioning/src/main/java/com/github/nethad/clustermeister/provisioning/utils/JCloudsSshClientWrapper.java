@@ -15,6 +15,7 @@
  */
 package com.github.nethad.clustermeister.provisioning.utils;
 
+import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
 import java.io.File;
 import java.io.InputStream;
 import org.jclouds.compute.domain.ExecResponse;
@@ -90,12 +91,12 @@ public class JCloudsSshClientWrapper implements SSHClient {
     }
     
     @Override
-    public void connect(String userName, String host) throws SSHClientException {
+    public void connect(String host) throws SSHClientException {
         sshClient.connect();
     }
 
     @Override
-    public void connect(String userName, String host, int port) throws SSHClientException {
+    public void connect(String host, int port) throws SSHClientException {
         sshClient.connect();
     }
 
@@ -135,11 +136,11 @@ public class JCloudsSshClientWrapper implements SSHClient {
     /**
      * This method does nothing.
      * 
-     * @param privateKeyPath not used.
+     * @param credentials  not used.
      * @throws SSHClientException never happens 
      */
     @Override
-    public void setPrivateKey(String privateKeyPath) throws SSHClientException {
+    public void setCredentials(KeyPairCredentials credentials) throws SSHClientException {
         //nop
     }
 

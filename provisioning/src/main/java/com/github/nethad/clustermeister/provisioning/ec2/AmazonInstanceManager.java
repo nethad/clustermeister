@@ -253,12 +253,9 @@ public class AmazonInstanceManager {
                 try {
                     if(credentials instanceof KeyPairCredentials) {
                         KeyPairCredentials keypair = credentials.as(KeyPairCredentials.class);
-                        sshClientForReverseTunnel.addIdentity(instanceMetadata.getId(), 
-                                keypair.getPrivateKey().
-                                getBytes(keypair.getKeySourceCharset()));
+                        sshClientForReverseTunnel.setCredentials(keypair);
                         String publicIp = Iterables.getFirst(instanceMetadata.getPublicAddresses(), null);
-                        sshClientForReverseTunnel.connect(credentials.getUser(), publicIp, 
-                                instanceMetadata.getLoginPort());
+                        sshClientForReverseTunnel.connect(publicIp, instanceMetadata.getLoginPort());
                         SocksTunnel socksJPPFReverseTunnel = sshClientForReverseTunnel.getNewSocksReverseTunnel();
                         instanceToJPPFReverseTunnel.put(instanceMetadata.getId(), socksJPPFReverseTunnel);
                         socksJPPFReverseTunnel.openTunnel(

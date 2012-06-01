@@ -17,6 +17,8 @@ package com.github.nethad.clustermeister.provisioning.torque;
 
 import com.github.nethad.clustermeister.api.Loggers;
 import com.github.nethad.clustermeister.api.impl.FileConfiguration;
+import com.github.nethad.clustermeister.api.impl.KeyPairCredentials;
+import java.io.File;
 import org.apache.commons.configuration.Configuration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,16 +39,15 @@ public class TorqueConfiguration {
     
     private static final Logger logger = LoggerFactory.getLogger(Loggers.PROVISIONING);
     
-    private String sshUser;
-    private String privateKeyPath;
+    private KeyPairCredentials sshCredentials;
     private String sshHost;
     private int sshPort;
     private String emailNotify;
     private final String queueName;
 
     public TorqueConfiguration(String sshUser, String privateKeyPath, String sshHost, int sshPort, String emailNotify, String queueName) {
-        this.sshUser = sshUser;
-        this.privateKeyPath = privateKeyPath;
+        this.sshCredentials = new KeyPairCredentials("Torque SSH Credentials", 
+                sshUser, new File(privateKeyPath));
         this.sshHost = sshHost;
         this.sshPort = sshPort;
         this.emailNotify = emailNotify;
@@ -100,12 +101,8 @@ public class TorqueConfiguration {
                 + "Using default value \""+defaultValue+"\".";
     }
 
-    public String getSshUser() {
-        return sshUser;
-    }
-
-    public String getPrivateKeyPath() {
-        return privateKeyPath;
+    public KeyPairCredentials getSshCredentials() {
+        return sshCredentials;
     }
 
     public String getSshHost() {

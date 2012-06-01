@@ -42,7 +42,6 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
     private String host;
     private int port;
     private SSHClient sshClient;
-    private String user;
     private boolean isInfrastructureDeployed;
     private AtomicInteger currentNodeNumber;
     private final long sessionId;
@@ -71,7 +70,7 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
     }
     
     private void connectToSSH() throws SSHClientException {
-        sshClient.connect(user, host, port);
+        sshClient.connect(host, port);
     }
 
     @VisibleForTesting
@@ -133,7 +132,6 @@ public class TorqueJPPFNodeDeployer implements TorqueNodeDeployment, PublicIpNot
     private void loadConfiguration() {     
           host = configuration.getSshHost();
           port = configuration.getSshPort();
-          user = configuration.getSshUser();
     }
 
     /**
