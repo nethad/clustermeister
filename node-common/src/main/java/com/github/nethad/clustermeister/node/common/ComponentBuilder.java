@@ -16,11 +16,19 @@
 package com.github.nethad.clustermeister.node.common;
 
 /**
+ * Responsible for the creation of components.
+ * 
+ * A component is some functional entity of Clustermeister.
  *
  * @author daniel
  */
 public interface ComponentBuilder<T> {
 
+    /**
+     * Create a new component.
+     * 
+     * @return a new instance of this component.
+     */
     public T build();
     
 }

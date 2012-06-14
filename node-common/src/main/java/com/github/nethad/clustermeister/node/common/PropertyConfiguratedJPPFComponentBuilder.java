@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Creates JPPF component instances that can be configured with {@link Properties}.
  *
  * @author daniel
  */
@@ -35,6 +36,11 @@ public abstract class PropertyConfiguratedJPPFComponentBuilder <T>
     
     private static int configClassId = 1;
 
+    /**
+     * Returns the properties to use as JPPFConfiguration.
+     * 
+     * @return the configured properties.
+     */
     protected abstract Properties getProperties();
     
     @Override
@@ -42,9 +48,14 @@ public abstract class PropertyConfiguratedJPPFComponentBuilder <T>
         return createConfigurationSource(getProperties());
     }
     
-    protected static String createConfigurationSource(Properties properties) {
+    /**
+     * Dynamically creates a new class that implements 
+     * {@link JPPFConfiguration.ConfigurationSource} and returns the provided properties.
+     */
+    private static String createConfigurationSource(Properties properties) {
         ClassPool classPool = ClassPool.getDefault();
-        CtClass classPrototype = classPool.makeClass("GenericClustermeisterConfigurationSource#" + configClassId++);
+        String name = String.format("GenericClustermeisterConfigurationSource#%d", configClassId++);
+        CtClass classPrototype = classPool.makeClass(name);
         try {
             classPrototype.setInterfaces(
                     new CtClass[]{classPool.get("org.jppf.utils.JPPFConfiguration$ConfigurationSource")});

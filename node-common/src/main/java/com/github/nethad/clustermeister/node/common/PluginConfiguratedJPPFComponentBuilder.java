@@ -16,7 +16,8 @@
 package com.github.nethad.clustermeister.node.common;
 
 /**
- * Creates instances that need a custom JPPF ConfigurationSource.
+ * 
+ * Creates JPPF component instances that read the JPPF configuration from a class.
  *
  * This class coordinates the System property settings between concurrent calls.
  *
@@ -38,8 +39,20 @@ public abstract class PluginConfiguratedJPPFComponentBuilder <T>
         }
     }
     
+    /**
+     * Sub-classes need to implement the component creation here.
+     * 
+     * @return a new instance of this component.
+     */
     protected abstract T doBuild();
     
+    /**
+     * Returns the fully qualified class name of the class to read the configuration from.
+     * 
+     * The class needs to implement the {@link JPPFConfiguration.ConfigurationSource} interface.
+     * 
+     * @return the class name of the configuration source.
+     */
     protected abstract String getConfigurationClassName();
 
     private void setConfigProperty() {
