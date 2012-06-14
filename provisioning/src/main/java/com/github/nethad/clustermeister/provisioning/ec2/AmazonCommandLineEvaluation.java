@@ -28,8 +28,8 @@ import com.github.nethad.clustermeister.provisioning.ec2.commands.RemoveNodeComm
 import com.github.nethad.clustermeister.provisioning.ec2.commands.ShutdownCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.StartNodeCommand;
 import com.github.nethad.clustermeister.provisioning.ec2.commands.StateCommand;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
+import com.github.nethad.clustermeister.provisioning.jppf.ManagementByJobsClientBuilder;
 
 /**
  * @{inheritDoc}
@@ -56,8 +56,9 @@ public class AmazonCommandLineEvaluation implements CommandLineEvaluation {
         this.nodeManager = nodeManager;
         this.handle = handle;
         //TODO: refactor initialization of this management client. Shouldn't be here!
-        this.managementClient = JPPFConfiguratedComponentFactory.getInstance().
-                createManagementByJobsClient("localhost", JPPFConstants.DEFAULT_SERVER_PORT);
+        ManagementByJobsClientBuilder builder = new ManagementByJobsClientBuilder(
+                "localhost", JPPFConstants.DEFAULT_SERVER_PORT);
+        this.managementClient = builder.build();
         nodeManager.registerManagementClient(managementClient);
         registerCommands();
     }

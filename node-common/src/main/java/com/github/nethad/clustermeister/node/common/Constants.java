@@ -67,6 +67,11 @@ public class Constants {
     public static final String JPPF_JVM_OPTIONS = "jppf.jvm.options";
     
     /**
+     * JPPF System property configuration configuration source.
+     */
+    public static final String JPPF_CONFIG_PLUGIN = "jppf.config.plugin";
+    
+    /**
      * If a job's name contains this string, the node will be shut down.
      */
     public static final String JOB_MARKER_SHUTDOWN = "#SHUTDOWN_MARKER#";
