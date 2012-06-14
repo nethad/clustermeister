@@ -16,7 +16,7 @@
 package com.github.nethad.clustermeister.provisioning.jppf;
 
 import com.github.nethad.clustermeister.api.JPPFConstants;
-import com.github.nethad.clustermeister.node.common.PropertyConfiguratedJPPFComponentBuilder;
+import com.github.nethad.clustermeister.node.common.builders.PropertyConfiguratedJPPFComponentBuilder;
 import java.util.Properties;
 
 /**
