@@ -20,6 +20,7 @@ import com.github.nethad.clustermeister.node.common.PropertyConfiguratedJPPFComp
 import java.util.Properties;
 
 /**
+ * Builds a new {@link JPPFManagementByJobsClient} component.
  *
  * @author daniel
  */
@@ -30,6 +31,12 @@ public class ManagementByJobsClientBuilder
     
     private final int port;
 
+    /**
+     * Creates a new builder.
+     * 
+     * @param host the server host
+     * @param port the server port
+     */
     public ManagementByJobsClientBuilder(String host, int port) {
         this.host = host;
         this.port = port;

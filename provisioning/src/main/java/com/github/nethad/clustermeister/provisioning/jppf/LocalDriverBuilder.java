@@ -30,6 +30,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
+ * Builds and launches a new local driver component.
  *
  * @author daniel
  */
@@ -45,6 +46,13 @@ public class LocalDriverBuilder extends PluginConfiguratedJPPFComponentBuilder<C
     
     private final Configuration configuration;
 
+    /**
+     * Creates a new builder.
+     * 
+     * @param serverPort the server port
+     * @param managementPort the management port
+     * @param configuration the configuration
+     */
     public LocalDriverBuilder(int serverPort, int managementPort, Configuration configuration) {
         this.serverPort = serverPort;
         this.managementPort = managementPort;
