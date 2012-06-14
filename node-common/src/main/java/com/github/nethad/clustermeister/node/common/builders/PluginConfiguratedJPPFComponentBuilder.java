@@ -16,6 +16,7 @@
 package com.github.nethad.clustermeister.node.common.builders;
 
 import com.github.nethad.clustermeister.node.common.Constants;
+import org.jppf.utils.JPPFConfiguration;
 
 /**
  * 
@@ -34,6 +35,7 @@ public abstract class PluginConfiguratedJPPFComponentBuilder <T>
         synchronized(PluginConfiguratedJPPFComponentBuilder.class) {
             setConfigProperty();
             try {
+                JPPFConfiguration.reset();
                 return doBuild();
             } finally {
                 deleteConfigProperty();
@@ -63,5 +65,6 @@ public abstract class PluginConfiguratedJPPFComponentBuilder <T>
     
     private void deleteConfigProperty() {
         System.getProperties().remove(Constants.JPPF_CONFIG_PLUGIN);
+        JPPFConfiguration.reset();
     }
 }

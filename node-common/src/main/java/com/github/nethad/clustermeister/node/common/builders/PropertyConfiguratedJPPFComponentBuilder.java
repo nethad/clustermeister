@@ -34,18 +34,35 @@ public abstract class PropertyConfiguratedJPPFComponentBuilder <T>
     private static final Logger logger = 
             LoggerFactory.getLogger(PropertyConfiguratedJPPFComponentBuilder.class);
     
+    /**
+     * The properties that will be used as JPPFConfiguration.
+     */
+    protected Properties properties = new Properties();
+
     private static int configClassId = 1;
 
     /**
-     * Returns the properties to use as JPPFConfiguration.
+     * Set properties.
      * 
-     * @return the configured properties.
+     * @param properties the properties to use as JPPFConfiguration.
      */
-    protected abstract Properties getProperties();
+    public void setProperties(Properties properties) {
+        this.properties = properties;
+    }
+    
+    /**
+     * Set a property to be used as JPPFConfiguration.
+     * 
+     * @param key the property key
+     * @param value the property value
+     */
+    public void setProperty(String key, String value) {
+        this.properties.setProperty(key, value);
+    }
     
     @Override
     protected String getConfigurationClassName() {
-        return createConfigurationSource(getProperties());
+        return createConfigurationSource(properties);
     }
     
     /**
