@@ -62,13 +62,13 @@ public class ClustermeisterDriverLauncherTest {
         serverBuilder.setProperty("jppf.server.port", "11111");
         serverBuilder.setProperty("jppf.discovery.enabled", "false");
         
-        TestClientBuilder clientBuilder = new TestClientBuilder();
+        SimpleClientBuilder clientBuilder = new SimpleClientBuilder();
         clientBuilder.setProperty("jppf.drivers", "testDriver");
         clientBuilder.setProperty("testDriver.jppf.server.host", "localhost");
         clientBuilder.setProperty("testDriver.jppf.server.port", "11111");
         clientBuilder.setProperty("jppf.discovery.enabled", "false");
         
-        TestClientBuilder clientBuilder2 = new TestClientBuilder();
+        SimpleClientBuilder clientBuilder2 = new SimpleClientBuilder();
         clientBuilder2.setProperty("jppf.drivers", "testDriver2");
         clientBuilder2.setProperty("testDriver2.jppf.server.host", "localhost");
         clientBuilder2.setProperty("testDriver2.jppf.server.port", "11112");

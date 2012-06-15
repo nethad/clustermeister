@@ -23,7 +23,7 @@ import org.jppf.client.JPPFClient;
  *
  * @author daniel
  */
-public class TestClientBuilder extends PropertyConfiguratedJPPFComponentBuilder<JPPFClient> {
+public class SimpleClientBuilder extends PropertyConfiguratedJPPFComponentBuilder<JPPFClient> {
 
     @Override
     protected JPPFClient doBuild() {
