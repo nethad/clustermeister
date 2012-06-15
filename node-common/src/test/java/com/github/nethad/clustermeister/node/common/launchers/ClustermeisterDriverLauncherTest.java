@@ -21,10 +21,9 @@ import org.jppf.client.JPPFClient;
 import org.jppf.client.JPPFClientConnectionStatus;
 import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Assert;
+import static org.junit.Assert.*;
 import org.junit.Before;
 import org.junit.BeforeClass;
-import static org.junit.Assert.*;
 import org.junit.Test;
 
 /**
@@ -52,37 +51,24 @@ public class ClustermeisterDriverLauncherTest {
     public void tearDown() {
     }
 
-    /**
-     * Test of main method, of class ClustermeisterDriverLauncher.
-     */
     @Test
-    public void testMain() throws InterruptedException, ClassNotFoundException, InstantiationException, IllegalAccessException, IOException {
+    public void testDriverBuilder() throws InterruptedException, ClassNotFoundException, InstantiationException, IllegalAccessException, IOException {
         JPPFDriverBuilder serverBuilder = new JPPFDriverBuilder();
         serverBuilder.setProperty("jppf.management.port", "12000");
-        serverBuilder.setProperty("jppf.server.port", "11111");
+        serverBuilder.setProperty("jppf.server.port", "11112");
         serverBuilder.setProperty("jppf.discovery.enabled", "false");
+        
+        serverBuilder.build();
         
         SimpleClientBuilder clientBuilder = new SimpleClientBuilder();
         clientBuilder.setProperty("jppf.drivers", "testDriver");
         clientBuilder.setProperty("testDriver.jppf.server.host", "localhost");
-        clientBuilder.setProperty("testDriver.jppf.server.port", "11111");
+        clientBuilder.setProperty("testDriver.jppf.server.port", "11112");
         clientBuilder.setProperty("jppf.discovery.enabled", "false");
-        
-        SimpleClientBuilder clientBuilder2 = new SimpleClientBuilder();
-        clientBuilder2.setProperty("jppf.drivers", "testDriver2");
-        clientBuilder2.setProperty("testDriver2.jppf.server.host", "localhost");
-        clientBuilder2.setProperty("testDriver2.jppf.server.port", "11112");
-        clientBuilder2.setProperty("jppf.discovery.enabled", "false");
-        
-        ClustermeisterJPPFServer server = serverBuilder.build();
-        
         JPPFClient client = clientBuilder.build();
-        JPPFClient client2 = clientBuilder2.build();
         
         Thread.sleep(3000);
         
         assertEquals(JPPFClientConnectionStatus.ACTIVE, client.getClientConnection().getStatus());
-        assertEquals(JPPFClientConnectionStatus.DISCONNECTED, client2.getClientConnection().getStatus());
-        
     }
 }

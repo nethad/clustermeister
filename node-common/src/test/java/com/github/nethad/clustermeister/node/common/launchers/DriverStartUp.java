@@ -15,36 +15,17 @@
  */
 package com.github.nethad.clustermeister.node.common.launchers;
 
+import org.jppf.startup.JPPFDriverStartupSPI;
+
 /**
- * A JPPF Driver/Server.
  *
  * @author daniel
  */
-public class ClustermeisterJPPFServer extends ClustermeisterJPPFThread {
-    
-    /**
-     * FQCN of JPPF Driver runner.
-     */
-    protected static final String JPPF_DRIVER_CLASS = "org.jppf.server.JPPFDriver";
+public class DriverStartUp implements JPPFDriverStartupSPI {
 
-    /**
-     * Create a JPPF Driver.
-     */
-    public ClustermeisterJPPFServer() {
-        this("JPPF Driver");
-    }
-
-    /**
-     * Create a JPPF Driver with a specified Thread Name.
-     * 
-     * @param name 
-     */
-    public ClustermeisterJPPFServer(String name) {
-        super(name);
-    }
-    
     @Override
     public void run() {
-        executeMain(JPPF_DRIVER_CLASS, NO_LAUNCHER_ARG);
+        ClustermeisterJPPFServer.signalInitialization();
     }
+    
 }

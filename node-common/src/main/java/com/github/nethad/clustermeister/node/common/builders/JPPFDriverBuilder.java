@@ -38,8 +38,6 @@ public class JPPFDriverBuilder extends PropertyConfiguratedJPPFComponentBuilder<
                 while(!server.getMonitor().get()) {
                     server.getMonitor().wait();
                 }
-                //wait a bit more to make sure the server thread has initialized.
-                Thread.sleep(500);
             } catch (InterruptedException ex) {
                 logger.error("Interrupted while waiting for driver to initialize.");
             }
