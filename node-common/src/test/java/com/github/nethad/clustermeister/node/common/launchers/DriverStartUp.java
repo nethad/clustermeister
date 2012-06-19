@@ -18,6 +18,7 @@ package com.github.nethad.clustermeister.node.common.launchers;
 import org.jppf.startup.JPPFDriverStartupSPI;
 
 /**
+ * This class hooks into JPPF Driver initialization in test scope.
  *
  * @author daniel
  */
