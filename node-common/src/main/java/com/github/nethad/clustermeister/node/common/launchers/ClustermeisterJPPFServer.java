@@ -37,7 +37,7 @@ public class ClustermeisterJPPFServer extends ClustermeisterJPPFThread {
     /**
      * Create a JPPF Driver with a specified Thread Name.
      * 
-     * @param name 
+     * @param name A name for this server thread.
      */
     public ClustermeisterJPPFServer(String name) {
         super(name);
