@@ -264,22 +264,22 @@
             <dependency>
                 <groupId>org.jppf</groupId>
                 <artifactId>common</artifactId>
-                <version>3.0.1</version>
+                <version>3.1</version>
             </dependency>
             <dependency>
                 <groupId>org.jppf</groupId>
                 <artifactId>common-node</artifactId>
-                <version>3.0.1</version>
+                <version>3.1</version>
             </dependency>
             <dependency>
                 <groupId>org.jppf</groupId>
                 <artifactId>client</artifactId>
-                <version>3.0.1</version>
+                <version>3.1</version>
             </dependency>
             <dependency>
                 <groupId>org.jppf</groupId>
                 <artifactId>server</artifactId>
-                <version>3.0.1</version>
+                <version>3.1</version>
             </dependency>
             <dependency>
                 <groupId>com.github.nethad.clustermeister</groupId>
