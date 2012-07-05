@@ -29,6 +29,10 @@
             <version>3.15.0-GA</version>
         </dependency>
         <dependency>
+            <groupId>org.jppf</groupId>
+            <artifactId>client</artifactId>
+        </dependency>
+        <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
             <scope>test</scope>
@@ -44,8 +48,8 @@
             <scope>test</scope>
         </dependency>
         <dependency>
-            <groupId>org.jppf</groupId>
-            <artifactId>client</artifactId>
+            <groupId>org.jvnet.opendmk</groupId>
+            <artifactId>jmxremote_optional</artifactId>
             <scope>test</scope>
         </dependency>
     </dependencies>

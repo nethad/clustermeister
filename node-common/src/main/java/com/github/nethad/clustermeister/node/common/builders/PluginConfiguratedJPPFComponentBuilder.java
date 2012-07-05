@@ -31,6 +31,7 @@ public abstract class PluginConfiguratedJPPFComponentBuilder <T>
     
     @Override
     public T build() {
+        preMutex();
         //JVM wide synchronization
         synchronized(PluginConfiguratedJPPFComponentBuilder.class) {
             setConfigProperty();
@@ -49,6 +50,13 @@ public abstract class PluginConfiguratedJPPFComponentBuilder <T>
      * @return a new instance of this component.
      */
     protected abstract T doBuild();
+    
+    /**
+     * This enables sub-classes to hook in before entering the global mutual exclusion.
+     */
+    protected void preMutex(){
+        //nop
+    }
     
     /**
      * Returns the fully qualified class name of the class to read the configuration from.

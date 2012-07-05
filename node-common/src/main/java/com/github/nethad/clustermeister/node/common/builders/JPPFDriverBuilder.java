@@ -15,9 +15,8 @@
  */
 package com.github.nethad.clustermeister.node.common.builders;
 
+import com.github.nethad.clustermeister.node.common.ClientConnectionAwaiter;
 import com.github.nethad.clustermeister.node.common.launchers.ClustermeisterJPPFServer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * Configures and starts a new JPPF Driver/Server.
@@ -26,22 +25,20 @@ import org.slf4j.LoggerFactory;
  */
 public class JPPFDriverBuilder extends PropertyConfiguratedJPPFComponentBuilder<ClustermeisterJPPFServer> {
     
-    private final static Logger logger = LoggerFactory.getLogger("COMMON-NODE");
+    private ClientConnectionAwaiter initializationAwaiter;
     
     @Override
     protected ClustermeisterJPPFServer doBuild() {
         ClustermeisterJPPFServer server = new ClustermeisterJPPFServer();
-        synchronized(server.getMonitor()) {
-            server.start();
-                //wait for server to load configuration.
-            try {
-                while(!server.getMonitor().get()) {
-                    server.getMonitor().wait();
-                }
-            } catch (InterruptedException ex) {
-                logger.error("Interrupted while waiting for driver to initialize.");
-            }
-        }   
+        server.start();
+        initializationAwaiter.await();
         return server;
+    }
+
+    @Override
+    protected void preMutex() {
+        String driverHost = properties.getProperty("jppf.server.host", "localhost");
+        int driverPort = Integer.parseInt(properties.getProperty("jppf.server.port", "11111"));
+        this.initializationAwaiter = new ClientConnectionAwaiter(driverHost, driverPort);
     }
 }

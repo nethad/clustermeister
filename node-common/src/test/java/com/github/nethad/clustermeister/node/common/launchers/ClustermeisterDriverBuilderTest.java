@@ -15,10 +15,8 @@
  */
 package com.github.nethad.clustermeister.node.common.launchers;
 
+import com.github.nethad.clustermeister.node.common.ClientConnectionAwaiter;
 import com.github.nethad.clustermeister.node.common.builders.JPPFDriverBuilder;
-import java.io.IOException;
-import org.jppf.client.JPPFClient;
-import org.jppf.client.JPPFClientConnectionStatus;
 import org.junit.After;
 import org.junit.AfterClass;
 import static org.junit.Assert.*;
@@ -52,26 +50,39 @@ public class ClustermeisterDriverBuilderTest {
     }
 
     @Test
-    public void testDriverBuilder() throws InterruptedException, 
-            ClassNotFoundException, InstantiationException, 
-            IllegalAccessException, IOException {
+    public void testDriverBuilder() throws InterruptedException {
+        int managementPort = 12000;
+        int serverPort = 11112;
+        DriverBuilderThread driverBuilderThread = new DriverBuilderThread(serverPort, managementPort);
+        driverBuilderThread.start(); 
+        driverBuilderThread.join();
+
+        new ClientConnectionAwaiter("localhost", serverPort).await();
+        assertTrue(true);
+    }
+    
+    private class DriverBuilderThread extends Thread {
+
+        private final int serverPort;
+        private final int managementPort;
+        ClustermeisterJPPFServer server;
+
+        private DriverBuilderThread(int serverPort, int managementPort) {
+            this.serverPort = serverPort;
+            this.managementPort = managementPort;
+        }
         
-        JPPFDriverBuilder serverBuilder = new JPPFDriverBuilder();
-        serverBuilder.setProperty("jppf.management.port", "12000");
-        serverBuilder.setProperty("jppf.server.port", "11112");
-        serverBuilder.setProperty("jppf.discovery.enabled", "false");
+        @Override
+        public void run() {
+            JPPFDriverBuilder serverBuilder = new JPPFDriverBuilder();
+            serverBuilder.setProperty("jppf.management.host", "localhost");
+            serverBuilder.setProperty("jppf.management.port", String.valueOf(this.managementPort));
+            serverBuilder.setProperty("jppf.server.host", "localhost");
+            serverBuilder.setProperty("jppf.server.port", String.valueOf(this.serverPort));
+            serverBuilder.setProperty("jppf.discovery.enabled", "false");
+            serverBuilder.setProperty("jppf.management.enabled", "true");
         
-        serverBuilder.build();
-        
-        SimpleClientBuilder clientBuilder = new SimpleClientBuilder();
-        clientBuilder.setProperty("jppf.drivers", "testDriver");
-        clientBuilder.setProperty("testDriver.jppf.server.host", "localhost");
-        clientBuilder.setProperty("testDriver.jppf.server.port", "11112");
-        clientBuilder.setProperty("jppf.discovery.enabled", "false");
-        JPPFClient client = clientBuilder.build();
-        
-        Thread.sleep(3000);
-        
-        assertEquals(JPPFClientConnectionStatus.ACTIVE, client.getClientConnection().getStatus());
+            server = serverBuilder.build();
+        }
     }
 }
