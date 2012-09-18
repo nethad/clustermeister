@@ -50,7 +50,32 @@ Clustermeister tries to solve this issue by providing tools to set up nodes easi
 
 \section{Architecture}
 
+\subsection{Terminology}
 
+\begin{description}
+\item[Clustermeister Node] A node can be interpreted as a JVM that executes code. Nodes are running on local or remote Clustermeister instances. A single instance can host several nodes.
+\item[Clustermeister Instance] An instance is a physical or virtual machine generally running in a cluster or a cloud computation service such as Amazon EC2.
+\end{description}
+
+\subsection{Clustermeister Modules}
+
+Clustermeister consists of two main modules: Provisioning and API.
+
+The major advantage of this separation of concerns is, that it enables the user to set up and deploy nodes and instances at the beginning of a development or computation session. Using this set-up the user can repeatedly execute code without the need for re-deployment of changed code. This speeds up developing and testing code in a distributed environment.
+
+\subsection{Clustermeister Provisioning}
+The provisioning module is accessible via a command line interface (CLI) and is responsible for deployment of the Clustermeister infrastructure. This enables provisioning of instances and nodes, deployment of dependencies and dynamic classloading.
+
+Clustermeister provisioning is used to set up distributed nodes for a development or computation session.
+
+\subsection{The Clustermeister API}
+Allows the user to send jobs and tasks to Clustermeister nodes for execution and access to the computation results. The computations are executed asynchronously, in parallel and in a distributed manner. Clustermeister API supports execution of Serializable and JVM executable code. This supports not only Java but also bytecode compatible programming languages such as Scala.
+
+The Clustermeister API is used to access the nodes and features provided by the Clustermeister provisioning module during a development or computation session.
+
+\subsection{Toplology}
+
+TODO
 
 \section{Implementation}
 
