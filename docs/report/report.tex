@@ -18,20 +18,32 @@
 
 \section{Motivation}
 
-\subsection{Subtitle}
+\subsection{What is Clustermeister?}
+Clustermeister provides a framework for easy code execution and testing on remote and distributed Java Virtual Machines (JVM). Specifically it provides utilities to facilitate remote code deployment scenarios and an API to execute code on remote JVMs.
 
-Lorem ipsum dolor sit amet, consectetuer adipiscing elit.
+\subsection{Problems Addressed}
+Testing code on a dynamically provisioned cluster or in the cloud is in most cases a hassle for Java/Scala developers. The code needs to be packaged, cluster nodes have to be allocated, the allocated nodes have to be found, the packaged code needs to be deployed to all the nodes and usually the JVM on the node has to be restarted. This process is often managed using a variety of tools, ranging from SSH scripts to custom cloud APIs and clustering frameworks. The whole process is time-consuming to set up, manage and run. Another issue is that usually the connection from the developer machine to the cluster is slow, so transferring files from the developer machine to all the nodes is potentially slow. 
 
-\subsection{Yet another subtitle}
+Clustermeister tries to solve this issue by providing tools to set up nodes easily and fast.
 
-\subsubsection{Sub-subtitle}
 
-Vestibulum pellentesque felis eu massa.\footnote{Footnote.}
+\subsection{Provided Services}
 
-\subsubsection{Yet another sub-subtitle}
+\begin{itemize}
+\item Deployment of JPPF (TODO: what is JPPF?) nodes on (virtual) machines requiring only minimal configuration.
+\item Provisioning of Amazon EC2 instances provided by jClouds (TODO: jcoulds intro).
+\item Parallel and distributed code execution via a Java ExecutorService interface or a native JPPF interface.
+\item Dynamic classloading allowing for rapid re-execution of client code without manual re-deployment.
+\item Addressable nodes for code execution on specific nodes.
+\item Easy deployment of dependencies using maven repository dependency resolution provided by Sonatype Aether (TODO: aether intro).
+\end{itemize}
 
-Suspendisse vel felis. Ut lorem lorem, interdum eu, tincidunt sit
-amet, laoreet vitae, arcu.
+\subsection{Supported Environments}
+\begin{itemize}
+\item Execution in JVMs on the local machine.
+\item TORQUE (PBS) Clusters.
+\item Amazon Web Services Elastic Compute Cloud (EC2).
+\end{itemize}
 
 \section{Organisation}
 
