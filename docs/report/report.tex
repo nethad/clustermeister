@@ -1,6 +1,7 @@
 \documentclass[english]{uzhpub}
 \usepackage[T1]{fontenc}
 \usepackage[latin9]{inputenc}
+\usepackage{listings}
 
 \begin{document}
 
@@ -46,6 +47,38 @@ amet, laoreet vitae, arcu.
 
 \section{User Manual}
 
-% lstset{language=Java, numbers=left, showspaces=false, frame=single, breaklines=true}
+\subsection{Tutorial}
+
+This tutorial shows the setup for a Java project. However, the steps discussed here should be applicable to other language environments running on the JVM, such as Scala. The code is deliberately kept simple, to show you how Clustermeister works and what a typical work-flow looks like. After that, however, it should be easy to build more complex projects.
+
+\subsubsection{Setting Up A Java Project With Clustermeister API}
+
+As a first step, you need to set up a Maven project. If you are not familiar with Maven, see their Maven in 5 Minutes intro\footnote{http://maven.apache.org/guides/getting-started/maven-in-five-minutes.html}. 
+If you have not used Maven yet, do not worry, we provide you with the necessary configuration here. To start a new Maven project, enter:
+
+\begin{lstlisting}[breaklines=true]
+ mvn archetype:generate -DinteractiveMode=true -DarchetypeArtifactId=maven-archetype-quickstart
+\end{lstlisting}
+
+This is an interactive command which asks you for the mandatory Maven configuration. In our configuration, for the groupId you use org.example.mycmproject and for the artifactId you enter helloworld. You can choose other values, of course. For the version and package you just hit enter. After that, you are asked to confirm the values and you end up with this project structure:
+
+\begin{lstlisting}[breaklines=true]
+/helloworld
+/helloworld/pom.xml
+/helloworld/src/
+/helloworld/src/main/
+/helloworld/src/main/java/
+/helloworld/src/main/java/org/example/mycmproject/
+/helloworld/src/main/java/org/example/mycmproject/App.java
+/helloworld/src/test/
+/helloworld/src/test/java/
+/helloworld/src/test/java/org/example/mycmproject/
+/helloworld/src/test/java/org/example/mycmproject/AppTest.java
+\end{lstlisting}
+
+\lstinputlisting[language=Java, numbers=left, showspaces=false, frame=single, breaklines=true]{listings/HelloWorldCallable.java}
+
+\lstinputlisting[language=Java, numbers=left, showspaces=false, frame=single, breaklines=true]{listings/HelloWorld.java}
+
 
 \end{document}
