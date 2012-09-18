@@ -1,8 +1,12 @@
 \documentclass[english]{uzhpub}
 \usepackage[T1]{fontenc}
 \usepackage[latin9]{inputenc}
+\usepackage{listings}
+\usepackage{color}
 
 \begin{document}
+
+
 
 %% Titelei
 \title{Master Project: Clustermeister}
@@ -16,6 +20,9 @@
 \maketitle
 
 \section{Motivation}
+
+\definecolor{lbcolor}{rgb}{0.9,0.9,0.9}
+\definecolor{white}{rgb}{1.0,1.0,1.0}
 
 \subsection{What is Clustermeister?}
 Clustermeister provides a framework for easy code execution and testing on remote and distributed Java Virtual Machines (JVM). Specifically it provides utilities to facilitate remote code deployment scenarios and an API to execute code on remote JVMs.
@@ -83,6 +90,142 @@ TODO
 
 \section{User Manual}
 
-% lstset{language=Java, numbers=left, showspaces=false, frame=single, breaklines=true}
+\subsection{Tutorial}
+
+This tutorial shows the setup for a Java project. However, the steps discussed here should be applicable to other language environments running on the JVM, such as Scala. The code is deliberately kept simple, to show you how Clustermeister works and what a typical work-flow looks like. After that, however, it should be easy to build more complex projects.
+
+\subsubsection{Setting Up A Java Project With Clustermeister API}
+
+As a first step, you need to set up a Maven project. If you are not familiar with Maven, see their Maven in 5 Minutes intro\footnote{http://maven.apache.org/guides/getting-started/maven-in-five-minutes.html}. 
+If you have not used Maven yet, do not worry, we provide you with the necessary configuration here. To start a new Maven project, enter:
+
+\begin{lstlisting}[breaklines=true, backgroundcolor=\color{lbcolor}]
+ mvn archetype:generate -DinteractiveMode=true -DarchetypeArtifactId=maven-archetype-quickstart
+\end{lstlisting}
+
+This is an interactive command which asks you for the mandatory Maven configuration. In our configuration, for the \texttt{groupId} you use \texttt{org.example.mycmproject} and for the \texttt{artifactId} you enter \texttt{helloworld}. You can choose other values, of course. For the version and package you just hit enter. After that, you are asked to confirm the values and you end up with this project structure:
+
+\begin{lstlisting}[breaklines=true, backgroundcolor=\color{lbcolor}]
+/helloworld
+/helloworld/pom.xml
+/helloworld/src/
+/helloworld/src/main/
+/helloworld/src/main/java/
+/helloworld/src/main/java/org/example/mycmproject/
+/helloworld/src/main/java/org/example/mycmproject/App.java
+/helloworld/src/test/
+/helloworld/src/test/java/
+/helloworld/src/test/java/org/example/mycmproject/
+/helloworld/src/test/java/org/example/mycmproject/AppTest.java
+\end{lstlisting}
+
+To use the Clustermeister API, you need to modify the \texttt{pom.xml} file and add the dependencies and the Clustermeister Maven Repository. After that, the \texttt{pom.xml} file should look like this:
+
+\lstinputlisting[language=XML, numbers=left, showspaces=false, frame=single, breaklines=true, title=\lstname]{listings/pom.xml}
+
+Now that you have created a new Maven project, you can prepare some nodes for code execution.
+
+\subsubsection{Use The Clustermeister Command Line Interface To Run Nodes}
+
+Before you can run any code, you need to deploy nodes that execute it. Clustermeister offers a "local" provider to run the code on the local machine. This is useful to test code and get familiar with the Clustermeister tools.
+
+You need to get the command line client jar here\footnote{https://maven.ifi.uzh.ch/maven2/content/repositories/snapshots/com/github/nethad/clustermeister/cli/0.1-SNAPSHOT/} or build it yourself. If you choose to build it yourself, the jar lands in \texttt{clustermeister/cli/target/cli-0.1-SNAPSHOT.jar}.
+
+To start the command line client, enter:
+
+\begin{lstlisting}[breaklines=true, backgroundcolor=\color{lbcolor}]
+java -jar cli-0.1-SNAPSHOT.jar -p local 
+\end{lstlisting}
+
+As you can see, we provide the command line argument \texttt{-p local}. With that, we specify the provider to use. Other providers would be \texttt{amazon} or \texttt{torque}. More information on the command line arguments may be obtained with the \texttt{-h} flag. After that, you will see the following logging output on the command line:
+
+\begin{lstlisting}[breaklines=true, backgroundcolor=\color{lbcolor}]
+29 May 2012 16:04:35,908 [INFO ][CLI]: Using configuration in /home/user/.clustermeister/configuration.yml or create file if it does not exist.
+29 May 2012 16:04:35,911 [INFO ][CLI]: Using provider LOCAL
+...
+29 May 2012 16:04:36,100 [WARN ][CLI]: Configuration file "/home/user/.clustermeister/configuration.yml" does not exist, create default configuration.
+... 
+\end{lstlisting}
+
+You have not yet created a configuration file yet, so a default configuration file is placed in\texttt{ ~/.clustermeister/configuration.yml}. More information on how to configure Clustermeister can be found here. Since you choose the local provider, no configuration is necessary.
+
+You should now be in the Clustermeister provisioning shell, recognizable by the \texttt{cm\$} prefix (If you do not see the prefix, press enter). You are now able to deploy nodes locally with
+
+\begin{lstlisting}[breaklines=true, backgroundcolor=\color{lbcolor}]
+cm$ addnodes 4 2
+\end{lstlisting}
+
+This deploys 4 nodes with 2 processing threads each. After a few seconds you should see
+
+\begin{lstlisting}[breaklines=true, backgroundcolor=\color{lbcolor}]
+...
+29 May 2012 16:21:10,975 [INFO ][provisioning.local.JPPFLocalNode]: Start node with ./startNode.sh jppf-node-0.properties false false -Xmx32m
+cm$ 29 May 2012 16:21:16,963 [INFO ][PROVISIONING]: Node connected 5BF598070A16C8BC0B6E5165940F0202
+29 May 2012 16:21:17,322 [INFO ][PROVISIONING]: Node connected 32597083BD1422CA62CC94C56ED4DA76
+29 May 2012 16:21:17,343 [INFO ][PROVISIONING]: Node connected 9E9907E000A0DD18F06275BE5CADAE90
+29 May 2012 16:21:17,413 [INFO ][PROVISIONING]: Node connected 4A774FB8003209127A61BA48F9E5E3DD
+\end{lstlisting}
+
+The 4 nodes we deployed locally are now connected to the local driver. We are finally able to execute code on these nodes. Read on to learn how.
+
+\subsubsection{Use The Clustermeister API To Execute Code On Nodes}
+
+Now that you have deployed some nodes, you can start implementing the code. Change back to your newly created Maven project and add these two classes to the \texttt{helloworld/src/main/java/org/example/mycmproject/} folder:
+
+\lstinputlisting[language=Java, numbers=left, showspaces=false, frame=single, breaklines=true, title=\lstname]{listings/HelloWorldCallable.java}
+
+\lstinputlisting[language=Java, numbers=left, showspaces=false, frame=single, breaklines=true, title=\lstname]{listings/HelloWorld.java}
+
+In the \texttt{main} method, you create a \texttt{Clustermeister} object and ask for all nodes that are currently provisioned. You iterate through all nodes and execute the \texttt{HelloWorldCallable} on each node. The \texttt{HelloWorldCallable} simply returns a \texttt{"Hello World!"} as a result. Back at the \texttt{main} method, you get a \texttt{ListenableFuture} (provided by the Google Guava Libraries\footnote{http://code.google.com/p/guava-libraries/}. To read more about the \texttt{ListenableFuture}, see their documentation\footnote{http://code.google.com/p/guava-libraries/wiki/ListenableFutureExplained}). With the \texttt{get()} method, you wait for the result and print it out. After all the "computations" are done (imagine a less ridiculous example with actual computations involved), you invoke \texttt{Clustermeister.shutdown()}.
+
+\textbf{IMPORTANT:} Do not invoke \texttt{shutdown()} before all the results are returned! Code running on the nodes might dynamically load classes from your machine and the connection is torn down after the \texttt{shutdown()} command. In this example, you use the blocking \texttt{get()} command, so \texttt{shutdown()} is invoked after you received all results. But if you, for example, register callbacks on your futures and execute code meanwhile, the \texttt{finally} block might be invoked before your callbacks are executed, so keep this in mind!
+
+You are finally able to run the code by executing the \texttt{HelloWorld} class. First you need to compile the two classes:
+
+\begin{lstlisting}[breaklines=true, backgroundcolor=\color{lbcolor}]
+mvn clean install
+\end{lstlisting}
+
+You should see
+
+\begin{lstlisting}[breaklines=true, backgroundcolor=\color{lbcolor}]
+...
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+...
+\end{lstlisting}
+
+at the end. If the build succeeded, we can start our HelloWorld class with:
+
+\begin{lstlisting}[breaklines=true, backgroundcolor=\color{lbcolor}]
+mvn exec:java -Dexec.mainClass="org.example.mycmproject.HelloWorld"
+\end{lstlisting}
+
+In the output, you should see:
+
+\begin{lstlisting}[breaklines=true, backgroundcolor=\color{lbcolor}]
+...
+[INFO ][API] - Provisioning returned 4 nodes.
+Node 9E9907E000A0DD18F06275BE5CADAE90, result: Hello world!
+Node 32597083BD1422CA62CC94C56ED4DA76, result: Hello world!
+Node 5BF598070A16C8BC0B6E5165940F0202, result: Hello world!
+Node 4A774FB8003209127A61BA48F9E5E3DD, result: Hello world!
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+...
+\end{lstlisting}
+
+When you are finished, you can shut down the locally provisioned nodes. Change to the Clustermeister CLI and type:
+
+\begin{lstlisting}[breaklines=true, backgroundcolor=\color{lbcolor}]
+cm$ shutdown
+\end{lstlisting}
+
+When shutdown completed, type exit to leave the CLI.
+
+And that is all. You have set up a new Maven project, configured with the Clustermeister API. You have set up 4 local nodes and executed a Hello World example on them. To see more elaborate examples, check out the Clustermeister Examples repository\footnote{https://github.com/nethad/clustermeister-examples}.
+
 
 \end{document}
