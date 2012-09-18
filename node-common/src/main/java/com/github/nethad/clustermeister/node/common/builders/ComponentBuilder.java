@@ -13,30 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.jppf;
-
-import java.util.Properties;
-import org.junit.Ignore;
-import org.junit.Test;
+package com.github.nethad.clustermeister.node.common.builders;
 
 /**
+ * Responsible for the creation of components.
+ * 
+ * A component is some functional entity of Clustermeister.
  *
  * @author daniel
  */
-@Ignore("Depends on local configuration.")
-public class JPPFManagementByJobsClientTest {
+public interface ComponentBuilder<T> {
 
-    @Test
-    public void testSomeMethod() throws InterruptedException {
-
-        ManagementByJobsClientBuilder builder = 
-                new ManagementByJobsClientBuilder("localhost", 11111);
-        JPPFManagementByJobsClient client = builder.build();
-
-        Properties props = client.getJPPFConfig("localhost", 11198);
-
-        System.out.println(props);
-        
-        client.close();
-    }
+    /**
+     * Create a new component.
+     * 
+     * @return a new instance of this component.
+     */
+    public T build();
+    
 }

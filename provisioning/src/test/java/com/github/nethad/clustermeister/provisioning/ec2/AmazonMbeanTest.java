@@ -15,8 +15,8 @@
  */
 package com.github.nethad.clustermeister.provisioning.ec2;
 
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
+import com.github.nethad.clustermeister.provisioning.jppf.ManagementByJobsClientBuilder;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -35,8 +35,9 @@ public class AmazonMbeanTest {
 	@Test
 	public void testSomeMethod() throws InterruptedException, Exception {
             
-            JPPFManagementByJobsClient client = JPPFConfiguratedComponentFactory.getInstance().
-                    createManagementByJobsClient("localhost", 11111);
+            ManagementByJobsClientBuilder builder = 
+                    new ManagementByJobsClientBuilder("localhost", 11111);
+            JPPFManagementByJobsClient client = builder.build();
             
             client.shutdownAllNodes();
 //            client.shutdownNode("057E551CF16A6AEF5DFBCC52F8E415D8");

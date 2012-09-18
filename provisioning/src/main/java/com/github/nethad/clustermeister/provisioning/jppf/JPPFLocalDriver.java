@@ -51,8 +51,8 @@ public class JPPFLocalDriver implements Observer {
     }
 
     private void localSetupAndRun() {
-        launcher = JPPFConfiguratedComponentFactory.getInstance().
-                createLocalDriver(SERVER_PORT, MANAGEMENT_PORT, configuration);
+        LocalDriverBuilder builder = new LocalDriverBuilder(SERVER_PORT, MANAGEMENT_PORT, configuration);
+        launcher = builder.build();
     }
 
     public String getIpAddress() {

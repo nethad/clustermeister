@@ -74,7 +74,7 @@ public class AmazonConfigurationLoader {
     public static final String USER = "user";
     
     /**
-     * AMI (Amazon Image) ID configuration property.
+     * AMI (Amazon Machine Image) ID configuration property.
      */
     public static final String AMI_ID = "ami_id";
     

@@ -13,30 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.github.nethad.clustermeister.provisioning.jppf;
-
-import java.util.Properties;
-import org.junit.Ignore;
-import org.junit.Test;
+package com.github.nethad.clustermeister.node.common.builders;
 
 /**
  *
  * @author daniel
  */
-@Ignore("Depends on local configuration.")
-public class JPPFManagementByJobsClientTest {
-
-    @Test
-    public void testSomeMethod() throws InterruptedException {
-
-        ManagementByJobsClientBuilder builder = 
-                new ManagementByJobsClientBuilder("localhost", 11111);
-        JPPFManagementByJobsClient client = builder.build();
-
-        Properties props = client.getJPPFConfig("localhost", 11198);
-
-        System.out.println(props);
-        
-        client.close();
+public class JPPFNodeBuilder extends PropertyConfiguratedJPPFComponentBuilder<Void> {
+    
+    @Override
+    protected Void doBuild() {
+        throw new UnsupportedOperationException("Not supported yet.");
     }
+
 }

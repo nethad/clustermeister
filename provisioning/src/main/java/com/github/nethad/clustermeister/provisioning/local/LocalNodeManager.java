@@ -16,12 +16,11 @@
 package com.github.nethad.clustermeister.provisioning.local;
 
 import com.github.nethad.clustermeister.api.Loggers;
-import com.github.nethad.clustermeister.api.NodeConfiguration;
 import com.github.nethad.clustermeister.provisioning.CommandLineEvaluation;
 import com.github.nethad.clustermeister.provisioning.CommandLineHandle;
-import com.github.nethad.clustermeister.provisioning.jppf.JPPFConfiguratedComponentFactory;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFLocalDriver;
 import com.github.nethad.clustermeister.provisioning.jppf.JPPFManagementByJobsClient;
+import com.github.nethad.clustermeister.provisioning.jppf.ManagementByJobsClientBuilder;
 import com.github.nethad.clustermeister.provisioning.rmi.RmiServerForApi;
 import java.util.Collection;
 import java.util.LinkedList;
@@ -69,8 +68,8 @@ public class LocalNodeManager {
 
         JPPFManagementByJobsClient client = null;
         try {
-            client = JPPFConfiguratedComponentFactory.getInstance().createManagementByJobsClient(
-                    driverHost, serverPort);
+            ManagementByJobsClientBuilder builder = new ManagementByJobsClientBuilder(driverHost, serverPort);
+            client = builder.build();
             try {
                 client.shutdownAllNodes();
             } catch (Exception ex) {
