@@ -1,0 +1,25 @@
+profiles:
+  # micro instance minimal configuration
+  - micro-us:
+      type: t1.micro
+      region: us-east-1
+  # micro instance full configuration
+  - micro-eu:
+      ami_id: ami-f9231b8d
+      type: t1.micro
+      region: eu-west-1
+      zone: eu-west-1c
+      keypair: EC2_Keypair
+      shutdown_state: suspended
+  # micro spot instance
+  - spot-eu:
+      type: t1.micro
+      region: eu-west-1
+      spot_price: 0.03
+  # cluster compute instance
+  - cluster:
+      type: cc1.4xlarge
+      region: us-east-1
+      keypair: EC2_Keypair
+      shutdown_state: suspended
+      placement_group: cm-cluster

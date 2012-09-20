@@ -1,0 +1,27 @@
+# configuration for the amazon provider
+amazon:
+  access_key_id: 00accesskey00
+  ... more configuration ...
+
+# configuration for the torque provider
+torque:
+  ssh_user: user
+  ... more configuration ...
+
+# Configuration independent of any provider, related to library-preloading for nodes 
+# (to speed up code execution by avoiding remote class-loading)
+preload:
+  poms:
+    - /home/user/path/to/my/pom.xml
+  ... more configuration ...
+
+# JVM fine-tuning for the local provider and (remote) nodes
+jvm_options:
+  local_driver: "-Xmx500m"
+  ... more configuration ...
+
+# Logging configuration (currently for remote logging from nodes only).
+logging:
+  node:
+    remote: false
+  ... more configuration ...

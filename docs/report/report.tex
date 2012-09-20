@@ -1,8 +1,10 @@
-\documentclass[english]{uzhpub}
+%\documentclass[english]{uzhpub}
+\documentclass{article}
 \usepackage[T1]{fontenc}
 \usepackage[latin9]{inputenc}
 \usepackage{listings}
 \usepackage{color}
+\usepackage{longtable}
 
 \begin{document}
 
@@ -11,7 +13,7 @@
 %% Titelei
 \title{Master Project: Clustermeister}
 
-\subtitle{Report}
+%\subtitle{Report}
 
 \author{Daniel Spicar, Thomas Ritter}
 
@@ -79,11 +81,27 @@ TODO
 
 \section{Implementation}
 
+We chose to implement Clustermeister in Java, because we knew that Clustermeister will be used by Scala clients, so the JVM was a logical decision. Another goal was to licence Clustermeister under the Apache Licence, version 2.0.
 
+\subsection{Node Runtime}
+
+We did not want to re-implement a node runtime based on java ourselves, so instead we evaluated existing libraries that would help us run code on remote JVMs. Ideally, this runtime should provide a means of dynamically loading libraries and classes from the machine that is issuing the computation task.
+
+There are a few libraries that would fit our needs, among them are GridGain, Hazelcast and JPPF. In the following, these libraries are discussed.
+
+\paragraph{GridGain} GridGain\footnote{http://www.gridgain.com/} was very easy to set up, has a pleasant API and worked out of the box for us. It is able to remotely load libraries and classes without additional configuration. However, newer versions of GridGain are licenced under the GPL and we could not find out how to configure GridGain programmatically. Because of these reasons, we ruled out GridGain.
+
+\paragraph{Hazelcast} Hazelcast\footnote{http://www.hazelcast.com/} was a good fit at first sight, due to its nice API. However, it lacked features that we needed for Clustermeister, i.e. remote deployment of libraries and classes and provisioning capabilities. Hazelcast is generally a low-level solution and it would have required more implementation effort to integrate it into Clustermeister.
+
+\paragraph{JPPF} JPPF\footnote{http://jppf.org/} was a good fit for our requirements. It is licenced under the Apache Licence and is being actively developed. Further, there is good community support and it fits the needs for Clustermeister.
+
+JPPF is at the core of Clustermeister. JPPF provides a runtime for remote nodes and a server implementation that can run locally. Our two target platforms were Torque/PBS and Amazon EC2, and we were able to install JPPF runtimes on those platforms manually. The goal of Clustermeister, however, was to automate this deployment and provide mechanisms to dynamically add and remove remote nodes to the computation cluster. In the following, we will discuss how these two platforms are accessed by Clustermeister to deploy a JPPF infrastructure.
 
 \section{User Manual}
 
 \subsection{Tutorial}
+
+\label{tutorial}
 
 This tutorial shows the setup for a Java project. However, the steps discussed here should be applicable to other language environments running on the JVM, such as Scala. The code is deliberately kept simple, to show you how Clustermeister works and what a typical work-flow looks like. After that, however, it should be easy to build more complex projects.
 
@@ -219,6 +237,308 @@ cm$ shutdown
 When shutdown completed, type exit to leave the CLI.
 
 And that is all. You have set up a new Maven project, configured with the Clustermeister API. You have set up 4 local nodes and executed a Hello World example on them. To see more elaborate examples, check out the Clustermeister Examples repository\footnote{https://github.com/nethad/clustermeister-examples}.
+
+\subsection{Clustermeister API}
+
+The Clustermeister API offers 4 different ways to execute code on provisioned nodes. These are:
+
+\begin{itemize}
+ \item via an ExecutorService\footnote{http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ExecutorService.html}
+ \item execute code on addressable nodes
+ \item with Clustermeister Jobs and Tasks
+ \item via the native JPPF interface\footnote{http://jppf.org/}
+\end{itemize}
+
+All of these are discussed in the following.
+
+Further, you can find functional examples in the Clustermeister Examples Repository\footnote{https://github.com/nethad/clustermeister-examples}.
+
+\subsubsection{ExecutorService}
+
+The \texttt{ExecutorService} is an Java interface and therefore offers interoperability with existing projects.
+
+You can request an ExecutorService with \texttt{Clustermeister.getExecutorService(ExecutorServiceMode)}. The \texttt{ExecutorServiceMode} enables you to define task scheduling preferences:
+
+\begin{itemize}
+ \item \texttt{ExecutorServiceMode.standard()} executes Callabes/Runnables immediately.
+ \item \texttt{ExecutorServiceMode.timeConstraint(long timeout)} bundles Callables/Runnables and executes them after the given timeout (in milliseconds)
+ \item \texttt{ExecutorServiceMode.batchSizeContraint(int batchSize)} bundles Callables/Runnables and executes them after the given count.
+ \item \texttt{ExecutorServiceMode.timeoutAndBatchSizeContraint(long timeout, int batchSize)} bundles Callables/Runnables and executes them if either a timeout (in milliseconds) occurs or the given count is reached, depending on what happens first.
+\end{itemize}
+
+Since Clustermeister wraps a JPPFExecutorService, more information can be found in the JPPFExecutorService Javadoc\footnote{http://jppf.org/api-3/org/jppf/client/concurrent/JPPFExecutorService.html}.
+
+\subsubsection{Addressable Nodes}
+
+With an ExecutorService and the Clustermeister Jobs and Tasks, you cannot control on which nodes your tasks are executed. If you need this flexibility, you can choose your nodes by calling \texttt{Clustermeister.getAllNodes()} which returns you a list of ExecutorNodes. An ExecutorNode offers node characteristics with \texttt{ExecutorNode.getCapabilities()} and an execution handle via \texttt{ExecutorNode.execute(Callable)}.
+
+\subsubsection{Clustermeister Jobs and Tasks}
+
+Clustermeister Jobs are a nice way to bundle tasks that belong together. It further offers to attach read-only data to a Job that can be used by all Tasks.
+
+To create a Job, you call \texttt{JobFactory.create(String name, Map<String, Object> jobData)}. Both are optional, but the \texttt{jobData} enables you to add arbitrary data to your job with a given key. To read this data, you extend a \texttt{Task} which offers you \texttt{Task.getValue(String key)}.
+
+To add a Task to a Job, you simply call \texttt{Job.addTask(Task)} and then execute the Job with \texttt{Clustermeister.executeJob(Job)}. The \texttt{executeJob()} method is blocking. If you want to submit your job asynchronously, you can either use \texttt{executeJobAsync()}, which returns you a ListenableFuture\footnote{http://code.google.com/p/guava-libraries/wiki/ListenableFutureExplained} with the list of results or the more fine-grained \texttt{executeJobAsyncTasks()}, which returns a list of ListenableFutures. Every Future belongs to a task and the Future completes as soon as the corresponding task is finished, so you do not need to wait for all the tasks to be finished.
+
+\subsubsection{Native JPPF Interface}
+
+If all the methods above do not offer you enough flexibility, you can still access the unterlying \texttt{JPPFClient}, which Clustermeister uses internally. For more information on this, see the JPPF documentation\footnote{http://jppf.org/doc/v3/index.php?title=JPPF\_3.x\_Documentation}.
+
+\subsection{Command Line Interface}
+
+The Clustermeister command line client is the user interface to interact with the provisioning module. It sets up the provisioning infrastructure needed to communicate with and deploy Clustermeister nodes.
+
+The Tutorial in section \ref{tutorial} describes how to obtain and run the command line interface (CLI).
+
+This page documents the CLI capabilities and especially the different capabilities of the supported three providers (Torque, Amazon, Local).
+
+The basic capabilities of the CLI include command completion and listing of available commands as well as printing of usage instructions for these commands.
+
+\subsubsection{Commands supported by all providers}
+
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l| p{7cm}|}
+\hline
+\textbf{Command} & \textbf{Arguments} & \textbf{Description} \\ \hline
+help & none & Prints a list of available commands and a short description. \\ \hline
+shutdown & none & Shuts down all running Clustermeister nodes and the provisioning infrastructure. \\ \hline
+exit & none & Quits the CLI. \\ \hline
+\end{tabular}
+\end{table}
+
+\textbf{IMPORTANT}: If you call the \texttt{exit} command before calling the \texttt{shutdown} command you will have to shut down the running Clustermeister by other means than the CLI. Also properly exiting the CLI requires the \texttt{shutdown} command followed by the \texttt{exit} command. Note that after the \texttt{shutdown} command has been issued, the CLI will be in an inconsistent state and can not be used to deploy nodes anymore. The only command that should be used then is the exit command. We understand that this is confusing and a solution is being worked on.
+
+
+\subsubsection{Troque Provider}
+
+This provider supports PBS/TORQUE setups by logging in to a queue management machine via SSH and issuing \texttt{qsub} commands. To use the torque provider start the CLI with the \texttt{-p torque} argument.
+
+The commands are described in table \ref{tab:torqueprovider}.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l| p{3cm} | p{6cm}|}
+\hline
+\textbf{Command} & \textbf{Arguments} & \textbf{Description} \\ \hline
+state & none & Lists the currently running nodes with their node ID and number of processing threads. Also prints the number of currently running nodes. \\ \hline
+addnodes & [number of nodes] [processing threads per node] & Starts new Clustermeister nodes. You can specify how many processing threads a node should use. Typically the total number of processing nodes per physical machine should be approximately the number of CPUs or CPU cores. \\ \hline
+removenode & node ID... & Shuts down the listed node IDs. \\ \hline
+\end{tabular}
+\caption{Torque provider commands}
+\label{tab:torqueprovider}
+\end{table}
+
+\subsubsection{Amazon Provider}
+
+This provider supports Amazon EC2. To use the amazon provider start the CLI with the -p amazon argument.
+
+The commands are described in table \ref{tab:amazonprovider}.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l| p{3cm} | p{6cm}|}
+\hline
+\textbf{Command} & \textbf{Arguments} & \textbf{Description} \\ \hline
+state & none & Lists all currently running nodes and their properties (node ID, IP addresses, amazon instance ID). \\ \hline
+addnodes & [number of nodes] [profile name] & Starts the specified number of nodes with the specified (and previoulsy configured) node profile. See Configuration for details. \\ \hline
+get instances & -v (optional, to print more details) & Lists all EC2 instances associated to the configured AWS Account. \\ \hline
+get keypairs & none & Lists all key pair credentials known to Clustermeister for this AWS Account or configured in the configuration file. See Configuration for details. \\ \hline
+get profiles & none & Lists all configured instance profiles and their properties. See Configuration for details. \\ \hline
+instance resume & EC2 instance ID & Start a suspended AWS EC2 instance. \\ \hline
+instance suspend & EC2 instance ID & Shutdown a running AWS EC2 instance. \\ \hline
+instance terminate & EC2 instance ID & Shutdown and delete an AWS EC2 instance. \\ \hline
+removenode & [shutdown state] [node ID...] & Remove a Clustermeister node and put the EC2 instance into the specified shutdown state. \\ \hline
+startnode & EC2 instance ID & Start a Clustermeister node on a suspended or running EC2 instance. \\ \hline
+\end{tabular}
+\caption{Amazon provider commands}
+\label{tab:amazonprovider}
+\end{table}
+
+
+\subsubsection{Local Provider}
+
+The local provider has very limited capabilities and is only intended for local testing. The local provider is the default provider but it can be explicitly chosen by launching the CLI with the \texttt{-p local} argument.
+
+The commands are described in table \ref{tab:localprovider}.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l| p{3cm} | p{6cm}|}
+\hline
+\textbf{Command} & \textbf{Arguments} & \textbf{Description} \\ \hline
+state & none & Prints the number of currently running Clustermeister nodes. \\ \hline
+addnodes & [number of nodes] [processing threads per node] & Starts new Clustermeister nodes. You can specify how many processing threads a node should use. Typically the total number of processing nodes per physical machine should be approximately the number of CPUs or CPU cores. \\ \hline
+\end{tabular}
+\caption{Local provider commands}
+\label{tab:localprovider}
+\end{table}
+
+
+\subsection{Configuration}
+
+The default configuration is expected at \texttt{~/.clustermeister/configuration.yml} (that is \texttt{/home/username/.clustermeister/configuration.yml} for Linux and \texttt{/Users/username/.clustermeister/configuration.yml}. The configuration files are written in YAML.
+
+\subsubsection{High-level structure}
+
+The configuration file has different sections, these are the top-level keys:
+
+\begin{itemize}
+ \item \textbf{amazon}: Configuration related to the amazon provider.
+ \item \textbf{torque}: Configuration related to the torque provider.
+ \item \textbf{preload}: Configuration independent of any provider, related to library-preloading for nodes (to speed up code execution by avoiding remote class-loading).
+ \item \textbf{jvm\_options}: JVM fine-tuning for the local provider and (remote) nodes.
+ \item \textbf{logging}: Logging configuration (currently only for remote logging from nodes).
+\end{itemize}
+
+The configuration file is structured like this:
+
+\lstinputlisting[numbers=left, showspaces=false, frame=single, breaklines=true]{listings/config_structure.yaml}
+
+\subsubsection{Provider Configuration: Amazon}
+
+\paragraph{AWS Credentials}
+
+In order to access the EC2 API, Clustermeister requires the configuration the Access Key ID and the Secret Key\footnote{http://docs.amazonwebservices.com/AWSEC2/latest/UserGuide/using-credentials.html\#using-credentials-access-key}.
+
+\begin{lstlisting}[breaklines=true, frame=single]
+access_key_id: <Access Key ID> 
+secret_key: <Secred Key>
+\end{lstlisting}
+
+\paragraph{Instance Profiles}
+
+Because it would be very complicated to configure EC2 Instances on the command line each time, Clustermeister uses configured instance profiles that define the capabilities, credentials and location of EC Instances.
+
+A user can define an arbitrary number of profiles with custom, user-defined names.
+
+Currently Clustermeister supports these properties for instance profiles:
+
+% \begin{table}[h]
+% \centering
+\begin{longtable}{|l| p{6cm} | p{3cm}|}
+\hline
+Property & Description & Default\\ \hline
+type & AWS EC2 Instance Type. Specification and valid values (check 'API Name') can be found here. & none (required)\\ \hline
+region & AWS EC2 Region. Valid values (check 'Endpoint' which has the format 'ec2.<region>.amazonaws.com') can be found here. See also Using Regions and Availability Zones. & none (required)\\ \hline
+zone & AWS EC Availability Zone. See also Using Regions and Availability Zones. & no preference (random assignment)\\ \hline
+ami\_id & Specifies the AMI (Amazon Machine Image) to use by its ID. & the highest version of the Amazon Linux AMI\\ \hline
+keypair & A reference to a configured keypair name (see section of Keypairs). This keypair is used for SSH access to instances that use this profile. If no keypair is configured, Clustermeister generates one automatically for internal use. However is you desire to access the instance via SSH yourself you should configure a keypair. & auto-generated credentials\\ \hline
+shutdown\_state & The state to which the instance is put when it is shut down. Valid values are: 'terminated' (the instance is deleted and can not be started anymore), 'suspended' (the instance can be started again) and 'running' (the node is removed from clustermeister but the EC2 instance continues running). & suspended\\ \hline
+group & Affects the name of instances (e.g. in the EC2 Console) and is required for spot instances that launch and shut down together. & clustermeister\\ \hline
+spot\_price & If a spot price (a float value in US Dollar) is set, the instances are started as spot instances. See also Amazon EC2 Spot Instances. & none (required for spot instances)\\ \hline
+spot\_request\_type & Spot instances can get terminated, for example when the spot price goes beyond the configured spot price. If a request duration (see 'spot\_request\_valid\_from' and 'spot\_request\_valid\_to') is configured, this option determines if the spot instances are restarted again provided the circumstances allow for it (e.g. spot price is below spot price). Valid values are 'one\_time' (when instances get terminated they do not restart) and 'persistent' (restart terminated instances for the duration of the request). & one\_time\\ \hline
+spot\_request\_valid\_from & From which point in time a spot request is active. Valid values are formatted according to following pattern: yyyy-MM-dd HH:mm & none (any time)\\ \hline
+spot\_request\_valid\_to & Until which point in time a spot request is active. Valid values are formatted according to following pattern: yyyy-MM-dd HH:mm & none (any time) \\ \hline
+\end{longtable}
+% \end{table}
+
+\paragraph{Example configurations}
+
+Here are a few template configurations:
+
+\lstinputlisting[numbers=left, showspaces=false, frame=single, breaklines=true]{listings/example_configurations.yaml}
+
+\paragraph{Keypair (Credentials)}
+
+Generally Clustermeister does not need to be configured with custom credentials for instance profiles. It can generate its own credentials and access these nodes. However, custom AMIs may require different credentials or if the user wants to log into an instance with SSH the auto generated credentials may not work.
+
+In such a case it is possible to supply custom credentials or use credentials configured in the AWS EC2 Console. The credentials have to be configured and referenced from the instance profile configurations (see property 'keypair').
+
+A user can define an arbitrary number of keypairs with custom, user-defined names.
+
+Note: Currently custom keypairs have to be password-less because Clustermeister does not support private key passwords.
+
+\lstinputlisting[numbers=left, showspaces=false, frame=single, breaklines=true]{listings/amazon_keypairs.yaml}
+
+\paragraph{Example Amazon Configuration}
+
+This is a full Amazon provider configuration example:
+
+\lstinputlisting[numbers=left, showspaces=false, frame=single, breaklines=true]{listings/example_amazon_configuration.yaml}
+
+\subsubsection{Torque Configuration}
+
+The Torque configuration is relatively simple. Each node that is deployed to a Torque cluster is a new Torque job. It is assumed that Torque jobs are started via SSH on a job submission server and with the Torque \texttt{qsub} command. Here is a sample configuration with comments:
+
+\lstinputlisting[numbers=left, showspaces=false, frame=single, breaklines=true]{listings/example_torque_configuration.yaml}
+
+\textbf{IMPORTANT}: it is assumed that the private key does not require a password, because node deployments have to be automated. Furthermore, SSH logins with passwords are not supported by Clustermeister.
+
+\subsubsection{General Configuration}
+
+This sections contains configurations that are independent of providers.
+
+\paragraph{Preloading}
+
+When executing code on remote, distributed nodes, there are are usually numerous dependencies. Although these dependencies can be dynamically loaded over the network, it can easily take a few minutes until all classes are loaded and any code is actually executed. This is cumbersome and the preloading configuration circumvents this by uploading dependency jar files at deploy time. The preloading configuration specifies which jar files need to be preloaded.
+
+Since Clustermeister supports Maven natively, you can specify a \texttt{pom.xml} file from which dependencies are extracted. A configuration could look like this:
+
+\lstinputlisting[numbers=left, showspaces=false, frame=single, breaklines=true]{listings/preload_configuration.yaml}
+
+With \texttt{excludes} you can specify dependencies that are ignored for preloading. To manually add dependencies (this is possible without specifying a pom.xml), you can add \texttt{artifacts}. The string for manually added dependencies are structured as: 
+
+\begin{lstlisting}[breaklines=true]
+groupId:artifactId:version
+\end{lstlisting}
+
+If you wanted to add the Google Guava Libraries in version 12.0, the notation would be:
+
+\begin{lstlisting}[breaklines=true]
+"com.google.guava:guava:12.0"
+\end{lstlisting}
+
+If you specify dependencies which are not in the Maven Central Repository, you can add other repositories:
+
+\lstinputlisting[numbers=left, showspaces=false, frame=single, breaklines=true]{listings/preload_repo_configuration.yaml}
+
+With these configuration options, you can significantly speed up your code execution time.
+
+\paragraph{JVM Options}
+
+In the JVM Options configuration, you can specify JVM Options for the local driver and (remote) nodes. This enables you, for example, to fine-tune memory management. See the documentation\footnote{http://docs.oracle.com/javase/6/docs/technotes/tools/windows/java.html} for more information on JVM Options.
+
+The most common option would probably be:
+
+\begin{lstlisting}[breaklines=true, frame=single]
+jvm_options:
+  local_driver: "-Xmx500m"
+  node: "-Xmx300m"
+\end{lstlisting}
+
+This sets the maximum size of the memory allocation pool to 500 megabytes for the local driver, and to 300 megabytes for each node. You can add more options, separated with spaces, just as you would on the command line.
+
+\paragraph{Logging}
+
+With the logging configuration you can configure remote logging from nodes. Remote logging means that you can see log statements from Clustermeister nodes in the CLI and local log files.
+
+The logging configuration currently supports the properties defined in table \ref{tab:loggingproperties}
+
+\begin{table}[h]
+\centering
+\begin{tabular}{| l | p{9cm} | l |}
+\hline
+\textbf{Property} & \textbf{Description} & \textbf{Default} \\ \hline
+remote & This property can either be 'true' or 'false' and turns remote logging on or off. & false \\ \hline
+remote\_port & The local TCP port on which a server process listens for incoming remote logging statements. Must be a valid TCP port number (from 0 to 65536) and should not be used by any other process. & 52321 \\ \hline
+level & Specifies the log level on remote nodes (irrespective of remote logging being used or not). Valid values are: TRACE, DEBUG, INFO, WARN and ERROR. & INFO \\ \hline
+\end{tabular}
+\caption{Logging properties}
+\label{tab:loggingproperties}
+\end{table}
+
+Here is an example configuration:
+
+\begin{lstlisting}[breaklines=true, frame=single]
+logging:
+  node:
+   remote: true
+   remote_port: 54451
+   level: INFO
+\end{lstlisting}
+
 
 
 \end{document}
