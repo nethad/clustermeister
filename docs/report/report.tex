@@ -1,4 +1,5 @@
-\documentclass[english]{uzhpub}
+%\documentclass[english]{uzhpub}
+\documentclass{article}
 \usepackage[T1]{fontenc}
 \usepackage[latin9]{inputenc}
 \usepackage{listings}
@@ -11,7 +12,7 @@
 %% Titelei
 \title{Master Project: Clustermeister}
 
-\subtitle{Report}
+%\subtitle{Report}
 
 \author{Daniel Spicar, Thomas Ritter}
 
@@ -226,6 +227,52 @@ cm$ shutdown
 When shutdown completed, type exit to leave the CLI.
 
 And that is all. You have set up a new Maven project, configured with the Clustermeister API. You have set up 4 local nodes and executed a Hello World example on them. To see more elaborate examples, check out the Clustermeister Examples repository\footnote{https://github.com/nethad/clustermeister-examples}.
+
+\subsection{Clustermeister API}
+
+The Clustermeister API offers 4 different ways to execute code on provisioned nodes. These are:
+
+\begin{itemize}
+ \item via an ExecutorService\footnote{http://docs.oracle.com/javase/6/docs/api/java/util/concurrent/ExecutorService.html}
+ \item execute code on addressable nodes
+ \item with Clustermeister Jobs and Tasks
+ \item via the native JPPF interface\footnote{http://jppf.org/}
+\end{itemize}
+
+All of these are discussed in the following.
+
+Further, you can find functional examples in the Clustermeister Examples Repository\footnote{https://github.com/nethad/clustermeister-examples}.
+
+\subsubsection{ExecutorService}
+
+The \texttt{ExecutorService} is an Java interface and therefore offers interoperability with existing projects.
+
+You can request an ExecutorService with \texttt{Clustermeister.getExecutorService(ExecutorServiceMode)}. The \texttt{ExecutorServiceMode} enables you to define task scheduling preferences:
+
+\begin{itemize}
+ \item \texttt{ExecutorServiceMode.standard()} executes Callabes/Runnables immediately.
+ \item \texttt{ExecutorServiceMode.timeConstraint(long timeout)} bundles Callables/Runnables and executes them after the given timeout (in milliseconds)
+ \item \texttt{ExecutorServiceMode.batchSizeContraint(int batchSize)} bundles Callables/Runnables and executes them after the given count.
+ \item \texttt{ExecutorServiceMode.timeoutAndBatchSizeContraint(long timeout, int batchSize)} bundles Callables/Runnables and executes them if either a timeout (in milliseconds) occurs or the given count is reached, depending on what happens first.
+\end{itemize}
+
+Since Clustermeister wraps a JPPFExecutorService, more information can be found in the JPPFExecutorService Javadoc\footnote{http://jppf.org/api-3/org/jppf/client/concurrent/JPPFExecutorService.html}.
+
+\subsubsection{Addressable Nodes}
+
+With an ExecutorService and the Clustermeister Jobs and Tasks, you cannot control on which nodes your tasks are executed. If you need this flexibility, you can choose your nodes by calling \texttt{Clustermeister.getAllNodes()} which returns you a list of ExecutorNodes. An ExecutorNode offers node characteristics with \texttt{ExecutorNode.getCapabilities()} and an execution handle via \texttt{ExecutorNode.execute(Callable)}.
+
+\subsubsection{Clustermeister Jobs and Tasks}
+
+Clustermeister Jobs are a nice way to bundle tasks that belong together. It further offers to attach read-only data to a Job that can be used by all Tasks.
+
+To create a Job, you call \texttt{JobFactory.create(String name, Map<String, Object> jobData)}. Both are optional, but the \texttt{jobData} enables you to add arbitrary data to your job with a given key. To read this data, you extend a \texttt{Task} which offers you \texttt{Task.getValue(String key)}.
+
+To add a Task to a Job, you simply call \texttt{Job.addTask(Task)} and then execute the Job with \texttt{Clustermeister.executeJob(Job)}. The \texttt{executeJob()} method is blocking. If you want to submit your job asynchronously, you can either use \texttt{executeJobAsync()}, which returns you a ListenableFuture\footnote{http://code.google.com/p/guava-libraries/wiki/ListenableFutureExplained} with the list of results or the more fine-grained \texttt{executeJobAsyncTasks()}, which returns a list of ListenableFutures. Every Future belongs to a task and the Future completes as soon as the corresponding task is finished, so you do not need to wait for all the tasks to be finished.
+
+\subsubsection{Native JPPF Interface}
+
+If all the methods above do not offer you enough flexibility, you can still access the unterlying \texttt{JPPFClient}, which Clustermeister uses internally. For more information on this, see the JPPF documentation\footnote{http://jppf.org/doc/v3/index.php?title=JPPF\_3.x\_Documentation}.
 
 
 \end{document}
