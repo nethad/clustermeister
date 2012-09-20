@@ -102,7 +102,21 @@ There are a few libraries that would fit our needs, among them are GridGain, Haz
 
 \paragraph{JPPF} JPPF\footnote{http://jppf.org/} was a good fit for our requirements. It is licenced under the Apache Licence and is being actively developed. Further, there is good community support and it fits the needs for Clustermeister.
 
+\subsection{Deployment}
+
 JPPF is at the core of Clustermeister. JPPF provides a runtime for remote nodes and a server implementation that can run locally. Our two target platforms were Torque/PBS and Amazon EC2, and we were able to install JPPF runtimes on those platforms manually. The goal of Clustermeister, however, was to automate this deployment and provide mechanisms to dynamically add and remove remote nodes to the computation cluster. In the following, we will discuss how these two platforms are accessed by Clustermeister to deploy a JPPF infrastructure.
+
+\subsubsection{Torque}
+
+Torque offers a generally static infrastructure for deployment. Computations tasks are started from a job submission machine that is accessed via SSH. Access to this machine usually does not change.
+
+When accessed via SSH, Torque jobs are submitted with the \texttt{qsub} command. In Clustermeister, we access the job submission machine via SSH, upload our artifacts and start each node as a separate \texttt{qsub} job submission. Depending on how many CPU cores are request for each job and the how many jobs are issued by other participants, these nodes are started immediately or they may be queued. This is one of the difficulties involved with Torque, as node startups cannot be directly controlled.
+
+Another difficulty is network access to nodes. A Torque cluster is commonly isolated, therefore nodes are allowed to initiate connections, even to resources outside of the local network, but the nodes themselves are not accessible from outside. These constraints lead to difficulties in node management, because the JPPF node management infrastrucure relies on JMX\footnote{http://www.oracle.com/technetwork/java/javase/tech/javamanagement-140525.html} and requires a direct connection to the node. We circumvented this problem by extending the JPPF node runtime with management job submissions. These are submitted equally to common computation tasks, but contain meta-data that is handled by the nodes. For example, if a node needs to be shut down, Clustermeister issues a special task and nodes react on it. These special tasks are not dynamic and need to be integrated before the node runtime is deployment and special tasks can therefore not be changed or installed while the node is running.
+
+\subsubsection{Amazon}
+
+TODO
 
 \section{User Manual}
 
