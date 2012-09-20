@@ -1,0 +1,10 @@
+preload:
+  poms:
+    - /home/user/path/to/my/pom.xml
+    - /home/user/path/to/my/other/pom.xml # if there is one
+  excludes:
+    - "org.example.groupid.to.exclude:artifactid"
+    - "org.example.other.groupid.to.exclude:otherartifactid"
+  artifacts:
+    - "com.groupid:artifactid:1.0"
+    - "org.othergroupid:otherartifactid:2.3"

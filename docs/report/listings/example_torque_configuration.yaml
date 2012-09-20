@@ -1,0 +1,14 @@
+# torque provider configuration
+torque:
+# the user name to connect to the job submission server
+  ssh_user: user
+# the private key for authentication (must be password-less)
+  ssh_privatekey: /home/user/.ssh/id_dsa
+# the ssh host to connect to
+  ssh_host: host.example.org
+# the port for the ssh connection
+  ssh_port: 22
+# the email address for notifications (used by the torque system)
+  email_notify: user@example.org
+# the torque queue name
+  queue_name: queuename

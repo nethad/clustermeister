@@ -1,0 +1,10 @@
+# Example 1: Configuring a key pair configured in the AWS console (Network & Security -> Key Pairs).
+  - EC2_keypair:
+      user: ec2-user
+      private_key: /path/to/EC2_keypair.pem
+
+# Example 2: Configuring a custom key pair (requires a public key file).
+  - My_Keypair:
+      user: ec2-user
+      private_key: /path/to/otherkey_rsa
+      public_key: /path/to/mykey_rsa.pub

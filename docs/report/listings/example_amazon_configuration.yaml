@@ -1,0 +1,20 @@
+amazon:
+  access_key_id: secret
+  secret_key: secret
+
+  keypairs:
+    - EC2_keypair:
+        user: ec2-user
+        private_key: /path/to/EC2_keypair.pem
+
+  profiles:
+    - micro-eu:
+        ami_id: ami-f9231b8d
+        type: t1.micro
+        region: eu-west-1
+        zone: eu-west-1c
+        keypair: EC2_keypair
+        shutdown_state: terminated
+    - micro-us:
+        type: t1.micro
+        region: us-east-1
