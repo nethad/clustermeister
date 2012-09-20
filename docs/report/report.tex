@@ -21,36 +21,29 @@
 
 \maketitle
 
-\section{Motivation}
-
 \definecolor{lbcolor}{rgb}{0.9,0.9,0.9}
 \definecolor{white}{rgb}{1.0,1.0,1.0}
 
-\subsection{What is Clustermeister?}
-Clustermeister provides a framework for easy code execution and testing on remote and distributed Java Virtual Machines (JVM). Specifically it provides utilities to facilitate remote code deployment scenarios and an API to execute code on remote JVMs.
+\section{Motivation}
 
-\subsection{Problems Addressed}
-Testing code on a dynamically provisioned cluster or in the cloud is in most cases a hassle for Java/Scala developers. The code needs to be packaged, cluster nodes have to be allocated, the allocated nodes have to be found, the packaged code needs to be deployed to all the nodes and usually the JVM on the node has to be restarted. This process is often managed using a variety of tools, ranging from SSH scripts to custom cloud APIs and clustering frameworks. The whole process is time-consuming to set up, manage and run. Another issue is that usually the connection from the developer machine to the cluster is slow, so transferring files from the developer machine to all the nodes is potentially slow. 
+Programming distributed systems poses a number of challenges for a developer. One of these challenges is to request, configure and start a distributed computing infrastructure. This is the problem of provisioning. Another challenge is to package, deploy and run code on the distributed computing infrastructure. This is the problem of deployment and execution. Clustermeister has been made to support Java/Scala developers in tackling this challenge by providing dynamic provisioning and deployment in cloud and cluster computation environments.
 
-Clustermeister tries to solve this issue by providing tools to set up nodes easily and fast.
+Dynamic provisioning means that with Clustermeister a developer can set up a distributed computation environment, and then alter it at any time during a session. In Clustermeister terminology a developer can add and remove nodes and shut the environment down again. A node is an addressable unit that can execute code. Clustermeister abstracts the underlying specifics of the computation environment from the user. This way multiple environment can be supported and the the user does not have to maintain various tools and scripts and interact with different APIs.
 
+Dynamic deployment means that Clustermeister can deploy new and changed code to nodes without the need to interact with the distributed computation environment manually. This means a developer can just run changed code and does not need to worry about updating and restarting code deployments in the distributed environment. This can save a lot time and hassle when developing a distributed system.
 
-\subsection{Provided Services}
+Provisioning and deployment are tasks that interact with distributed computation environments and this is handled transparently to the user by the Clustermeister Provisioning module. Code execution on the other hand must interact closely with user code. For this purpose the Clustermeister API forms a bridge between the infrastructure provided by Clustermeister and the user code. The API offers various methods for code execution. Some allow to address specific nodes, others will distribute tasks to available nodes transparently.
 
+The aim of the project is to support developers by letting them concentrate on their code and solve infrastructure challenges reliably and with minimal configuration.
+
+\subsection*{Clustermeister provides:}
 \begin{itemize}
-\item Deployment of JPPF (TODO: what is JPPF?) nodes on (virtual) machines requiring only minimal configuration.
-\item Provisioning of Amazon EC2 instances provided by jClouds (TODO: jcoulds intro).
-\item Parallel and distributed code execution via a Java ExecutorService interface or a native JPPF interface.
-\item Dynamic classloading allowing for rapid re-execution of client code without manual re-deployment.
+\item Dynamic distributed computation infrastructure provisioning.
+\item Dynamic class-loading allowing for client code execution without manual re-deployment.
+\item Easy deployment of dependencies using Apache Maven dependency resolution.
+\item Parallel and distributed code execution via a Java ExecutorService interface or a native inferface.
 \item Addressable nodes for code execution on specific nodes.
-\item Easy deployment of dependencies using maven repository dependency resolution provided by Sonatype Aether (TODO: aether intro).
-\end{itemize}
-
-\subsection{Supported Environments}
-\begin{itemize}
-\item Execution in JVMs on the local machine.
-\item TORQUE (PBS) Clusters.
-\item Amazon Web Services Elastic Compute Cloud (EC2).
+\item Provisioning of Amazon Web Services Elastic Compute Cloud (EC2) and TORQUE (PBS) infrastructure.
 \end{itemize}
 
 \section{Organisation}
