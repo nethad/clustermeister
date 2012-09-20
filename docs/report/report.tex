@@ -4,6 +4,7 @@
 \usepackage[latin9]{inputenc}
 \usepackage{listings}
 \usepackage{color}
+\usepackage{tabularx}
 
 \begin{document}
 
@@ -92,6 +93,8 @@ TODO
 \section{User Manual}
 
 \subsection{Tutorial}
+
+\label{tutorial}
 
 This tutorial shows the setup for a Java project. However, the steps discussed here should be applicable to other language environments running on the JVM, such as Scala. The code is deliberately kept simple, to show you how Clustermeister works and what a typical work-flow looks like. After that, however, it should be easy to build more complex projects.
 
@@ -274,5 +277,95 @@ To add a Task to a Job, you simply call \texttt{Job.addTask(Task)} and then exec
 
 If all the methods above do not offer you enough flexibility, you can still access the unterlying \texttt{JPPFClient}, which Clustermeister uses internally. For more information on this, see the JPPF documentation\footnote{http://jppf.org/doc/v3/index.php?title=JPPF\_3.x\_Documentation}.
 
+\subsection{Command Line Interface}
+
+The Clustermeister command line client is the user interface to interact with the provisioning module. It sets up the provisioning infrastructure needed to communicate with and deploy Clustermeister nodes.
+
+The Tutorial in section \ref{tutorial} describes how to obtain and run the command line interface (CLI).
+
+This page documents the CLI capabilities and especially the different capabilities of the supported three providers (Torque, Amazon, Local).
+
+The basic capabilities of the CLI include command completion and listing of available commands as well as printing of usage instructions for these commands.
+
+\subsubsection{Commands supported by all providers}
+
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|l| p{7cm}|}
+\hline
+\textbf{Command} & \textbf{Arguments} & \textbf{Description} \\ \hline
+help & none & Prints a list of available commands and a short description. \\ \hline
+shutdown & none & Shuts down all running Clustermeister nodes and the provisioning infrastructure. \\ \hline
+exit & none & Quits the CLI. \\ \hline
+\end{tabular}
+\end{table}
+
+\textbf{IMPORTANT}: If you call the \texttt{exit} command before calling the \texttt{shutdown} command you will have to shut down the running Clustermeister by other means than the CLI. Also properly exiting the CLI requires the \texttt{shutdown} command followed by the \texttt{exit} command. Note that after the \texttt{shutdown} command has been issued, the CLI will be in an inconsistent state and can not be used to deploy nodes anymore. The only command that should be used then is the exit command. We understand that this is confusing and a solution is being worked on.
+
+
+\subsubsection{Troque Provider}
+
+This provider supports PBS/TORQUE setups by logging in to a queue management machine via SSH and issuing \texttt{qsub} commands. To use the torque provider start the CLI with the \texttt{-p torque} argument.
+
+The commands are described in table \ref{tab:torqueprovider}.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l| p{3cm} | p{6cm}|}
+\hline
+\textbf{Command} & \textbf{Arguments} & \textbf{Description} \\ \hline
+state & none & Lists the currently running nodes with their node ID and number of processing threads. Also prints the number of currently running nodes. \\ \hline
+addnodes & [number of nodes] [processing threads per node] & Starts new Clustermeister nodes. You can specify how many processing threads a node should use. Typically the total number of processing nodes per physical machine should be approximately the number of CPUs or CPU cores. \\ \hline
+removenode & node ID... & Shuts down the listed node IDs. \\ \hline
+\end{tabular}
+\caption{Torque provider commands}
+\label{tab:torqueprovider}
+\end{table}
+
+\subsubsection{Amazon Provider}
+
+This provider supports Amazon EC2. To use the amazon provider start the CLI with the -p amazon argument.
+
+The commands are described in table \ref{tab:amazonprovider}.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l| p{3cm} | p{6cm}|}
+\hline
+\textbf{Command} & \textbf{Arguments} & \textbf{Description} \\ \hline
+state & none & Lists all currently running nodes and their properties (node ID, IP addresses, amazon instance ID). \\ \hline
+addnodes & [number of nodes] [profile name] & Starts the specified number of nodes with the specified (and previoulsy configured) node profile. See Configuration for details. \\ \hline
+get instances & -v (optional, to print more details) & Lists all EC2 instances associated to the configured AWS Account. \\ \hline
+get keypairs & none & Lists all key pair credentials known to Clustermeister for this AWS Account or configured in the configuration file. See Configuration for details. \\ \hline
+get profiles & none & Lists all configured instance profiles and their properties. See Configuration for details. \\ \hline
+instance resume & EC2 instance ID & Start a suspended AWS EC2 instance. \\ \hline
+instance suspend & EC2 instance ID & Shutdown a running AWS EC2 instance. \\ \hline
+instance terminate & EC2 instance ID & Shutdown and delete an AWS EC2 instance. \\ \hline
+removenode & [shutdown state] [node ID...] & Remove a Clustermeister node and put the EC2 instance into the specified shutdown state. \\ \hline
+startnode & EC2 instance ID & Start a Clustermeister node on a suspended or running EC2 instance. \\ \hline
+\end{tabular}
+\caption{Amazon provider commands}
+\label{tab:amazonprovider}
+\end{table}
+
+
+\subsubsection{Local Provider}
+
+The local provider has very limited capabilities and is only intended for local testing. The local provider is the default provider but it can be explicitly chosen by launching the CLI with the \texttt{-p local} argument.
+
+The commands are described in table \ref{tab:localprovider}.
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l| p{3cm} | p{6cm}|}
+\hline
+\textbf{Command} & \textbf{Arguments} & \textbf{Description} \\ \hline
+state & none & Prints the number of currently running Clustermeister nodes. \\ \hline
+addnodes & [number of nodes] [processing threads per node] & Starts new Clustermeister nodes. You can specify how many processing threads a node should use. Typically the total number of processing nodes per physical machine should be approximately the number of CPUs or CPU cores. \\ \hline
+\end{tabular}
+\caption{Local provider commands}
+\label{tab:localprovider}
+\end{table}
 
 \end{document}
