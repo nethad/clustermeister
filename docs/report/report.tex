@@ -88,7 +88,21 @@ TODO
 
 \section{Implementation}
 
+We chose to implement Clustermeister in Java, because we knew that Clustermeister will be used by Scala clients, so the JVM was a logical decision. Another goal was to licence Clustermeister under the Apache Licence, version 2.0.
 
+\subsection{Node Runtime}
+
+We did not want to re-implement a node runtime based on java ourselves, so instead we evaluated existing libraries that would help us run code on remote JVMs. Ideally, this runtime should provide a means of dynamically loading libraries and classes from the machine that is issuing the computation task.
+
+There are a few libraries that would fit our needs, among them are GridGain, Hazelcast and JPPF. In the following, these libraries are discussed.
+
+\paragraph{GridGain} GridGain\footnote{http://www.gridgain.com/} was very easy to set up, has a pleasant API and worked out of the box for us. It is able to remotely load libraries and classes without additional configuration. However, newer versions of GridGain are licenced under the GPL and we could not find out how to configure GridGain programmatically. Because of these reasons, we ruled out GridGain.
+
+\paragraph{Hazelcast} Hazelcast\footnote{http://www.hazelcast.com/} was a good fit at first sight, due to its nice API. However, it lacked features that we needed for Clustermeister, i.e. remote deployment of libraries and classes and provisioning capabilities. Hazelcast is generally a low-level solution and it would have required more implementation effort to integrate it into Clustermeister.
+
+\paragraph{JPPF} JPPF\footnote{http://jppf.org/} was a good fit for our requirements. It is licenced under the Apache Licence and is being actively developed. Further, there is good community support and it fits the needs for Clustermeister.
+
+JPPF is at the core of Clustermeister. JPPF provides a runtime for remote nodes and a server implementation that can run locally. Our two target platforms were Torque/PBS and Amazon EC2, and we were able to install JPPF runtimes on those platforms manually. The goal of Clustermeister, however, was to automate this deployment and provide mechanisms to dynamically add and remove remote nodes to the computation cluster. In the following, we will discuss how these two platforms are accessed by Clustermeister to deploy a JPPF infrastructure.
 
 \section{User Manual}
 
