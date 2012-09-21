@@ -174,6 +174,21 @@ Another difficulty is network access to nodes. A Torque cluster network is commo
 
 TODO
 
+\subsection{Project structure}
+
+Clustermeister uses Maven\footnote{http://maven.apache.org/} to manage dependencies and build artifacts. It is hierarchically organized with a parent \texttt{pom.xml} and several sub-modules:
+
+\begin{itemize}
+ \item \textbf{api}: this module contains the end-user visible parts of Clustermeister, i.e. its API and interfaces.
+ \item \textbf{provisioning}: in this module, Amazon and Torque provisioning is implemented, as well as a general-purpose interface to allow for alternate provisioning targets
+ \item \textbf{cli}: this is a relatively small module that provides a command line interface for node provisioning. It is basically a command-line frontend to the provisioning module.
+ \item \textbf{driver}: this module is used to build an executable JPPF driver (server). It contains a few extensions for the original JPPF driver.
+ \item \textbf{node-common}: this contains code that is used by both the (JPPF) driver and node module and can be seen as a ``shared library''.
+ \item \textbf{node}: this module is used to build an executable JPPF node. It contains a few extensions for the original JPPF node to allow for special maintenance tasks.
+ \item \textbf{integration-tests}: this module contains test ``scenarios'' written in Java as well as Scala that uses the Clustermeister API. These are (non-automated) tests that exercise the whole Clustermeister library.
+\end{itemize}
+
+
 \section{User Manual}
 
 \subsection{Tutorial}
