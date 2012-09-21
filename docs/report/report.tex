@@ -141,6 +141,12 @@ The Clustermeister API is used to access the nodes and features provided by the 
 \label{fig:topology}
 \end{figure}
 
+Fig. \ref{fig:topology} depicts a high-level view on a typical Clustermeister topology.
+
+On the left side, you can see a Clustermeister setup for Amazon EC2. In this case, two instances are provisioned. There are two Clustermeister nodes running on the first instance, and one node running on the second instance. Each node uses an SSH tunnel to the local machine to connect to the JPPF server. The local JPPF server is started by Clustermeister automatically once the command-line client is started. Nodes provisioned on Amazon instances connect to this server via SSH tunnels automatically. Once they are connected, end-users are able to use them via the Clustermeister API. The Clustermeister API communicates with the local JPPF server and the server manages and distributes computation tasks.
+
+On the right side, a set-up for Torque is depicted. The local part is the same as seen in the Amazon example, but there are a few differences otherwise. There is no direct access to the Torque cluster nodes themselves. The nodes are started on a job submission server (not in the picture) and the Torque infrastructure decides on which Torque cluster node Clustermeister nodes are started. Once a Clustermeister node is started, it connects to the JPPF server on the local machine. The Torque cluster firewall allows for outgoing traffic but does not allow for incoming traffic. The details are discussed in Sect. \ref{implementation-torque}.
+
 \section{Implementation}
 \label{implementation}
 
@@ -163,6 +169,8 @@ There are a few libraries that would fit the needs, among them are GridGain, Haz
 JPPF is at the core of Clustermeister. JPPF provides a runtime for remote nodes and a server implementation that can run locally. The two target platforms for Clustermeister were Torque/PBS and Amazon EC2, and early tests installing JPPF runtimes on those platforms manually were successful. The goal of Clustermeister, however, was to automate this deployment and provide mechanisms to dynamically add and remove remote nodes to the computation cluster. In the following, properties of those two platforms are discussed.
 
 \subsubsection{Torque}
+
+\label{implementation-torque}
 
 Torque offers a generally static infrastructure for deployment. Computations tasks are started from a job submission machine that is accessed via SSH and Torque users have SSH access to this machine.
 
