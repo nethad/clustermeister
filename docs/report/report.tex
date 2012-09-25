@@ -206,6 +206,25 @@ to verify functionality in isolation. Additionally a small framework for integra
 \label{fig:issues}
 \end{figure}
 
+\section{Performance Evaluation}
+
+Assessing Clustermeister performance highly depends on the computation task at hand and may be significantly improved by the load-balancing (task distribution) algorithm chosen for the (local) JPPF server. The available load-balancing strategies are\footnote{http://www.jppf.org/doc/v3/index.php?title=Configuring\_a\_JPPF\_server\#Load-balancing}:
+
+\begin{enumerate}
+ \item \textbf{manual}: with this strategy, the user can provide a number of tasks that are executed on each node at most at the same time.
+ \item \textbf{autotuned}: this strategy uses an adaptive heuristic algorithm based on the Monte Carlo algorithm.
+ \item \textbf{proportional}: an adaptive deterministic algorithm based on the contribution of each node to the overall mean task execution time.
+ \item \textbf{rl}: adaptive algorithm based on reinforcement learning.
+ \item \textbf{NodeThreads}: each node receives at most n * m tasks, where n is the number of threads the node is configured to use, and m is a user-defined factor. 
+\end{enumerate}
+
+If the computation involves many short-running (split seconds) tasks, it is favorable to send many such tasks in a batch, even more so if all the tasks combined only take a few seconds to complete each. Some of the load-balancing strategy (TODO which?) apply a ``slow start principle'' and perform badly for short-running computations.
+
+\subsection{Deployment Time}
+
+The time to deploy a Clustermeister infrastructure depends on the target platform. Torque cluster nodes are statically configured and are running continuously, hence node start-up time does not need to be accounted for. For amazon instances, however, instance start-up time is significant and does take between 30 and 120 seconds (TODO correct numbers?).
+
+
 \newpage
 
 \appendix
