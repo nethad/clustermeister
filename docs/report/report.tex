@@ -30,7 +30,7 @@
 
 Programming distributed systems poses a number of challenges for a developer. One of these challenges is to request, configure and start a distributed computing infrastructure. This is the problem of provisioning. Another challenge is to package, deploy and run code on the distributed computing infrastructure. This is the problem of deployment and execution. Clustermeister has been made to support Java/Scala developers in tackling this challenge by providing dynamic provisioning and deployment in cloud and cluster computation environments.
 
-Dynamic provisioning means that with Clustermeister a developer can set up a distributed computation environment, and then alter it at any time during a session. In Clustermeister terminology a developer can add and remove nodes and shut the environment down again. A node is an addressable unit that can execute code. Clustermeister abstracts the underlying specifics of the computation environment from the user. This way multiple environment can be supported and the the user does not have to maintain various tools and scripts and interact with different APIs.
+Dynamic provisioning means that with Clustermeister a developer can set up a distributed computation environment, and then alter it at any time during a session. In Clustermeister terminology a developer can add and remove nodes and shut the environment down again. A node is an addressable unit that can execute code. Clustermeister abstracts the underlying specifics of the computation environment from the user. This way multiple environment can be supported and the user does not have to maintain various tools and scripts and interact with different APIs.
 
 Dynamic deployment means that Clustermeister can deploy new and changed code to nodes without the need to interact with the distributed computation environment manually. This means a developer can just run changed code and does not need to worry about updating and restarting code deployments in the distributed environment. This can save a lot time and hassle when developing a distributed system.
 
@@ -48,66 +48,27 @@ The aim of the project is to support developers by letting them concentrate on t
 \item Provisioning of Amazon Web Services Elastic Compute Cloud (EC2) and TORQUE (PBS) infrastructure.
 \end{itemize}
 
-\section{Organisation}
+\section{Evaluation of Third-Party Libraries}
 
-The project duration has been scheduled to three and a half to maximum four months and there has been no pre-existing code base to work from. The project team consisted of two students that worked approximately three days a week on the project. The project definition contained some organizational specifications for the Clustermeister project. Namely that the project shall be licensed under the Apache License, Version 2.0\footnote{http://www.apache.org/licenses/LICENSE-2.0.html}, developed on GitHub\footnote{https://github.com/} and make use of github's issue management and documentation facilities. Therefore Clustermeister is an open source project and all source code and documentation is publicly available at: \url{https://github.com/nethad/clustermeister}.
+Java was chosen as the platform for Clustermeister, because it was known that Clustermeister will be used by Scala clients, so the JVM was a logical decision. Another goal was to licence Clustermeister under the Apache Licence, version 2.0. These were the two most important constraints while searching for suitable libraries.
 
-Given these specifications a number of coarse work items were identified:
-\begin{enumerate}
-\item \label{wi:spec}Specify the desired system's architecture and functionality (refer to section \ref{architecture} for more information).
-\item \label{wi:res}Research and evaluate existing frameworks and libraries for re-use in this project. Particularly frameworks for parallel code execution in distributed JVMs.
-\item \label{wi:fam}Familiarize with the desired target computation environments, Amazon Web Services Elastic Compute Cloud (EC2) and TORQUE (PBS).
-\item \label{wi:impl}Implementation of the system (refer to section \ref{implementation} for more information).
-\item \label{wi:eval}Testing and Evaluation of the solution.
-\end{enumerate}
+The goal for Clustermeister was not to re-implement a node runtime based on Java, so instead existing libraries were evaluated that would help to run code on remote JVMs. Ideally, this runtime should provide a means of dynamically loading libraries and classes from the machine that is issuing the computation task.
 
-\subsection{Schedule}
+There are a few libraries that would fit the needs. We selected three libraries to evaluate. These are 
+GridGain\footnote{http://www.gridgain.com/}, 
+Hazelcast\footnote{http://www.hazelcast.com/} and 
+JPPF\footnote{http://jppf.org/}. In the following, these libraries and their characteristics are discussed.
 
-The project team estimated the time necessary to spend on each work item and then defined a schedule (see Tab. \ref{tab:schedule}). Work items \ref{wi:res} and \ref{wi:fam} are included in the phase \emph{Evaluation} in the first three weeks. This phase should result in choosing a viable framework for the solution. Next the phase \emph{Implementation 1} follows, which contains the specification and architecture of the solution (work item \ref{wi:spec}) and focuses on implementation of the provisioning module (part of work item \ref{wi:impl}). The provisioning module is a critical centrepiece of the project. In week 10 it the evaluation of the performance of the provisioning module should become a focus (phase \emph{Evaluation 1}, part of work item \ref{wi:eval}). This does not mean that no tests are run before, but that week focuses on identifying critical problems before it is too late to repair them. The phase \emph{Implementation 2} gives opportunity to correct problems and implement the API (work items \
-ref{wi:impl}). The last weeks (\emph{Evaluation 2}) should then focus on evaluating the complete system (work item \ref{wi:eval}) and correcting bugs (\ref{wi:impl}). The schedule is not to be interpreted as a definitive work plan in the style of the waterfall model\footnote{http://en.wikipedia.org/wiki/Waterfall\_model}. It associates to each week of the planned project duration the primary type of work that should be performed. For example: In the fifth week the project team will start work on the implementation of the Amazon EC2 provisioning module. The schedule then allows to identify how progress in the project is developing and if the project is on schedule or if action needs to be taken to be able to finish on time. That does not mean that in the fifth week work is restricted to the Amazon EC2 provisioning module, nor that no work is done on the EC2 module in other weeks.
+\paragraph{GridGain} GridGain was very easy to set up, has a pleasant API and worked out of the box. It is able to remotely load libraries and classes without additional configuration. However, newer versions of GridGain are licenced under the GPL and there was no obvious way to configure GridGain programmatically. Because of these reasons, GridGain was ruled out.
 
-\begin{table}[hptb]
-\centering
-\begin{tabular}{|l|l|p{7cm}|}
-\hline
-\textbf{Week} & \textbf{Phase} & \textbf{Major Tasks} \\ \hline
-30.1. - 5.2. & Evaluation & JPPF, GridGain, Hazlecast, jClouds \\ \hline
-6.2. - 12.2. & Evaluation & Prototyping mit JPPF, Amazon EC2, Torque \\ \hline
-13.2. - 19.2. & Evaluation & Prototyping Torque, Evaluation Wirr, JPPF Ext. features \\ \hline
-20.2. - 26.2. & Implementation 1 & Provisioning: Architecture, API: Architecture \\ \hline
-27.2. - 4.3. & Implementation 1 & Provisioning: Amazon \\ \hline
-5.3. - 11.3. & Implementation 1 & Provisioning: Amazon \\ \hline
-12.3. - 18.3. & Implementation 1 & Provisioning: Torque \\ \hline
-19.3. - 25.3. & Implementation 1 & Provisioning: Torque \\ \hline
-26.3. - 1.4. & Implementation 1 & Reserve \\ \hline
-2.4. - 8.4. & Evaluation 1 & Run first Performance/Scalability Tests \\ \hline
-9.4. - 15.4. & Implementation 2 & Implement Lessons Learned from Evaluation \\ \hline
-16.4. - 22.4. & Implementation 2 & Implement Lessons Learned from Evaluation \\ \hline
-23.4. - 29.4. & Implementation 2 & API \\ \hline
-30.4. - 6.5. & Implementation 2 & API \\ \hline
-7.5. - 13.5. & Implementation 2 & Reserve \\ \hline
-14.5. - 20.5. & Evaluation 2 &  \\ \hline
-21.5. - 27.5. & Evaluation 2 &  \\ \hline
-28.5. - 3.6. & Evaluation 2 &  \\ \hline
-\end{tabular}
-\caption{Project Schedule.}
-\label{tab:schedule}
-\end{table}
+\paragraph{Hazelcast} Hazelcast was a good fit at first sight, due to its nice API. However, it lacked features that were needed for Clustermeister, i.e. remote deployment of libraries and classes and provisioning capabilities. Hazelcast is generally a low-level solution and it would have required more implementation effort to integrate it into Clustermeister.
 
-\subsection{Working Methodology}
-
-The two students worked on the project in a co-located environment. Since this was a small team, organization was often informally agreed upon. While responsibility for different parts of the system were split (e.g. between Amazon EC2 and Torque modules) they worked as a team, sometimes employing techniques such as code review or pair programming. In general the work methodology followed the ideas of agile software development (TODO: ref) and iterative development. When starting work on a scheduled work item, the task was split into numbered \emph{Issues} that captured a confined unit of work (see Fig. \ref{fig:issues}). Issues have been worked on one at a time. This helped with the intention to avoid putting the code base into an inconsistent state because an issue could only be completed when it was properly implemented and tested. While the methodology did not necessarily follow the approach of test driven development (TODO: ref), great effort was taken to write unit tests for most of the system in order 
-to verify functionality in isolation. Additionally a small framework for integration tests has been written to ensure the solutions overall health.
-
-\begin{figure}[hptb]
-\centering
-\includegraphics[scale=0.7]{images/github-issues.pdf}
-\caption{Issue Management with GitHub}
-\label{fig:issues}
-\end{figure}
+\paragraph{JPPF} JPPF was a good fit for the requirements. It is licenced under the Apache Licence and is being actively developed. Further, there is good community support and it fits the needs for Clustermeister. Therefore, JPPF was chosen to build the basic infrastructure.
 
 \section{Architecture}
 \label{architecture}
+
+In this section, Clustermeister's high-level architecture is characterized. First, Clustermeister terminology is introduced. Second, the most important building blocks and modules are presented. At the end of this section, the Clustermeister topology is explained with an example set-up.
 
 \subsection{Terminology}
 
@@ -122,17 +83,21 @@ Clustermeister consists of two main modules: Provisioning and API.
 
 The major advantage of this separation of concerns is, that it enables the user to set up and deploy nodes and instances at the beginning of a development or computation session. Using this set-up the user can repeatedly execute code without the need for re-deployment of changed code. This speeds up developing and testing code in a distributed environment.
 
-\subsection{Clustermeister Provisioning}
+\subsubsection{Clustermeister Provisioning}
 The provisioning module is accessible via a command line interface (CLI) and is responsible for deployment of the Clustermeister infrastructure. This enables provisioning of instances and nodes, deployment of dependencies and dynamic classloading.
 
 Clustermeister provisioning is used to set up distributed nodes for a development or computation session.
 
-\subsection{The Clustermeister API}
-Allows the user to send jobs and tasks to Clustermeister nodes for execution and access to the computation results. The computations are executed asynchronously, in parallel and in a distributed manner. Clustermeister API supports execution of Serializable and JVM executable code. This supports not only Java but also bytecode compatible programming languages such as Scala.
+\subsubsection{The Clustermeister API}
+The API allows the user to send jobs and tasks to Clustermeister nodes for execution and access to the computation results. The computations are executed asynchronously, in parallel and in a distributed manner. Clustermeister API supports execution of Serializable and JVM executable code. This supports not only Java but also bytecode compatible programming languages such as Scala.
 
 The Clustermeister API is used to access the nodes and features provided by the Clustermeister provisioning module during a development or computation session.
 
-\subsection{Toplology}
+\subsection{JPPF}
+
+JPPF is a client-server based framework/library written in Java. JPPF nodes connect to a JPPF server (also called driver) and receive task which they execute. A JPPF server may connect to a parent server and acts as a node to receive jobs/tasks. In a Clustermeister setup, a local JPPF server is always started. Nodes in a Torque cluster or on an Amazon instance connect to this local JPPF server. Code that is executed via the Clustermeister API connects to the local JPPF server and the server distributes the tasks to the connected nodes.
+
+\subsection{Topology}
 
 \begin{figure}[h]
 \centering
@@ -150,19 +115,7 @@ On the right side, a set-up for Torque is depicted. The local part is the same a
 \section{Implementation}
 \label{implementation}
 
-In this section, the Clustermeister implementation is discussed in detail. Java was chosen as the platform for Clustermeister, because it was known that Clustermeister will be used by Scala clients, so the JVM was a logical decision. Another goal was to licence Clustermeister under the Apache Licence, version 2.0.
-
-\subsection{Node Runtime}
-
-The goal for Clustermeister was not to re-implement a node runtime based on Java, so instead existing libraries were evaluated that would help to run code on remote JVMs. Ideally, this runtime should provide a means of dynamically loading libraries and classes from the machine that is issuing the computation task.
-
-There are a few libraries that would fit the needs, among them are GridGain, Hazelcast and JPPF. In the following, these libraries are discussed.
-
-\paragraph{GridGain} GridGain\footnote{http://www.gridgain.com/} was very easy to set up, has a pleasant API and worked out of the box. It is able to remotely load libraries and classes without additional configuration. However, newer versions of GridGain are licenced under the GPL and there was no obvious way to configure GridGain programmatically. Because of these reasons, GridGain was ruled out.
-
-\paragraph{Hazelcast} Hazelcast\footnote{http://www.hazelcast.com/} was a good fit at first sight, due to its nice API. However, it lacked features that were needed for Clustermeister, i.e. remote deployment of libraries and classes and provisioning capabilities. Hazelcast is generally a low-level solution and it would have required more implementation effort to integrate it into Clustermeister.
-
-\paragraph{JPPF} JPPF\footnote{http://jppf.org/} was a good fit for the requirements. It is licenced under the Apache Licence and is being actively developed. Further, there is good community support and it fits the needs for Clustermeister. Therefore, JPPF was chosen to build the basic infrastructure.
+In this section, the Clustermeister implementation is discussed in detail and differences with regard to the implementation between the two target platforms, Amazon EC2 and Torque/PBS, are explained.
 
 \subsection{Deployment}
 
@@ -195,6 +148,63 @@ Clustermeister uses Maven\footnote{http://maven.apache.org/} to manage dependenc
  \item \textbf{node}: this module is used to build an executable JPPF node. It contains a few extensions for the original JPPF node to allow for special maintenance tasks.
  \item \textbf{integration-tests}: this module contains test ``scenarios'' written in Java as well as Scala that uses the Clustermeister API. These are (non-automated) tests that exercise the whole Clustermeister library.
 \end{itemize}
+
+\section{Organisation}
+
+The project duration has been scheduled to three and a half to maximum four months and there has been no pre-existing code base to work from. The project team consisted of two students that worked approximately three days a week on the project. The project definition contained some organizational specifications for the Clustermeister project. Namely that the project shall be licensed under the Apache License, Version 2.0\footnote{http://www.apache.org/licenses/LICENSE-2.0.html}, developed on GitHub\footnote{https://github.com/} and make use of github's issue management and documentation facilities. Therefore Clustermeister is an open source project and all source code and documentation is publicly available at: \url{https://github.com/nethad/clustermeister}.
+
+Given these specifications a number of coarse work items were identified:
+\begin{enumerate}
+\item \label{wi:spec}Specify the desired system's architecture and functionality (refer to section \ref{architecture} for more information).
+\item \label{wi:res}Research and evaluate existing frameworks and libraries for re-use in this project. Particularly frameworks for parallel code execution in distributed JVMs.
+\item \label{wi:fam}Familiarize with the desired target computation environments, Amazon Web Services Elastic Compute Cloud (EC2) and TORQUE (PBS).
+\item \label{wi:impl}Implementation of the system (refer to section \ref{implementation} for more information).
+\item \label{wi:eval}Testing and Evaluation of the solution.
+\end{enumerate}
+
+\subsection{Schedule}
+
+The project team estimated the time necessary to spend on each work item and then defined a schedule (see Tab. \ref{tab:schedule}). Work items \ref{wi:res} and \ref{wi:fam} are included in the phase \emph{Evaluation} in the first three weeks. This phase should result in choosing a viable framework for the solution. Next the phase \emph{Implementation 1} follows, which contains the specification and architecture of the solution (work item \ref{wi:spec}) and focuses on implementation of the provisioning module (part of work item \ref{wi:impl}). The provisioning module is a critical centrepiece of the project. In week 10 it the evaluation of the performance of the provisioning module should become a focus (phase \emph{Evaluation 1}, part of work item \ref{wi:eval}). This does not mean that no tests are run before, but that week focuses on identifying critical problems before it is too late to repair them. The phase \emph{Implementation 2} gives opportunity to correct problems and implement the API (work items \ref{wi:impl}). The last weeks (\emph{Evaluation 2}) should then focus on evaluating the complete system (work item \ref{wi:eval}) and correcting bugs (\ref{wi:impl}). The schedule is not to be interpreted as a definitive work plan in the style of the waterfall model\footnote{http://en.wikipedia.org/wiki/Waterfall\_model}. It associates to each week of the planned project duration the primary type of work that should be performed. For example: In the fifth week the project team will start work on the implementation of the Amazon EC2 provisioning module. The schedule then allows to identify how progress in the project is developing and if the project is on schedule or if action needs to be taken to be able to finish on time. That does not mean that in the fifth week work is restricted to the Amazon EC2 provisioning module, nor that no work is done on the EC2 module in other weeks.
+
+\begin{table}[hptb]
+\centering
+\begin{tabular}{|l|l|p{7cm}|}
+\hline
+\textbf{Week} & \textbf{Phase} & \textbf{Major Tasks} \\ \hline
+30.1. - 5.2. & Evaluation & JPPF, GridGain, Hazlecast, jClouds \\ \hline
+6.2. - 12.2. & Evaluation & Prototyping with JPPF, Amazon EC2, Torque \\ \hline
+13.2. - 19.2. & Evaluation & Prototyping Torque, Evaluation Wirr, JPPF Ext. features \\ \hline
+20.2. - 26.2. & Implementation 1 & Provisioning: Architecture, API: Architecture \\ \hline
+27.2. - 4.3. & Implementation 1 & Provisioning: Amazon \\ \hline
+5.3. - 11.3. & Implementation 1 & Provisioning: Amazon \\ \hline
+12.3. - 18.3. & Implementation 1 & Provisioning: Torque \\ \hline
+19.3. - 25.3. & Implementation 1 & Provisioning: Torque \\ \hline
+26.3. - 1.4. & Implementation 1 & Reserved \\ \hline
+2.4. - 8.4. & Evaluation 1 & Run first Performance/Scalability Tests \\ \hline
+9.4. - 15.4. & Implementation 2 & Implement Lessons Learned from Evaluation \\ \hline
+16.4. - 22.4. & Implementation 2 & Implement Lessons Learned from Evaluation \\ \hline
+23.4. - 29.4. & Implementation 2 & API \\ \hline
+30.4. - 6.5. & Implementation 2 & API \\ \hline
+7.5. - 13.5. & Implementation 2 & Reserved \\ \hline
+14.5. - 20.5. & Evaluation 2 &  \\ \hline
+21.5. - 27.5. & Evaluation 2 &  \\ \hline
+28.5. - 3.6. & Evaluation 2 &  \\ \hline
+\end{tabular}
+\caption{Project Schedule.}
+\label{tab:schedule}
+\end{table}
+
+\subsection{Working Methodology}
+
+The two students worked on the project in a co-located environment. Since this was a small team, organization was often informally agreed upon. While responsibility for different parts of the system were split (e.g. between Amazon EC2 and Torque modules) they worked as a team, sometimes employing techniques such as code review or pair programming. In general the work methodology followed the ideas of agile software development\footnote{http://en.wikipedia.org/wiki/Agile\_software\_development} and iterative development. When starting work on a scheduled work item, the task was split into numbered \emph{Issues} that captured a confined unit of work (see Fig. \ref{fig:issues}). Issues have been worked on one at a time. This helped with the intention to avoid putting the code base into an inconsistent state because an issue could only be completed when it was properly implemented and tested. While the methodology did not necessarily follow the approach of test driven development\footnote{http://www.agiledata.org/essays/tdd.html}, great effort was taken to write unit tests for most of the system in order 
+to verify functionality in isolation. Additionally a small framework for integration tests has been written to ensure the solutions overall health.
+
+\begin{figure}[hptb]
+\centering
+\includegraphics[scale=0.7]{images/github-issues.pdf}
+\caption{Issue Management with GitHub}
+\label{fig:issues}
+\end{figure}
 
 \newpage
 
