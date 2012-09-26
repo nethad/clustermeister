@@ -65,7 +65,7 @@ JPPF\footnote{http://jppf.org/}. In the following, these libraries and their cha
 
 \paragraph{JPPF} JPPF was a good fit for the requirements. It is licenced under the Apache Licence and is being actively developed. Further, there is good community support and it fits the needs for Clustermeister. Therefore, JPPF was chosen to build the basic infrastructure.
 
-\section{Architecture}
+\section{Architecture and Specification}
 \label{architecture}
 
 In this section, Clustermeister's high-level architecture is characterized. First, Clustermeister terminology is introduced. Second, the most important building blocks and modules are presented. At the end of this section, the Clustermeister topology is explained with an example set-up.
@@ -77,27 +77,75 @@ In this section, Clustermeister's high-level architecture is characterized. Firs
 \item[Clustermeister Instance] An instance is a physical or virtual machine generally running in a cluster or a cloud computation service such as Amazon EC2.
 \end{description}
 
-\subsection{Clustermeister Modules}
+\subsection{Use Cases}
+
+\subsubsection*{Abstract Use Case}
+This abstract use case that has been compiled from the project definition and discussion among the developers and the project leadership. It aims to demonstrate how Clustermeister can be used in a development workflow. The use case applies to Java and Scala developers.
+
+\begin{enumerate}
+\item \label{uc:start}The developer begins a programming session.
+\item The developer starts Clustermeister locally from the command line.
+\item \label{uc:alloc}Using the terminal where Clustermeister is running, the developer allocates five Clustermeister nodes in a distributed computation infrastructure.
+\item \label{uc:prog}The developer programs a parallel algorithm and uses the Clustermeister API in the source code to submit parallel tasks to the Clustermeister nodes requested in step \ref{uc:alloc}.
+\item The developer compiles the code and executes it. The result is not as expected.
+\item The developer corrects a bug in the source code, re-compiles it and executes it again. This time the result is correct.
+\item The developer wants to speed up the computation. He opens the terminal where Clustermeister is running and requests another five Clustermeister nodes.
+\item The developer executes his program again, without re-compilation. This time the result has been computed faster.
+\item The developer is satisfied with the result and de-allocates all Clustermeister nodes using the terminal where Clustermeister is running.
+\item The programming session ends.
+\end{enumerate}
+
+\subsubsection*{Specific Use Cases}
+There are many specific use cases that can be derived from this abstract use case. Here are examples of specific variations that will be supported:
+
+\begin{description}
+\item[Step \ref{uc:start}.1] The developer starts wants to execute some code in a distributed manner, not planning to do any development.
+\item[Step \ref{uc:alloc}.1] The developer allocates five nodes in the Amazon Web Services Elastic Compute Cloud (EC2).
+\item[Step \ref{uc:alloc}.2] The developer allocates five nodes in the TORQUE Cluster provided at the department of informatics in the University of Zurich.
+\item[Step \ref{uc:prog}.1] The developer programs a distributed AKKA\footnote{http://akka.io/} actor system. The Clustermeister API allows to iterate trough available nodes and bootstrap an actor system by submitting actors to the nodes for execution.
+\end{description}
+
+\subsection{Specification}
+In the project definition the following requirements relevant for the architecture have been identified:
+
+\begin{enumerate}
+\item A method of querying the state of the provisioned infrastructure (Clustermeister nodes) must be available in Clustermeister.
+\item A method of adding and removing nodes to or from the provisioned infrastructure must be available in Clustermeister.
+\item Clustermeister must offer an API that can be used from Java and Scala and enables user code to interact with Clustermeister nodes. The API must offer:
+\begin{enumerate}
+\item Access to a Java collection describing all available nodes.
+\item Nodes offer a method to submit code to them for execution.
+\end{enumerate}
+\item Changed code needs to be deployed and loaded on the nodes automatically.
+\item The communication with the cluster nodes should be secured and require some form of authorization. 
+\end{enumerate}
+
+\subsection{Architecture}
+
+\subsubsection{Clustermeister Modules}
 
 Clustermeister consists of two main modules: Provisioning and API.
 
-The major advantage of this separation of concerns is, that it enables the user to set up and deploy nodes and instances at the beginning of a development or computation session. Using this set-up the user can repeatedly execute code without the need for re-deployment of changed code. This speeds up developing and testing code in a distributed environment.
+Clustermeister Provisioning is running in an independent user process on the developer's machine and implements the Clustermeister API.
+
+The Clustermeister API is a library that can be used in user code in order to interact with Clustermeister Provisioning. 
+
+This separation of concerns enables the user to set up and deploy Clustermeister nodes at the beginning of a session and then change and execute code repeatedly,  without the need to perform any manual re-deployment. This speeds up developing and testing code in a distributed environment.
 
 \subsubsection{Clustermeister Provisioning}
 The provisioning module is accessible via a command line interface (CLI) and is responsible for deployment of the Clustermeister infrastructure. This enables provisioning of instances and nodes, deployment of dependencies and dynamic classloading.
 
-Clustermeister provisioning is used to set up distributed nodes for a development or computation session.
+Provisioning is the core of Clustermeister's dynamic code deployment and execution `magic' and implements the specifics of interacting with supported cloud or cluster computation infrastructures.
 
 \subsubsection{The Clustermeister API}
-The API allows the user to send jobs and tasks to Clustermeister nodes for execution and access to the computation results. The computations are executed asynchronously, in parallel and in a distributed manner. Clustermeister API supports execution of Serializable and JVM executable code. This supports not only Java but also bytecode compatible programming languages such as Scala.
-
-The Clustermeister API is used to access the nodes and features provided by the Clustermeister provisioning module during a development or computation session.
+Allows the user to send jobs and tasks to Clustermeister nodes for execution and access to the computation's results. The computations are executed asynchronously, in parallel and in a distributed manner. Clustermeister API supports execution of Serializable and Java code. This does not exclude code written in other, bytecode compatible, programming languages such as Scala.
 
 \subsection{JPPF}
 
 JPPF is a client-server based framework/library written in Java. JPPF nodes connect to a JPPF server (also called driver) and receive tasks which they execute. A JPPF server may connect to a parent server and acts as a node to receive tasks. In a Clustermeister setup, a local JPPF server is always started. Nodes in a Torque cluster or on an Amazon instance connect to this local JPPF server. Code that is executed via the Clustermeister API connects to the local JPPF server and the server distributes the tasks to the connected nodes.
 
-\subsection{Topology}
+\subsubsection{Toplology}
+\label{topology}
 
 \begin{figure}[h]
 \centering
@@ -132,8 +180,9 @@ When accessed via SSH, Torque jobs are submitted with the \texttt{qsub} command.
 Another difficulty is network access to nodes. A Torque cluster network is commonly isolated, therefore nodes are allowed to initiate connections, even to resources outside of the local network, but the nodes themselves are not accessible from outside. These constraints lead to difficulties in node management, because the JPPF node management infrastrucure relies on JMX\footnote{http://www.oracle.com/technetwork/java/javase/tech/javamanagement-140525.html} and requires a direct connection to the node. Clustermeister circumvented this problem by extending the JPPF node runtime with management job extensions. These jobs are submitted equally to common computation tasks, but contain meta-data that is handled by the nodes. For example, if a node needs to be shut down, Clustermeister issues a special task and nodes react on it. These special tasks are not dynamic and need to be integrated before the node runtime is deployed. Therefore management tasks cannot be changed or installed while the node is running.
 
 \subsubsection{Amazon}
+The Amazon provider component manages Amazon EC2 instances and deploys JPPF nodes on them. The Amazon EC2 service offers many options for customizing and running instances. Clustermeister relies on the jClouds\footnote{http://www.jclouds.org/} library to interact with the EC2 API. It has been chosen because it supports all required features, is well maintained and offers its own API which is not specific to the underlying cloud computation service. This allows to extend Clustermeister with support for other services in the future.
 
-TODO
+The Amazon provider has been implemented such that it is able to build complex JPPF topologies\footnote{http://www.jppf.org/doc/v3/index.php?title=JPPF\_Overview\#Architecture\_and\_topology} \footnote{http://www.jroller.com/jppf/entry/master\_worker\_or\_p2p\_grid}. This means it can deploy arbitrary numbers of JPPF nodes and servers to any EC2 instance. However bugs in JPPF prevented this functionality to be fully active in Clustermeister. Therefore the provider supports the topology described in section \ref{topology} only
 
 \subsection{Project structure}
 
