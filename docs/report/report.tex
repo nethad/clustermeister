@@ -184,7 +184,8 @@ The Amazon provider component manages Amazon EC2 instances and deploys JPPF node
 
 The Amazon provider has been implemented such that it is able to build complex JPPF topologies\footnote{http://www.jppf.org/doc/v3/index.php?title=JPPF\_Overview\#Architecture\_and\_topology} \footnote{http://www.jroller.com/jppf/entry/master\_worker\_or\_p2p\_grid}. This means it can deploy arbitrary numbers of JPPF nodes and servers to any EC2 instance. However bugs in JPPF prevented this functionality to be fully active in Clustermeister. Therefore the provider supports the topology described in section \ref{topology} only
 
-\subsection{Project structure}
+\subsection{Project Structure}
+\label{structure}
 
 Clustermeister uses Maven\footnote{http://maven.apache.org/} to manage dependencies and build artifacts. It is hierarchically organized with a parent \texttt{pom.xml} and several sub-modules:
 
@@ -197,6 +198,46 @@ Clustermeister uses Maven\footnote{http://maven.apache.org/} to manage dependenc
  \item \textbf{node}: this module is used to build an executable JPPF node. It contains a few extensions for the original JPPF node to allow for special maintenance tasks.
  \item \textbf{integration-tests}: this module contains test ``scenarios'' written in Java as well as Scala that uses the Clustermeister API. These are (non-automated) tests that exercise the whole Clustermeister library.
 \end{itemize}
+
+\subsection{Module Dependencies}
+In order to prevent to prevent dependency cycles and to understand node deployment, the user must understand how Clustermeister modules depend on each other. In section \ref{structure} the modules have been described. This section relates them to each other.
+
+The dependencies are depicted in Fig. \ref{fig:deps} for reference. Conceptually there are two rows of dependencies. The first row consist of modules that users of Clustermeister will need. The second row consist of modules that are used to run Clustermeister nodes and drivers. It is very important to prevent any dependencies from the second row onto the first because all dependencies (direct and indirect) of the Node module must be deployed on Clustermeister instances and this should be minimized. Additionally there is a high likelihood of creating cyclic dependencies when introducing such dependencies. Currently drivers are only deployed locally but it is possible that Drivers will be deployed to instances as well in the future. The corresponding functionality is present in the Amazon module. 
+
+The CLI contains the entry point to the Clustermeister process and is compiled into an executable. Therefore nothing else should depend on it. The CLI depends on the driver module, because it launches a local driver to send jobs to distributed nodes. On the other end, there is the API module which should depend on as little as possible because it is used as a library in user-code and should not create too many additional dependencies. Provisioning depends driver and node because it deploys their compiled JAR packages to Clustermeister instances. It also uses code from node-common for node management.
+
+\subsubsection{API Module Dependencies}
+This is a listing to the direct dependencies of the API module. Users of the Clustermeister API need to provide these dependencies and their indirect dependencies at runtime.
+
+\begin{itemize}
+ \item snakeyaml (1.10)
+ \item Apache Commons Configuration (1.8)
+ \item jmxremote\_optional
+ \item Google Guava (11.0.1)
+ \item JPPF Server (3.1.1)
+ \item JPPF Common (3.1.1)
+ \item JPPF Common Node (3.1.1)
+ \item JPPF Client (3.1.1)
+\end{itemize} 
+
+\subsubsection{Node Runtime Dependencies}
+This is a listing to the runtime dependencies of the Node module. It is important to understand that these dependencies need to be deployed to Clustermeister instances and made available in the classpath of nodes. Clustermeister should handle this automatically but this serves to document the requirements as a reference when debugging or developing Clustermeister.
+
+\begin{itemize}
+ \item Clustermeister Node-Common (0.1-SNAPSHOT)
+ \item JPPF Common Node (3.1.1)
+ \item Log4J (1.2.16)
+ \item SLF4J API (1.6.4)
+ \item SLF4J Log4J Bindings (slf4j-log4j12 1.6.4)
+ \item jmxremote\_optional
+\end{itemize}
+
+\begin{figure}[hp]
+\centering
+\includegraphics[scale=0.7]{images/module-deps.pdf}
+\caption{Clustermeister module dependnecies. The arrows illustrate depends-on relationships. The dependencies are conceptually assigned into two rows. The first row consists of CLI, Provisioning and API. The second row consists of Driver, Node and Node-Common.}
+\label{fig:deps}
+\end{figure}
 
 \section{Organisation}
 
