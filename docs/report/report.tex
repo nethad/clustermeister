@@ -334,53 +334,68 @@ In the remainder of this section the data and conclusions obtained from this eva
 
 \subsubsection{Job with many Short-Running Tasks}
 
-For this evaluation the computation of an image of the Mandelbrot set\footnote{http://en.wikipedia.org/wiki/Mandelbrot\_set} has been chosen.
-This type of Job has the feature that it creates a large number of short running tasks that can be executed in parallel. In our evaluation each Task calculates a single row of colors of the resulting picture. The execution time of each task is negligible. The largest portion of time will be used on network latency when transmitting the tasks to the nodes. Therefore the goal is to maximize parallel computation to save time. The evaluation showed that the load balancing algorithm used in the local driver has the most influence on overall execution time. A computation job containing 600 tasks that can be executed in parallel is sent to the driver. The driver then distributes tasks to the available nodes. If a bad load balancing algorithm is configured, the driver will send only small numbers of tasks to the nodes at once and await the nodes to complete tasks before sending more. With long running tasks this would not be an issue but with short running tasks the network latency overhead is a much stronger factor than the task execution time. The network overhead is increased additionally because the tasks are sent in small batches.
+For this evaluation the computation of an image of the Mandelbrot set\footnote{http://en.wikipedia.org/wiki/Mandelbrot\_set} has been chosen. The job creates a task for each row of the image and the task computes an array of color values. The computation of a single task is very fast (fractions of a second) but there are many tasks (600 tasks for an image with resolution 800 x 600). The evaluation was done with the Amazon EC2 provider on \textit{t1.micro} instances\footnote{http://aws.amazon.com/ec2/instance-types/}. The nodes were configured to use only one thread to computation so they could only execute one task at a time. For each run the job was configured to calculate the same part of the image to obtain comparable execution times. 
 
-Run 1 (Amazon, Nodes 1, Threads 1, NodeThreads m = 600, 600 tasks): 00:00:02.190
-Run 2 (Amazon, Nodes 2, Threads 1, NodeThreads m = 300, 600 tasks): 00:00:01.494
-Run 3 (Amazon, Nodes 3, Threads 1, NodeThreads m = 200, 600 tasks): 00:00:01.332
-Run 4 (Amazon, Nodes 4, Threads 1, NodeThreads m = 150, 600 tasks): 00:00:01.014
-Run 5 (Amazon, Nodes 5, Threads 1, NodeThreads m = 120, 600 tasks): 00:00:00.894
-Run 6 (Amazon, Nodes 6, Threads 1, NodeThreads m = 100, 600 tasks): 00:00:00.851
+The first evaluation concentrated on the influence of the load balancing algorithm on execution times. This is not an evaluation of the load balancing algorithms but  an evaluation how much the execution time differs between the worst case and the best case. One part of the execution time measured is network overhead for sending the tasks to the nodes. JPPF can send multiple tasks in batches to nodes. The tasks are then queued on the node for execution but can not be sent to any other node any more. Another strategy is to queue the tasks on the JPPF server and distribute them to nodes as resources become available. To archive this behaviour, the NodeThreads algorithm has been chosen. Because each node has been configured with one thread only, the multiplicator (m) setting for this strategy determines the number of tasks that will be sent to each node in a batch (provided there are enough tasks to satisfy all upper limits).
 
-Run 7 (Amazon, Nodes 6, Threads 1, NodeThreads m = 1, 600 tasks): 00:00:12.156
+The working hypothesis was that, assuming all nodes have equal computational resources, for tasks where the \textit{computation time} is much smaller than the \textit{network latency}, the optimal strategy is to distribute all tasks to all available nodes in one batch (see Tab. \ref{tab:mandelbrot-lb}). Contrary, the worst strategy would be to open a dedicated connection for every single task to send it to a node for execution (this equals batches of size 1). In this scenario there is a strong disproportion between network overhead and task computation time in favour of network overhead. The computation time of a task is simply too short to justify paying the overhead of establishing a dedicated connection over the network for every single task. Thus network overhead is expected to be the dominating factor in overall job execution time.
 
-load balancing algorithm influences task batches
+The hypothesis has been tested by running this evaluation on 6 nodes with the NodeThreads load balancing strategy and a multiplicator setting of 100 (best case) and 1 (worst case). The resulting execution times can be seen in Tab. \ref{tab:mandelbrot-lb-res}. It is very obvious that choosing the right load balancing strategy to minimize network latency is very important. The best case scenario is more than 14 times faster than the worst case scenario. And the difference is network overhead.
 
-network latency >> execution time --> send large ('ideal size') batches to nodes
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+\textbf{Tasks scheduled per node} & \textbf{Job Execution Time [ms]} \\ \hline
+100 & 851 \\ \hline
+1 & 12156 \\ \hline
+\end{tabular}
+\caption{Results of running the Mandelbrot set computation on 6 nodes with best case and worst case load balancing settings.}
+\label{tab:mandelbrot-lb-res}
+\end{table}
 
-network latency << execution time --> just occupy all nodes
+The other evaluation concentrated on the influence of number of nodes on execution time. More nodes equal more computation power but also more load balancing and network communication overhead. For this evaluation the load balancing strategy has been manually configured for optimal values under the assumption that each node has has equal resources (see Tab. \ref{tab:mandelbrot-lb}). Fig. \ref{fig:times-mandelbrot} shows the execution times for the Mandelbrot set job for 1 to 6 nodes. As expected the execution time is reduced for each node added. Using 6 nodes instead of 1 node, more than halves the execution time. However the decrease is not linear as the overhead increases with larger number of nodes.
 
-Example (NodeThreads)
+\begin{table}[h!]
+\centering
+\begin{tabular}{|c|c|}
+\hline
+\textbf{\# of Nodes} & \textbf{Tasks scheduled per node} \\ \hline
+1 & 600 \\ \hline
+2 & 300 \\ \hline
+3 & 200 \\ \hline
+4 & 150 \\ \hline
+5 & 120 \\ \hline
+6 & 100 \\ \hline
+\end{tabular}
+\caption{Optimal load balancing settings for the Mandelbrot set evaluation. The goal is to distribute all tasks to all available nodes in one batch.}
+\label{tab:mandelbrot-lb}
+\end{table}
 
-6 nodes, 600 tasks, short running, m=1, m=100
-
-Plus: Adaptive algorithms (rl, proportional) --> learn over time (number of jobs) --> implication on use case: single job -> bad, many jobs --> good, advantage when node computation power is very unbalanced
-
-Another way to speed up computation is to provide more nodes for execution.
-
-600 tasks, short running, node threads
-
-1 node, m = 600
-2 nodes, m = 300
-3 nodes, m= 200
-4, 150
-5, 120
-6, 100
+\begin{figure}[h]
+\centering
+\includegraphics[scale=0.7]{images/amazon-duration.pdf}
+\caption{Execution times for the Madelbrot set calcualtion job}
+\label{fig:times-mandelbrot}
+\end{figure}
 
 \subsubsection{Job with few Long-Running Tasks}
 
-Task exec time = 5 sec
+TODO
 
-Run 1 (Amazon, Nodes 1, Threads 1, NodeThreads m = 30, 30 tasks): 
-Run 2 (Amazon, Nodes 2, Threads 1, NodeThreads m = 15, 30 tasks): 
-Run 3 (Amazon, Nodes 3, Threads 1, NodeThreads m = 10, 30 tasks): 
-Run 4 (Amazon, Nodes 4, Threads 1, NodeThreads m = 8, 30 tasks): 
-Run 5 (Amazon, Nodes 5, Threads 1, NodeThreads m = 6, 30 tasks): 
-Run 6 (Amazon, Nodes 6, Threads 1, NodeThreads m = 5, 30 tasks): 
+\subsubsection{Adaptive load balancing algorithms}
 
-Run 7 (Amazon, Nodes 6, Threads 1, NodeThreads m = 1, 30 tasks): 
+JPPF offers a number of adaptive load balancing strategies. These algorithms usually need to execute a number of jobs before they achieve good results. They their task distribution behaviour depending on statistics about a node's past performance and overall execution time. When very similar jobs (in terms of task number/execution time) are submitted repeatedly they often achieve close to optimal performance. However they can easily be thrown off when a job's tasks are very heterogeneous.
+
+Another advantage of adaptive algorithms is that they can automatically tune the load balancing on a per node basis when the participating nodes have very different computation power. Therefore a weak node would receive less tasks than a strong node. This would be complicated or even impossible to achieve manually with the provided configuration options.
+
+TODO: image of rl, proportional results
+
+\subsubsection{Execution Time Conclusions}
+
+The conclusions from this evaluations of execution times is that it is critical to choose the right load balancing strategy depending on the type of computation that is performed. When a task's computation time is much smaller than the network latency, it is important to minimize the task batches sent over the network by choosing an optimal batch size. When the tasks execution time is much larger than the network latency, it is best to not distribute tasks to nodes pre-maturely but instead queue the tasks on the server and send only small batches to nodes to prevent any node from becoming idle for a long time because no tasks are available for scheduling.
+
+Finally, adaptive algorithms can be very good depending on the use case. If a user wants to execute only a single very long running job, adaptive algorithms are a bad idea. It is better to manually tune the load balancing settings. But if many jobs are going to be executed during a session, the adaptive algorithms will learn to perform well. Especially when the available nodes have very different computation power.
 
 \newpage
 
