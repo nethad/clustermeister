@@ -130,7 +130,7 @@ Clustermeister Provisioning is running in an independent user process on the dev
 
 The Clustermeister API is a library that can be used in user code in order to interact with Clustermeister Provisioning. 
 
-This separation of concerns enables the user to set up and deploy Clustermeister nodes at the beginning of a session and then change and execute code repeatedly,  without the need to perform any manual re-deployment. This speeds up developing and testing code in a distributed environment.
+This separation of concerns enables the user to set up and deploy Clustermeister nodes at the beginning of a session and then change and execute code repeatedly, without the need to perform any manual re-deployment. This speeds up developing and testing code in a distributed environment.
 
 \subsubsection{Clustermeister Provisioning}
 The provisioning module is accessible via a command line interface (CLI) and is responsible for deployment of the Clustermeister infrastructure. This enables provisioning of instances and nodes, deployment of dependencies and dynamic classloading.
@@ -165,9 +165,13 @@ On the right side, a set-up for Torque is depicted. The local part is the same a
 
 In this section, the Clustermeister implementation is discussed in detail and differences with regard to the implementation between the two target platforms, Amazon EC2 and Torque/PBS, are explained.
 
-\subsection{Deployment}
+\subsection{Provisioning and Deployment}
+Most of Clustermeister's functionality is implemented in the provisioning module. This module is responsible to start and manage Clustermeister nodes and make them available to users of the Clustermeister API. In order to provide this functionality, the provisioning module must   
 
+(TODO: check this paragraph)
 JPPF is at the core of Clustermeister. JPPF provides a runtime for remote nodes and a server implementation that can run locally. The two target platforms for Clustermeister were Torque/PBS and Amazon EC2, and early tests installing JPPF runtimes on those platforms manually were successful. The goal of Clustermeister, however, was to automate this deployment and provide mechanisms to dynamically add and remove remote nodes to the computation cluster. In the following, properties of those two platforms are discussed.
+
+\subsubsection{lala}
 
 \subsubsection{Torque}
 
@@ -200,11 +204,11 @@ Clustermeister uses Maven\footnote{http://maven.apache.org/} to manage dependenc
 \end{itemize}
 
 \subsection{Module Dependencies}
-In order to prevent to prevent dependency cycles and to understand node deployment, the user must understand how Clustermeister modules depend on each other. In section \ref{structure} the modules have been described. This section relates them to each other.
+In order to prevent to prevent dependency cycles and to understand node deployment, one must understand how Clustermeister modules depend on each other. In section \ref{structure} the modules have been described. This section relates them to each other.
 
-The dependencies are depicted in Fig. \ref{fig:deps} for reference. Conceptually there are two rows of dependencies. The first row consist of modules that users of Clustermeister will need. The second row consist of modules that are used to run Clustermeister nodes and drivers. It is very important to prevent any dependencies from the second row onto the first because all dependencies (direct and indirect) of the Node module must be deployed on Clustermeister instances and this should be minimized. Additionally there is a high likelihood of creating cyclic dependencies when introducing such dependencies. Currently drivers are only deployed locally but it is possible that Drivers will be deployed to instances as well in the future. The corresponding functionality is present in the Amazon module. 
+The dependencies are depicted in Fig. \ref{fig:deps} for reference. Conceptually there are two rows of dependencies. The first row consist of modules that users of Clustermeister will work with. The second row consist of modules that are used to run Clustermeister nodes and drivers. It is very important to prevent any dependencies from the second row onto the first because all dependencies (direct and indirect) of the Node module must be deployed on Clustermeister instances and this should be minimized. Additionally there is a high likelihood of creating cyclic dependencies when introducing such dependencies. Currently drivers are only deployed locally but it is possible that Drivers will be deployed to instances as well in the future. The corresponding functionality is present in the Amazon provider. 
 
-The CLI contains the entry point to the Clustermeister process and is compiled into an executable. Therefore nothing else should depend on it. The CLI depends on the driver module, because it launches a local driver to send jobs to distributed nodes. On the other end, there is the API module which should depend on as little as possible because it is used as a library in user-code and should not create too many additional dependencies. Provisioning depends driver and node because it deploys their compiled JAR packages to Clustermeister instances. It also uses code from node-common for node management.
+The CLI contains the entry point to the Clustermeister process and is compiled into an executable. Therefore nothing else should depend on it. The CLI depends on the driver module, because it launches a local driver to send jobs to distributed nodes. On the other end, there is the API module which should depend on as little as possible because it is used as a library in user-code and should not create too many additional dependencies. Provisioning depends on driver and node, because it deploys their compiled JAR packages to Clustermeister instances. It also uses code from node-common for node management.
 
 \subsubsection{API Module Dependencies}
 This is a listing to the direct dependencies of the API module. Users of the Clustermeister API need to provide these dependencies and their indirect dependencies at runtime.
@@ -298,9 +302,25 @@ to verify functionality in isolation. Additionally a small framework for integra
 \label{fig:issues}
 \end{figure}
 
-\section{Performance Evaluation}
+\section{Evaluation}
+This sections summarizes the performance evaluation done with Clusterermeister. Areas of interest are the provisioning and deployment time (the time needed to make distributed Clustermeister nodes available and load user code on them) and job execution times (how Clustermeister can reduce the time needed to complete a computation job). 
 
-Assessing Clustermeister performance highly depends on the computation task at hand and may be significantly improved by the load-balancing (task distribution) algorithm chosen for the (local) JPPF server. The available load-balancing strategies are\footnote{http://www.jppf.org/doc/v3/index.php?title=Configuring\_a\_JPPF\_server\#Load-balancing}:
+\subsection{Provisioning and Deployment Time}
+
+The time to provision the Clustermeister infrastructure strongly depends on the provisioning provider. When executing code on Clustermeister nodes another critical factor is the time to deploy user code and its dependencies on those nodes. 
+
+\subsubsection{Troque Provisioning}
+Torque cluster nodes are provisioned by queuing job requests on the queue management server. At some time the request is granted and a JPPF node is started. Provided the request has a high enough priority, this typically happens very quickly. Therefore the major time needed for provisioning falls to uploading the JPPF node executables and user configured libraries to the queue management server. The time for this depends on network latency, bandwidth and the size of configured libraries. However it is a one time investment only, provided the configuration is not changed and Clustermeister is not updated. Finally the JPPF node launches in about 5-8 seconds. For all these reasons the overall provisioning time is hard to predict but typically lies somewhere between 30 seconds and less than 10 seconds.
+
+\subsubsection{Amazon Provisioning}
+Amazon nodes can take significantly longer to be made available. While the same delays apply in respect to upload of binary data and launching a JPPF node, the binary files need to be uploaded to each instance and not only to the queue management server as in the Torque case. But the largest delay falls to the time needed for Amazon to make an EC2 instance available (loading a machine image, booting the machine, and configuring firewall and credentials on it). Creating a new instance and launching a Clustermeister node on it takes about 1 minute and 44 seconds on average (with a maximum measured time of 2:15 and a minimum of 1:30). Of course these numbers depend on the user configuration and network latency and bandwidth as well. On the other hand, launching a Clustermeister node on an already running instance takes merely about 8 seconds. To avoid  this long start up time, the Amazon provider performs node provisioning in parallel for all requested nodes.
+
+\subsubsection{Code Deployment}
+When a user executes code on Clustermeister, each class that is not available or out of date in a node's classpath, is loaded over the network from the user's classpath. This happens at runtime, one-by-one as the classes are loaded. Loading large amounts of classes or libraries in this way is very inefficient and may take several minutes. To mitigate this problem, Clustermeister offers the ability to pre-load libraries to nodes at provisioning time. Section \ref{appendix-general-configuration} describes how library pre-loading can be used.
+
+\subsection{Execution Time}
+
+Assessing execution time strongly depends on the nature of the computation task at hand. In the context of Clustermeister we are primarily interested in tasks that can be executed in parallel. This section uses the term \textit{job} to describe a single computation task, such as evaluating a list of numbers if they are primes. A job can then be split into a number of \textit{tasks} that can be executed in parallel (e.g. each number can be checked in parallel, provided there are enough resources). For the purposes of this evaluation two different kind of jobs were evaluated. Namely jobs that consists of a large number of trivial tasks with short execution time. And jobs that consist of a small number of long-running tasks. These two kinds of jobs behave very differently and as will be demonstrated, require different load-balancing (task distribution) algorithm for optimal performance. Clustermeister does not perform any load balancing but allows to configure the load balancing algorithm used by JPPF. The available choices are\footnote{http://www.jppf.org/doc/v3/index.php?title=Configuring\_a\_JPPF\_server\#Load-balancing}:
 
 \begin{enumerate}
  \item \textbf{manual}: with this strategy, the user can provide a number of tasks that are executed on each node at most at the same time.
@@ -310,14 +330,57 @@ Assessing Clustermeister performance highly depends on the computation task at h
  \item \textbf{NodeThreads}: each node receives at most n * m tasks, where n is the number of threads the node is configured to use, and m is a user-defined factor. 
 \end{enumerate}
 
-If the computation involves many short-running (split seconds) tasks, it is favorable to send many such tasks in a batch, even more so if all the tasks combined only take a few seconds to complete. Some of the load-balancing strategies (TODO which?) apply a ``slow start principle'' and perform badly for short-running computations.
+In the remainder of this section the data and conclusions obtained from this evaluation are presented.
 
-\subsection{Deployment Time}
+\subsubsection{Job with many Short-Running Tasks}
 
-The time to deploy a Clustermeister infrastructure depends on the target platform. Torque cluster nodes are statically configured and are running continuously, hence node start-up time does not need to be accounted for. For amazon instances, however, instance start-up time is significant and does take between 30 and 120 seconds (TODO correct numbers?).
+For this evaluation the computation of an image of the Mandelbrot set\footnote{http://en.wikipedia.org/wiki/Mandelbrot\_set} has been chosen.
+This type of Job has the feature that it creates a large number of short running tasks that can be executed in parallel. In our evaluation each Task calculates a single row of colors of the resulting picture. The execution time of each task is negligible. The largest portion of time will be used on network latency when transmitting the tasks to the nodes. Therefore the goal is to maximize parallel computation to save time. The evaluation showed that the load balancing algorithm used in the local driver has the most influence on overall execution time. A computation job containing 600 tasks that can be executed in parallel is sent to the driver. The driver then distributes tasks to the available nodes. If a bad load balancing algorithm is configured, the driver will send only small numbers of tasks to the nodes at once and await the nodes to complete tasks before sending more. With long running tasks this would not be an issue but with short running tasks the network latency overhead is a much stronger factor than the task execution time. The network overhead is increased additionally because the tasks are sent in small batches.
 
-Another facet of the deployment time is the actual \textit{code} deployment time. If you, for example, run code written in Java that uses a lot of libraries, each library class that is used needs to be sent to the nodes. This dynamic class loading happens on demand and depending on the size of the libraries can take a few minutes to complete. Fortunately, JPPF allows for libraries to be preloaded when a node starts up. Clustermeister provides configuration options to specify a Maven pom file to extract the necessary libraries and deploy them with the Clustermeister infrastructure. This way, projects that use Maven integrate well with the Clustermeister framework. Dependencies may be configured manually, refer to section \ref{appendix-general-configuration} for more details.
+Run 1 (Amazon, Nodes 1, Threads 1, NodeThreads m = 600, 600 tasks): 00:00:02.190
+Run 2 (Amazon, Nodes 2, Threads 1, NodeThreads m = 300, 600 tasks): 00:00:01.494
+Run 3 (Amazon, Nodes 3, Threads 1, NodeThreads m = 200, 600 tasks): 00:00:01.332
+Run 4 (Amazon, Nodes 4, Threads 1, NodeThreads m = 150, 600 tasks): 00:00:01.014
+Run 5 (Amazon, Nodes 5, Threads 1, NodeThreads m = 120, 600 tasks): 00:00:00.894
+Run 6 (Amazon, Nodes 6, Threads 1, NodeThreads m = 100, 600 tasks): 00:00:00.851
 
+Run 7 (Amazon, Nodes 6, Threads 1, NodeThreads m = 1, 600 tasks): 00:00:12.156
+
+load balancing algorithm influences task batches
+
+network latency >> execution time --> send large ('ideal size') batches to nodes
+
+network latency << execution time --> just occupy all nodes
+
+Example (NodeThreads)
+
+6 nodes, 600 tasks, short running, m=1, m=100
+
+Plus: Adaptive algorithms (rl, proportional) --> learn over time (number of jobs) --> implication on use case: single job -> bad, many jobs --> good, advantage when node computation power is very unbalanced
+
+Another way to speed up computation is to provide more nodes for execution.
+
+600 tasks, short running, node threads
+
+1 node, m = 600
+2 nodes, m = 300
+3 nodes, m= 200
+4, 150
+5, 120
+6, 100
+
+\subsubsection{Job with few Long-Running Tasks}
+
+Task exec time = 5 sec
+
+Run 1 (Amazon, Nodes 1, Threads 1, NodeThreads m = 30, 30 tasks): 
+Run 2 (Amazon, Nodes 2, Threads 1, NodeThreads m = 15, 30 tasks): 
+Run 3 (Amazon, Nodes 3, Threads 1, NodeThreads m = 10, 30 tasks): 
+Run 4 (Amazon, Nodes 4, Threads 1, NodeThreads m = 8, 30 tasks): 
+Run 5 (Amazon, Nodes 5, Threads 1, NodeThreads m = 6, 30 tasks): 
+Run 6 (Amazon, Nodes 6, Threads 1, NodeThreads m = 5, 30 tasks): 
+
+Run 7 (Amazon, Nodes 6, Threads 1, NodeThreads m = 1, 30 tasks): 
 
 \newpage
 
