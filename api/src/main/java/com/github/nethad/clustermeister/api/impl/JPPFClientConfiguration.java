@@ -36,6 +36,9 @@ public class JPPFClientConfiguration extends AbstractJPPFConfiguration {
         properties.setProperty(String.format(JPPFConstants.DRIVER_SERVER_PORT_PATTERN, driverName), "11111");
 //        properties.setProperty("reconnect.max.time", "-1");
         properties.setProperty(JPPFConstants.DISCOVERY_ENABLED, "false");
+        properties.setProperty(JPPFConstants.LOAD_BALANCING_ALGORITHM, "manual");
+        properties.setProperty(JPPFConstants.LOAD_BALANCING_STRATEGY, "manual");
+        properties.setProperty("strategy.manual.size", "1000000");
     }
 
     @Override
