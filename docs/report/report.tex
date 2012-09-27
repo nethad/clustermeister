@@ -320,7 +320,8 @@ When a user executes code on Clustermeister, each class that is not available or
 
 \subsection{Execution Time}
 
-Assessing execution time strongly depends on the nature of the computation task at hand. In the context of Clustermeister we are primarily interested in tasks that can be executed in parallel. This section uses the term \textit{job} to describe a single computation task, such as evaluating a list of numbers if they are primes. A job can then be split into a number of \textit{tasks} that can be executed in parallel (e.g. each number can be checked in parallel, provided there are enough resources). For the purposes of this evaluation two different kind of jobs were evaluated. Namely jobs that consists of a large number of trivial tasks with short execution time. And jobs that consist of a small number of long-running tasks. These two kinds of jobs behave very differently and as will be demonstrated, require different load-balancing (task distribution) algorithm for optimal performance. Clustermeister does not perform any load balancing but allows to configure the load balancing algorithm used by JPPF. The available choices are\footnote{http://www.jppf.org/doc/v3/index.php?title=Configuring\_a\_JPPF\_server\#Load-balancing}:
+Assessing execution time strongly depends on the nature of the computation task at hand. In the context of Clustermeister we are primarily interested in tasks that can be executed in parallel. This section uses the term \textit{job} to describe a single computation task, such as evaluating a list of numbers if they are primes. A job can then be split into a number of \textit{tasks} that can be executed in parallel (e.g. each number can be checked in parallel, provided there are enough resources). For the purposes of this evaluation two different kind of jobs were evaluated. Namely jobs that consists of a large number of trivial tasks with short execution time. And jobs that consist of a small number of long-running tasks. These two kinds of jobs behave very differently and as will be demonstrated, require different load-balancing (task distribution) algorithm for optimal performance. Clustermeister does not perform any load balancing but allows to configure the load balancing algorithm used by JPPF. The 
+available choices are\footnote{http://www.jppf.org/doc/v3/index.php?title=Configuring\_a\_JPPF\_server\#Load-balancing}:
 
 \begin{enumerate}
  \item \textbf{manual}: with this strategy, the user can provide a number of tasks that are executed on each node at most at the same time.
@@ -381,7 +382,14 @@ The other evaluation concentrated on the influence of number of nodes on executi
 
 \subsubsection{Job with few Long-Running Tasks}
 
-TODO
+\begin{figure}[hptb]
+\centering
+\includegraphics[scale=0.7]{images/long-running-duration.pdf}
+\caption{Long-running tasks}
+\label{fig:evaluation-long-running}
+\end{figure}
+
+In the simulation with long-running tasks, there were 30 tasks that had a duration of 5 seconds each. In fig. \ref{fig:evaluation-long-running}, the results of the simulation are shown in a chart. The number of nodes were increased from 1 to 6 for each simulation. Each node had one processing thread. In the simulation with 6 nodes, the optimal execution distributes 5 tasks for each node. Each task has a duration of 5 seconds, therefore the optimal execution time is 25 seconds. In the simulation, there was a duration of 25.928 seconds. Hence for long-running tasks, network overhead is neglectable and nodes are always fully utilized.
 
 \subsubsection{Adaptive load balancing algorithms}
 
