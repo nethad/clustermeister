@@ -1,5 +1,5 @@
-%\documentclass[english]{uzhpub}
-\documentclass[12pt]{article}
+\documentclass[english]{uzhpub}
+%\documentclass[12pt]{article}
 \usepackage[T1]{fontenc}
 \usepackage[latin9]{inputenc}
 \usepackage{listings}
@@ -28,65 +28,62 @@
 
 \section{Motivation}
 
-Programming distributed systems poses a number of challenges for a developer. One of these challenges is to request, configure and start a distributed computing infrastructure. This is the problem of provisioning. Another challenge is to package, deploy and run code on the distributed computing infrastructure. This is the problem of deployment and execution. Clustermeister has been made to support Java/Scala developers in tackling this challenge by providing dynamic provisioning and deployment in cloud and cluster computation environments.
+Programming distributed systems creates a number of challenges for a developer. One of these challenges is to request, configure and start a distributed computing infrastructure. This is the problem of provisioning. Another challenge is to package, deploy and run code on the distributed computing infrastructure. This is the problem of deployment and execution. Clustermeister has been made to support Java/Scala developers in tackling this challenge by providing dynamic provisioning and deployment in cloud and cluster computation environments.
 
-Dynamic provisioning means that with Clustermeister a developer can set up a distributed computation environment, and then alter it at any time during a session. In Clustermeister terminology a developer can add and remove nodes and shut the environment down again. A node is an addressable unit that can execute code. Clustermeister abstracts the underlying specifics of the computation environment from the user. This way multiple environment can be supported and the user does not have to maintain various tools and scripts and interact with different APIs.
+Dynamic provisioning means that with Clustermeister a developer can set up a distributed computation environment, and then alter it at any time during a session. In Clustermeister terminology a developer can add and remove nodes and shut the environment down again. A node is an addressable unit that can execute code. Clustermeister abstracts the underlying specifics of the computation environment from the user. This way multiple environments can be supported and the user does not have to maintain various tools and scripts and interact with different APIs.
 
-Dynamic deployment means that Clustermeister can deploy new and changed code to nodes without the need to interact with the distributed computation environment manually. This means a developer can just run changed code and does not need to worry about updating and restarting code deployments in the distributed environment. This can save a lot time and hassle when developing a distributed system.
+Dynamic deployment means that Clustermeister can deploy new and changed code to nodes without the need to interact with the distributed computation environment manually. A developer can just run changed code and does not need to worry about updating and restarting code in the distributed environment. This can save a lot time and hassle when developing a distributed system.
 
-Provisioning and deployment are tasks that interact with distributed computation environments and this is handled transparently to the user by the Clustermeister Provisioning module. Code execution on the other hand must interact closely with user code. For this purpose the Clustermeister API forms a bridge between the infrastructure provided by Clustermeister and the user code. The API offers various methods for code execution. Some allow to address specific nodes, others will distribute tasks to available nodes transparently.
+Provisioning and deployment interact with distributed computation environments. The Clustermeister provisioning module handles this transparently. Code execution on the other hand must interact closely with user code. For this purpose the Clustermeister API forms a bridge between the infrastructure provided by Clustermeister and the user code.
 
-The aim of the project is to support developers by letting them concentrate on their code and solve infrastructure challenges reliably and with minimal configuration.
+The aim of the project is to support developers by letting them concentrate on their code. Clustermeister solves infrastructure challenges reliably and with minimal configuration.
 
 \subsection*{Clustermeister provides:}
 \begin{itemize}
-\item Dynamic distributed computation infrastructure provisioning.
+\item Dynamic distributed computation infrastructure provisioning for of Amazon Web Services Elastic Compute Cloud (EC2) and TORQUE (PBS).
 \item Dynamic class-loading allowing for client code execution without manual re-deployment.
 \item Easy deployment of dependencies using Apache Maven dependency resolution.
-\item Parallel and distributed code execution via a Java ExecutorService interface or a native inferface.
+\item Parallel and distributed code execution via a Java ExecutorService interface or a native interface.
 \item Addressable nodes for code execution on specific nodes.
-\item Provisioning of Amazon Web Services Elastic Compute Cloud (EC2) and TORQUE (PBS) infrastructure.
 \end{itemize}
 
-\section{Evaluation of Third-Party Libraries}
+\section{Evaluation of Third-Party Frameworks}
 
-Java was chosen as the platform for Clustermeister, because it was known that Clustermeister will be used by Scala clients, so the JVM was a logical decision. Another goal was to licence Clustermeister under the Apache Licence, version 2.0. These were the two most important constraints while searching for suitable libraries.
+Clustermeister has been implemented in Java, because the project definition required it to be useful for Java and Scala developers. Another specification has been to was to licence Clustermeister under the Apache Licence, version 2.0\footnote{http://www.apache.org/licenses/LICENSE-2.0.html}. These have been the most important constraints while searching for suitable libraries and frameworks. Sections \ref{spec} and \ref{orga} will discuss the project specification in more detail.
 
-The goal for Clustermeister was not to re-implement a node runtime based on Java, so instead existing libraries were evaluated that would help to run code on remote JVMs. Ideally, this runtime should provide a means of dynamically loading libraries and classes from the machine that is issuing the computation task.
+Dynamic class loading and distributed computing are complex problems to solve and implementing a new solution has been deemed too complex. Instead, existing frameworks were evaluated. Ideally, this framework provides some sort of communication between remote processes and a means of dynamically loading classes from the machine that is issuing the computation task.
 
-There are a few libraries that would fit the needs. We selected three libraries to evaluate. These are 
-GridGain\footnote{http://www.gridgain.com/}, 
-Hazelcast\footnote{http://www.hazelcast.com/} and 
-JPPF\footnote{http://jppf.org/}. In the following, these libraries and their characteristics are discussed.
+Three frameworks have been evaluated closely. They are 
+GridGain\footnote{http://www.gridgain.com/}, Hazelcast\footnote{http://www.hazelcast.com/} and JPPF\footnote{http://jppf.org/}.
 
-\paragraph{GridGain} GridGain was very easy to set up, has a pleasant API and worked out of the box. It is able to remotely load libraries and classes without additional configuration. However, newer versions of GridGain are licenced under the GPL. Further, there was no obvious way to configure GridGain programmatically. Because of these reasons, GridGain was ruled out.
+\paragraph{GridGain} GridGain is very easy to set up, well maintained and offers a pleasant API. It is able to do dynamic classloading from remote machines too. However, newer versions of GridGain Community Edition are licenced under the GNU General Public License v3.0\footnote{http://www.gnu.org/licenses/gpl.html}. GPL3 is incompatible with Apache License 2.0 in that GPL3 licensed source code and binaries can not be distributed in an Apache Licensed project TODO: ref. Because it is very likely that Clustermeister executables would include elements of GridGain and because there are compatible alternatives available, it has been ruled out.
 
-\paragraph{Hazelcast} Hazelcast was a good fit at first sight, due to its nice API. However, it lacked features that were needed for Clustermeister, i.e. remote deployment of libraries and classes and provisioning capabilities. Hazelcast is generally a low-level solution and it would have required more implementation effort to integrate it into Clustermeister.
+\paragraph{Hazelcast} Hazelcast has a very nice, modern API. However, it lacks features that are required by Clustermeister, such as remote classloading. Generally it lacks higher level features that GridGain or JPPF provide.
 
-\paragraph{JPPF} JPPF was a good fit for the requirements. It is licenced under the Apache Licence and is being actively developed. Further, there is good community support and it fits the needs for Clustermeister. Therefore, JPPF was chosen to build the basic infrastructure.
+\paragraph{JPPF} JPPF is licenced under the Apache Licence, version 2.0 and is being actively developed. Further, there is good community support and it satisfies the requirements of Clustermeister. It does make a more amateur-project impression when compared to GridGain but prototyping revealed it to be easy to use and advanced. But it is the compatible license that gave it the edge over GridGain.
 
 \section{Architecture and Specification}
 \label{architecture}
-
-In this section, Clustermeister's high-level architecture is characterized. First, Clustermeister terminology is introduced. Second, the most important building blocks and modules are presented. At the end of this section, the Clustermeister topology is explained with an example set-up.
+This section defines the functional requirements of the Clustermeister project by demonstrating typical use cases and then compiling a list of specifications. It also introduces by a high level view on the Clustermeister architecture to give the reader an overview of its general structure and the most important modules.
 
 \subsection{Terminology}
-
+The terms node and instance will be used throughout the rest of this document to describe Clustermeister. They are defined here for clarity.
+ 
 \begin{description}
-\item[Clustermeister Node] A node can be interpreted as a JVM that executes code. Nodes are running on local or remote Clustermeister instances. A single instance can host several nodes.
 \item[Clustermeister Instance] An instance is a physical or virtual machine generally running in a cluster or a cloud computation service such as Amazon EC2.
+\item[Clustermeister Node] A node can be interpreted as a JVM that executes code. Nodes are running on local or remote Clustermeister instances. A single instance can host several nodes.
 \end{description}
 
 \subsection{Use Cases}
 
 \subsubsection*{Abstract Use Case}
-This abstract use case that has been compiled from the project definition and discussion among the developers and the project leadership. It aims to demonstrate how Clustermeister can be used in a development workflow. The use case applies to Java and Scala developers.
+This abstract use case has been compiled from the project definition (TODO: ref) and discussion among the developers and the project leadership. It aims to demonstrate how Clustermeister can be used in a development workflow. The use case applies to Java and Scala developers.
 
 \begin{enumerate}
 \item \label{uc:start}The developer begins a programming session.
 \item The developer starts Clustermeister locally from the command line.
 \item \label{uc:alloc}Using the terminal where Clustermeister is running, the developer allocates five Clustermeister nodes in a distributed computation infrastructure.
-\item \label{uc:prog}The developer programs a parallel algorithm and uses the Clustermeister API in the source code to submit parallel tasks to the Clustermeister nodes requested in step \ref{uc:alloc}.
+\item \label{uc:prog}The developer programs a parallel algorithm and uses the Clustermeister API in the user code to submit parallel tasks to Clustermeister nodes.
 \item The developer compiles the code and executes it. The result is not as expected.
 \item The developer corrects a bug in the source code, re-compiles it and executes it again. This time the result is correct.
 \item The developer wants to speed up the computation. He opens the terminal where Clustermeister is running and requests another five Clustermeister nodes.
@@ -106,6 +103,7 @@ There are many specific use cases that can be derived from this abstract use cas
 \end{description}
 
 \subsection{Specification}
+\label{spec}
 In the project definition the following requirements relevant for the architecture have been identified:
 
 \begin{enumerate}
@@ -117,7 +115,7 @@ In the project definition the following requirements relevant for the architectu
 \item Nodes offer a method to submit code to them for execution.
 \end{enumerate}
 \item Changed code needs to be deployed and loaded on the nodes automatically.
-\item The communication with the cluster nodes should be secured and require some form of authorization. 
+\item The communication with the nodes should be secured and require some form of authorization. 
 \end{enumerate}
 
 \subsection{Architecture}
@@ -135,88 +133,83 @@ This separation of concerns enables the user to set up and deploy Clustermeister
 \subsubsection{Clustermeister Provisioning}
 The provisioning module is accessible via a command line interface (CLI) and is responsible for deployment of the Clustermeister infrastructure. This enables provisioning of instances and nodes, deployment of dependencies and dynamic classloading.
 
-Provisioning is the core of Clustermeister's dynamic code deployment and execution `magic' and implements the specifics of interacting with supported cloud or cluster computation infrastructures.
+Provisioning is also the core of Clustermeister's dynamic code deployment and execution \textit{magic} and implements the specifics of interacting with supported cloud or cluster computation infrastructures.
 
 \subsubsection{The Clustermeister API}
-Allows the user to send jobs and tasks to Clustermeister nodes for execution and access to the computation's results. The computations are executed asynchronously, in parallel and in a distributed manner. Clustermeister API supports execution of Serializable and Java code. This does not exclude code written in other, bytecode compatible, programming languages such as Scala.
+Allows the user to send jobs and tasks to Clustermeister nodes for execution and access to the computation's results. The computations are executed asynchronously, in parallel and in a distributed manner. Clustermeister API supports execution of serializable Java code. This does not exclude code written in other, bytecode compatible programming languages such as Scala.
 
-\subsection{JPPF}
-
-JPPF is a client-server based framework/library written in Java. JPPF nodes connect to a JPPF server (also called driver) and receive tasks which they execute. A JPPF server may connect to a parent server and acts as a node to receive tasks. In a Clustermeister setup, a local JPPF server is always started. Nodes in a Torque cluster or on an Amazon instance connect to this local JPPF server. Code that is executed via the Clustermeister API connects to the local JPPF server and the server distributes the tasks to the connected nodes.
-
-\subsection{Toplology}
+\subsection{Clustermeister Toplology with JPPF}
 \label{topology}
+Clustermeister's distributed computation framework and remote classloading capabilities have implemented with JPPF. It is a client-server based framework written in Java. JPPF nodes connect to a JPPF server (also called driver) and receive tasks which they execute. A JPPF server may connect to a parent server and acts as a node to receive tasks. In a Clustermeister setup, a local JPPF server is always started. Nodes in a Torque cluster or on an Amazon EC2 instance connect to this local JPPF server. Code that is executed via the Clustermeister API connects to the local JPPF server and the server distributes the tasks to the connected nodes.
 
+\subsubsection{A Clustermeister Topology}
 \begin{figure}[h]
 \centering
 \includegraphics[scale=0.5]{images/topology.pdf}
-\caption{Topology}
+\caption{An illustration of how nodes are distributed in a remote distributed computation environment and connect to the developer's local machine, where Clustermeister is running.}
 \label{fig:topology}
 \end{figure}
 
-Fig. \ref{fig:topology} depicts a high-level view on a typical Clustermeister topology.
-
-On the left side, you can see a Clustermeister setup for Amazon EC2. In this case, two instances are provisioned. There are two Clustermeister nodes running on the first instance, and one node running on the second instance. Each node uses an SSH tunnel to the local machine to connect to the JPPF server. The local JPPF server is started by Clustermeister automatically once the command-line client is started. Nodes provisioned on Amazon instances connect to this server via SSH tunnels automatically. Once they are connected, end-users are able to use them via the Clustermeister API. The Clustermeister API communicates with the local JPPF server and the server manages and distributes computation tasks.
-
-On the right side, a set-up for Torque is depicted. The local part is the same as seen in the Amazon example, but there are a few differences otherwise. There is no direct access to the Torque cluster nodes themselves. The nodes are started on a job submission server (not in the picture) and the Torque infrastructure decides on which Torque cluster node Clustermeister nodes are started. Once a Clustermeister node is started, it connects to the JPPF server on the local machine. The Torque cluster firewall allows for outgoing traffic but does not allow for incoming traffic. The details are discussed in Sect. \ref{implementation-torque}.
+Fig. \ref{fig:topology} depicts a high-level view on a typical Clustermeister topology. On the left side, a Clustermeister setup for Amazon EC2 can be seen. In this case, two instances are provisioned. There are two Clustermeister nodes running on the first instance, and one node running on the second instance. Each node uses an SSH tunnel to the local machine to connect to the JPPF server. For this purpose the user's machine connects to an EC2 instance and opens a SSH tunnel. This is called a \textit{reverse tunnel}, because the remote machine can use this tunnel to communicate in the opposite direction and circumvent firewalls between the user and the remote machine. The local JPPF server is started by Clustermeister automatically once the command-line client is started. A users of Clustermeister is able to use the nodes via the Clustermeister API. The Clustermeister API communicates with the local Clustermeister process from the user code. On the right side, a set-up for Torque is depicted. The local part is the same as seen in the Amazon example, but there are a few differences otherwise. There is no direct access to the Torque cluster nodes themselves. The nodes are started on a job submission server (not in the picture) and the Torque infrastructure decides on which cluster nodes the Clustermeister nodes are started. Once a Clustermeister node is started, it connects to the JPPF server on the local machine. The Torque cluster firewall allows for outgoing traffic but does not allow for incoming traffic. The details are discussed in section \ref{implementation-torque}.
 
 \section{Implementation}
 \label{implementation}
 
-In this section, the Clustermeister implementation is discussed in detail and differences with regard to the implementation between the two target platforms, Amazon EC2 and Torque/PBS, are explained.
+
+This section discusses Clustermeister implementation details such a the projects source code structure and dependencies or concerns and locations of components. Also differences with regard to the implementation between the two providers, Amazon EC2 and Torque/PBS, are explained.
 
 \subsection{Project Structure}
 \label{structure}
 
-Clustermeister uses Maven\footnote{http://maven.apache.org/} to manage dependencies and build artifacts. It is hierarchically organized with a parent \texttt{pom.xml} and several sub-modules:
+Clustermeister uses Maven\footnote{http://maven.apache.org/} to manage dependencies and build artefacts. It is hierarchically organized with a parent \texttt{pom.xml} and several sub-modules:
 
-\begin{itemize}
- \item \textbf{api}: this module contains the end-user visible parts of Clustermeister, i.e. its API and interfaces.
- \item \textbf{provisioning}: in this module, Amazon and Torque provisioning is implemented, as well as a general-purpose interface to allow for alternate provisioning targets
- \item \textbf{cli}: this is a relatively small module that provides a command line interface for node provisioning. It is basically a command-line frontend to the provisioning module.
- \item \textbf{driver}: this module is used to build an executable JPPF driver (server). It contains a few extensions for the original JPPF driver.
- \item \textbf{node-common}: this contains code that is used by both the (JPPF) driver and node module and can be seen as a ``shared library''.
- \item \textbf{node}: this module is used to build an executable JPPF node. It contains a few extensions for the original JPPF node to allow for special maintenance tasks.
- \item \textbf{integration-tests}: this module contains test ``scenarios'' written in Java as well as Scala that uses the Clustermeister API. These are tests that exercise the whole Clustermeister library.
-\end{itemize}
+\begin{description}
+\item[api] Contains the parts of Clustermeister that the user interacts with, i.e. its API and shared interfaces that are implemented by the provisioning module and the API.
+\item[provisioning] Implements interactions with remote computing infrastructures, code and JPPF deployment as well as several utilities (i.e. dependency pre-loading).
+\item[cli] Provides a command line interface (CLI) for the provisioning module starts the provisioning infrastructure.
+\item[driver] Builds an executable Clustermeister driver (server) and implements extensions to the original JPPF driver.
+\item[node-common] A shared library that is deployed in the classpath of drivers and nodes.
+\item[node] Builds an executable Clustermeister node and implements extensions to the original JPPF node.
+\item[integration-tests] Contains integration test scenarios written in Java and Scala that use the Clustermeister API and the provisioning module together.
+\end{description}
 
 \subsection{Module Dependencies}
-In order to prevent to prevent dependency cycles and to understand node deployment, one must understand how Clustermeister modules depend on each other. In section \ref{structure} the modules have been described. This section relates them to each other.
+In order to prevent dependency cycles and to understand node deployment, one must understand how Clustermeister modules depend on each other. In section \ref{structure} the modules have been described. This section relates them to each other.
 
-The dependencies are depicted in Fig. \ref{fig:deps} for reference. Conceptually there are two rows of dependencies. The first row consist of modules that users of Clustermeister will work with. The second row consist of modules that are used to run Clustermeister nodes and drivers. It is very important to prevent any dependencies from the second row onto the first because all dependencies (direct and indirect) of the Node module must be deployed on Clustermeister instances and this should be minimized. Additionally there is a high likelihood of creating cyclic dependencies when introducing such dependencies. Currently drivers are only deployed locally but it is possible that Drivers will be deployed to instances as well in the future. The corresponding functionality is present in the Amazon provider. 
+The dependencies are depicted in Fig. \ref{fig:deps} for reference. Conceptually there are two rows of dependencies. The first row consist of modules that users of Clustermeister will work with. The second row consist of modules that are used to run Clustermeister nodes and drivers. It is very important to prevent any dependencies from the second row onto the first because all dependencies (direct and indirect) of the \textit{Node} module must be deployed on Clustermeister instances and this should be minimized. Additionally there is a high likelihood of creating cyclic dependencies when introducing such dependencies. Currently drivers are only deployed locally but it is possible that drivers will be deployed to instances as well in the future. The corresponding functionality is present in the Amazon provider. 
 
-The CLI contains the entry point to the Clustermeister process and is compiled into an executable. Therefore nothing else should depend on it. The CLI depends on the driver module, because it launches a local driver to send jobs to distributed nodes. On the other end, there is the API module which should depend on as little as possible because it is used as a library in user-code and should not create too many additional dependencies. Provisioning depends on driver and node, because it deploys their compiled JAR packages to Clustermeister instances. It also uses code from node-common for node management.
+The \textit{CLI} contains the entry point to the Clustermeister process and is compiled into an executable. Therefore nothing else should depend on it. It depends on the \textit{Driver} module, because it launches a local driver in order to send jobs to distributed nodes. On the other end, there is the \textit{API} module, which should depend on as little as possible, because it is used as a library in user-code and should not create too many additional dependencies. \textit{Provisioning} depends on \textit{Driver} and \textit{Node}, because it deploys their compiled JAR packages to Clustermeister instances. It also uses code from \textit{Node-Common} for node management.
 
 \subsubsection{API Module Dependencies}
-This is a listing to the direct dependencies of the API module. Users of the Clustermeister API need to provide these dependencies and their indirect dependencies at runtime.
+This is a listing to the direct dependencies of the \textit{API} module. Users of the Clustermeister API need to have these dependencies and their indirect dependencies available in their classpath at runtime.
 
 \begin{itemize}
- \item snakeyaml (1.10)
- \item Apache Commons Configuration (1.8)
- \item jmxremote\_optional
- \item Google Guava (11.0.1)
- \item JPPF Server (3.1.1)
- \item JPPF Common (3.1.1)
- \item JPPF Common Node (3.1.1)
- \item JPPF Client (3.1.1)
+\item snakeyaml (1.10)
+\item Apache Commons Configuration (1.8)
+\item jmxremote\_optional
+\item Google Guava (11.0.1)
+\item JPPF Server (3.1.1)
+\item JPPF Common (3.1.1)
+\item JPPF Common Node (3.1.1)
+\item JPPF Client (3.1.1)
 \end{itemize} 
 
 \subsubsection{Node Runtime Dependencies}
-This is a listing to the runtime dependencies of the Node module. It is important to understand that these dependencies need to be deployed to Clustermeister instances and made available in the classpath of nodes. Clustermeister should handle this automatically but this serves to document the requirements as a reference when debugging or developing Clustermeister.
+This is a listing of the runtime dependencies of the \textit{Node} module. It is important to understand that these dependencies need to be deployed to Clustermeister instances and made available in the classpath of nodes. Clustermeister should handle this automatically but this serves to document the requirements as a reference when debugging or developing Clustermeister.
 
 \begin{itemize}
- \item Clustermeister Node-Common (0.1-SNAPSHOT)
- \item JPPF Common Node (3.1.1)
- \item Log4J (1.2.16)
- \item SLF4J API (1.6.4)
- \item SLF4J Log4J Bindings (slf4j-log4j12 1.6.4)
- \item jmxremote\_optional
+\item Clustermeister Node-Common (0.1-SNAPSHOT)
+\item JPPF Common Node (3.1.1)
+\item Log4J (1.2.16)
+\item SLF4J API (1.6.4)
+\item SLF4J Log4J Bindings (slf4j-log4j12 1.6.4)
+\item jmxremote\_optional
 \end{itemize}
 
 \begin{figure}[hp]
 \centering
 \includegraphics[scale=0.7]{images/module-deps.pdf}
-\caption{Clustermeister module dependnecies. The arrows illustrate depends-on relationships. The dependencies are conceptually assigned into two rows. The first row consists of CLI, Provisioning and API. The second row consists of Driver, Node and Node-Common.}
+\caption{Clustermeister module dependencies. The arrows illustrate depends-on relationships. The dependencies are conceptually assigned into two rows. The first row consists of CLI, Provisioning and API. The second row consists of Driver, Node and Node-Common.}
 \label{fig:deps}
 \end{figure}
 
@@ -292,8 +285,8 @@ The customizations made include:
 \end{itemize}
 
 \section{Organisation}
-
-The project duration has been scheduled to three and a half to maximum four months and there has been no pre-existing code base to work from. The project team consisted of two students that worked approximately three days a week on the project. The project definition contained some organizational specifications for the Clustermeister project. Namely that the project shall be licensed under the Apache License, Version 2.0\footnote{http://www.apache.org/licenses/LICENSE-2.0.html}, developed on GitHub\footnote{https://github.com/} and make use of github's issue management and documentation facilities. Therefore Clustermeister is an open source project and all source code and documentation is publicly available at: \url{https://github.com/nethad/clustermeister}.
+\label{orga}
+The project duration has been scheduled to three and a half to maximum four months and there has been no pre-existing code base to work from. The project team consisted of two students that worked approximately three days a week on the project. The project definition contained some organizational specifications for the Clustermeister project. Namely that the project shall be licensed under the Apache License, Version 2.0, developed on GitHub\footnote{https://github.com/} and make use of github's issue management and documentation facilities. Therefore Clustermeister is an open source project and all source code and documentation is publicly available at: \url{https://github.com/nethad/clustermeister}.
 
 Given these specifications a number of coarse work items were identified:
 \begin{enumerate}
