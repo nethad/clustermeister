@@ -273,21 +273,18 @@ The Amazon provider has been implemented such that it is able to build complex J
 \subsubsection{Utilities}
 
 \begin{description}
- \item[SSH] Both provisioning targets use jsch\footnote{http://www.jcraft.com/jsch/} for SSH access. However, the Amazon target uses jsch via the jclouds API, because jsch is integrated with jclouds. Further, nodes on Amazon instances use a reverse SSH tunnel to connect to the JPPF driver on the local machine.
- \item[Dependency Preloading] In the configuration file, the end-user can configure a pom.xml file or custom entries for dependencies that should be deployed to the node. This is implemented with the aether\footnote{http://www.sonatype.org/aether} library. For more information on how to configure this, see section \ref{appendix-general-configuration}.
- \item[Remote Logging] Logging output from (remote) nodes can be redirected to the local machine. This feature is implemented with log4j remote logging.
+ \item[SSH] Both provisioning targets use jsch\footnote{http://www.jcraft.com/jsch/} for SSH access. However, the Amazon target uses jsch via the jclouds API, because jsch is integrated with jclouds. The SSH utility is also capable of opening reverse SSH tunnels which is used extensively by the Amazon target (see section \ref{topology}).
+ \item[YAML Configuration Loader] We believe that YAML\footnote{http://www.yaml.org/} is a very easy to use configuration format. But there has been no YAML extension for the Apache Commons Configuration library which has been used throughout Clustermeister before this decision. Therefore a custom extension has been implemented in \textit{YamlConfiguration} by adapting snakeyaml\footnote{http://code.google.com/p/snakeyaml/}. 
+ \item[Dependency Preloading] Clustermeister is capable of resolving artefacts from Maven repositories and deploying them in nodes during node deployment time. This functionality has been implemented in the \textit{dependencymanager} package. Because these dependencies are configured by the user in a configuration file, \textit{DependencyConfigurationUtil} helps parsing repository and artefact configurations and \textit{MavenRepositorySystem} is used by it to download artefacts from Maven repositories. \textit{MavenRepositorySystem} is implemented with the aether\footnote{http://www.sonatype.org/aether} library. For more information on pre-loading configuration, see section \ref{appendix-general-configuration}.
 \end{description}
-
 
 \subsection{CLI}
 
-The CLI (command line interface) is a user interface for provisioning and can be seen as a front-end for the provisioning module. It is the entry point to the provisioning process. The command line interface contains a simple shell that allows to execute commands. The shell itself is implemented with the jline\footnote{http://jline.sourceforge.net/} library, which handles console input and offers features like command auto completion and a history mechanism.
+The CLI (command line interface) is a user interface for provisioning and can be seen as a front-end for the provisioning module. The command line interface contains a simple shell that allows to execute commands. The shell itself is implemented with the jline\footnote{http://jline.sourceforge.net/} library, which handles console input and offers features like command auto completion and a history mechanism. 
+
+The class \textit{Provisioning} is the entry point to the provisioning process. It reads the local user configuration and starts the RMI IPC infrastructure, the local JPPF driver and a remote logging server thread (in \textit{RemoteLoggingServer}). Remote logging redirects output from (remote) nodes to the CLI process. This feature is implemented by dynamically configuring a log4j \textit{SocketAppender} on nodes and redirecting received log statements to the CLI's \textit{LogManager}. 
 
 A guide on how to use the command line interface can be found in section \ref{tutorial}.
-
-jlines -> command completion
-config loading
-user interface for provisioning
 
 \subsection{Node and Driver}
 The node and driver module's main purpose is to wrap JPPF nodes and drivers to introduce custom functionality and to build self-contained zip archives that include their executables, static configuration files and their runtime dependencies. These archives can then be deployed by the provisioning module to Clustermeister instances, unpacked, and executed.
