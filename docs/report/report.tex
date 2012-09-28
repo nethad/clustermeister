@@ -1,5 +1,5 @@
-%\documentclass[english]{uzhpub}
-\documentclass[12pt]{article}
+\documentclass[english]{uzhpub}
+%\documentclass[12pt]{article}
 \usepackage[T1]{fontenc}
 \usepackage[latin9]{inputenc}
 \usepackage{listings}
@@ -226,20 +226,8 @@ JPPF offers its own API as ``JPPF client''. Clustermeister uses the JPPF client 
 
 The Clustermeister API and its interfaces are designed to reduce configuration as much as possible, but some configuration is still necessary. In section \ref{configuration} the configuration options are discussed in detail.
 
-JPPF Client that connects to local driver
-+ custom Job/Task classes, access to native API, ExecutorService
-+ Configuration?
-
-interface to distributed infrastructure from user code
-
 \subsection{Provisioning and Deployment}
 Most of Clustermeister's functionality is implemented in the provisioning module. This module is responsible to start and manage Clustermeister nodes and make them available to users of the Clustermeister API. Because Clustermeister uses JPPF internally, the provisioning module is conceptually a JPPF driver (server) process that runs on the local developer's machine. The Clustermeister API connects to this server and sends jobs to it. The server itself maintains connections to the distributed nodes and, depending the load balancing strategy configured, distributes tasks to the available nodes. JPPF also solves the problem of dynamic classloading. Therefore, most of this module's code manages deployment of a JPPF setup in different environments. It also provides a number of utilities that support this task or improve the user experience.
-
-- dep preloading impl. with aether
-- SSH impl with jsch
-- Amazon with jclouds, parallel
-- Torque qsub...
-- remote logging
 
 \subsubsection{The Provisioning Process}
 The provisioning process is started from the command line interface (CLI) and then creates a local JPPF driver process (see section \ref{localdriver}) and RMI servers for inter process communication (IPC) with the local driver process and the API (see \textit{RmiInfrastructure}, \textit{RmiServerForDriver} and \textit{RmiServerForApi}).
