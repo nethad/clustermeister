@@ -257,7 +257,6 @@ Node management refers to tasks such as starting or stopping nodes or gathering 
 lala
 
 \paragraph{Torque Provider}
-
 \label{implementation-torque}
 
 Torque offers a generally static infrastructure for deployment. Computations tasks are started from a job submission machine that is accessed via SSH and Torque users have SSH access to this machine.
@@ -266,7 +265,7 @@ When accessed via SSH, Torque jobs are submitted with the \texttt{qsub} command.
 
 Another difficulty is network access to nodes. A Torque cluster network is commonly isolated, therefore nodes are allowed to initiate connections, even to resources outside of the local network, but the nodes themselves are not accessible from outside. These constraints lead to difficulties in node management, because the JPPF node management infrastrucure relies on JMX and requires a direct connection to the node. Clustermeister circumvented this problem by extending the JPPF node runtime with management job extensions. These jobs are submitted equally to common computation tasks, but contain meta-data that is handled by the nodes. For example, if a node needs to be shut down, Clustermeister issues a special task and nodes react on it. These special tasks are not dynamic and need to be integrated before the node runtime is deployed. Therefore management tasks cannot be changed or installed while the node is running.
 
-\subsubsection{Amazon}
+\paragraph{Amazon Provider}
 The Amazon provider component manages Amazon EC2 instances and deploys JPPF nodes on them. The Amazon EC2 service offers many options for customizing and running instances. Clustermeister relies on the jClouds\footnote{http://www.jclouds.org/} library to interact with the EC2 API. It has been chosen because it supports all required features, is well maintained and offers its own API which is not specific to the underlying cloud computation service. This allows to extend Clustermeister with support for other services in the future.
 
 The Amazon provider has been implemented such that it is able to build complex JPPF topologies\footnote{http://www.jppf.org/doc/v3/index.php?title=JPPF\_Overview\#Architecture\_and\_topology} \footnote{http://www.jroller.com/jppf/entry/master\_worker\_or\_p2p\_grid}. This means it can deploy arbitrary numbers of JPPF nodes and servers to any EC2 instance. However bugs in JPPF prevented this functionality to be fully active in Clustermeister. Therefore the provider supports the topology described in section \ref{topology} only
