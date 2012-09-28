@@ -222,9 +222,9 @@ This is a listing to the runtime dependencies of the Node module. It is importan
 
 \subsection{API}
 
-JPPF offers its own API as ``JPPF client''. Clustermeister uses the JPPF client to connect to the local JPPF driver and to send jobs internally. However, Clustermeister offers its own API that simplifies job execution and reduces the configuration to a minimum. To achieve this, Clustermeister offers its own job and task interfaces, but permits access to the JPPF native API. Further, it offers a Java \texttt{ExecutorService}.
+JPPF offers its own API as ``JPPF client''. Clustermeister uses the JPPF client to connect to the local JPPF driver and to send jobs internally. However, Clustermeister wraps this JPPF client with its own API that simplifies job execution and reduces the configuration to a minimum. To achieve this, Clustermeister offers its own job and task interfaces. However, the Clustermeister API permits access to the JPPF native API, if more control over job execution is desired. Further, it offers a Java \texttt{ExecutorService} that is inherited from the JPPF client API.
 
-Some configuration is still necessary and in section \ref{configuration} the configuration options are discussed in detail.
+The Clustermeister API and its interfaces are designhed to reduce configuration as much as possible, but some configuration is still necessary. In section \ref{configuration} the configuration options are discussed in detail.
 
 JPPF Client that connects to local driver
 + custom Job/Task classes, access to native API, ExecutorService
@@ -278,7 +278,7 @@ The Amazon provider has been implemented such that it is able to build complex J
 
 \subsection{CLI}
 
-The CLI (command line interface) module offers the clustermeister shell. This shell is a user interface for provisioning and can be seen as a front-end for the provisioning module. The shell itself is implemented with the jline\footnote{http://jline.sourceforge.net/} library, which handles console input and offers features like command auto completion and a history mechanism.
+The CLI (command line interface) is a user interface for provisioning and can be seen as a front-end for the provisioning module. The command line interface contains a simple shell that allows to execute commands. The shell itself is implemented with the jline\footnote{http://jline.sourceforge.net/} library, which handles console input and offers features like command auto completion and a history mechanism.
 
 A guide on how to use the command line interface can be found in section \ref{tutorial}.
 
