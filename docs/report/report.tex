@@ -224,7 +224,7 @@ This is a listing to the runtime dependencies of the Node module. It is importan
 
 JPPF offers its own API as ``JPPF client''. Clustermeister uses the JPPF client to connect to the local JPPF driver and to send jobs internally. However, Clustermeister wraps this JPPF client with its own API that simplifies job execution and reduces the configuration to a minimum. To achieve this, Clustermeister offers its own job and task interfaces. However, the Clustermeister API permits access to the JPPF native API, if more control over job execution is desired. Further, it offers a Java \texttt{ExecutorService} that is inherited from the JPPF client API.
 
-The Clustermeister API and its interfaces are designhed to reduce configuration as much as possible, but some configuration is still necessary. In section \ref{configuration} the configuration options are discussed in detail.
+The Clustermeister API and its interfaces are designed to reduce configuration as much as possible, but some configuration is still necessary. In section \ref{configuration} the configuration options are discussed in detail.
 
 JPPF Client that connects to local driver
 + custom Job/Task classes, access to native API, ExecutorService
