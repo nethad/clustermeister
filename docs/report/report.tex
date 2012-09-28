@@ -399,6 +399,13 @@ Another advantage of adaptive algorithms is that they can automatically tune the
 
 TODO: image of rl, proportional results
 
+\begin{figure}[hptb]
+\centering
+\includegraphics[scale=0.7]{images/learning-duration.pdf}
+\caption{Adaptive load balancing algorithms}
+\label{fig:evaluation-learning}
+\end{figure}
+
 \subsubsection{Execution Time Conclusions}
 
 The conclusions from this evaluations of execution times is that it is critical to choose the right load balancing strategy depending on the type of computation that is performed. When a task's computation time is much smaller than the network latency, it is important to minimize the task batches sent over the network by choosing an optimal batch size. When the tasks execution time is much larger than the network latency, it is best to not distribute tasks to nodes pre-maturely but instead queue the tasks on the server and send only small batches to nodes to prevent any node from becoming idle for a long time because no tasks are available for scheduling.
