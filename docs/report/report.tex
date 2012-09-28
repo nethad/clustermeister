@@ -266,8 +266,15 @@ config loading
 user interface for provisioning
 
 \subsection{Node and Driver}
-Builds self containing deployable node package
-Builds self containing deployable driver package, can be deployed on instances but also used for the local driver
+The node and driver module's main purpose is to wrap JPPF nodes and drivers to introduce custom functionality and to build self-contained zip archives that include their executables, static configuration files and their runtime dependencies. These archives can then be deployed by the provisioning module to Clustermeister instances, unpacked, and executed.
+
+The customizations made include:
+
+\begin{itemize}
+\item Custom launchers that can launch nodes in different modes and with custom parameters to adjust functionality depending on the environment they run it (Amazon EC2 instance, Torque or the local machine). The main purpose is to redirect standard I/O streams and to adapt the process model to the environment's requirements.
+\item Code to implement management job functionality (e.g. shut down the node upon receiving a special kind of job) is implemented in \textit{ClustermeisterNodeLifeCycleListener}.
+\item When the driver is the local driver (see section \ref{topology}), it starts corresponding RMI infrastructure to communicate node connection events with the provisioning process.
+\end{itemize}
 
 \section{Organisation}
 
