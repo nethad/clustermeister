@@ -233,24 +233,30 @@ JPPF Client that connects to local driver
 interface to distributed infrastructure from user code
 
 \subsection{Provisioning and Deployment}
-Most of Clustermeister's functionality is implemented in the provisioning module. This module is responsible to start and manage Clustermeister nodes and make them available to users of the Clustermeister API. In order to provide this functionality, the provisioning module must   
+Most of Clustermeister's functionality is implemented in the provisioning module. This module is responsible to start and manage Clustermeister nodes and make them available to users of the Clustermeister API. Because Clustermeister uses JPPF internally, the provisioning module is conceptually a JPPF driver (server) process that runs on the local developer's machine. The Clustermeister API connects to this server and sends jobs to it. The server itself maintains connections to the distributed nodes and, depending the load balancing strategy configured, distributes tasks to the available nodes. JPPF also solves the problem of dynamic classloading. Therefore, most of this module's code manages deployment of a JPPF setup in different environments. It also provides a number of utilities that support this task or improve the user experience.
 
-(TODO: check this paragraph)
-JPPF is at the core of Clustermeister. JPPF provides a runtime for remote nodes and a server implementation that can run locally. The two target platforms for Clustermeister were Torque/PBS and Amazon EC2, and early tests installing JPPF runtimes on those platforms manually were successful. The goal of Clustermeister, however, was to automate this deployment and provide mechanisms to dynamically add and remove remote nodes to the computation cluster. In the following, properties of those two platforms are discussed.
-
-- local JPPF driver + node deployment code + utilities (dep. resolution, ssh, ...)
-- dynamic classloading solved by JPPF
 - dep preloading impl. with aether
 - SSH impl with jsch
 - Amazon with jclouds, parallel
 - Torque qsub...
-- implements API interfaces
 - remote logging
-- node management
 
-\subsubsection{lala}
+\subsubsection{The Provisioning Process}
+The provisioning process is started from the command line interface (CLI) and then creates a local JPPF driver process (see section \ref{localdriver}) and RMI servers for inter process communication (IPC) with the local driver process and the API (see \textit{RmiInfrastructure}, \textit{RmiServerForDriver} and \textit{RmiServerForApi}).
 
-\subsubsection{Torque}
+\subsubsection{The Local JPPF Driver Process}
+\label{localdriver}
+The local driver is implemented primarily in \textit{JPPFLocalDriver} and \textit{LocalDriverBuilder}. However, JPPF does not provide interfaces to communicate with this process. Therefore the local driver communicates with an RMI server (\textit{RmiServerForDriver}, \textit{CMNodeConnectionListener}) in the provisioning process, in order to inform it about changes in the JPPF environment (primarily node connections or disconnections).
+
+\subsubsection{Node Management}
+
+Node management refers to tasks such as starting or stopping nodes or gathering information about them. Clustermeister customized JPPF nodes such that they can perform such tasks when they receive special kinds of computation jobs. This was implemented this way because JPPF performs such management via JMX\footnote{http://www.oracle.com/technetwork/java/javase/tech/javamanagement-140525.html}, but distributing JMX is problematic with the licensing chosen for Clustermeister and it turned out not to be very reliable. The node management is primarily implemented in \textit{JPPFManagementByJobsClient}, which is a wrapper around a standard JPPF client. The different provider implementations (see section \ref{deployment}) can then create and use these clients to manage the node state or gather information about the nodes.
+
+\subsubsection{Node Deployment}
+\label{deployment}
+lala
+
+\paragraph{Torque Provider}
 
 \label{implementation-torque}
 
@@ -258,7 +264,7 @@ Torque offers a generally static infrastructure for deployment. Computations tas
 
 When accessed via SSH, Torque jobs are submitted with the \texttt{qsub} command. In Clustermeister, the job submission machine is accessed via SSH, then artifacts are uploaded and each node is started as a separate \texttt{qsub} job submission. Depending on how many CPU cores are requested for each job and how many jobs are issued by other participants, these nodes are started immediately or they may be queued. This is one of the difficulties involved with Torque, as node startups cannot be directly controlled.
 
-Another difficulty is network access to nodes. A Torque cluster network is commonly isolated, therefore nodes are allowed to initiate connections, even to resources outside of the local network, but the nodes themselves are not accessible from outside. These constraints lead to difficulties in node management, because the JPPF node management infrastrucure relies on JMX\footnote{http://www.oracle.com/technetwork/java/javase/tech/javamanagement-140525.html} and requires a direct connection to the node. Clustermeister circumvented this problem by extending the JPPF node runtime with management job extensions. These jobs are submitted equally to common computation tasks, but contain meta-data that is handled by the nodes. For example, if a node needs to be shut down, Clustermeister issues a special task and nodes react on it. These special tasks are not dynamic and need to be integrated before the node runtime is deployed. Therefore management tasks cannot be changed or installed while the node is running.
+Another difficulty is network access to nodes. A Torque cluster network is commonly isolated, therefore nodes are allowed to initiate connections, even to resources outside of the local network, but the nodes themselves are not accessible from outside. These constraints lead to difficulties in node management, because the JPPF node management infrastrucure relies on JMX and requires a direct connection to the node. Clustermeister circumvented this problem by extending the JPPF node runtime with management job extensions. These jobs are submitted equally to common computation tasks, but contain meta-data that is handled by the nodes. For example, if a node needs to be shut down, Clustermeister issues a special task and nodes react on it. These special tasks are not dynamic and need to be integrated before the node runtime is deployed. Therefore management tasks cannot be changed or installed while the node is running.
 
 \subsubsection{Amazon}
 The Amazon provider component manages Amazon EC2 instances and deploys JPPF nodes on them. The Amazon EC2 service offers many options for customizing and running instances. Clustermeister relies on the jClouds\footnote{http://www.jclouds.org/} library to interact with the EC2 API. It has been chosen because it supports all required features, is well maintained and offers its own API which is not specific to the underlying cloud computation service. This allows to extend Clustermeister with support for other services in the future.
