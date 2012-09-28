@@ -248,6 +248,8 @@ JPPF is at the core of Clustermeister. JPPF provides a runtime for remote nodes 
 - remote logging
 - node management
 
+
+
 \subsubsection{lala}
 
 \subsubsection{Torque}
@@ -264,6 +266,15 @@ Another difficulty is network access to nodes. A Torque cluster network is commo
 The Amazon provider component manages Amazon EC2 instances and deploys JPPF nodes on them. The Amazon EC2 service offers many options for customizing and running instances. Clustermeister relies on the jClouds\footnote{http://www.jclouds.org/} library to interact with the EC2 API. It has been chosen because it supports all required features, is well maintained and offers its own API which is not specific to the underlying cloud computation service. This allows to extend Clustermeister with support for other services in the future.
 
 The Amazon provider has been implemented such that it is able to build complex JPPF topologies\footnote{http://www.jppf.org/doc/v3/index.php?title=JPPF\_Overview\#Architecture\_and\_topology} \footnote{http://www.jroller.com/jppf/entry/master\_worker\_or\_p2p\_grid}. This means it can deploy arbitrary numbers of JPPF nodes and servers to any EC2 instance. However bugs in JPPF prevented this functionality to be fully active in Clustermeister. Therefore the provider supports the topology described in section \ref{topology} only
+
+\subsubsection{Utilities}
+
+\begin{description}
+ \item[SSH] Both provisioning targets use jsch\footnote{http://www.jcraft.com/jsch/} for SSH access. However, the Amazon target uses jsch via the jclouds API, because jsch is integrated with jclouds.
+ \item[Dependency Preloading] In the configuration file, the end-user can configure a pom.xml file or custom entries for dependencies that should be deployed to the node. This is implemented with the aether\footnote{http://www.sonatype.org/aether} library. For more information on how to configure this, see section \ref{appendix-general-configuration}.
+ \item[Remote Logging] Logging output from (remote) nodes can be redirected to the local machine. This feature is implemented with log4j remote logging.
+\end{description}
+
 
 \subsection{CLI}
 
