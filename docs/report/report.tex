@@ -1,5 +1,5 @@
-\documentclass[english]{uzhpub}
-%\documentclass[12pt]{article}
+%\documentclass[english]{uzhpub}
+\documentclass[12pt]{article}
 \usepackage[T1]{fontenc}
 \usepackage[latin9]{inputenc}
 \usepackage{listings}
@@ -256,7 +256,13 @@ Another difficulty is network access to nodes. A Torque cluster network is commo
 \paragraph{Amazon Provider}
 The Amazon provider component manages Amazon EC2 instances and deploys JPPF nodes on them. The Amazon EC2 service offers many options for customizing and running instances. Clustermeister relies on the jClouds\footnote{http://www.jclouds.org/} library to interact with the EC2 API. It has been chosen because it supports all required features, is well maintained and offers its own API which is not specific to the underlying cloud computation service. This allows to extend Clustermeister with support for other services in the future.
 
-The Amazon provider has been implemented such that it is able to build complex JPPF topologies\footnote{http://www.jppf.org/doc/v3/index.php?title=JPPF\_Overview\#Architecture\_and\_topology} \footnote{http://www.jroller.com/jppf/entry/master\_worker\_or\_p2p\_grid}. This means it can deploy arbitrary numbers of JPPF nodes and servers to any EC2 instance. However bugs in JPPF prevented this functionality to be fully active in Clustermeister. Therefore the provider supports the topology described in section \ref{topology} only
+The Amazon provider has been implemented such that it is able to build complex JPPF topologies\footnote{http://www.jppf.org/doc/v3/index.php?title=JPPF\_Overview\#Architecture\_and\_topology} \footnote{http://www.jroller.com/jppf/entry/master\_worker\_or\_p2p\_grid}. This means it can deploy arbitrary numbers of JPPF nodes and servers to any EC2 instance. However bugs in JPPF prevented this functionality to be fully active in Clustermeister. Therefore the provider supports the topology described in section \ref{topology} only.
+
+In general node deployment has been implemented in a highly parallel manner in the Amazon provider because of the long time it takes to provision an EC instance (see section \ref{azn-prov} for details). This allows to request and deploy arbitrary numbers of nodes in parallel. However the user should take care not to overdo this because there is no mechanism to throttle the network load on the local machine caused by massive parallel deployments. Once nodes are running network load should not be a major concern any more (except when dynamically loading large libraries, refer to section \ref{code-deployment} for details).
+
+The functionality specific to the deployment of nodes on EC2 is located in the \textit{ec2} package. \textit{AamzonNodeConfiguration} is a parameter object for specifying the details of a node to be deployed. It is used in \textit{AmazonNodeManager} which is a high-level controller to interact with the Amazon environment in an node-centric manner. This keeps the management of instances (the actual virtual machines) largely transparent to the rest of Clustermeister. \textit{AmazonNode} implements an object describing deployed nodes. \textit{AmazonEC2JPPFDeployer} implements the workflow of deploying Clustermeister nodes and drivers on instances. \textit{AmazonCommandLineEvaluation} and the classes in the \textit{ec2.commands} package implement the CLI integration of the Amazon provider.
+
+The other classes mostly implement utilities to manage things like auto-generated SSH credentials (\textit{CredentialsManager}), an API for direct calls to EC2 web services (\textit{AwsEc2Facade}), or parsing Amazon specific configuration values (\textit{AmazonConfigurationLoader}).
 
 \subsubsection{Utilities}
 
@@ -355,9 +361,11 @@ The time to provision the Clustermeister infrastructure strongly depends on the 
 Torque cluster nodes are provisioned by queuing job requests on the queue management server. At some time the request is granted and a JPPF node is started. Provided the request has a high enough priority, this typically happens very quickly. Therefore the major time needed for provisioning falls to uploading the JPPF node executables and user configured libraries to the queue management server. The time for this depends on network latency, bandwidth and the size of configured libraries. However it is a one time investment only, provided the configuration is not changed and Clustermeister is not updated. Finally the JPPF node launches in about 5-8 seconds. For all these reasons the overall provisioning time is hard to predict but typically lies somewhere between 30 seconds and less than 10 seconds.
 
 \subsubsection{Amazon Provisioning}
+\label{azn-prov}
 Amazon nodes can take significantly longer to be made available. While the same delays apply in respect to upload of binary data and launching a JPPF node, the binary files need to be uploaded to each instance and not only to the queue management server as in the Torque case. But the largest delay falls to the time needed for Amazon to make an EC2 instance available (loading a machine image, booting the machine, and configuring firewall and credentials on it). Creating a new instance and launching a Clustermeister node on it takes about 1 minute and 44 seconds on average (with a maximum measured time of 2:15 and a minimum of 1:30). Of course these numbers depend on the user configuration and network latency and bandwidth as well. On the other hand, launching a Clustermeister node on an already running instance takes merely about 8 seconds. To avoid  this long start up time, the Amazon provider performs node provisioning in parallel for all requested nodes.
 
 \subsubsection{Code Deployment}
+\label{code-deployment}
 When a user executes code on Clustermeister, each class that is not available or out of date in a node's classpath, is loaded over the network from the user's classpath. This happens at runtime, one-by-one as the classes are loaded. Loading large amounts of classes or libraries in this way is very inefficient and may take several minutes. To mitigate this problem, Clustermeister offers the ability to pre-load libraries to nodes at provisioning time. Section \ref{appendix-general-configuration} describes how library pre-loading can be used.
 
 \subsection{Execution Time}
