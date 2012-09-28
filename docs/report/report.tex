@@ -334,6 +334,7 @@ available choices are\footnote{http://www.jppf.org/doc/v3/index.php?title=Config
 In the remainder of this section the data and conclusions obtained from this evaluation are presented.
 
 \subsubsection{Job with many Short-Running Tasks}
+\label{short-tasks}
 
 For this evaluation the computation of an image of the Mandelbrot set\footnote{http://en.wikipedia.org/wiki/Mandelbrot\_set} has been chosen. The job creates a task for each row of the image and the task computes an array of color values. The computation of a single task is very fast (fractions of a second) but there are many tasks (600 tasks for an image with resolution 800 x 600). The evaluation was done with the Amazon EC2 provider on \textit{t1.micro} instances\footnote{http://aws.amazon.com/ec2/instance-types/}. The nodes were configured to use only one thread to computation so they could only execute one task at a time. For each run the job was configured to calculate the same part of the image to obtain comparable execution times. 
 
@@ -376,7 +377,7 @@ The other evaluation concentrated on the influence of number of nodes on executi
 \begin{figure}[h]
 \centering
 \includegraphics[scale=0.7]{images/amazon-duration.pdf}
-\caption{Execution times for the Madelbrot set calcualtion job}
+\caption{Execution times for the Madelbrot set calcualtion job.}
 \label{fig:times-mandelbrot}
 \end{figure}
 
@@ -393,16 +394,16 @@ In the simulation with long-running tasks, there were 30 tasks that had a durati
 
 \subsubsection{Adaptive load balancing algorithms}
 
-JPPF offers a number of adaptive load balancing strategies. These algorithms usually need to execute a number of jobs before they achieve good results. They their task distribution behaviour depending on statistics about a node's past performance and overall execution time. When very similar jobs (in terms of task number/execution time) are submitted repeatedly they often achieve close to optimal performance. However they can easily be thrown off when a job's tasks are very heterogeneous.
+JPPF offers a number of adaptive load balancing strategies. These algorithms usually need to execute a number of jobs before they achieve good results. Their task distribution behaviour depends on statistics about a node's past performance and overall execution time. When very similar jobs (in terms of task number/execution time) are submitted repeatedly they often achieve close to optimal performance. However they can easily be thrown off when a job's tasks are very heterogeneous.
 
 Another advantage of adaptive algorithms is that they can automatically tune the load balancing on a per node basis when the participating nodes have very different computation power. Therefore a weak node would receive less tasks than a strong node. This would be complicated or even impossible to achieve manually with the provided configuration options.
 
-TODO: image of rl, proportional results
+Figure \ref{fig:evaluation-learning} shows the job execution times for the Mandelbrot set evaluation (see section \ref{short-tasks}) when using the reinforced learning (rl) and the proportional load balancing strategies.
 
-\begin{figure}[hptb]
+\begin{figure}[h]
 \centering
 \includegraphics[scale=0.7]{images/learning-duration.pdf}
-\caption{Adaptive load balancing algorithms}
+\caption{Execution times for the Mandelbrot set job for 10 runs with adaptive load balancing strategies.}
 \label{fig:evaluation-learning}
 \end{figure}
 
