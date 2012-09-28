@@ -59,7 +59,7 @@ GridGain\footnote{http://www.gridgain.com/},
 Hazelcast\footnote{http://www.hazelcast.com/} and 
 JPPF\footnote{http://jppf.org/}. In the following, these libraries and their characteristics are discussed.
 
-\paragraph{GridGain} GridGain was very easy to set up, has a pleasant API and worked out of the box. It is able to remotely load libraries and classes without additional configuration. However, newer versions of GridGain are licenced under the GPL and there was no obvious way to configure GridGain programmatically. Because of these reasons, GridGain was ruled out.
+\paragraph{GridGain} GridGain was very easy to set up, has a pleasant API and worked out of the box. It is able to remotely load libraries and classes without additional configuration. However, newer versions of GridGain are licenced under the GPL. Further, there was no obvious way to configure GridGain programmatically. Because of these reasons, GridGain was ruled out.
 
 \paragraph{Hazelcast} Hazelcast was a good fit at first sight, due to its nice API. However, it lacked features that were needed for Clustermeister, i.e. remote deployment of libraries and classes and provisioning capabilities. Hazelcast is generally a low-level solution and it would have required more implementation effort to integrate it into Clustermeister.
 
@@ -99,10 +99,10 @@ This abstract use case that has been compiled from the project definition and di
 There are many specific use cases that can be derived from this abstract use case. Here are examples of specific variations that will be supported:
 
 \begin{description}
-\item[Step \ref{uc:start}.1] The developer starts wants to execute some code in a distributed manner, not planning to do any development.
+\item[Step \ref{uc:start}.1] The developer wants to execute some code in a distributed manner, not planning to do any development.
 \item[Step \ref{uc:alloc}.1] The developer allocates five nodes in the Amazon Web Services Elastic Compute Cloud (EC2).
 \item[Step \ref{uc:alloc}.2] The developer allocates five nodes in the TORQUE Cluster provided at the department of informatics in the University of Zurich.
-\item[Step \ref{uc:prog}.1] The developer programs a distributed AKKA\footnote{http://akka.io/} actor system. The Clustermeister API allows to iterate trough available nodes and bootstrap an actor system by submitting actors to the nodes for execution.
+\item[Step \ref{uc:prog}.1] The developer programs a distributed AKKA\footnote{http://akka.io/} actor system. The Clustermeister API allows to iterate through available nodes and bootstrap an actor system by submitting actors to the nodes for execution.
 \end{description}
 
 \subsection{Specification}
@@ -177,7 +177,7 @@ Clustermeister uses Maven\footnote{http://maven.apache.org/} to manage dependenc
  \item \textbf{driver}: this module is used to build an executable JPPF driver (server). It contains a few extensions for the original JPPF driver.
  \item \textbf{node-common}: this contains code that is used by both the (JPPF) driver and node module and can be seen as a ``shared library''.
  \item \textbf{node}: this module is used to build an executable JPPF node. It contains a few extensions for the original JPPF node to allow for special maintenance tasks.
- \item \textbf{integration-tests}: this module contains test ``scenarios'' written in Java as well as Scala that uses the Clustermeister API. These are (non-automated) tests that exercise the whole Clustermeister library.
+ \item \textbf{integration-tests}: this module contains test ``scenarios'' written in Java as well as Scala that uses the Clustermeister API. These are tests that exercise the whole Clustermeister library.
 \end{itemize}
 
 \subsection{Module Dependencies}
@@ -270,7 +270,7 @@ The Amazon provider has been implemented such that it is able to build complex J
 \subsubsection{Utilities}
 
 \begin{description}
- \item[SSH] Both provisioning targets use jsch\footnote{http://www.jcraft.com/jsch/} for SSH access. However, the Amazon target uses jsch via the jclouds API, because jsch is integrated with jclouds.
+ \item[SSH] Both provisioning targets use jsch\footnote{http://www.jcraft.com/jsch/} for SSH access. However, the Amazon target uses jsch via the jclouds API, because jsch is integrated with jclouds. Further, nodes on Amazon instances use a reverse SSH tunnel to connect to the JPPF driver on the local machine.
  \item[Dependency Preloading] In the configuration file, the end-user can configure a pom.xml file or custom entries for dependencies that should be deployed to the node. This is implemented with the aether\footnote{http://www.sonatype.org/aether} library. For more information on how to configure this, see section \ref{appendix-general-configuration}.
  \item[Remote Logging] Logging output from (remote) nodes can be redirected to the local machine. This feature is implemented with log4j remote logging.
 \end{description}
