@@ -505,7 +505,7 @@
 
 %% UNIT (e.g. Institute)
 \ifuzh@english
-    \renewcommand*\uzhunit{University Unit}
+    \renewcommand*\uzhunit{Department of Informatics}
 \else
     \renewcommand*\uzhunit{Universit\"atseinheit}
 \fi

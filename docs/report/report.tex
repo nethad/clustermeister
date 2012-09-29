@@ -49,14 +49,14 @@ The aim of the project is to support developers by letting them concentrate on t
 
 \section{Evaluation of Third-Party Frameworks}
 
-Clustermeister has been implemented in Java, because the project definition required it to be useful for Java and Scala developers. Another specification has been to was to licence Clustermeister under the Apache Licence, version 2.0\footnote{http://www.apache.org/licenses/LICENSE-2.0.html}. These have been the most important constraints while searching for suitable libraries and frameworks. Sections \ref{spec} and \ref{orga} will discuss the project specification in more detail.
+Clustermeister has been implemented in Java, because the project definition required it to be useful for Java and Scala developers. Another specification has been to was to licence Clustermeister under the Apache Licence, version 2.0 \cite{apache-license-2}. These have been the most important constraints while searching for suitable libraries and frameworks. Sections \ref{spec} and \ref{orga} will discuss the project specification in more detail.
 
 Dynamic class loading and distributed computing are complex problems to solve and implementing a new solution has been deemed too complex. Instead, existing frameworks were evaluated. Ideally, this framework provides some sort of communication between remote processes and a means of dynamically loading classes from the machine that is issuing the computation task.
 
 Three frameworks have been evaluated closely. They are 
 GridGain\footnote{http://www.gridgain.com/}, Hazelcast\footnote{http://www.hazelcast.com/} and JPPF\footnote{http://jppf.org/}.
 
-\paragraph{GridGain} GridGain is very easy to set up, well maintained and offers a pleasant API. It is able to do dynamic classloading from remote machines too. However, newer versions of GridGain Community Edition are licenced under the GNU General Public License v3.0\footnote{http://www.gnu.org/licenses/gpl.html}. GPL3 is incompatible with Apache License 2.0 in that GPL3 licensed source code and binaries can not be distributed in an Apache Licensed project TODO: ref. Because it is very likely that Clustermeister executables would include elements of GridGain and because there are compatible alternatives available, it has been ruled out.
+\paragraph{GridGain} GridGain is very easy to set up, well maintained and offers a pleasant API. It is able to do dynamic classloading from remote machines too. However, newer versions of GridGain Community Edition are licensed under the GNU General Public License v3.0 \cite{gpl3}. GPL version 3 is incompatible with Apache License 2.0 in that GPL 3 licensed source code and binaries can not be distributed in an Apache Licensed project \cite{asf-legal-faq}. Because it is very likely that Clustermeister executables would include elements of GridGain and because there are compatible alternatives available, it has been ruled out.
 
 \paragraph{Hazelcast} Hazelcast has a very nice, modern API. However, it lacks features that are required by Clustermeister, such as remote classloading. Generally it lacks higher level features that GridGain or JPPF provide.
 
@@ -77,7 +77,7 @@ The terms node and instance will be used throughout the rest of this document to
 \subsection{Use Cases}
 
 \subsubsection*{Abstract Use Case}
-This abstract use case has been compiled from the project definition (TODO: ref) and discussion among the developers and the project leadership. It aims to demonstrate how Clustermeister can be used in a development workflow. The use case applies to Java and Scala developers.
+This abstract use case has been compiled from the project definition \cite{proj-def} and discussion among the developers and the project leadership. It aims to demonstrate how Clustermeister can be used in a development workflow. The use case applies to Java and Scala developers.
 
 \begin{enumerate}
 \item \label{uc:start}The developer begins a programming session.
@@ -220,18 +220,18 @@ JPPF offers its own API as ``JPPF client''. Clustermeister uses the JPPF client 
 The Clustermeister API and its interfaces are designed to reduce configuration as much as possible, but some configuration is still necessary. In section \ref{configuration} the configuration options are discussed in detail.
 
 \subsection{Provisioning and Deployment}
-Most of Clustermeister's functionality is implemented in the provisioning module. This module is responsible to start and manage Clustermeister nodes and make them available to users of the Clustermeister API. Because Clustermeister uses JPPF internally, the provisioning module is conceptually a JPPF driver (server) process that runs on the local developer's machine. The Clustermeister API connects to this server and sends jobs to it. The server itself maintains connections to the distributed nodes and, depending the load balancing strategy configured, distributes tasks to the available nodes. JPPF also solves the problem of dynamic classloading. Therefore, most of this module's code manages deployment of a JPPF setup in different environments. It also provides a number of utilities that support this task or improve the user experience.
+Most of Clustermeister's functionality is implemented in the provisioning module. It is responsible to start and manage Clustermeister nodes and make them available to users of the Clustermeister API. Because Clustermeister uses JPPF internally, the provisioning module is actually an extended JPPF driver (server) process that runs on the local developer's machine. The Clustermeister API connects to this server and sends jobs to it. The server maintains connections to the distributed nodes and, depending the load balancing strategy configured, distributes tasks to the available nodes. JPPF also solves the problem of dynamic classloading. Therefore, most of this module's code manages deployment and set-up of JPPF in different environments. It also provides a number of utilities that support this task or improve the user experience.
 
 \subsubsection{The Provisioning Process}
-The provisioning process is started from the command line interface (CLI) and then creates a local JPPF driver process (see section \ref{localdriver}) and RMI servers for inter process communication (IPC) with the local driver process and the API (see \textit{RmiInfrastructure}, \textit{RmiServerForDriver} and \textit{RmiServerForApi}).
+The provisioning process is started from the command line interface (CLI) and then creates a local JPPF driver process (see section \ref{localdriver}) and RMI servers for inter process communication (IPC) with the local driver process and the API (in the classes \textit{RmiInfrastructure}, \textit{RmiServerForDriver} and \textit{RmiServerForApi}).
 
 \subsubsection{The Local JPPF Driver Process}
 \label{localdriver}
-The local driver is implemented primarily in \textit{JPPFLocalDriver} and \textit{LocalDriverBuilder}. However, JPPF does not provide interfaces to communicate with this process. Therefore the local driver communicates with an RMI server (\textit{RmiServerForDriver}, \textit{CMNodeConnectionListener}) in the provisioning process, in order to inform it about changes in the JPPF environment (primarily node connections or disconnections).
+The local driver is implemented primarily in \textit{JPPFLocalDriver} and \textit{LocalDriverBuilder}. However, JPPF does not provide interfaces to communicate with this process programmatically. Therefore the local driver has been extended to communicates with an RMI server in the provisioning process (classes \textit{RmiServerForDriver}, \textit{CMNodeConnectionListener}), in order to inform it about changes in the JPPF environment (primarily node connections or disconnections).
 
 \subsubsection{Node Management}
 
-Node management refers to tasks such as starting or stopping nodes or gathering information about them. Clustermeister customized JPPF nodes such that they can perform such tasks when they receive special kinds of computation jobs. This was implemented this way because JPPF performs such management via JMX\footnote{http://www.oracle.com/technetwork/java/javase/tech/javamanagement-140525.html}, but distributing JMX is problematic with the licensing chosen for Clustermeister and it turned out not to be very reliable. The node management is primarily implemented in \textit{JPPFManagementByJobsClient}, which is a wrapper around a standard JPPF client. The different provider implementations (see section \ref{deployment}) can then create and use these clients to manage the node state or gather information about the nodes.
+Node management refers to tasks such as starting or stopping nodes or gathering information about them. Clustermeister customized JPPF nodes such that they can perform such tasks when they receive special kinds of jobs. This has been implemented in this way, because JPPF performs such management via JMX \cite{jmx}, but distributing JMX is problematic with the licensing chosen for Clustermeister. Also, JMX connections turned out not to be very reliable. The node management is primarily implemented in \textit{JPPFManagementByJobsClient}, which is a wrapper around a standard JPPF client. The different provider implementations (see section \ref{deployment}) can then create and use this client to manage the node state or gather information about the nodes.
 
 \subsubsection{Node Deployment}
 \label{deployment}
@@ -242,16 +242,16 @@ Because the supported cloud and cluster environments are very different, the spe
 
 Torque offers a generally static infrastructure for deployment. Computations tasks are started from a job submission machine that is accessed via SSH and Torque users have SSH access to this machine.
 
-When accessed via SSH, Torque jobs are submitted with the \texttt{qsub} command. In Clustermeister, the job submission machine is accessed via SSH, then artifacts are uploaded and each node is started as a separate \texttt{qsub} job submission. Depending on how many CPU cores are requested for each job and how many jobs are issued by other participants, these nodes are started immediately or they may be queued. This is one of the difficulties involved with Torque, as node startups cannot be directly controlled.
+When accessed via SSH, Torque jobs are submitted with the \texttt{qsub} command. In Clustermeister, the job submission machine is accessed via SSH, then artefacts are uploaded and each node is started as a separate \texttt{qsub} job submission. Depending on how many CPU cores are requested for each job and how many jobs are issued by other participants, these nodes are started immediately or they may be queued. This is one of the difficulties involved with Torque, as node start-up cannot be directly controlled.
 
-Another difficulty is network access to nodes. A Torque cluster network is commonly isolated, therefore nodes are allowed to initiate connections, even to resources outside of the local network, but the nodes themselves are not accessible from outside. These constraints lead to difficulties in node management, because the JPPF node management infrastrucure relies on JMX and requires a direct connection to the node. Clustermeister circumvented this problem by extending the JPPF node runtime with management job extensions. These jobs are submitted equally to common computation tasks, but contain meta-data that is handled by the nodes. For example, if a node needs to be shut down, Clustermeister issues a special task and nodes react on it. These special tasks are not dynamic and need to be integrated before the node runtime is deployed. Therefore management tasks cannot be changed or installed while the node is running.
+Another difficulty is network access to nodes. A Torque cluster network is commonly isolated, therefore nodes are allowed to initiate connections, even to resources outside of the local network, but the nodes themselves are not accessible from outside. These constraints lead to difficulties in node management, because the JPPF node management infrastructure relies on JMX and requires a direct connection to the node. Clustermeister circumvented this problem by extending the JPPF node runtime with management job extensions. These jobs are submitted just like common computation jobs, but contain special meta-data that nodes react to.
 
 \paragraph{Amazon Provider}
-The Amazon provider component manages Amazon EC2 instances and deploys JPPF nodes on them. The Amazon EC2 service offers many options for customizing and running instances. Clustermeister relies on the jClouds\footnote{http://www.jclouds.org/} library to interact with the EC2 API. It has been chosen because it supports all required features, is well maintained and offers its own API which is not specific to the underlying cloud computation service. This allows to extend Clustermeister with support for other services in the future.
+The Amazon provider component manages Amazon EC2 instances and deploys Clustermeister nodes on them. The Amazon EC2 service offers many options for customizing and running instances. Clustermeister relies on the jClouds\footnote{http://www.jclouds.org/} library to interact with the EC2 API. It has been chosen because it supports all required features, is well maintained and offers its own API which is not specific to the underlying cloud computation service. This potentially allows to extend Clustermeister with support for other services in the future.
 
-The Amazon provider has been implemented such that it is able to build complex JPPF topologies\footnote{http://www.jppf.org/doc/v3/index.php?title=JPPF\_Overview\#Architecture\_and\_topology} \footnote{http://www.jroller.com/jppf/entry/master\_worker\_or\_p2p\_grid}. This means it can deploy arbitrary numbers of JPPF nodes and servers to any EC2 instance. However bugs in JPPF prevented this functionality to be fully active in Clustermeister. Therefore the provider supports the topology described in section \ref{topology} only.
+The Amazon provider has been implemented such that it is able to build complex JPPF topologies \cite{jppf-topo, jppf-topo-blog}. It can deploy arbitrary numbers of JPPF nodes and servers to any EC2 instance. But because of bugs in JPPF, this functionality is not fully active in Clustermeister. Therefore the provider supports only the topology with one local server as described in section \ref{topology}.
 
-In general node deployment has been implemented in a highly parallel manner in the Amazon provider because of the long time it takes to provision an EC instance (see section \ref{azn-prov} for details). This allows to request and deploy arbitrary numbers of nodes in parallel. However the user should take care not to overdo this because there is no mechanism to throttle the network load on the local machine caused by massive parallel deployments. Once nodes are running network load should not be a major concern any more (except when dynamically loading large libraries, refer to section \ref{code-deployment} for details).
+In general, node deployment has been implemented in a highly parallel manner in the Amazon provider, because of the long time it takes to provision an EC2 instance (section \ref{azn-prov} discusses this and contains measured times). Because of this parallel implementation, it is possible to request and deploy arbitrary numbers of nodes that launch in parallel. However the user needs take care not to overdo this, because there is no mechanism to throttle the network load on the local machine caused by massive parallel deployments. Once nodes are running, network load should not be a major concern any more (except when dynamically loading large libraries, refer to section \ref{code-deployment} for details).
 
 The functionality specific to the deployment of nodes on EC2 is located in the \textit{ec2} package. \textit{AamzonNodeConfiguration} is a parameter object for specifying the details of a node to be deployed. It is used in \textit{AmazonNodeManager} which is a high-level controller to interact with the Amazon environment in an node-centric manner. This keeps the management of instances (the actual virtual machines) largely transparent to the rest of Clustermeister. \textit{AmazonNode} implements an object describing deployed nodes. \textit{AmazonEC2JPPFDeployer} implements the workflow of deploying Clustermeister nodes and drivers on instances. \textit{AmazonCommandLineEvaluation} and the classes in the \textit{ec2.commands} package implement the CLI integration of the Amazon provider.
 
@@ -260,16 +260,16 @@ The other classes mostly implement utilities to manage things like auto-generate
 \subsubsection{Utilities}
 
 \begin{description}
- \item[SSH] Both provisioning targets use jsch\footnote{http://www.jcraft.com/jsch/} for SSH access. However, the Amazon target uses jsch via the jclouds API, because jsch is integrated with jclouds. The SSH utility is also capable of opening reverse SSH tunnels which is used extensively by the Amazon target (see section \ref{topology}).
- \item[YAML Configuration Loader] We believe that YAML\footnote{http://www.yaml.org/} is a very easy to use configuration format. But there has been no YAML extension for the Apache Commons Configuration library which has been used throughout Clustermeister before this decision. Therefore a custom extension has been implemented in \textit{YamlConfiguration} by adapting snakeyaml\footnote{http://code.google.com/p/snakeyaml/}. 
- \item[Dependency Preloading] Clustermeister is capable of resolving artefacts from Maven repositories and deploying them in nodes during node deployment time. This functionality has been implemented in the \textit{dependencymanager} package. Because these dependencies are configured by the user in a configuration file, \textit{DependencyConfigurationUtil} helps parsing repository and artefact configurations and \textit{MavenRepositorySystem} is used by it to download artefacts from Maven repositories. \textit{MavenRepositorySystem} is implemented with the aether\footnote{http://www.sonatype.org/aether} library. For more information on pre-loading configuration, see section \ref{appendix-general-configuration}.
+\item[SSH] Both provisioning providers use jsch\footnote{http://www.jcraft.com/jsch/} for SSH access. However, the Amazon provider uses jsch via the jclouds API, because jsch is integrated with jclouds. The SSH utility is also capable of opening reverse SSH tunnels which is used extensively by the Amazon provider (see section \ref{topology}).
+\item[YAML Configuration Loader] We believe that YAML\footnote{http://www.yaml.org/} is a very easy to use configuration format. But there has been no YAML extension for the Apache Commons Configuration library which has been used throughout Clustermeister before this decision. Therefore a custom extension has been implemented in \textit{YamlConfiguration} by adapting snakeyaml\footnote{http://code.google.com/p/snakeyaml/}. 
+\item[Dependency Pre-Loading] Clustermeister is capable of resolving artefacts from Maven repositories and deploying them in nodes during node deployment time. This functionality has been implemented in the \textit{dependencymanager} package. Because these dependencies are configured by the user in a configuration file \textit{DependencyConfigurationUtil} helps parsing repository and artefact configurations and \textit{MavenRepositorySystem} is used by it to download artefacts from Maven repositories. It is implemented with the aether\footnote{http://www.sonatype.org/aether} library. For more information on pre-loading configuration, refer to section \ref{appendix-general-configuration}.
 \end{description}
 
 \subsection{CLI}
 
 The CLI (command line interface) is a user interface for provisioning and can be seen as a front-end for the provisioning module. The command line interface contains a simple shell that allows to execute commands. The shell itself is implemented with the jline\footnote{http://jline.sourceforge.net/} library, which handles console input and offers features like command auto completion and a history mechanism. 
 
-The class \textit{Provisioning} is the entry point to the provisioning process. It reads the local user configuration and starts the RMI IPC infrastructure, the local JPPF driver and a remote logging server thread (in \textit{RemoteLoggingServer}). Remote logging redirects output from (remote) nodes to the CLI process. This feature is implemented by dynamically configuring a log4j \textit{SocketAppender} on nodes and redirecting received log statements to the CLI's \textit{LogManager}. 
+The class \textit{Provisioning} is the entry point to the provisioning process. It reads the local user configuration, starts the RMI IPC infrastructure, the local JPPF driver and a remote logging server thread (in \textit{RemoteLoggingServer}). Remote logging redirects output from (remote) nodes to the CLI process. This feature is implemented by dynamically configuring a Log4J \textit{SocketAppender} on nodes and redirecting received log statements to the CLI's \textit{LogManager}. 
 
 A guide on how to use the command line interface can be found in section \ref{tutorial}.
 
@@ -280,17 +280,17 @@ The customizations made include:
 
 \begin{itemize}
 \item Custom launchers that can launch nodes in different modes and with custom parameters to adjust functionality depending on the environment they run it (Amazon EC2 instance, Torque or the local machine). The main purpose is to redirect standard I/O streams and to adapt the process model to the environment's requirements.
-\item Code to implement management job functionality (e.g. shut down the node upon receiving a special kind of job) is implemented in \textit{ClustermeisterNodeLifeCycleListener}.
-\item When the driver is the local driver (see section \ref{topology}), it starts corresponding RMI infrastructure to communicate node connection events with the provisioning process.
+\item Code to implement node management functionality (e.g. shut down the node upon receiving a special kind of job) is implemented in \textit{ClustermeisterNodeLifeCycleListener}.
+\item When the driver is the local driver (see section \ref{topology}), it connects to the local provisioning process' RMI server to communicate node events to it.
 \end{itemize}
 
 \section{Organisation}
 \label{orga}
-The project duration has been scheduled to three and a half to maximum four months and there has been no pre-existing code base to work from. The project team consisted of two students that worked approximately three days a week on the project. The project definition contained some organizational specifications for the Clustermeister project. Namely that the project shall be licensed under the Apache License, Version 2.0, developed on GitHub\footnote{https://github.com/} and make use of github's issue management and documentation facilities. Therefore Clustermeister is an open source project and all source code and documentation is publicly available at: \url{https://github.com/nethad/clustermeister}.
+The project duration has been scheduled to three and a half to maximum four months and there has been no pre-existing code base to work from. The project team consisted of two students that worked approximately three days a week on the project. The project definition contained some organizational specifications for the Clustermeister project. Namely that the project shall be licensed under the Apache License, Version 2.0, developed on GitHub\footnote{https://github.com/} and make use of GitHub's issue management and documentation facilities. Therefore Clustermeister is an open source project and all source code and documentation is publicly available at: \url{https://github.com/nethad/clustermeister}.
 
 Given these specifications a number of coarse work items were identified:
 \begin{enumerate}
-\item \label{wi:spec}Specify the desired system's architecture and functionality (refer to section \ref{architecture} for more information).
+\item \label{wi:spec}Specify the desired system architecture and functionality (refer to section \ref{architecture} for more information).
 \item \label{wi:res}Research and evaluate existing frameworks and libraries for re-use in this project. Particularly frameworks for parallel code execution in distributed JVMs.
 \item \label{wi:fam}Familiarize with the desired target computation environments, Amazon Web Services Elastic Compute Cloud (EC2) and TORQUE (PBS).
 \item \label{wi:impl}Implementation of the system (refer to section \ref{implementation} for more information).
@@ -299,8 +299,8 @@ Given these specifications a number of coarse work items were identified:
 
 \subsection{Schedule}
 
-The project team estimated the time necessary to spend on each work item and then defined a schedule (see Tab. \ref{tab:schedule}). Work items \ref{wi:res} and \ref{wi:fam} are included in the phase \emph{Evaluation} in the first three weeks. This phase should result in choosing a viable framework for the solution. Next the phase \emph{Implementation 1} follows, which contains the specification and architecture of the solution (work item \ref{wi:spec}) and focuses on implementation of the provisioning module (part of work item \ref{wi:impl}). The provisioning module is a critical centrepiece of the project. In week 10 it the evaluation of the performance of the provisioning module should become a focus (phase \emph{Evaluation 1}, part of work item \ref{wi:eval}). This does not mean that no tests are run before, but that week focuses on identifying critical problems before it is too late to repair them. The phase \emph{Implementation 2} gives opportunity to correct problems and implement the API (work items \
-ref{wi:impl}). The last weeks (\emph{Evaluation 2}) should then focus on evaluating the complete system (work item \ref{wi:eval}) and correcting bugs (\ref{wi:impl}). The schedule is not to be interpreted as a definitive work plan in the style of the waterfall model\footnote{http://en.wikipedia.org/wiki/Waterfall\_model}. It associates to each week of the planned project duration the primary type of work that should be performed. For example: In the fifth week the project team will start work on the implementation of the Amazon EC2 provisioning module. The schedule then allows to identify how progress in the project is developing and if the project is on schedule or if action needs to be taken to be able to finish on time. That does not mean that in the fifth week work is restricted to the Amazon EC2 provisioning module, nor that no work is done on the EC2 module in other weeks.
+The project team estimated the time necessary to spend on each work item and then defined a schedule (see table \ref{tab:schedule}). Work items \ref{wi:res} and \ref{wi:fam} are included in the phase \emph{Evaluation} in the first three weeks. This phase should result in choosing a viable framework for the solution. Next the phase \emph{Implementation 1} follows, which contains the specification and architecture of the solution (work item \ref{wi:spec}) and focuses on implementation of the provisioning module (part of work item \ref{wi:impl}). The provisioning module is a critical centrepiece of the project. In week 10 the evaluation of the performance of the provisioning module should become a focus (phase \emph{Evaluation 1}, part of work item \ref{wi:eval}). This does not mean that no tests are run before, but that week focuses on identifying critical problems before it is too late to repair them. The phase \emph{Implementation 2} gives opportunity to correct problems and implement the API (work items \
+ref{wi:impl}). The last weeks (\emph{Evaluation 2}) should then focus on evaluating the complete system (work item \ref{wi:eval}) and correcting bugs (\ref{wi:impl}). The schedule is not to be interpreted as a definitive work plan in the style of the waterfall model \cite{waterfall-wiki}. It associates to each week of the planned project duration the primary type of work that should be performed. For example: In the fifth week the project team will start work on the implementation of the Amazon EC2 provisioning module. The schedule then allows to identify how progress in the project is developing and if the project is on schedule or if action needs to be taken to be able to finish on time. That does not mean that in the fifth week work is restricted to the Amazon EC2 provisioning module, nor that no work is done on the EC2 module in other weeks.
 
 \begin{table}[hptb]
 \centering
@@ -332,39 +332,38 @@ ref{wi:impl}). The last weeks (\emph{Evaluation 2}) should then focus on evaluat
 
 \subsection{Working Methodology}
 
-The two students worked on the project in a co-located environment. Since this was a small team, organization was often informally agreed upon. While responsibility for different parts of the system were split (e.g. between Amazon EC2 and Torque modules) they worked as a team, sometimes employing techniques such as code review or pair programming. In general the work methodology followed the ideas of agile software development\footnote{http://en.wikipedia.org/wiki/Agile\_software\_development} and iterative development. When starting work on a scheduled work item, the task was split into numbered \emph{Issues} that captured a confined unit of work (see Fig. \ref{fig:issues}). Issues have been worked on one at a time. This helped with the intention to avoid putting the code base into an inconsistent state because an issue could only be completed when it was properly implemented and tested. While the methodology did not necessarily follow the approach of test driven development\footnote{http://www.agiledata.
-org/essays/tdd.html}, great effort was taken to write unit tests for most of the system in order 
+The two students worked on the project in a co-located environment. Since this was a small team, organization was often informally agreed upon. While responsibility for different parts of the system were split (e.g. between Amazon EC2 and Torque modules) they worked as a team, sometimes employing techniques such as code review or pair programming. In general the work methodology followed the ideas of agile software development \cite{agile-wiki} and iterative development. When starting work on a scheduled work item, the task was split into numbered \emph{issues} that captured a confined unit of work (Fig. \ref{fig:issues} shows a screenshot of the GitHub issue management system). Issues have been worked on one at a time. This helped with the intention to avoid putting the code base into an inconsistent state because an issue could only be completed when it was properly implemented and tested. While the methodology did not necessarily follow the approach of test driven development \cite{tdd}, great effort was taken to write unit tests for most of the system in order 
 to verify functionality in isolation. Additionally a small framework for integration tests has been written to ensure the solutions overall health.
 
 \begin{figure}[hptb]
 \centering
 \includegraphics[scale=0.7]{images/github-issues.pdf}
-\caption{Issue Management with GitHub}
+\caption{A screenshot depicting the Issue management system of GitHub.}
 \label{fig:issues}
 \end{figure}
 
 \section{Evaluation}
-This sections summarizes the performance evaluation done with Clusterermeister. Areas of interest are the provisioning and deployment time (the time needed to make distributed Clustermeister nodes available and load user code on them) and job execution times (how Clustermeister can reduce the time needed to complete a computation job). 
+This sections summarizes the performance evaluation done with Clusterermeister. Areas of interest are the provisioning and deployment time (the time needed to make distributed Clustermeister nodes available and load user code on them) and job execution times (i.e. how Clustermeister can reduce the time needed to complete a computation job). 
 
 \subsection{Provisioning and Deployment Time}
 
-The time to provision the Clustermeister infrastructure strongly depends on the provisioning provider. When executing code on Clustermeister nodes another critical factor is the time to deploy user code and its dependencies on those nodes. 
+The time to provision the Clustermeister infrastructure strongly depends on the provisioning provider. When executing code on Clustermeister nodes, another critical factor is the time to deploy user code and its dependencies on those nodes. 
 
 \subsubsection{Troque Provisioning}
-Torque cluster nodes are provisioned by queuing job requests on the queue management server. At some time the request is granted and a JPPF node is started. Provided the request has a high enough priority, this typically happens very quickly. Therefore the major time needed for provisioning falls to uploading the JPPF node executables and user configured libraries to the queue management server. The time for this depends on network latency, bandwidth and the size of configured libraries. However it is a one time investment only, provided the configuration is not changed and Clustermeister is not updated. Finally the JPPF node launches in about 5-8 seconds. For all these reasons the overall provisioning time is hard to predict but typically lies somewhere between 30 seconds and less than 10 seconds.
+Torque cluster nodes are provisioned by queuing job requests on the queue management server. At some time the request is granted and a node is started. Provided the request has a high enough priority, this typically happens very quickly. Therefore the major time needed for provisioning falls to uploading the node executable and user configured libraries to the queue management server. The time for this depends on network latency, bandwidth and the size of configured libraries. However it is a one time investment only, provided the configuration is not changed and Clustermeister is not updated. The node launches in about 5-8 seconds. For these reasons the overall provisioning time is hard to predict but typically lies somewhere between 5 to 30 seconds.
 
 \subsubsection{Amazon Provisioning}
 \label{azn-prov}
-Amazon nodes can take significantly longer to be made available. While the same delays apply in respect to upload of binary data and launching a JPPF node, the binary files need to be uploaded to each instance and not only to the queue management server as in the Torque case. But the largest delay falls to the time needed for Amazon to make an EC2 instance available (loading a machine image, booting the machine, and configuring firewall and credentials on it). Creating a new instance and launching a Clustermeister node on it takes about 1 minute and 44 seconds on average (with a maximum measured time of 2:15 and a minimum of 1:30). Of course these numbers depend on the user configuration and network latency and bandwidth as well. On the other hand, launching a Clustermeister node on an already running instance takes merely about 8 seconds. To avoid  this long start up time, the Amazon provider performs node provisioning in parallel for all requested nodes.
+Amazon nodes can take significantly longer to be made available. While the same delays apply in respect to upload of binary data and launching of a node, the binary files need to be uploaded to each instance and not only to the queue management server as in the Torque case. But the largest delay falls to the time needed for Amazon to make an EC2 instance available (loading a machine image, booting the machine, and configuring firewall and credentials on it). Creating a new instance and launching a Clustermeister node on it takes about 1 minute and 44 seconds on average (with a maximum measured time of 2:15 and a minimum of 1:30). Of course these numbers depend on the user configuration, network latency and bandwidth. But launching a Clustermeister node on an already running instance takes merely about 8 seconds. To avoid overly long start-up times, the Amazon provider performs node provisioning in parallel for all requested nodes.
 
 \subsubsection{Code Deployment}
 \label{code-deployment}
-When a user executes code on Clustermeister, each class that is not available or out of date in a node's classpath, is loaded over the network from the user's classpath. This happens at runtime, one-by-one as the classes are loaded. Loading large amounts of classes or libraries in this way is very inefficient and may take several minutes. To mitigate this problem, Clustermeister offers the ability to pre-load libraries to nodes at provisioning time. Section \ref{appendix-general-configuration} describes how library pre-loading can be used.
+When a user executes code on Clustermeister, each class that is not available or out of date in a node's classpath is loaded over the network from the user's classpath. This happens at runtime, one-by-one as the classes are loaded. Loading large amounts of classes or libraries in this way is very inefficient and may take several minutes. To mitigate this problem, Clustermeister offers the ability to pre-load libraries to nodes at provisioning time. Section \ref{appendix-general-configuration} describes how library pre-loading can be used.
 
 \subsection{Execution Time}
 
-Assessing execution time strongly depends on the nature of the computation task at hand. In the context of Clustermeister we are primarily interested in tasks that can be executed in parallel. This section uses the term \textit{job} to describe a single computation task, such as evaluating a list of numbers if they are primes. A job can then be split into a number of \textit{tasks} that can be executed in parallel (e.g. each number can be checked in parallel, provided there are enough resources). For the purposes of this evaluation two different kind of jobs were evaluated. Namely jobs that consists of a large number of trivial tasks with short execution time. And jobs that consist of a small number of long-running tasks. These two kinds of jobs behave very differently and as will be demonstrated, require different load-balancing (task distribution) algorithm for optimal performance. Clustermeister does not perform any load balancing but allows to configure the load balancing algorithm used by JPPF. The 
-available choices are\footnote{http://www.jppf.org/doc/v3/index.php?title=Configuring\_a\_JPPF\_server\#Load-balancing}:
+Assessing execution time strongly depends on the nature of the computation task at hand. In the context of Clustermeister the primary interest is in tasks that can be executed in parallel. This section uses the term \textit{job} to describe a single computation task, such as evaluating a list of numbers if they are primes. A job can then be split into a number of \textit{tasks} that can be executed in parallel (e.g. each number can be checked in parallel, provided there are enough resources). For the purposes of this evaluation two different kind of jobs were evaluated. Namely jobs that consists of a large number of trivial tasks with very short execution time. And jobs that consist of a small number of long-running tasks. These two kinds of jobs behave very differently and, as will be demonstrated, require different load-balancing (task distribution) strategies for optimal performance. Clustermeister does not perform any load balancing but allows to configure the load balancing algorithm used by JPPF. The 
+available choices are \cite{jppf-lb}:
 
 \begin{enumerate}
  \item \textbf{manual}: with this strategy, the user can provide a number of tasks that are executed on each node at most at the same time.
@@ -379,19 +378,19 @@ In the remainder of this section the data and conclusions obtained from this eva
 \subsubsection{Job with many Short-Running Tasks}
 \label{short-tasks}
 
-For this evaluation the computation of an image of the Mandelbrot set\footnote{http://en.wikipedia.org/wiki/Mandelbrot\_set} has been chosen. The job creates a task for each row of the image and the task computes an array of color values. The computation of a single task is very fast (fractions of a second) but there are many tasks (600 tasks for an image with resolution 800 x 600). The evaluation was done with the Amazon EC2 provider on \textit{t1.micro} instances\footnote{http://aws.amazon.com/ec2/instance-types/}. The nodes were configured to use only one thread to computation so they could only execute one task at a time. For each run the job was configured to calculate the same part of the image to obtain comparable execution times. 
+For this evaluation the computation of an image of the Mandelbrot set\footnote{http://en.wikipedia.org/wiki/Mandelbrot\_set} has been chosen. The job creates a task for each row of the image and the task computes an array of color values. The computation of a single task is very fast (fractions of a second) but there are many tasks (600 tasks for an image with resolution 800 x 600). The evaluation was done with the Amazon EC2 provider on \textit{t1.micro} instances\footnote{http://aws.amazon.com/ec2/instance-types/}. The nodes were configured to use only one computation thread, so they could only execute one task at a time. For each run, the job was configured to calculate the same part of the image in order to obtain comparable execution times. 
 
-The first evaluation concentrated on the influence of the load balancing algorithm on execution times. This is not an evaluation of the load balancing algorithms but  an evaluation how much the execution time differs between the worst case and the best case. One part of the execution time measured is network overhead for sending the tasks to the nodes. JPPF can send multiple tasks in batches to nodes. The tasks are then queued on the node for execution but can not be sent to any other node any more. Another strategy is to queue the tasks on the JPPF server and distribute them to nodes as resources become available. To archive this behaviour, the NodeThreads algorithm has been chosen. Because each node has been configured with one thread only, the multiplicator (m) setting for this strategy determines the number of tasks that will be sent to each node in a batch (provided there are enough tasks to satisfy all upper limits).
+The first evaluation concentrated on the influence of the load balancing algorithm on execution times. This is not an evaluation of the load balancing algorithms, but an evaluation of how much the execution time differs between the worst case and the best case. One part of the execution time measured is network overhead for sending the tasks to the nodes. JPPF can send multiple tasks in batches to nodes. The tasks are then queued on the node for execution but can not be sent to any other node any more. Another strategy is to queue the tasks on the JPPF server and distribute them to nodes as resources become available. To achieve this behaviour, the NodeThreads algorithm has been chosen. Because each node has been configured with one thread only, the multiplicator (\textit{m}) setting for this strategy determines the number of tasks that will be sent to each node in a batch (provided there are enough tasks to satisfy all upper limits).
 
-The working hypothesis was that, assuming all nodes have equal computational resources, for tasks where the \textit{computation time} is much smaller than the \textit{network latency}, the optimal strategy is to distribute all tasks to all available nodes in one batch (see Tab. \ref{tab:mandelbrot-lb}). Contrary, the worst strategy would be to open a dedicated connection for every single task to send it to a node for execution (this equals batches of size 1). In this scenario there is a strong disproportion between network overhead and task computation time in favour of network overhead. The computation time of a task is simply too short to justify paying the overhead of establishing a dedicated connection over the network for every single task. Thus network overhead is expected to be the dominating factor in overall job execution time.
+The working hypothesis has been that, assuming all nodes have equal computational resources, for tasks where the \textit{computation time} is much smaller than the \textit{network latency}, the optimal strategy is to distribute all tasks to all available nodes in one batch (see table \ref{tab:mandelbrot-lb}). Contrary, the worst strategy would be to open a dedicated connection for every single task to send it to a node for execution (this equals batches of size 1). In this scenario there is a strong disproportion between network overhead and task computation time in favour of network overhead. The computation time of a task is simply too short to justify paying the overhead of establishing a dedicated connection over the network for every single task. Thus network overhead is expected to be the dominating factor in overall job execution time.
 
-The hypothesis has been tested by running this evaluation on 6 nodes with the NodeThreads load balancing strategy and a multiplicator setting of 100 (best case) and 1 (worst case). The resulting execution times can be seen in Tab. \ref{tab:mandelbrot-lb-res}. It is very obvious that choosing the right load balancing strategy to minimize network latency is very important. The best case scenario is more than 14 times faster than the worst case scenario. And the difference is network overhead.
+The hypothesis has been tested by running this evaluation on 6 nodes with the NodeThreads load balancing strategy and a multiplicator setting of 100 (best case) and 1 (worst case). The resulting execution times can be seen in table \ref{tab:mandelbrot-lb-res}. It is obvious that choosing the right load balancing strategy to minimize network latency is very important. The best case scenario is more than 14 times faster than the worst case scenario. And the difference is network overhead.
 
 \begin{table}[h!]
 \centering
 \begin{tabular}{|c|c|}
 \hline
-\textbf{Tasks scheduled per node} & \textbf{Job Execution Time [ms]} \\ \hline
+\textbf{Tasks Scheduled per Node} & \textbf{Job Execution Time [ms]} \\ \hline
 100 & 851 \\ \hline
 1 & 12156 \\ \hline
 \end{tabular}
@@ -399,13 +398,13 @@ The hypothesis has been tested by running this evaluation on 6 nodes with the No
 \label{tab:mandelbrot-lb-res}
 \end{table}
 
-The other evaluation concentrated on the influence of number of nodes on execution time. More nodes equal more computation power but also more load balancing and network communication overhead. For this evaluation the load balancing strategy has been manually configured for optimal values under the assumption that each node has has equal resources (see Tab. \ref{tab:mandelbrot-lb}). Fig. \ref{fig:times-mandelbrot} shows the execution times for the Mandelbrot set job for 1 to 6 nodes. As expected the execution time is reduced for each node added. Using 6 nodes instead of 1 node, more than halves the execution time. However the decrease is not linear as the overhead increases with larger number of nodes.
+The other evaluation concentrated on the influence of number of nodes on execution time. More nodes equal more computation power but also more load balancing and network communication overhead. For this evaluation the load balancing strategy has been manually configured for optimal values under the assumption that each node has has equal resources (see table \ref{tab:mandelbrot-lb}). Fig. \ref{fig:times-mandelbrot} shows the execution times for the Mandelbrot set job for 1 to 6 nodes. As expected the execution time is reduced for each node added. Using 6 nodes instead of 1 node, more than halves the execution time. However the decrease is not linear as the overhead increases with larger number of nodes.
 
 \begin{table}[h!]
 \centering
 \begin{tabular}{|c|c|}
 \hline
-\textbf{\# of Nodes} & \textbf{Tasks scheduled per node} \\ \hline
+\textbf{\# of Nodes} & \textbf{Tasks Scheduled per Node} \\ \hline
 1 & 600 \\ \hline
 2 & 300 \\ \hline
 3 & 200 \\ \hline
@@ -426,14 +425,14 @@ The other evaluation concentrated on the influence of number of nodes on executi
 
 \subsubsection{Job with few Long-Running Tasks}
 
-\begin{figure}[hptb]
+In the simulation with long-running tasks, there were 30 tasks that had a duration of 5 seconds each. In Fig. \ref{fig:evaluation-long-running}, the results of the simulation are shown in a chart. The number of nodes were increased from 1 to 6 for each simulation. Each node had one processing thread. In the simulation with 6 nodes, the optimal execution distributes 5 tasks for each node. Each task has a duration of 5 seconds, therefore the optimal execution time is 25 seconds. In the simulation, there was a duration of 25.928 seconds. Hence for long-running tasks, network overhead is neglect-able. To reach optimal execution times one must make sure that all nodes are always fully utilized.
+
+\begin{figure}[h]
 \centering
 \includegraphics[scale=0.7]{images/long-running-duration.pdf}
-\caption{Long-running tasks}
+\caption{Execution times for the long-running tasks evaluation.}
 \label{fig:evaluation-long-running}
 \end{figure}
-
-In the simulation with long-running tasks, there were 30 tasks that had a duration of 5 seconds each. In fig. \ref{fig:evaluation-long-running}, the results of the simulation are shown in a chart. The number of nodes were increased from 1 to 6 for each simulation. Each node had one processing thread. In the simulation with 6 nodes, the optimal execution distributes 5 tasks for each node. Each task has a duration of 5 seconds, therefore the optimal execution time is 25 seconds. In the simulation, there was a duration of 25.928 seconds. Hence for long-running tasks, network overhead is neglectable and nodes are always fully utilized.
 
 \subsubsection{Adaptive load balancing algorithms}
 
@@ -452,15 +451,84 @@ Figure \ref{fig:evaluation-learning} shows the job execution times for the Mande
 
 \subsubsection{Execution Time Conclusions}
 
-The conclusions from this evaluations of execution times is that it is critical to choose the right load balancing strategy depending on the type of computation that is performed. When a task's computation time is much smaller than the network latency, it is important to minimize the task batches sent over the network by choosing an optimal batch size. When the tasks execution time is much larger than the network latency, it is best to not distribute tasks to nodes pre-maturely but instead queue the tasks on the server and send only small batches to nodes to prevent any node from becoming idle for a long time because no tasks are available for scheduling.
+The conclusions from this evaluations of execution times is that it is critical to choose the right load balancing strategy depending on the type of computation that is performed. When a task's computation time is much smaller than the network latency, it is important to choose an optimal batch size. When the tasks execution time is much larger than the network latency, it is best to not distribute tasks to nodes pre-maturely but instead queue the tasks on the server and send only small batches to nodes to prevent any node from becoming idle for a long time, because no tasks are available for scheduling.
 
 Finally, adaptive algorithms can be very good depending on the use case. If a user wants to execute only a single very long running job, adaptive algorithms are a bad idea. It is better to manually tune the load balancing settings. But if many jobs are going to be executed during a session, the adaptive algorithms will learn to perform well. Especially when the available nodes have very different computation power.
+
+\begin{thebibliography}{99}
+
+\bibitem{apache-license-2}
+  The Apache Software Foundation,
+  \emph{Apache License, Version 2.0},
+  January 2004.
+  URL: \url{http://www.apache.org/licenses/LICENSE-2.0.html}
+
+\bibitem{gpl3}
+  Open Source Initiative,
+  \emph{GNU General Public License, version 3 (GPL-3.0)},
+  September 2012.
+  URL: \url{http://opensource.org/licenses/gpl-3.0.html}
+
+\bibitem{asf-legal-faq}
+  The Apache Software Foundation,
+  ASF Legal Previously Asked Questions, \emph{Which licenses may NOT be included within Apache products?},
+  September 2012.
+  URL: \url{http://www.apache.org/legal/resolved.html#category-x}
+  
+\bibitem{proj-def}
+  A. Bernstein and P. Stutz,
+  Master Project Description, \emph{Dynamic Cluster Provisioning and Deployment},
+  Department of Informatics, University of Zurich,
+  January 2012.
+
+\bibitem{jmx}
+  Oracle,
+  \emph{Java Management Extensions (JMX) Technology},
+  September 2012.
+  URL: \url{http://www.oracle.com/technetwork/java/javase/tech/javamanagement-140525.html}
+
+\bibitem{jppf-topo}
+  JPPF Documentation 3.x, 
+  JPPF Overview, \emph{Architecture and topology},
+  September 2012.
+  URL: \url{http://www.jppf.org/doc/v3/index.php?title=JPPF_Overview#Architecture_and_topology}
+
+\bibitem{jppf-topo-blog}
+  L. Cohen, 
+  JPPF Blog, \emph{Master/worker or P2P Grid? How about You choose?},
+  February 2012.
+  URL: \url{http://www.jroller.com/jppf/entry/master_worker_or_p2p_grid}
+
+\bibitem{waterfall-wiki}
+  Wikipedia, 
+  \emph{Waterfall model} -- Wikipedia, The Free Encyclopedia,
+  September 2012.
+  URL: \url{http://en.wikipedia.org/wiki/Waterfall_model}
+
+\bibitem{agile-wiki}
+  Wikipedia, 
+  \emph{Agile software development} -- Wikipedia, The Free Encyclopedia,
+  September 2012.
+  URL: \url{http://en.wikipedia.org/wiki/Agile_software_development}
+  
+\bibitem{tdd}
+  Agile Data, 
+  \emph{Introduction to Test Driven Development (TDD)},
+  September 2012.
+  URL: \url{http://www.agiledata.org/essays/tdd.html}
+  
+\bibitem{jppf-lb}
+  JPPF Documentation 3.x, 
+  Configuring a JPPF server, \emph{Load-balancing},
+  September 2012.
+  URL: \url{http://www.jppf.org/doc/v3/index.php?title=Configuring_a_JPPF_server#Load-balancing}
+
+\end{thebibliography}
 
 \newpage
 
 \appendix
 
 \input{appendix-manual.tex}
-
 
 \end{document}
